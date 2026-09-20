@@ -1,0 +1,2036 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Seed: presales that seed or refund</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ------------------------------------------------------------------ tokens */
+:root{
+  --paper:#ffffff; --mist:#F5F7FC;
+  --ink:#131A2E; --ink-2:#2A3454; --muted:#5F6883; --faint:#98A0B8;
+  --navy:#5668A0; --navy-deep:#3D4B7C; --navy-soft:#A8B3D6; --navy-wash:#E8ECF7;
+  --hair:rgba(61,75,124,.16); --hair-2:rgba(61,75,124,.30);
+  --glass:rgba(255,255,255,.62); --glass-line:rgba(255,255,255,.85);
+  --lift:0 8px 30px -12px rgba(40,55,110,.28);
+  --sans:'Instrument Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Instrument Serif','Iowan Old Style',Georgia,'Times New Roman',serif;
+  --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --ease:cubic-bezier(.65,0,.35,1); --out:cubic-bezier(.16,1,.3,1);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px);-webkit-text-size-adjust:100%}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+body{background:#fff;color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button{cursor:pointer;background:none;border:0}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--navy);outline-offset:3px;border-radius:6px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.wrap{width:100%;max-width:1160px;margin:0 auto;padding:0 24px}
+
+#field{position:fixed;inset:0;z-index:0;pointer-events:none}
+main,footer{position:relative;z-index:1}
+
+/* --------------------------------------------------------------------- nav */
+.nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;
+  padding:calc(16px + env(safe-area-inset-top,0px)) 20px 16px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:22px;letter-spacing:-.04em}
+.brand svg{width:26px;height:26px;fill:var(--navy-deep)}
+.glass{background:var(--glass);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--glass-line);box-shadow:var(--lift)}
+.navpill{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;border-radius:999px;padding:6px 8px}
+.navpill a{position:relative;z-index:1;padding:6px 16px;border-radius:999px;font-size:14px;font-weight:500;color:var(--muted);transition:color .3s}
+.navpill a:hover,.navpill a.on{color:var(--ink)}
+.navpill .ind{position:absolute;top:6px;bottom:6px;left:0;border-radius:999px;background:#fff;box-shadow:0 2px 8px -2px rgba(40,55,110,.28);
+  transition:transform .45s var(--ease),width .45s var(--ease),opacity .3s;opacity:0;will-change:transform}
+.navright{display:flex;align-items:center;gap:10px;position:relative}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-weight:600;font-size:14px;padding:11px 22px;
+  transition:transform .15s,background .25s,box-shadow .25s,opacity .2s;white-space:nowrap}
+.btn:active{transform:translateY(1px)}
+.btn-ink{background:var(--ink);color:#fff;box-shadow:inset 0 -2px 0 rgba(0,0,0,.35)}
+.btn-ink:hover{background:var(--ink-2)}
+.btn-navy{background:var(--navy-deep);color:#fff;box-shadow:inset 0 -2px 0 rgba(10,18,50,.35)}
+.btn-navy:hover{background:#344170}
+.btn-glass{color:var(--ink)}
+.btn-glass:hover{background:rgba(255,255,255,.9)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+.btn-lg{font-size:15px;padding:14px 26px}
+.btn-block{width:100%}
+.wdot{width:7px;height:7px;border-radius:50%;background:#7FC8A9;box-shadow:0 0 0 3px rgba(127,200,169,.25)}
+.menubtn{display:none;width:42px;height:42px;border-radius:50%;place-items:center}
+.menubtn svg{width:18px;height:18px;stroke:var(--ink);stroke-width:1.8;fill:none;stroke-linecap:round}
+.pop{position:absolute;right:0;top:calc(100% + 10px);width:264px;border-radius:18px;padding:16px;background:#fff;border:1px solid var(--hair);box-shadow:0 24px 60px -20px rgba(30,45,100,.35);display:none}
+.pop.open{display:block}
+.pop h4{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px}
+.pop .bal{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-top:1px solid var(--hair);font-size:13.5px}
+.pop .bal span:first-child{color:var(--muted)}
+.pop button{margin-top:12px;width:100%;padding:10px;border-radius:999px;border:1px solid var(--hair-2);font-weight:600;font-size:13.5px}
+.pop button:hover{background:var(--mist)}
+.mobnav{display:none}
+
+/* -------------------------------------------------------------------- hero */
+.hero{position:relative;height:100dvh;min-height:660px;overflow:hidden}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%}
+#sphere-base{z-index:10;opacity:0;animation:globeIn 2s var(--out) .1s forwards}
+#sphere-reveal{z-index:30;pointer-events:none}
+@keyframes globeIn{0%{opacity:0;transform:scale(1.06)}to{opacity:1;transform:scale(1)}}
+.hero-copy{position:absolute;top:21%;left:0;right:0;z-index:50;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 20px;pointer-events:none}
+.hero-copy a{pointer-events:auto}
+.livechip{display:inline-flex;align-items:center;gap:9px;border-radius:999px;padding:7px 14px 7px 12px;font-size:13px;font-weight:500;color:var(--ink-2);margin-bottom:26px}
+.pulse{position:relative;width:7px;height:7px;border-radius:50%;background:var(--navy);flex:none}
+.pulse::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--navy);opacity:0;animation:pulse 2.2s ease-out infinite}
+@keyframes pulse{0%{transform:scale(.5);opacity:.9}100%{transform:scale(1.7);opacity:0}}
+h1{line-height:.96;font-weight:400}
+h1 .l1{display:block;font-family:var(--serif);font-style:italic;font-size:clamp(42px,6.6vw,88px);letter-spacing:-.025em}
+h1 .l2{display:block;font-weight:600;font-size:clamp(36px,5.7vw,76px);letter-spacing:-.05em;margin-top:2px}
+.hero-sub{max-width:47ch;margin-top:24px;color:var(--ink-2);font-size:clamp(15px,1.25vw,17px);line-height:1.5;
+  background:radial-gradient(closest-side,rgba(255,255,255,.92),rgba(255,255,255,0));padding:6px 10px}
+.hero-cta{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;justify-content:center}
+.reveal{opacity:0;animation:heroReveal 1.1s var(--out) forwards}
+@keyframes heroReveal{0%{opacity:0;filter:blur(12px);transform:translateY(28px)}to{opacity:1;filter:blur(0);transform:none}}
+.hero-foot{position:absolute;left:0;right:0;bottom:0;height:120px;z-index:40;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,0),#fff 92%)}
+
+/* ---------------------------------------------------------------- sections */
+.sec{padding:clamp(72px,10vw,128px) 0}
+.sec-head{display:grid;grid-template-columns:7fr 5fr;gap:40px;align-items:end;margin-bottom:40px}
+h2{font-weight:600;font-size:clamp(30px,4.3vw,50px);line-height:1.04;letter-spacing:-.045em}
+h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;line-height:1}
+.sec-head p{color:var(--muted);max-width:44ch;font-size:16px}
+.panel{position:relative;border:1px solid var(--hair);border-radius:22px;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+
+/* segmented control (sliding ink indicator) */
+.seg{position:relative;display:inline-flex;padding:4px;border-radius:999px;border:1px solid var(--hair);background:#fff}
+.seg .seg-ind{position:absolute;top:4px;bottom:4px;left:0;border-radius:999px;background:var(--ink);transition:transform .45s var(--ease),width .45s var(--ease);will-change:transform}
+.seg button{position:relative;z-index:1;padding:7px 16px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);transition:color .3s;white-space:nowrap}
+.seg button[aria-pressed="true"]{color:#fff}
+.seg button .ct{font-family:var(--mono);font-weight:400;font-size:11.5px;opacity:.7;margin-left:5px}
+
+/* ------------------------------------------------------------ presale list */
+.panel-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;border-bottom:1px solid var(--hair);flex-wrap:wrap}
+.panel-bar .live{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:500;color:var(--ink-2)}
+.tag{display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;border-radius:999px;padding:3px 9px;border:1px solid var(--hair-2);color:var(--muted);background:#fff}
+.tag.in{border-color:transparent;background:var(--navy-wash);color:var(--navy-deep)}
+.cols,.row{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(0,1.7fr) minmax(0,1.15fr) minmax(0,1fr) 92px;gap:18px;align-items:center;padding:0 22px}
+.cols{padding-top:11px;padding-bottom:11px;border-bottom:1px solid var(--hair);font-size:12.5px;color:var(--faint);font-weight:500}
+.cols span:nth-child(3),.cols span:nth-child(4){text-align:right}
+.row{width:100%;text-align:left;padding-top:15px;padding-bottom:15px;border-bottom:1px solid var(--hair);transition:background .2s}
+.row:last-child{border-bottom:0;border-radius:0 0 21px 21px}
+.row:hover{background:rgba(232,236,247,.45)}
+.row.flash{animation:flash 1.8s ease-out}
+@keyframes flash{0%{background:var(--navy-wash)}100%{background:transparent}}
+.c-proj{display:flex;align-items:center;gap:13px;min-width:0}
+.av{flex:none;width:40px;height:40px;border-radius:11px;background:var(--navy-wash);display:grid;place-items:center}
+.av svg{width:26px;height:26px;fill:var(--navy-deep)}
+.av.lg{width:52px;height:52px;border-radius:14px}.av.lg svg{width:34px;height:34px}
+.nm{min-width:0;display:flex;flex-direction:column;gap:2px}
+.nm b{font-weight:600;font-size:15px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm b .tk{font-family:var(--mono);font-weight:400;font-size:12px;color:var(--muted);margin-left:7px;letter-spacing:-.02em}
+.meta{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.chain{display:inline-flex;align-items:center;gap:6px}
+.chain::before{content:"";width:7px;height:7px;background:var(--navy-deep)}
+.chain.sol::before{border-radius:50%;background:var(--navy-soft)}
+.c-prog{display:flex;align-items:center;gap:12px}
+.bar{flex:1;height:6px;border-radius:999px;background:var(--navy-wash);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:999px;background:var(--navy);transition:width .8s var(--out)}
+.seeded .bar i{background:var(--ink)}
+.refunding .bar i{background:repeating-linear-gradient(135deg,var(--navy-soft) 0 4px,transparent 4px 7px)}
+.pct{font-size:12.5px;color:var(--ink-2);width:38px;text-align:right}
+.c-raised,.c-time{text-align:right;font-size:13px}
+.c-raised em{font-style:normal;color:var(--faint)}
+.c-time{color:var(--ink-2)}
+.c-act{text-align:right}
+.pill-sm{display:inline-block;border-radius:999px;padding:7px 15px;font-size:12.5px;font-weight:600;border:1px solid var(--hair-2);background:#fff;transition:background .2s,color .2s,border-color .2s}
+.row:hover .pill-sm,.pill-sm.hot{background:var(--navy-deep);border-color:var(--navy-deep);color:#fff}
+.empty{padding:54px 22px;text-align:center;color:var(--muted)}
+.empty a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
+.panel-foot{padding:13px 22px;border-top:1px solid var(--hair);font-size:13px;color:var(--muted)}
+
+/* ------------------------------------------------------------- mechanism */
+.mech-top{padding:26px 28px 22px;border-bottom:1px solid var(--hair)}
+.mech-label{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.mech-label label{font-weight:600;font-size:15px}
+.mech-label output{font-size:13px;color:var(--ink-2)}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;cursor:ew-resize;display:block}
+input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:999px;background:linear-gradient(to right,var(--navy) var(--p,64%),var(--navy-wash) var(--p,64%))}
+input[type=range]::-moz-range-track{height:8px;border-radius:999px;background:var(--navy-wash)}
+input[type=range]::-moz-range-progress{height:8px;border-radius:999px;background:var(--navy)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-9px;border-radius:50%;background:#fff;border:2px solid var(--navy-deep);box-shadow:0 4px 12px -3px rgba(40,55,110,.45)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--navy-deep);box-shadow:0 4px 12px -3px rgba(40,55,110,.45)}
+.scale{display:flex;justify-content:space-between;font-size:11.5px;color:var(--faint);margin-top:4px}
+.fork{position:relative;display:grid;grid-template-columns:1fr 1fr}
+.fork::before{content:"";position:absolute;top:24px;bottom:24px;left:50%;width:1px;background:var(--hair)}
+.end{padding:28px;transition:opacity .45s,filter .45s}
+.end.off{opacity:.32;filter:saturate(.4)}
+.end h3{font-size:21px;font-weight:600;letter-spacing:-.03em;display:flex;align-items:center;gap:10px}
+.end p{color:var(--muted);margin-top:8px;max-width:42ch;font-size:14.5px}
+.ledger{margin-top:20px;border:1px solid var(--hair);position:relative;background:#fff}
+.ledger div{display:grid;grid-template-columns:1fr auto auto;gap:14px;padding:9px 13px;font-size:12.5px;border-bottom:1px solid var(--hair)}
+.ledger div:last-child{border-bottom:0}
+.ledger div span:nth-child(1){color:var(--muted)}.ledger div span:nth-child(2){color:var(--faint)}
+.ledger div span:nth-child(3){color:var(--navy-deep);font-weight:500;min-width:14ch;text-align:right}
+.tick{position:absolute;width:9px;height:9px;border:0 solid var(--navy);pointer-events:none}
+.tick.tl{top:-1px;left:-1px;border-top-width:1.5px;border-left-width:1.5px}.tick.tr{top:-1px;right:-1px;border-top-width:1.5px;border-right-width:1.5px}
+.tick.bl{bottom:-1px;left:-1px;border-bottom-width:1.5px;border-left-width:1.5px}.tick.br{bottom:-1px;right:-1px;border-bottom-width:1.5px;border-right-width:1.5px}
+.plus{position:absolute;width:13px;height:13px;transform:translate(-50%,-50%);pointer-events:none;z-index:3}
+.plus::before,.plus::after{content:"";position:absolute;background:var(--navy)}
+.plus::before{left:6px;top:0;width:1.5px;height:13px}.plus::after{top:6px;left:0;height:1.5px;width:13px}
+.rules{position:relative;display:grid;grid-template-columns:repeat(3,1fr);margin-top:22px}
+.rules::before,.rules::after{content:"";position:absolute;top:24px;bottom:24px;width:1px;background:var(--hair)}
+.rules::before{left:33.333%}.rules::after{left:66.666%}
+.rule{padding:28px}
+.rule svg{width:100%;height:74px;margin-bottom:20px;display:block}
+.rule h3{font-size:18.5px;font-weight:600;letter-spacing:-.03em}
+.rule p{color:var(--muted);margin-top:7px;font-size:14.5px;max-width:34ch}
+
+/* ----------------------------------------------------------------- create */
+.create{display:grid;grid-template-columns:1.05fr .95fr}
+.create::before{content:"";position:absolute;top:24px;bottom:24px;left:52.5%;width:1px;background:var(--hair)}
+.form{padding:30px;display:grid;gap:18px;grid-template-columns:1fr 1fr}
+.f{display:flex;flex-direction:column;gap:7px;min-width:0}
+.f.full{grid-column:1/-1}
+.f label,.f .lab{font-size:13px;font-weight:600;color:var(--ink-2)}
+.f .hint{font-size:12.5px;color:var(--faint);font-weight:400;margin-left:6px}
+.inp{display:flex;align-items:center;border:1px solid var(--hair-2);border-radius:13px;background:#fff;transition:border-color .2s,box-shadow .2s}
+.inp:focus-within{border-color:var(--navy);box-shadow:0 0 0 4px rgba(86,104,160,.14)}
+.inp input{flex:1;min-width:0;border:0;outline:0;background:transparent;padding:12px 14px;font-size:15px}
+.inp input::placeholder{color:var(--faint)}
+.inp .suf{padding-right:14px;color:var(--muted);font-size:13px}
+.err{font-size:12.5px;color:#9B3D4E;min-height:0}
+.preview{padding:30px;display:flex;flex-direction:column;gap:18px}
+.preview .lab{font-size:13px;font-weight:600;color:var(--ink-2)}
+.pcard{position:relative;border:1px solid var(--hair);background:#fff;padding:18px}
+.pcard .c-prog{margin-top:16px}
+.facts{display:grid;gap:0;border-top:1px solid var(--hair)}
+.facts div{display:flex;justify-content:space-between;gap:18px;padding:11px 0;border-bottom:1px solid var(--hair);font-size:13.5px}
+.facts dt{color:var(--muted)}.facts dd{text-align:right;color:var(--ink)}
+
+/* -------------------------------------------------------------------- faq */
+.faq-grid{display:grid;grid-template-columns:4fr 8fr;gap:40px;align-items:start}
+.faq-grid h2{position:sticky;top:110px}
+.faq{display:flex;flex-direction:column;gap:12px}
+.qa{border:1px solid var(--hair);border-radius:20px;background:rgba(255,255,255,.7);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:background .3s,box-shadow .3s}
+.qa.open{background:#fff;box-shadow:var(--lift)}
+.qa button{width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:18px;padding:20px 24px;font-weight:600;font-size:17px;letter-spacing:-.025em}
+.qa .mk{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--navy-wash);color:var(--navy-deep);font-family:var(--mono);font-size:16px;transition:transform .35s var(--ease),background .3s,color .3s}
+.qa.open .mk{background:var(--navy-deep);color:#fff;transform:rotate(45deg)}
+.qa .a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.4,0,.2,1)}
+.qa.open .a{grid-template-rows:1fr}
+.qa .a>div{overflow:hidden}
+.qa .a p{padding:0 24px 22px;color:var(--muted);max-width:66ch}
+
+/* -------------------------------------------------------------------- cta */
+.cta{position:relative;overflow:hidden;border-radius:28px;background:#18213F;color:#fff;text-align:center;padding:clamp(44px,6vw,76px) 24px}
+.cta canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.cta>*:not(canvas){position:relative}
+.cta h2{margin:0 auto}
+.cta p{color:rgba(255,255,255,.78);max-width:46ch;margin:18px auto 0;font-size:16.5px}
+.cta .hero-cta{margin-top:30px}
+.btn-white{background:#fff;color:var(--ink)}.btn-white:hover{background:var(--navy-wash)}
+.btn-ghost{border:1px solid rgba(255,255,255,.3);color:#fff}.btn-ghost:hover{background:rgba(255,255,255,.08)}
+footer{padding:64px 0 40px}
+.foot{display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap;align-items:flex-start}
+.foot p{color:var(--muted);font-size:14px;max-width:40ch;margin-top:12px}
+.foot nav{display:flex;gap:26px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.foot nav a:hover,.foot nav button:hover{color:var(--navy-deep)}
+.foot nav button{color:var(--muted)}
+.fine{margin-top:40px;padding-top:20px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--faint);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+/* ------------------------------------------------------------------ sheet */
+dialog{border:0;padding:0;overflow:visible;background:transparent;color:inherit;max-width:none;max-height:none;margin:auto;width:min(540px,calc(100vw - 24px))}
+dialog::backdrop{background:rgba(19,26,46,.34);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+dialog[open]{animation:sheetIn .5s var(--out)}
+@keyframes sheetIn{0%{opacity:0;transform:translateY(22px) scale(.985)}to{opacity:1;transform:none}}
+.sheet{background:#fff;border-radius:26px;border:1px solid var(--hair);box-shadow:0 40px 100px -30px rgba(25,38,90,.5);padding:26px;max-height:calc(100dvh - 32px);overflow:auto}
+.sh-head{display:flex;gap:14px;align-items:center}
+.sh-head .nm b{font-size:21px;letter-spacing:-.035em}
+.x{margin-left:auto;flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--hair);display:grid;place-items:center;font-size:18px;line-height:1;color:var(--muted)}
+.x:hover{background:var(--mist);color:var(--ink)}
+.idea{margin-top:16px;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.25;color:var(--ink-2)}
+.readout{position:relative;border:1px solid var(--hair);margin-top:20px;padding:16px 18px}
+.readout .big{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.readout .big b{font-family:var(--mono);font-weight:500;font-size:24px;letter-spacing:-.05em}
+.readout .big b em{font-style:normal;color:var(--faint);font-size:15px}
+.readout .bar{margin:13px 0 12px;height:8px;flex:none}
+.readout .sub{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.amt{margin-top:22px}
+.amt-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
+.amt-top label{font-weight:600}.amt-top span{color:var(--muted)}
+.amt .inp input{font-family:var(--mono);font-size:24px;letter-spacing:-.05em;padding:13px 16px}
+.amt .inp .suf{font-family:var(--mono);font-size:14px}
+.chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.chips button{border:1px solid var(--hair-2);border-radius:999px;padding:6px 14px;font-family:var(--mono);font-size:12.5px;color:var(--ink-2);transition:background .2s,border-color .2s}
+.chips button:hover{background:var(--navy-wash);border-color:var(--navy-soft)}
+.promise{margin-top:16px;display:grid;gap:6px;font-size:14px;color:var(--ink-2)}
+.promise div{display:flex;gap:10px;align-items:flex-start}
+.promise svg{flex:none;width:16px;height:16px;margin-top:3px;stroke:var(--navy);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.sheet .btn-block{margin-top:20px}
+.state{margin-top:20px;border-radius:16px;background:var(--mist);padding:16px 18px;font-size:14.5px;color:var(--ink-2)}
+.state b{display:block;font-size:16px;letter-spacing:-.02em;color:var(--ink);margin-bottom:3px}
+.mine{margin-top:14px;display:flex;justify-content:space-between;font-size:13.5px;padding:11px 14px;border-radius:12px;background:var(--navy-wash);color:var(--navy-deep)}
+.specs{margin-top:20px;display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--hair);padding-top:14px;gap:12px}
+.specs dt{font-size:12px;color:var(--faint)}.specs dd{font-size:13px;color:var(--ink-2);margin-top:2px}
+.ca{margin-top:14px;display:inline-flex;align-items:center;gap:8px;border:1px solid var(--hair-2);padding:6px 11px;font-family:var(--mono);font-size:12px;color:var(--muted);transition:color .2s,border-color .2s}
+.ca:hover{color:var(--navy-deep);border-color:var(--navy)}
+.ca i{font-style:normal;color:var(--faint)}
+.toasts{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:max-content;max-width:calc(100vw - 24px)}
+.toast{background:var(--ink);color:#fff;border-radius:999px;padding:11px 20px;font-size:14px;font-weight:500;box-shadow:0 18px 40px -14px rgba(19,26,46,.6);animation:toastIn .5s var(--out);text-align:center}
+.toast.out{opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s}
+@keyframes toastIn{0%{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+/* ------------------------------------------------------------- responsive */
+@media (max-width:900px){
+  .navpill{display:none}
+  .menubtn{display:grid}
+  .mobnav.open{display:flex;flex-direction:column;position:fixed;top:calc(74px + env(safe-area-inset-top,0px));left:16px;right:16px;z-index:99;border-radius:20px;padding:10px;background:#fff;border:1px solid var(--hair);box-shadow:0 24px 60px -20px rgba(30,45,100,.35)}
+  .mobnav a{padding:13px 14px;border-radius:12px;font-weight:500}
+  .mobnav a:hover{background:var(--mist)}
+  .sec-head{grid-template-columns:1fr;gap:14px;margin-bottom:28px}
+  .faq-grid{grid-template-columns:1fr;gap:24px}.faq-grid h2{position:static}
+  .cols{display:none}
+  .row{grid-template-columns:1fr auto;grid-template-areas:"proj act" "prog prog" "raised time";row-gap:12px;padding:16px 18px}
+  .c-proj{grid-area:proj}.c-act{grid-area:act}.c-prog{grid-area:prog}.c-raised{grid-area:raised;text-align:left}.c-time{grid-area:time}
+  .panel-bar{padding:14px 18px}
+  .fork,.rules,.create{grid-template-columns:1fr}
+  .fork::before,.rules::before,.rules::after,.create::before{display:none}
+  .end+.end,.rule+.rule,.preview{border-top:1px solid var(--hair)}
+  .plus{display:none}
+  .form{grid-template-columns:1fr}
+  .hero-copy{top:17%}
+}
+@media (max-width:520px){
+  .wrap{padding:0 16px}
+  .nav{padding-left:14px;padding-right:14px}
+  .btn{padding:10px 16px;font-size:13.5px}
+  .btn-lg{padding:13px 20px;font-size:14.5px}
+  .mech-top,.end,.rule,.form,.preview{padding:22px 18px}
+  .seg button{padding:7px 12px}
+  dialog{margin:auto auto 0;width:100vw}
+  .sheet{border-radius:26px 26px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0px))}
+  .specs{grid-template-columns:1fr 1fr}
+}
+@media (prefers-reduced-motion:reduce){
+  .reveal,#sphere-base,dialog[open],.toast{animation-duration:.01s;animation-delay:0s}
+  .pulse::after{animation:none}
+}
+
+/* ================================================================== views */
+.view[hidden]{display:none}
+#field{transition:opacity .6s}
+body.in-app #field{opacity:.42}
+body.in-docs #field{opacity:.3}
+.navpill a.ext{color:var(--navy-deep)}
+a.row{color:inherit}
+.bar-link{font-size:13.5px;font-weight:600;color:var(--navy-deep);border-bottom:1px solid var(--hair-2);padding-bottom:1px}
+.bar-link:hover{border-color:var(--navy-deep)}
+
+/* ================================================================ app bar */
+.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:100;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;
+  padding:12px 22px;background:rgba(255,255,255,.84);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-bottom:1px solid var(--hair)}
+.appbar .brand{font-size:20px;justify-self:start}
+.appbar .brand svg{width:24px;height:24px}
+.appbar .brand small{font-family:var(--serif);font-style:italic;font-weight:400;font-size:19px;color:var(--muted);letter-spacing:-.01em;margin-left:2px}
+.appbar .right{justify-self:end;display:flex;align-items:center;gap:16px;position:relative}
+.appbar .btn{padding:9px 18px;font-size:13.5px}
+.textlink{font-size:14px;font-weight:500;color:var(--muted)}
+.textlink:hover{color:var(--ink)}
+.appmain{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:24px 22px 40px}
+.apphead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin:10px 0 20px}
+.apphead h1{font-weight:600;font-size:clamp(26px,3vw,36px);letter-spacing:-.045em;line-height:1.05}
+.apphead h1 i{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;margin-right:.18em}
+.apphead p{color:var(--muted);font-size:14.5px;max-width:52ch}
+.appfoot{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 22px 40px;font-size:12.5px;color:var(--faint);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.appfoot button{color:var(--muted);border-bottom:1px solid var(--hair-2)}
+
+/* stats strip */
+.stats{position:relative;display:grid;grid-template-columns:repeat(4,1fr);margin-bottom:16px}
+.stat{padding:16px 20px;position:relative}
+.stat+.stat::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:1px;background:var(--hair)}
+.stat dt{font-size:12.5px;color:var(--muted)}
+.stat dd{font-family:var(--mono);font-size:20px;letter-spacing:-.05em;margin-top:4px;color:var(--ink);font-variant-numeric:tabular-nums}
+.stat dd small{font-size:12.5px;color:var(--faint);letter-spacing:-.02em;margin-left:4px}
+
+/* toolbar */
+.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.toolbar .seg button{padding:6px 13px;font-size:12.5px}
+.toolbar .grow{flex:1}
+.mini{display:flex;align-items:center;border:1px solid var(--hair);border-radius:999px;background:#fff;height:37px;padding:0 14px;gap:8px;transition:border-color .2s,box-shadow .2s}
+.mini:focus-within{border-color:var(--navy);box-shadow:0 0 0 4px rgba(86,104,160,.14)}
+.mini input,.mini select{border:0;outline:0;background:transparent;font-size:13px;min-width:0}
+.mini svg{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:1.8;stroke-linecap:round;flex:none}
+.mini select{font-weight:600;color:var(--ink-2);cursor:pointer;padding-right:2px}
+.mini.search input{width:150px}
+.quick{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);font-weight:600}
+.quick .mini{padding:0 12px;height:37px}
+.quick .mini input{width:46px;font-family:var(--mono);font-size:13px;text-align:right;letter-spacing:-.03em}
+.quick .mini span{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+
+/* terminal grid */
+.tgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
+@media (min-width:1100px){.tgrid{grid-template-columns:minmax(0,1fr) 408px}}
+.tcols,.trow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.25fr) minmax(0,1.3fr) minmax(0,1fr) 98px 132px;gap:14px;align-items:center;padding:0 18px}
+.tcols{padding-top:10px;padding-bottom:10px;border-bottom:1px solid var(--hair);font-size:12px;color:var(--faint);font-weight:500}
+.tcols span:nth-child(n+3){text-align:right}
+.trow{position:relative;padding-top:12px;padding-bottom:12px;border-bottom:1px solid var(--hair);transition:background .2s}
+.trow:last-child{border-bottom:0;border-radius:0 0 21px 21px}
+.trow:hover{background:rgba(232,236,247,.4)}
+.trow.sel{background:var(--navy-wash)}
+.trow.flash{animation:flash 1.8s ease-out}
+.pick{display:flex;align-items:center;gap:12px;min-width:0;text-align:left;width:100%}
+.pick::after{content:"";position:absolute;inset:0}
+.pick:focus-visible{outline:none}.pick:focus-visible::after{outline:2px solid var(--navy);outline-offset:-2px}
+.trow .av{width:36px;height:36px;border-radius:10px}.trow .av svg{width:24px;height:24px}
+.trow .nm b{font-size:14.5px}
+.trow .meta{font-size:12px;flex-wrap:wrap;row-gap:4px}
+.t-r{text-align:right;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+.t-r em{font-style:normal;color:var(--faint)}
+.t-act{text-align:right;position:relative;z-index:1}
+.qb{border:1px solid var(--hair-2);background:#fff;border-radius:999px;padding:7px 12px;font-size:12px;font-weight:600;white-space:nowrap;transition:background .2s,color .2s,border-color .2s,transform .15s}
+.qb:hover,.qb.hot{background:var(--navy-deep);border-color:var(--navy-deep);color:#fff}
+.qb:active{transform:translateY(1px)}
+.qb[disabled]{opacity:.5;cursor:wait}
+.qb .num{font-weight:500}
+@media (max-width:1359px){.tcols,.trow{grid-template-columns:minmax(0,2fr) minmax(0,1.25fr) minmax(0,1.3fr) 98px 132px}.c-pace{display:none}}
+
+/* detail panel */
+.detail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 80px);max-height:calc(100dvh - 100px);overflow:auto;padding:22px;border-radius:22px}
+.detail .sh-head .nm b{font-size:19px}
+.detail .x{display:none}
+.detail .idea{font-size:19px;margin-top:14px}
+.detail .btn-block{margin-top:18px}
+.detail .specs{grid-template-columns:1fr;gap:0;padding-top:6px}
+.detail .specs div{display:flex;justify-content:space-between;gap:16px;padding:7px 0;align-items:baseline}
+.detail .specs dd{margin-top:0;text-align:right}
+.dlinks{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}.dlinks .ca{margin-top:0}
+.dempty{padding:60px 20px;text-align:center;color:var(--muted);font-size:14.5px}
+.chart{margin-top:14px;border:1px solid var(--hair);position:relative;background:#fff;padding:12px 12px 6px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .legend{display:flex;gap:16px;font-size:11.5px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap}
+.chart .legend i{display:inline-block;width:16px;height:0;border-top:2px solid var(--navy);vertical-align:middle;margin-right:6px}
+.chart .legend i.dash{border-top:1.5px dashed var(--navy-soft)}
+.pace{display:flex;justify-content:space-between;gap:12px;margin-top:10px;font-size:13px;color:var(--muted)}
+.pace b{font-family:var(--mono);font-weight:500;color:var(--ink);letter-spacing:-.03em}
+.acts{margin-top:18px}
+.acts h4{font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.acts div{display:grid;grid-template-columns:1fr auto 64px;gap:12px;padding:7px 0;border-top:1px solid var(--hair);font-size:12px;font-family:var(--mono);letter-spacing:-.03em}
+.acts div span:nth-child(1){color:var(--muted)}.acts div span:nth-child(3){color:var(--faint);text-align:right}
+.acts div.you span:nth-child(1){color:var(--navy-deep);font-weight:500}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:12px;border:1px solid var(--hair);background:#fff}
+.split div{padding:10px 13px}.split div+div{border-left:1px solid var(--hair)}
+.split dt{font-size:11.5px;color:var(--faint)}.split dd{font-family:var(--mono);font-size:13px;letter-spacing:-.03em;margin-top:1px}
+
+/* portfolio */
+.prow,.pcols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.4fr) 150px;gap:16px;align-items:center;padding:0 22px}
+.pcols{padding-top:11px;padding-bottom:11px;border-bottom:1px solid var(--hair);font-size:12.5px;color:var(--faint);font-weight:500}
+.prow{padding-top:14px;padding-bottom:14px;border-bottom:1px solid var(--hair)}
+.prow:last-child{border-bottom:0}
+.pcols span:nth-child(n+2),.prow>span:nth-child(n+2){text-align:right}
+.prow>span{font-size:13px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
+.balances{padding:20px 22px}
+.balances h3,.subhead{font-size:15px;font-weight:600;letter-spacing:-.02em}
+.balances .bal{display:flex;justify-content:space-between;padding:11px 0;border-top:1px solid var(--hair);font-size:13.5px;margin-top:0}
+.balances .bal:first-of-type{margin-top:12px}
+.balances .bal span:first-child{color:var(--muted)}
+.subhead{margin:30px 0 12px}
+
+/* ================================================================== docs */
+.docs{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:44px 24px 96px;display:grid;grid-template-columns:196px minmax(0,1fr);gap:52px}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 92px);align-self:start;display:flex;flex-direction:column;gap:2px}
+.toc a{padding:7px 12px;border-radius:10px;color:var(--muted);font-size:14px;transition:background .2s,color .2s}
+.toc a:hover{color:var(--ink)}
+.toc a.on{background:var(--navy-wash);color:var(--navy-deep);font-weight:600}
+.doc-hero{padding-bottom:36px}
+.doc-hero h1{font-size:clamp(34px,4.6vw,56px);line-height:1}
+.doc-hero h1 .l1{font-size:1.08em}.doc-hero h1 .l2{font-size:1em;margin-top:0}
+.doc-hero p{color:var(--muted);font-size:17px;max-width:56ch;margin-top:18px}
+.doc-sec{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,430px);gap:44px;padding:44px 0;border-top:1px solid var(--hair);scroll-margin-top:90px}
+.doc-sec h2{font-size:27px;letter-spacing:-.04em;margin-bottom:14px}
+.prose{max-width:60ch}
+.prose p{color:var(--ink-2);margin-bottom:13px;font-size:15.5px;line-height:1.62}
+.prose ol,.prose ul{margin:4px 0 14px 1.15em;color:var(--ink-2)}
+.prose li{margin-bottom:8px;padding-left:4px;line-height:1.55}
+.prose li::marker{color:var(--navy);font-family:var(--mono);font-size:13px}
+.prose b{font-weight:600;color:var(--ink)}
+.prose .note{border:1px solid var(--hair);background:var(--mist);border-radius:14px;padding:14px 16px;font-size:14.5px;color:var(--ink-2);margin-top:6px}
+.aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 92px);align-self:start;border:1px solid var(--hair);background:rgba(255,255,255,.94);padding:20px 22px}
+.aside h3{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.aside h3:not(:first-of-type){margin-top:20px;padding-top:16px;border-top:1px solid var(--hair)}
+.eq{font-family:var(--serif);font-size:20px;line-height:1.5;padding:8px 0;color:var(--ink);word-spacing:.06em}
+.eq i{font-style:italic}
+.eq sub{font-size:.62em;font-style:normal;font-family:var(--sans);vertical-align:-.35em;line-height:0}
+.eq .n{font-family:var(--mono);font-size:.7em;letter-spacing:-.03em}
+.frac{display:inline-flex;flex-direction:column;align-items:center;line-height:1.12;text-align:center;vertical-align:middle;margin:0 .15em}
+.frac>span:first-child{border-bottom:1px solid currentColor;padding:0 .4em .12em}
+.frac>span:last-child{padding:.12em .4em 0}
+.where{font-size:13px;color:var(--muted);line-height:1.5}
+.kv{display:grid;gap:0;font-size:13px}
+.kv div{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-top:1px solid var(--hair)}
+.kv div:first-child{border-top:0}
+.kv dt{color:var(--muted)}.kv dd{font-family:var(--mono);letter-spacing:-.03em;text-align:right;color:var(--ink)}
+.kv dd.t{font-family:var(--sans);letter-spacing:-.01em}
+.dtable{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:4px}
+.dtable th{text-align:left;font-weight:500;color:var(--faint);font-size:12.5px;padding:8px 10px 8px 0;border-bottom:1px solid var(--hair)}
+.dtable td{padding:10px 10px 10px 0;border-bottom:1px solid var(--hair);color:var(--ink-2);vertical-align:top}
+.dtable td.num,.dtable th.r{text-align:right}
+.dtable tr:last-child td{border-bottom:0}
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:6px 0 12px}
+.calc>div{min-width:0}.calc .inp input{width:100%}
+.calc label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
+.calc .inp{border-radius:11px}.calc .inp input{padding:9px 12px;font-family:var(--mono);font-size:14px;letter-spacing:-.03em}
+.calc .seg{grid-column:1/-1;justify-self:start}
+.calc .seg button{padding:6px 13px;font-size:12.5px}
+.st{display:inline-block;font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;border:1px solid var(--hair-2);color:var(--muted)}
+.st.set{background:var(--navy-deep);border-color:var(--navy-deep);color:#fff}
+.st.open{border-style:dashed}
+.life{width:100%;height:auto;display:block;margin:6px 0 16px}
+
+/* ============================================================ responsive */
+@media (max-width:1099px){
+  .detail{display:none}
+  .two{grid-template-columns:1fr}
+}
+@media (max-width:900px){
+  .appbar{grid-template-columns:1fr auto;row-gap:10px;padding:10px 14px}
+  .appbar .tabs{grid-column:1/-1;grid-row:2;justify-self:start;max-width:100%;overflow-x:auto}
+  .appbar .textlink{display:none}
+  .appmain{padding:18px 14px 32px}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat:nth-child(3)::before{display:none}
+  .stat:nth-child(n+3){border-top:1px solid var(--hair)}
+  .tcols,.pcols{display:none}
+  .trow{grid-template-columns:1fr auto;grid-template-areas:"proj act" "prog prog" "raised time";row-gap:10px;padding:14px 16px}
+  .trow .pick{grid-area:proj}.trow .t-act{grid-area:act}.trow .c-prog{grid-area:prog}.trow .c-raisedT{grid-area:raised;text-align:left}.trow .c-timeT{grid-area:time}
+  .prow{grid-template-columns:1fr auto;row-gap:8px;padding:14px 16px}
+  .prow>span:nth-child(2),.prow>span:nth-child(3){display:none}
+  .prow>span:nth-child(4){grid-column:1;text-align:left}
+  .prow>span:nth-child(5){grid-column:2;grid-row:1/3;align-self:center}
+  .quick{width:100%}
+  .mini.search{flex:1 1 100%}.mini.search input{width:100%}
+  .docs{grid-template-columns:minmax(0,1fr);gap:20px;padding:26px 16px 72px}
+  .docs article{min-width:0}
+  .toc{position:static;flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:6px;min-width:0}
+  .toc a{white-space:nowrap}
+  .doc-sec{grid-template-columns:minmax(0,1fr);gap:20px;padding:32px 0}
+  .eq{font-size:18px;overflow-x:auto}
+  .aside{position:static}
+}
+
+/* ============================================= pair assets (Solana, any SPL) */
+.chain::before,.chain.sol::before{border-radius:50%;background:var(--navy)}
+.chain.unv::before{background:transparent;border:1.5px solid #B9853B}
+.tag.warn{border-color:rgba(185,133,59,.45);color:#8A5A17;background:#FBF4E6}
+.state.warnbox{background:#FBF4E6;color:#6B4A1A;font-size:13.5px;margin-top:14px}
+.state.warnbox b{color:#5A3C10;font-size:14.5px}
+.quick .mini input{width:84px}
+.quick .mini select{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted)}
+.f .lab .hint{display:inline}
+@media (max-width:900px){.quick .mini input{width:100%}.quick .mini:first-of-type{flex:1}}
+.sh-head .meta{flex-wrap:wrap;row-gap:4px;white-space:normal}
+.sh-head .nm{min-width:0}
+.chips.stocks button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.promise b{font-weight:500}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<canvas id="field" aria-hidden="true"></canvas>
+
+<!-- ######################################################################
+     HOME
+     ###################################################################### -->
+<div class="view" id="view-home">
+<header class="nav">
+  <a href="#top" class="brand" aria-label="Seed home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.00" cy="12.00" r="1.55"/><circle cx="9.97" cy="13.86" r="1.49"/><circle cx="12.34" cy="8.13" r="1.43"/><circle cx="14.90" cy="15.78" r="1.37"/><circle cx="6.58" cy="11.04" r="1.31"/><circle cx="17.19" cy="8.70" r="1.25"/><circle cx="10.25" cy="18.51" r="1.19"/><circle cx="8.65" cy="5.54" r="1.13"/><circle cx="19.31" cy="14.67" r="1.07"/><circle cx="4.37" cy="15.15" r="1.01"/><circle cx="15.69" cy="4.12" r="0.95"/><circle cx="14.73" cy="20.70" r="0.89"/><circle cx="3.76" cy="7.22" r="0.83"/></svg>Seed</a>
+  <nav class="navpill glass" id="navpill" aria-label="Sections">
+    <span class="ind" aria-hidden="true"></span>
+    <a href="#presales">Presales</a>
+    <a href="#how">How it works</a>
+    <a href="#faq">FAQ</a>
+    <a href="#/docs" class="ext">Docs</a>
+  </nav>
+  <div class="navright">
+    <a class="btn btn-ink" href="#/app">Launch App</a>
+    <button class="menubtn glass" id="menuBtn" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/></svg></button>
+  </div>
+</header>
+<nav class="mobnav" id="mobnav" aria-label="Sections">
+  <a href="#presales">Presales</a><a href="#how">How it works</a><a href="#faq">FAQ</a><a href="#/docs">Docs</a><a href="#/app">Launch App</a>
+</nav>
+
+<main id="top">
+  <section class="hero" id="hero">
+    <canvas id="sphere-base" aria-hidden="true"></canvas>
+    <canvas id="sphere-reveal" aria-hidden="true"></canvas>
+    <div class="hero-copy">
+      <div class="livechip glass reveal" style="animation-delay:.1s"><span class="pulse"></span><span id="heroLive">Presales live</span></div>
+      <h1>
+        <span class="l1 reveal" style="animation-delay:.25s">Seeded in full,</span>
+        <span class="l2 reveal" style="animation-delay:.42s">or refunded in full</span>
+      </h1>
+      <p class="hero-sub reveal" style="animation-delay:.6s">A presale launchpad on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL, USDC, a tokenized stock or any token. If it misses its target by the deadline, every wallet gets back what it paid.</p>
+      <div class="hero-cta reveal" style="animation-delay:.74s">
+        <a href="#/app" class="btn btn-ink btn-lg">Launch App</a>
+        <a href="#/docs" class="btn btn-glass glass btn-lg">Read the docs</a>
+      </div>
+    </div>
+    <div class="hero-foot"></div>
+  </section>
+
+  <section class="sec" id="presales">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>Open presales</h2>
+        <p>Each one has a target, a deadline and a pair asset. Buy in with that asset, then wait for it to resolve. There is nothing to trade until it seeds into Meteora.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-bar">
+          <div class="live"><span class="pulse"></span><span id="liveCount"></span><span class="tag">Demo data</span></div>
+          <a class="bar-link" href="#/app">Open the terminal</a>
+        </div>
+        <div class="cols" aria-hidden="true"><span>Project</span><span>Filled</span><span>Raised</span><span>Ends in</span><span></span></div>
+        <div id="rows"></div>
+      </div>
+    </div>
+  </section>
+
+<section class="sec" id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2><i>Every presale ends</i>one of two ways</h2>
+        <p>Drag the slider to the deadline and see what each backer walks away with.</p>
+      </div>
+      <div class="panel">
+        <span class="plus" style="left:50%;top:0"></span>
+        <div class="mech-top">
+          <div class="mech-label">
+            <label for="mech">Raised when the clock runs out</label>
+            <output id="mechOut" class="num" for="mech"></output>
+          </div>
+          <input type="range" id="mech" min="0" max="100" value="64" step="1">
+          <div class="scale num"><span>0%</span><span>Target 100 SOL</span></div>
+        </div>
+        <div class="fork">
+          <span class="plus" style="left:50%;top:0"></span>
+          <div class="end" id="endRefund">
+            <h3>Short of the target</h3>
+            <p>No tokens are released and the supply is burned. Every backer withdraws exactly what they paid, fee included, straight from the presale vault.</p>
+            <div class="ledger num"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+              <div><span>7xKp…9fQa</span><span>paid 4</span><span>gets 4 SOL</span></div>
+              <div><span>Dm3t…Rw2e</span><span>paid 15</span><span>gets 15 SOL</span></div>
+              <div><span>9aHc…kL5v</span><span>paid 1</span><span>gets 1 SOL</span></div>
+            </div>
+          </div>
+          <div class="end" id="endSeed">
+            <h3>Target reached</h3>
+            <p>The presale ends the moment it fills. The whole raise is locked as liquidity in a Meteora pool, and backers claim their tokens at the presale price.</p>
+            <div class="ledger num"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+              <div><span>7xKp…9fQa</span><span>paid 4</span><span>gets 19,800,000</span></div>
+              <div><span>Dm3t…Rw2e</span><span>paid 15</span><span>gets 74,250,000</span></div>
+              <div><span>9aHc…kL5v</span><span>paid 1</span><span>gets 4,950,000</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel rules">
+        <span class="plus" style="left:33.333%;top:0"></span><span class="plus" style="left:66.666%;top:0"></span>
+        <span class="plus" style="left:33.333%;top:100%"></span><span class="plus" style="left:66.666%;top:100%"></span>
+        <div class="rule">
+          <svg viewBox="0 0 240 74" aria-hidden="true"><g fill="#5668A0"><circle cx="30" cy="37" r="7"/><circle cx="66" cy="37" r="7"/><circle cx="102" cy="37" r="7"/><circle cx="138" cy="37" r="7"/><circle cx="174" cy="37" r="7"/><circle cx="210" cy="37" r="7"/></g><path d="M20 58h200" stroke="#A8B3D6" stroke-width="1.5" stroke-dasharray="2 5"/></svg>
+          <h3>One price for everyone</h3>
+          <p>No curve and no early-bird discount. The first backer pays what the last one pays.</p>
+        </div>
+        <div class="rule">
+          <svg viewBox="0 0 240 74" aria-hidden="true"><g fill="none" stroke="#5668A0" stroke-width="1.5"><rect x="92" y="12" width="56" height="50" rx="10"/><path d="M148 28h46M148 46h46" stroke-dasharray="2 5" stroke="#A8B3D6"/><path d="M46 37h46"/></g><g fill="#5668A0"><circle cx="40" cy="37" r="5"/><circle cx="120" cy="37" r="6"/></g><g fill="#A8B3D6"><circle cx="200" cy="28" r="4"/><circle cx="200" cy="46" r="4"/></g></svg>
+          <h3>Two exits, no third</h3>
+          <p>Funds sit in Meteora's Presale Vault. They can only leave into the liquidity pool or back to the wallets they came from.</p>
+        </div>
+        <div class="rule">
+          <svg viewBox="0 0 240 74" aria-hidden="true"><circle cx="120" cy="37" r="25" fill="none" stroke="#A8B3D6" stroke-width="1.5" stroke-dasharray="3 6"/><circle cx="120" cy="37" r="4" fill="#5668A0"/></svg>
+          <h3>Nothing circulates until it seeds</h3>
+          <p>The full supply sits in the vault while the presale fills, so there is nothing to snipe or dump.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <section class="sec" id="faq">
+    <div class="wrap">
+      <div class="faq-grid"><h2>Questions</h2><div class="faq" id="faqList"></div></div>
+    </div>
+  </section>
+
+  <section class="sec" style="padding-top:0">
+    <div class="wrap">
+      <div class="cta" id="cta">
+        <canvas id="ctaField" aria-hidden="true"></canvas>
+        <h2><i>Open a presale</i>in about a minute</h2>
+        <p>Pick a pair, a target and a deadline. Backers carry no fill risk: it seeds, or they get back everything they paid.</p>
+        <div class="hero-cta"><a href="#/app/launch" class="btn btn-white btn-lg">Start a presale</a><a href="#/app" class="btn btn-ghost btn-lg">Open the terminal</a></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a href="#top" class="brand" style="font-size:19px">Seed</a>
+        <p>Fixed-price presales on Solana, built on Meteora's Presale Vault and DAMM v2. They seed, or they refund.</p>
+      </div>
+      <nav aria-label="Footer"><a href="#/app">Terminal</a><a href="#/app/launch">Start a presale</a><a href="#/docs">Docs</a><a href="#faq">FAQ</a><button data-reset>Reset demo</button></nav>
+    </div>
+    <div class="fine"><span>© 2026 Seed</span><span>Prototype. Wallet and presale data are simulated. No transactions are sent.</span></div>
+  </div>
+</footer>
+</div>
+
+<!-- ######################################################################
+     APP
+     ###################################################################### -->
+<div class="view" id="view-app" hidden>
+<header class="appbar">
+  <a href="#" class="brand" aria-label="Seed home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.00" cy="12.00" r="1.55"/><circle cx="9.97" cy="13.86" r="1.49"/><circle cx="12.34" cy="8.13" r="1.43"/><circle cx="14.90" cy="15.78" r="1.37"/><circle cx="6.58" cy="11.04" r="1.31"/><circle cx="17.19" cy="8.70" r="1.25"/><circle cx="10.25" cy="18.51" r="1.19"/><circle cx="8.65" cy="5.54" r="1.13"/><circle cx="19.31" cy="14.67" r="1.07"/><circle cx="4.37" cy="15.15" r="1.01"/><circle cx="15.69" cy="4.12" r="0.95"/><circle cx="14.73" cy="20.70" r="0.89"/><circle cx="3.76" cy="7.22" r="0.83"/></svg>Seed</a>
+  <div class="seg tabs" id="tabSeg" role="group" aria-label="App sections">
+    <span class="seg-ind" aria-hidden="true"></span>
+    <button data-v="terminal" aria-pressed="true">Terminal</button>
+    <button data-v="launch" aria-pressed="false">Launch</button>
+    <button data-v="portfolio" aria-pressed="false">Portfolio<span class="ct" id="ctPos"></span></button>
+  </div>
+  <div class="right">
+    <a class="textlink" href="#/docs">Docs</a>
+    <button class="btn btn-ink" id="walletBtn" aria-haspopup="true" aria-expanded="false">Connect wallet</button>
+    <div class="pop" id="walletPop" role="menu">
+      <h4>Demo wallet</h4>
+      <div id="walletBals"></div>
+      <button id="disconnectBtn">Disconnect</button>
+    </div>
+  </div>
+</header>
+
+<main class="appmain">
+  <!-- ------------------------------------------------------ TERMINAL -->
+  <section id="tab-terminal">
+    <div class="apphead">
+      <h1><i>Presale</i>terminal</h1>
+      <p>Every presale on Seed in one table, whatever it is paired with. Quick buy sends your preset amount in one click. Select a row for the fill chart and a custom amount.</p>
+    </div>
+    <dl class="panel stats" id="stats"></dl>
+    <div class="toolbar">
+      <div class="seg" id="statusSeg" role="group" aria-label="Status"><span class="seg-ind" aria-hidden="true"></span>
+        <button data-v="all" aria-pressed="false">All</button><button data-v="live" aria-pressed="true">Live</button><button data-v="seeded" aria-pressed="false">Seeded</button><button data-v="refunding" aria-pressed="false">Refunded</button></div>
+      <div class="seg" id="assetSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span>
+        <button data-v="all" aria-pressed="true">All pairs</button><button data-v="SOL" aria-pressed="false">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="stock" aria-pressed="false">Stocks</button><button data-v="other" aria-pressed="false">Other</button></div>
+      <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="q" placeholder="Search name or ticker" autocomplete="off" aria-label="Search presales"></label>
+      <label class="mini"><select id="sort" aria-label="Sort"><option value="ending">Ending soon</option><option value="filled">Most filled</option><option value="new">Newest</option></select></label>
+      <span class="grow"></span>
+      <div class="quick"><span>Quick buy</span>
+        <label class="mini"><input id="qbAmt" inputmode="decimal" aria-label="Quick buy amount"></label>
+        <label class="mini"><select id="qbAsset" aria-label="Quick buy asset"></select></label>
+      </div>
+    </div>
+    <div class="tgrid">
+      <div class="panel">
+        <div class="tcols" aria-hidden="true"><span>Project</span><span>Filled</span><span>Raised</span><span class="c-pace">Pace needed</span><span>Ends in</span><span></span></div>
+        <div id="trows"></div>
+        <div class="panel-foot" id="tryHint" hidden></div>
+      </div>
+      <aside class="panel detail" id="detail" aria-label="Selected presale"></aside>
+    </div>
+  </section>
+
+  <!-- -------------------------------------------------------- LAUNCH -->
+  <section id="tab-launch" hidden>
+    <div class="apphead">
+      <h1><i>Start</i>a presale</h1>
+      <p>Six fields and one transaction. The supply is fixed at 1B with mint authority revoked. Opening is free, and a miss costs you network fees and nothing else.</p>
+    </div>
+    <div class="panel create">
+      <span class="plus" style="left:52.5%;top:0"></span><span class="plus" style="left:52.5%;top:100%"></span>
+      <div class="form" id="form">
+        <div class="f"><label for="fName">Project name</label><div class="inp"><input id="fName" maxlength="24" placeholder="Kiln" autocomplete="off"></div></div>
+        <div class="f"><label for="fTicker">Ticker</label><div class="inp"><span class="suf" style="padding:0 0 0 14px">$</span><input id="fTicker" maxlength="6" placeholder="KILN" autocomplete="off" style="padding-left:4px;text-transform:uppercase" class="num"></div></div>
+        <div class="f full"><label for="fIdea">The idea, in one line<span class="hint" id="ideaCt">0 / 80</span></label><div class="inp"><input id="fIdea" maxlength="80" placeholder="What are backers funding?" autocomplete="off"></div></div>
+        <div class="f full"><span class="lab">Pair with<span class="hint">Backers buy in with this asset and the Meteora pool is paired against it</span></span>
+          <div><div class="seg" id="pairSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span><button data-v="SOL" aria-pressed="true">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="stock" aria-pressed="false">Stock</button><button data-v="any" aria-pressed="false">Any token</button></div></div>
+        </div>
+        <div class="f full" id="stockRow" hidden><span class="lab">Tokenized stock<span class="hint">xStocks from Meteora's approved list</span></span>
+          <div class="chips stocks" style="margin-top:0"><button type="button" data-stock="NVDAx" aria-pressed="false" title="NVIDIA">NVDAx</button><button type="button" data-stock="AAPLx" aria-pressed="false" title="Apple">AAPLx</button><button type="button" data-stock="TSLAx" aria-pressed="false" title="Tesla">TSLAx</button><button type="button" data-stock="HOODx" aria-pressed="false" title="Robinhood">HOODx</button><button type="button" data-stock="COINx" aria-pressed="false" title="Coinbase">COINx</button><button type="button" data-stock="MSFTx" aria-pressed="false" title="Microsoft">MSFTx</button><button type="button" data-stock="SPYx" aria-pressed="false" title="S&amp;P 500 ETF">SPYx</button><button type="button" data-stock="GOOGLx" aria-pressed="false" title="Alphabet">GOOGLx</button><button type="button" data-stock="AMZNx" aria-pressed="false" title="Amazon">AMZNx</button><button type="button" data-stock="METAx" aria-pressed="false" title="Meta">METAx</button></div></div>
+        <div class="f full" id="mintRow" hidden><label for="fMint">Token mint address<span class="hint" id="mintInfo"></span></label><div class="inp"><input id="fMint" class="num" placeholder="Paste an SPL mint address" autocomplete="off" spellcheck="false" style="font-size:13px"></div>
+          <div class="chips" style="margin-top:2px"><button type="button" data-mint="JUP">JUP</button><button type="button" data-mint="BONK">BONK</button></div></div>
+        <div class="f"><label for="fTarget">Target</label><div class="inp"><input id="fTarget" inputmode="decimal" placeholder="200" autocomplete="off" class="num"><span class="suf num" id="fCur">SOL</span></div></div>
+        <div class="f"><span class="lab">Deadline</span>
+          <div><div class="seg" id="timeSeg" role="group" aria-label="Deadline"><span class="seg-ind" aria-hidden="true"></span><button data-v="24" aria-pressed="false">24h</button><button data-v="72" aria-pressed="true">3 days</button><button data-v="168" aria-pressed="false">7 days</button></div></div>
+        </div>
+        <div class="f full"><div class="err" id="fErr" role="alert"></div><button class="btn btn-navy btn-lg btn-block" id="openBtn">Open presale</button></div>
+      </div>
+      <div class="preview">
+        <span class="lab">How backers will see it</span>
+        <div class="pcard"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span><div id="pvCard"></div></div>
+        <dl class="facts" id="pvFacts"></dl>
+      </div>
+    </div>
+    <h3 class="subhead">Your presales</h3>
+    <div class="panel" id="mineList"></div>
+  </section>
+
+  <!-- ----------------------------------------------------- PORTFOLIO -->
+  <section id="tab-portfolio" hidden>
+    <div class="apphead">
+      <h1><i>Your</i>positions</h1>
+      <p>What you have in open presales, and what is ready to claim.</p>
+    </div>
+    <dl class="panel stats" id="pstats"></dl>
+    <div class="two">
+      <div class="panel"><div class="pcols" aria-hidden="true"><span>Presale</span><span>You paid</span><span>Status</span><span>Yours to claim</span><span></span></div><div id="prows"></div></div>
+      <div class="panel balances"><h3>Wallet</h3><div id="pbal"></div></div>
+    </div>
+  </section>
+</main>
+<div class="appfoot"><span>Prototype. Wallet and presale data are simulated. No transactions are sent.</span><button data-reset>Reset demo</button></div>
+</div>
+
+<!-- ######################################################################
+     DOCS
+     ###################################################################### -->
+<div class="view" id="view-docs" hidden>
+<header class="appbar">
+  <a href="#" class="brand" aria-label="Seed home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.00" cy="12.00" r="1.55"/><circle cx="9.97" cy="13.86" r="1.49"/><circle cx="12.34" cy="8.13" r="1.43"/><circle cx="14.90" cy="15.78" r="1.37"/><circle cx="6.58" cy="11.04" r="1.31"/><circle cx="17.19" cy="8.70" r="1.25"/><circle cx="10.25" cy="18.51" r="1.19"/><circle cx="8.65" cy="5.54" r="1.13"/><circle cx="19.31" cy="14.67" r="1.07"/><circle cx="4.37" cy="15.15" r="1.01"/><circle cx="15.69" cy="4.12" r="0.95"/><circle cx="14.73" cy="20.70" r="0.89"/><circle cx="3.76" cy="7.22" r="0.83"/></svg>Seed <small>docs</small></a>
+  <span></span>
+  <div class="right"><a class="textlink" href="#">Home</a><a class="btn btn-ink" href="#/app">Launch App</a></div>
+</header>
+<div class="docs">
+  <nav class="toc" id="toc" aria-label="Docs sections"></nav>
+  <article>
+    <div class="doc-hero">
+      <h1><span class="l1">How Seed works,</span><span class="l2">with the math</span></h1>
+      <p>The rules of a presale, the Meteora programs underneath it, how pairing with any asset works, and the 1% protocol fee. Each section has the explanation on the left and the math beside it.</p>
+    </div>
+
+    <section class="doc-sec" id="d-overview" data-t="Overview">
+      <div class="prose">
+        <h2>Overview</h2>
+        <p>Seed is a presale launchpad on Solana, built on Meteora. A creator sets a target, a deadline and the asset the presale is paired with. Backers buy in with that asset at one fixed price.</p>
+        <p>If the target is met, the raise opens a locked Meteora pool against the pair asset and backers claim their tokens. If the deadline passes first, no tokens are released and every backer takes back exactly what they paid.</p>
+        <p>Most Meteora launchpads run a bonding curve that graduates into a DAMM v2 pool. Seed keeps the same destination and replaces the curve with Meteora's Presale Vault. Arriving early does not get you a better price, so there is no reason to race and nothing for a sniper to front-run.</p>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>At a glance</h3>
+        <dl class="kv">
+          <div><dt>Network</dt><dd class="t">Solana</dd></div>
+          <div><dt>Presale</dt><dd class="t">Meteora Presale Vault, fixed price</dd></div>
+          <div><dt>Pool</dt><dd class="t">Meteora DAMM v2, locked for good</dd></div>
+          <div><dt>Pairs with</dt><dd class="t">SOL, USDC, tokenized stocks, any SPL token</dd></div>
+          <div><dt>Token supply</dt><dd>1,000,000,000</dd></div>
+          <div><dt>To backers</dt><dd>50%</dd></div>
+          <div><dt>To the locked pool</dt><dd>50%</dd></div>
+          <div><dt>Protocol fee</dt><dd class="t">1% of each buy, returned on a miss</dd></div>
+          <div><dt>Refund if it misses</dt><dd>100%</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-lifecycle" data-t="Lifecycle">
+      <div class="prose">
+        <h2>Lifecycle</h2>
+        <svg class="life" viewBox="0 0 560 150" aria-label="A presale is live, then either seeded or refunded">
+          <g fill="none" stroke="#5668A0" stroke-width="1.5"><path d="M150 75h70"/><path d="M220 75c40 0 40-42 80-42h38"/><path d="M220 75c40 0 40 42 80 42h38" stroke-dasharray="3 5" stroke="#A8B3D6"/></g>
+          <g font-family="Instrument Sans, sans-serif" font-size="14" font-weight="600">
+            <rect x="20" y="52" width="130" height="46" rx="23" fill="#E8ECF7"/><text x="85" y="80" text-anchor="middle" fill="#3D4B7C">Live</text>
+            <rect x="338" y="10" width="200" height="46" rx="23" fill="#131A2E"/><text x="438" y="38" text-anchor="middle" fill="#fff">Seeded</text>
+            <rect x="338" y="94" width="200" height="46" rx="23" fill="#fff" stroke="#A8B3D6" stroke-width="1.5"/><text x="438" y="122" text-anchor="middle" fill="#5F6883">Refunded</text>
+          </g>
+          <g font-family="JetBrains Mono, monospace" font-size="11" fill="#5F6883"><text x="232" y="26">R = T</text><text x="214" y="134">t = D, R &lt; T</text></g>
+        </svg>
+        <p>A presale is <b>live</b> from the moment it opens. It leaves that state exactly once.</p>
+        <ul>
+          <li><b>Seeded.</b> The raise reaches the target. The vault ends the sale on the spot, even if the deadline is days away, and the pool opens.</li>
+          <li><b>Refunded.</b> The deadline arrives and the raise is still short. No tokens are released.</li>
+        </ul>
+        <p>While a presale is live, withdrawals are switched off in the vault. If backers could leave early, a large wallet could fake momentum and pull out at the last minute.</p>
+        <p>The buy that completes the target is trimmed to what fits. If 3.4 SOL of room is left and you send 10 SOL, the vault takes what fills it and the rest never leaves your wallet.</p>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>Notation</h3>
+        <dl class="kv">
+          <div><dt><span class="eq" style="padding:0;font-size:17px"><i>Q</i></span></dt><dd class="t">Pair asset, such as SOL or USDC</dd></div>
+          <div><dt><span class="eq" style="padding:0;font-size:17px"><i>T</i></span></dt><dd class="t">Target raise, in units of Q</dd></div>
+          <div><dt><span class="eq" style="padding:0;font-size:17px"><i>D</i></span></dt><dd class="t">Deadline</dd></div>
+          <div><dt><span class="eq" style="padding:0;font-size:17px"><i>R</i></span></dt><dd class="t">Raised so far, net of fees</dd></div>
+          <div><dt><span class="eq" style="padding:0;font-size:17px"><i>g<sub>i</sub></i></span></dt><dd class="t">What wallet i pays, fee included</dd></div>
+          <div><dt><span class="eq" style="padding:0;font-size:17px"><i>c<sub>i</sub></i></span></dt><dd class="t">What counts toward the raise, (1 − f) g</dd></div>
+          <div><dt><span class="eq" style="padding:0;font-size:17px"><i>S</i></span></dt><dd class="t">Token supply, 1,000,000,000</dd></div>
+          <div><dt><span class="eq" style="padding:0;font-size:17px"><i>a</i></span></dt><dd class="t">Share of supply for backers, 0.5</dd></div>
+          <div><dt><span class="eq" style="padding:0;font-size:17px"><i>f</i></span></dt><dd class="t">Protocol fee on each buy, 0.01</dd></div>
+        </dl>
+        <h3>Resolution</h3>
+        <div class="eq">Seeded&nbsp; if &nbsp;<i>R</i> = <i>T</i>&nbsp; at some &nbsp;<i>t</i> ≤ <i>D</i></div>
+        <div class="eq">Refunded&nbsp; if &nbsp;<i>R</i> &lt; <i>T</i>&nbsp; at &nbsp;<i>t</i> = <i>D</i></div>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-pricing" data-t="Price and allocation">
+      <div class="prose">
+        <h2>Price and allocation</h2>
+        <p>Half of the supply is reserved for backers. The price is the target divided by that half, quoted in the pair asset, and it does not move while the presale is live.</p>
+        <p>Your tokens are your share of the raise applied to the backer allocation. Fund 1% of the target and you receive 1% of the backer half, which is 0.5% of the whole supply.</p>
+        <p>On a bonding curve the first buyer and the thousandth pay different prices for the same token. Here they pay the same, so the only question a backer has to answer is whether the idea is worth funding.</p>
+        <div class="note">The calculator on the right uses the same formulas as the app. Switch the pair asset, then change the target or the amount to see every derived number.</div>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>Presale price, in Q per token</h3>
+        <div class="eq"><i>P</i> = <span class="frac"><span><i>T</i></span><span><i>a</i> · <i>S</i></span></span></div>
+        <h3>Tokens for a contribution</h3>
+        <div class="eq"><i>q<sub>i</sub></i> = <span class="frac"><span><i>c<sub>i</sub></i></span><span><i>P</i></span></span> = <i>a</i> · <i>S</i> · <span class="frac"><span><i>c<sub>i</sub></i></span><span><i>T</i></span></span></div>
+        <p class="where">where <i>c<sub>i</sub></i> = (1 − <i>f</i>) · <i>g<sub>i</sub></i></p>
+        <h3>Try the numbers</h3>
+        <div class="calc">
+          <div class="seg" id="calcSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span><button data-v="SOL" aria-pressed="true">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="JUP" aria-pressed="false">JUP</button></div>
+          <div><label for="cT">Target</label><div class="inp"><input id="cT" inputmode="decimal" value="100"></div></div>
+          <div><label for="cC">You pay</label><div class="inp"><input id="cC" inputmode="decimal" value="4"></div></div>
+        </div>
+        <dl class="kv" id="calcOut"></dl>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-assets" data-t="Pair assets">
+      <div class="prose">
+        <h2>Pair assets</h2>
+        <p>Every presale is priced and raised in one asset, chosen by the creator when it opens. SOL and USDC are the defaults. Any other SPL token works as well: the creator pastes its mint address.</p>
+        <p>Tokenized stocks work the same way. A presale paired with NVDAx is raised in NVDAx and opens an NVDAx pool. That gives the new token price exposure to the stock. It does not give holders any shareholder rights.</p>
+        <p>Backers buy in with that asset. The 1% fee is held in it, the Meteora pool is paired against it, and a refund returns it. Nothing is swapped along the way, so there is no slippage inside a presale.</p>
+        <p>Two things change when the pair asset is volatile. The target is fixed in units of the asset, so its dollar size moves while the presale is live. After the open, the new token's dollar price moves with the pair asset even when nobody trades it.</p>
+        <p><b>Check the mint.</b> A symbol can be copied. A mint address cannot. The app marks SOL, USDC and a short list of known mints as verified. Anything else shows an Unverified tag and its full mint address in the presale panel.</p>
+        <div class="note">Seed rejects mints that charge a transfer fee or run a transfer hook. Either one would break the rule that a refund equals what was paid.</div>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>Every formula holds in units of Q</h3>
+        <p class="where">Price, fee, pool depth and refunds are all measured in the pair asset. Dollar values follow from the pair asset's own price <i>p</i><sub>Q</sub>.</p>
+        <div class="eq">target in USD = <i>T</i> · <i>p</i><sub>Q</sub></div>
+        <div class="eq">token price in USD = <i>P</i> · <i>p</i><sub>Q</sub></div>
+        <h3>Same presale, four pairings</h3>
+        <table class="dtable">
+          <thead><tr><th>Target</th><th class="r">Price per token</th><th class="r">Fees if it seeds</th></tr></thead>
+          <tbody>
+            <tr><td class="num" style="text-align:left">100 SOL</td><td class="num">0.0000002 SOL</td><td class="num">1.01 SOL</td></tr>
+            <tr><td class="num" style="text-align:left">60,000 USDC</td><td class="num">0.00012 USDC</td><td class="num">606.06 USDC</td></tr>
+            <tr><td class="num" style="text-align:left">120,000 JUP</td><td class="num">0.00024 JUP</td><td class="num">1,212.12 JUP</td></tr>
+            <tr><td class="num" style="text-align:left">300 NVDAx</td><td class="num">0.0000006 NVDAx</td><td class="num">3.03 NVDAx</td></tr>
+          </tbody>
+        </table>
+        <h3>Verified at launch</h3>
+        <dl class="kv">
+          <div><dt>SOL</dt><dd>So111…11112</dd></div>
+          <div><dt>USDC</dt><dd>EPjFW…yTDt1v</dd></div>
+          <div><dt>JUP</dt><dd>JUPyi…NsDvCN</dd></div>
+          <div><dt>BONK</dt><dd>DezXA…pPB263</dd></div>
+          <div><dt>10 tokenized stocks</dt><dd class="t">Mints from Meteora's approved list</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-seeding" data-t="Seeding">
+      <div class="prose">
+        <h2>What happens when it seeds</h2>
+        <p>The token exists from the moment a presale opens: 1,000,000,000 supply with mint authority revoked. Half sits in the vault for backers and half waits for the pool. None of it can move until the presale resolves.</p>
+        <p>When the raise reaches the target, the vault ends the sale and Seed's launcher runs the seeding step. Anyone can trigger it, and it usually lands within seconds.</p>
+        <ol>
+          <li>The vault stops taking buys.</li>
+          <li>The launcher withdraws the raise. It is the only account the vault allows to do so, and only after a fill.</li>
+          <li>The whole raise is paired with the other half of the supply in a full-range Meteora DAMM v2 pool.</li>
+          <li>The liquidity position is permanently locked. Nobody can withdraw it, Seed included.</li>
+          <li>The 1% fees held in the vault go to the Seed treasury.</li>
+          <li>Backers claim their tokens from the vault.</li>
+        </ol>
+        <p>The fee rides on top of each buy, so the full target reaches the pool and the opening price equals the presale price exactly.</p>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>Where the money goes</h3>
+        <div class="eq">Pool, Q side = <i>T</i></div>
+        <div class="eq">Fees = <span class="frac"><span><i>T</i></span><span>1 − <i>f</i></span></span> − <i>T</i></div>
+        <h3>Where the supply goes</h3>
+        <div class="eq">Backers = <i>a</i> · <i>S</i></div>
+        <div class="eq">Pool, token side = (1 − <i>a</i>) · <i>S</i></div>
+        <h3>Opening price</h3>
+        <div class="eq"><i>P</i><sub>open</sub> = <span class="frac"><span><i>T</i></span><span>(1 − <i>a</i>) <i>S</i></span></span></div>
+        <p class="where">With <i>a</i> = 0.5 the two halves are equal, so <i>P</i><sub>open</sub> = <i>P</i>.</p>
+        <h3>Worked example, T = 100 SOL</h3>
+        <dl class="kv">
+          <div><dt>Backers pay in total</dt><dd>101.01 SOL</dd></div>
+          <div><dt>Into the pool</dt><dd>100 SOL</dd></div>
+          <div><dt>Protocol fees</dt><dd>1.01 SOL</dd></div>
+          <div><dt>Pool tokens</dt><dd>500,000,000</dd></div>
+          <div><dt>Opening price</dt><dd>0.0000002 SOL</dd></div>
+          <div><dt>Fully diluted value at open</dt><dd>200 SOL</dd></div>
+        </dl>
+        <p class="where" style="margin-top:8px">Rule of thumb: a presale opens at a fully diluted value of twice its target.</p>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-fee" data-t="Protocol fee">
+      <div class="prose">
+        <h2>Protocol fee</h2>
+        <p>Seed charges <b>1% of each buy</b>. It is the Presale Vault's deposit fee, set to 100 basis points. Pay 2 SOL and 1.98 SOL counts toward the raise while 0.02 SOL is held as the fee.</p>
+        <p>The fee sits in the vault next to the raise. If the presale misses, the vault returns both, so a failed presale costs backers nothing beyond network fees. Seed can only collect after a presale seeds.</p>
+        <p>Because the fee rides on top of the buy, the whole target reaches the pool. A 100 SOL presale opens with 100 SOL of liquidity.</p>
+        <p>Opening a presale, claiming tokens and withdrawing a refund carry no protocol fee.</p>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>On each buy</h3>
+        <div class="eq"><i>c</i> = (1 − <i>f</i>) · <i>g</i></div>
+        <div class="eq">fee = <i>f</i> · <i>g</i></div>
+        <h3>To land an exact amount in the raise</h3>
+        <div class="eq"><i>g</i> = ⌈ <span class="frac"><span><i>c</i> · 10,000</span><span>10,000 − 100</span></span> ⌉</div>
+        <p class="where">This is the vault's own rounding, in the asset's smallest units. The app uses it for "Fill the rest".</p>
+        <table class="dtable">
+          <thead><tr><th>Event</th><th class="r">What happens to the fee</th></tr></thead>
+          <tbody>
+            <tr><td>Buy in</td><td class="num">1% held in the vault</td></tr>
+            <tr><td>Presale seeds</td><td class="num">Held fees go to Seed</td></tr>
+            <tr><td>Presale misses</td><td class="num">Held fees go back to backers</td></tr>
+            <tr><td>Open a presale</td><td class="num">No fee</td></tr>
+          </tbody>
+        </table>
+        <h3>Examples</h3>
+        <dl class="kv">
+          <div><dt>Pay 2 SOL</dt><dd>1.98 + 0.02</dd></div>
+          <div><dt>Pay 250 USDC</dt><dd>247.50 + 2.50</dd></div>
+          <div><dt>100 SOL target, total fees</dt><dd>1.01 SOL</dd></div>
+          <div><dt>60,000 USDC target, total fees</dt><dd>606.06 USDC</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-refunds" data-t="Refunds">
+      <div class="prose">
+        <h2>Refunds</h2>
+        <p>If the deadline passes with the raise short of the target, the vault marks the presale failed. Each backer withdraws once and receives exactly what they paid: the amount that counted toward the raise plus the fee held on it.</p>
+        <p>Refunds are pulled by backers instead of pushed by the program. A push loop over hundreds of wallets does not fit in a Solana transaction, and one bad account could stall it. With pull withdrawals, every refund is independent of every other.</p>
+        <p>Withdrawals do not expire. The supply is pulled out of the vault and burned, so a failed token never reaches a wallet. Each buy creates a small escrow account, and the rent paid for it comes back with the withdrawal. The full cost of a missed presale to a backer is two network fees.</p>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>Refund per wallet</h3>
+        <div class="eq">refund<sub>i</sub> = <i>c<sub>i</sub></i> + fee<sub>i</sub> = <i>g<sub>i</sub></i></div>
+        <h3>Conservation</h3>
+        <div class="eq">Σ refund<sub>i</sub> = Σ <i>g<sub>i</sub></i></div>
+        <p class="where">The vault holds every unit that was paid and owes every unit back. After the last withdrawal its balance is zero.</p>
+        <h3>Example, deadline at 61%</h3>
+        <dl class="kv">
+          <div><dt>Target</dt><dd>150 SOL</dd></div>
+          <div><dt>Raised at the deadline</dt><dd>91.50 SOL</dd></div>
+          <div><dt>You paid</dt><dd>2.00 SOL</dd></div>
+          <div><dt>Counted toward the raise</dt><dd>1.98 SOL</dd></div>
+          <div><dt>Fee held</dt><dd>0.02 SOL</dd></div>
+          <div><dt>You withdraw</dt><dd>2.00 SOL</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-market" data-t="After it opens">
+      <div class="prose">
+        <h2>After it opens</h2>
+        <p>Once seeded, the token trades in a full-range Meteora DAMM v2 pool, which is a constant-product market. The pool's depth is set by the raise: a 100 SOL presale opens with 100 SOL on the pair side.</p>
+        <p>Backers together hold as many tokens as the pool does. The pool cannot buy all of them back at the presale price. Selling moves the price down along the curve, and the first seller gets a better price than the last.</p>
+        <p>The table on the right shows what a backer recovers, as a share of what they paid, by selling their whole allocation at the open. It assumes nobody else has traded and leaves out the pool's own swap fee.</p>
+        <div class="note">A refund covers a raise that fails. It does not cover a token that falls after it opens.</div>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>Pool at open</h3>
+        <div class="eq"><i>x</i> · <i>y</i> = <i>k</i></div>
+        <div class="eq"><i>x</i> = <i>T</i>,&nbsp; <i>y</i> = (1 − <i>a</i>) <i>S</i></div>
+        <h3>Selling q tokens returns</h3>
+        <div class="eq">Δ<i>x</i> = <i>x</i> · <span class="frac"><span><i>q</i></span><span><i>y</i> + <i>q</i></span></span></div>
+        <h3>Selling a whole allocation</h3>
+        <p class="where">A backer with share <i>s</i> = <i>c</i> / <i>T</i> of the raise holds <i>q</i> = <i>s</i> · <i>a</i> · <i>S</i> tokens. With <i>a</i> = 0.5:</p>
+        <div class="eq">Δ<i>x</i> = <span class="frac"><span><i>c</i></span><span>1 + <i>s</i></span></span> ,&nbsp; <span class="frac"><span>Δ<i>x</i></span><span><i>g</i></span></span> = <span class="frac"><span>1 − <i>f</i></span><span>1 + <i>s</i></span></span></div>
+        <table class="dtable">
+          <thead><tr><th>Share of the raise</th><th class="r">Recovered, of what was paid</th></tr></thead>
+          <tbody>
+            <tr><td class="num" style="text-align:left">1%</td><td class="num">98.0%</td></tr>
+            <tr><td class="num" style="text-align:left">5%</td><td class="num">94.3%</td></tr>
+            <tr><td class="num" style="text-align:left">10%</td><td class="num">90.0%</td></tr>
+            <tr><td class="num" style="text-align:left">25%</td><td class="num">79.2%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-terminal" data-t="Reading the terminal">
+      <div class="prose">
+        <h2>Reading the terminal</h2>
+        <p>The terminal lists every presale, whatever it is paired with, along with the numbers needed to judge whether it will make its deadline.</p>
+        <ul>
+          <li><b>Filled</b> is raised over target, counting buys net of the fee.</li>
+          <li><b>Pace needed</b> is how much has to arrive per hour, from now until the deadline, for the presale to seed. Compare it with the slope of the fill chart. When the dashed line is steeper than the solid one, the presale is behind.</li>
+          <li><b>Quick buy</b> sends your preset amount in one click. Presets are kept per asset, so a SOL presale uses your SOL preset and a USDC presale uses your USDC preset. The preset is what you pay, fee included. Like any buy, it is trimmed to what fits.</li>
+        </ul>
+        <p>Selecting a row opens the fill chart, a custom amount field and the most recent buys.</p>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>Filled</h3>
+        <div class="eq">filled = <span class="frac"><span><i>R</i></span><span><i>T</i></span></span></div>
+        <h3>Pace needed</h3>
+        <div class="eq">pace = <span class="frac"><span><i>T</i> − <i>R</i></span><span><i>D</i> − now</span></span></div>
+        <h3>Example</h3>
+        <dl class="kv">
+          <div><dt>Target</dt><dd>85 SOL</dd></div>
+          <div><dt>Raised</dt><dd>81.60 SOL</dd></div>
+          <div><dt>Time left</dt><dd>30 h</dd></div>
+          <div><dt>Pace needed</dt><dd>0.113 SOL/h</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-solana" data-t="Built on Meteora">
+      <div class="prose">
+        <h2>Built on Meteora</h2>
+        <p>Seed does not run its own presale contract. It is assembled from two Meteora programs, the same way curve launchpads are assembled from Meteora's bonding curve and DAMM v2.</p>
+        <p><b>Presale Vault</b> holds the raise and the backer half of the supply. Seed configures it as a fixed-price sale with withdrawals off and an early end at the cap. The refund rule lives in that program, not in ours.</p>
+        <p><b>DAMM v2</b> is the pool. The raise and the other half of the supply go in across the full price range, and the position is permanently locked. Aggregators such as Jupiter can route to it as soon as it opens.</p>
+        <p><b>Seed's launcher</b> is the glue. It creates the token and the vault in the one transaction a creator signs. After a fill it moves the raise into the pool and locks it. It is the only account the vault lets withdraw a successful raise, and it cannot touch a live or failed one.</p>
+        <p>Any Solana wallet works, including Phantom, Solflare and Backpack.</p>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>Presale</h3>
+        <dl class="kv">
+          <div><dt>Program</dt><dd class="t">Meteora Presale Vault</dd></div>
+          <div><dt>Program ID</dt><dd>presS…KjTdbj</dd></div>
+          <div><dt>Mode</dt><dd class="t">Fixed price</dd></div>
+          <div><dt>Withdrawals while live</dt><dd class="t">Off</dd></div>
+          <div><dt>Ends early at the cap</dt><dd class="t">Yes</dd></div>
+          <div><dt>Deposit fee</dt><dd>100 bps</dd></div>
+        </dl>
+        <h3>Pool</h3>
+        <dl class="kv">
+          <div><dt>Program</dt><dd class="t">Meteora DAMM v2</dd></div>
+          <div><dt>Program ID</dt><dd>cpamd…n1sGG</dd></div>
+          <div><dt>Curve</dt><dd class="t">Constant product, full range</dd></div>
+          <div><dt>Liquidity</dt><dd class="t">Permanently locked</dd></div>
+        </dl>
+        <h3>Locked positions still earn</h3>
+        <p class="where">On DAMM v2 a permanently locked position keeps accruing swap fees, and only those fees stay claimable. Who receives them is listed as open under Parameters.</p>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-risks" data-t="Risks">
+      <div class="prose">
+        <h2>Risks</h2>
+        <ul>
+          <li><b>Price after the open.</b> The refund guarantee ends when a presale seeds. From then on the token is a market asset and can lose value.</li>
+          <li><b>Locked funds.</b> A buy cannot be reversed while the presale is live. Your funds are tied up until it resolves, which can take the full deadline.</li>
+          <li><b>Pair asset.</b> A refund returns the asset you paid with, not its dollar value on the day you bought. If the pair asset falls while the presale is live, so does the value of your refund.</li>
+          <li><b>Look-alike mints.</b> Anyone can create a token called USDC. Buy only when the pair asset is verified or you have checked the mint yourself.</li>
+          <li><b>Tokenized stocks.</b> Their issuer can pause or freeze them. A presale or pool paired with one inherits that.</li>
+          <li><b>The seeding step.</b> Between a presale filling and its pool opening, the raise passes through Seed's launcher. It takes seconds, and it is the one point where backers rely on Seed instead of on Meteora's programs.</li>
+          <li><b>Creators.</b> The vault enforces the presale rules. It does not enforce that a creator builds what they described.</li>
+          <li><b>Programs.</b> Smart contract risk applies here as it does to any onchain protocol. Meteora's Presale Vault is still in beta.</li>
+        </ul>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>What the refund covers</h3>
+        <table class="dtable">
+          <thead><tr><th>Outcome</th><th class="r">Covered</th></tr></thead>
+          <tbody>
+            <tr><td>Raise misses its target</td><td class="num">Yes, 100%</td></tr>
+            <tr><td>Raise ends one buy short of the target</td><td class="num">Yes, 100%</td></tr>
+            <tr><td>Pair asset falls while the presale is live</td><td class="num">No</td></tr>
+            <tr><td>Token falls after it opens</td><td class="num">No</td></tr>
+            <tr><td>Network fees on buy and claim</td><td class="num">No</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-params" data-t="Parameters">
+      <div class="prose" style="max-width:none;grid-column:1/-1">
+        <h2>Parameters</h2>
+        <p style="max-width:60ch">Every constant used on this page. Status shows which values are decided and which are still proposals in this prototype.</p>
+        <table class="dtable">
+          <thead><tr><th>Parameter</th><th>Value</th><th class="r">Status</th></tr></thead>
+          <tbody>
+            <tr><td>Network</td><td>Solana</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Infrastructure</td><td>Meteora, with a presale in place of the bonding curve</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Pair asset</td><td>SOL, USDC, tokenized stocks or any SPL token, chosen by the creator</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Protocol fee, f</td><td>1%</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Refund on a miss</td><td>100% of what each backer paid</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Presale engine</td><td>Meteora Presale Vault: fixed price, withdrawals off, early end at the cap</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Fee mechanism</td><td>The vault's deposit fee at 100 bps, on top of each buy, returned on a miss</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Caps</td><td>Maximum cap is the target. Minimum cap sits one token unit under it, because the vault requires the two to differ</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Pool</td><td>DAMM v2, full range, position permanently locked</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Swap fee collection</td><td>In the pair asset only</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Verified pairs at launch</td><td>SOL, USDC, JUP, BONK and 10 tokenized stocks</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Token-2022 mints with a transfer fee or hook</td><td>Rejected as pair assets</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Token supply, S</td><td>1,000,000,000, mint authority revoked</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Backer share, a</td><td>50% of supply, fully claimable at seed with no vesting</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Supply on a miss</td><td>Burned</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Deadlines</td><td>24 hours, 3 days, 7 days</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Target bounds</td><td>10 to 5,000 SOL, 1,000 to 1,000,000 USDC, any amount above zero for other assets</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Creator allocation</td><td>None. Creators buy in at the presale price</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Launcher</td><td>A keeper key run by Seed at launch. A program-owned account would mean no key ever holds a raise</td><td class="num"><span class="st open">Open</span></td></tr>
+            <tr><td>Fee schedule at the open</td><td>DAMM v2 can start swap fees high and decay them to deter snipers. Not decided</td><td class="num"><span class="st open">Open</span></td></tr>
+            <tr><td>Swap fees earned by the locked position</td><td>Meteora's fee-sharing vault can split them between 2 to 5 wallets. Not decided</td><td class="num"><span class="st open">Open</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </article>
+</div>
+</div>
+
+<dialog id="sheet" aria-label="Presale"><div class="sheet" id="sheetBody"></div></dialog>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script>
+/* ==========================================================================
+   SEED. Presale state machine: live, then seeded (target hit) or refunding (deadline passed).
+   Solana only. Everything that would touch the chain goes through `adapter`, so
+   calls into the Seed program can replace the simulated ones without touching the UI.
+   Routes: #(home)  #/app/terminal[/id]  #/app/launch  #/app/portfolio  #/docs[/section]
+   ========================================================================== */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const r6 = n => Math.round(n * 1e6) / 1e6;
+
+/* Solana only, built on Meteora the way Ember is, with the bonding curve swapped for a presale:
+   Presale Vault (fixed price, withdrawals off, early end at the cap) holds the raise, then a DAMM v2 pool opens against the pair asset.
+   The 1% protocol fee is the vault's deposit fee: charged on top of each buy, returned in full if the presale misses. */
+const DEX = 'Meteora DAMM v2';
+const ASSETS = {
+  SOL:  { sym: 'SOL',  mint: 'So11111111111111111111111111111111111111112',  dp: 2, chips: [0.5, 2, 10],      min: 10,   max: 5000,    verified: true },
+  USDC: { sym: 'USDC', mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', dp: 2, chips: [50, 250, 1000],   min: 1000, max: 1000000, verified: true },
+  JUP:  { sym: 'JUP',  mint: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',  dp: 2, chips: [100, 500, 2500],  verified: true },
+  BONK: { sym: 'BONK', mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', dp: 0, chips: [1e6, 5e6, 2.5e7], verified: true }
+};
+/* tokenized stocks (xStocks). Mints come from Meteora's approved list at integration time, so none are hard-coded here. */
+const STOCKS = { NVDAx: 'NVIDIA', AAPLx: 'Apple', TSLAx: 'Tesla', HOODx: 'Robinhood', COINx: 'Coinbase', MSFTx: 'Microsoft', SPYx: 'S&P 500 ETF', GOOGLx: 'Alphabet', AMZNx: 'Amazon', METAx: 'Meta' };
+Object.keys(STOCKS).forEach(k => ASSETS[k] = { sym: k, mint: '', dp: 3, chips: [0.5, 2, 10], verified: true, stock: STOCKS[k] });
+const asset = k => ASSETS[k] || (state.custom && state.custom[k]) || { sym: k, mint: '', dp: 2, verified: false };
+const Q = p => asset(p.q);
+const chipsFor = p => Q(p).chips || [0.01, 0.05, 0.1].map(f => Number((p.target * f).toPrecision(2)));
+const quickFor = p => state.quick[p.q] != null ? state.quick[p.q] : Number((p.target * 0.01).toPrecision(2));
+const shortMint = m => m ? m.slice(0, 4) + '…' + m.slice(-4) : '';
+const SUPPLY = 1e9, A = 0.5, FEE = 0.01;          // supply, backer share, protocol fee
+const H = 3600e3, D = 24 * H, KEY = 'seed.v4';
+
+function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { let h = hashStr(seed) || 1; return () => { h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0; h = Math.imul(h ^ (h >>> 12), 0x297a2d39) >>> 0; h = (h ^ (h >>> 15)) >>> 0; return h / 4294967296; }; }
+function addr(seed) {
+  const r = rng('sol' + seed), abc = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+  let out = ''; for (let i = 0; i < 8; i++) out += abc[Math.floor(r() * abc.length)];
+  return `${out.slice(0, 4)}…${out.slice(4)}`;
+}
+function seedData() {
+  const n = Date.now();
+  const mk = (id, name, ticker, idea, q, target, pct, backers, openedAgo, dur, status = 'live', resolvedAgo = 0) => {
+    const openedAt = n - openedAgo, endsAt = openedAt + dur, resolvedAt = status === 'live' ? null : n - resolvedAgo;
+    const p = { id, name, ticker, idea, q, target, raised: r6(target * pct), backers, openedAt, endsAt, status, resolvedAt, contract: addr(id), mine: false, hist: [], acts: [] };
+    // synthesise a fill history that lands on the current raise
+    const r = rng(id), end = resolvedAt || n, k = 26, w = []; let sum = 0;
+    for (let i = 0; i < k; i++) { const v = 0.25 + r() * r() * 3; w.push(v); sum += v; }
+    let acc = 0; p.hist.push([openedAt, 0]);
+    for (let i = 0; i < k; i++) { acc += w[i] / sum; p.hist.push([Math.round(openedAt + (end - openedAt) * (i + 1) / k), r6(p.raised * acc)]); }
+    for (let i = 0; i < 6; i++) p.acts.push({ w: addr(id + i), a: r6(target * (0.002 + r() * 0.02)), t: end - Math.round((i + 1) * (4 + r() * 22) * 60e3) });
+    return p;
+  };
+  return [
+    mk('osprey', 'Osprey', 'OSPR', 'Text alerts before your perp position gets liquidated.', 'SOL', 85, .96, 212, 1.75 * D, 3 * D),
+    mk('moss', 'Moss', 'MOSS', 'One art drop a day, minted slowly.', 'SOL', 150, .61, 97, D - 200e3, D),
+    mk('tidewater', 'Tidewater', 'TIDE', 'Index vaults built from tokenized stocks.', 'USDC', 60000, .72, 388, 3.9 * D, 7 * D),
+    mk('lattice', 'Lattice', 'LATT', 'Shared DCA vaults for JUP stakers.', 'JUP', 120000, .48, 176, 2.2 * D, 7 * D),
+    mk('overclock', 'Overclock', 'OCLK', 'GPU rental credits you can trade.', 'NVDAx', 400, .57, 203, 2.9 * D, 7 * D),
+    mk('halfmoon', 'Halfmoon', 'HALF', 'Split a wallet\u2019s staking yield with a friend.', 'SOL', 300, .34, 141, 1.6 * D, 7 * D),
+    mk('quill', 'Quill', 'QUILL', 'Pay-per-article tips for newsletter writers.', 'USDC', 25000, 1, 264, 3.6 * D, 3 * D, 'seeded', 2 * D),
+    mk('ember', 'Ember', 'EMBR', 'Group bids on NFT auctions.', 'BONK', 2e9, .41, 58, 4 * D, 3 * D, 'refunding', D)
+  ];
+}
+
+const QUICK0 = () => ({ SOL: 2, USDC: 250, JUP: 500, BONK: 5000000, NVDAx: 1 });
+let state = { wallet: null, presales: [], positions: {}, claimed: {}, quick: QUICK0(), custom: {} };
+const ui = { view: 'home', tab: 'terminal', sel: null, fStatus: 'live', fAsset: 'all', q: '', sort: 'ending', qbAsset: 'SOL' };
+function fresh() { return { wallet: null, presales: seedData(), positions: {}, claimed: {}, quick: QUICK0(), custom: {} }; }
+function load() {
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q) { state = Object.assign(fresh(), s); return; } } catch (e) {}
+  state = fresh();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+
+/* ---- adapter (simulated). Swap these for wallet-adapter + Anchor client calls into the Seed program. */
+const adapter = {
+  async connect() { await wait(450); return { addr: '7xKp…9fQa', bal: { SOL: 38, USDC: 2400, JUP: 1800, BONK: 25000000, NVDAx: 14 } }; },
+  async contribute(p, amt) { await wait(900); },
+  async claimRefund(p) { await wait(800); },
+  async claimTokens(p) { await wait(800); },
+  async openPresale(p) { await wait(1000); }
+};
+
+/* ------------------------------------------------------------ formatting */
+const dpOf = k => asset(k).dp;
+const fmtAmt = (n, k) => Number(n.toFixed(dpOf(k))).toLocaleString('en-US', { maximumFractionDigits: dpOf(k) });
+const fmtRaised = (n, k) => Number(n.toFixed(dpOf(k))).toLocaleString('en-US', { minimumFractionDigits: Math.min(2, dpOf(k)), maximumFractionDigits: dpOf(k) });
+const trim2 = v => String(Number(v.toFixed(2)));
+/* compact form for table cells and big readouts: 43.2K, 1.25M, 2B */
+function fmtC(n, k, raised) { const a = Math.abs(n); return a >= 1e9 ? trim2(n / 1e9) + 'B' : a >= 1e6 ? trim2(n / 1e6) + 'M' : a >= 1e4 ? trim2(n / 1e3) + 'K' : raised ? fmtRaised(n, k) : fmtAmt(n, k); }
+const balOf = k => (state.wallet && state.wallet.bal[k]) || 0;
+const fmtTok = n => Math.round(n).toLocaleString('en-US');
+const fmtSig = n => n >= 100 ? Math.round(n).toLocaleString('en-US') : n >= 1 ? n.toFixed(2) : n >= 0.01 ? n.toFixed(3) : n.toFixed(4);
+const pctOf = p => Math.min(100, p.raised / p.target * 100);
+const leftOf = p => r6(p.target - p.raised);                                   // room left in the raise (net)
+const NET = 1 - FEE, netOf = g => r6(g * NET), feeOf = g => r6(g * FEE);
+const payLeft = p => Math.ceil(leftOf(p) / NET * 1e6) / 1e6;                     // what a wallet pays to fill the rest, fee included
+const tokensFor = (p, paid) => Math.min(netOf(paid), p.target) / p.target * SUPPLY * A;
+const pad = n => String(n).padStart(2, '0');
+function fmtLeft(ms) {
+  if (ms <= 0) return '00:00:00';
+  const s = Math.floor(ms / 1000), d = Math.floor(s / 86400), t = `${pad(Math.floor(s % 86400 / 3600))}:${pad(Math.floor(s % 3600 / 60))}:${pad(s % 60)}`;
+  return d ? `${d}d ${t}` : t;
+}
+function fmtAgo(ms) { const m = Math.max(0, Math.floor(ms / 60e3)); return m < 1 ? 'now' : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.floor(m / 60)}h ago` : `${Math.floor(m / 1440)}d ago`; }
+const fmtDate = ms => new Date(ms).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+const fmtDay = ms => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+function paceOf(p) { const h = (p.endsAt - Date.now()) / H; return h > 0 ? leftOf(p) / h : Infinity; }
+function paceTxt(p) { if (p.status !== 'live') return ''; const v = paceOf(p); return isFinite(v) ? `${v >= 1e4 ? fmtC(v, p.q) : fmtSig(v)} ${Q(p).sym}/h` : ''; }
+function timeCell(p) { return p.status === 'live' ? fmtLeft(p.endsAt - Date.now()) : (p.status === 'seeded' ? 'Seeded ' : 'Closed ') + fmtDay(p.resolvedAt || p.endsAt); }
+const find = id => state.presales.find(p => p.id === id);
+
+function avatar(p, lg) {
+  let h = hashStr(p.ticker + '/' + p.name), c = '';
+  for (let y = 0; y < 5; y++) for (let x = 0; x < 3; x++) {
+    h = Math.imul(h ^ (h >>> 15), 0x85ebca6b) >>> 0;
+    if ((h & 7) > 2) { const r = 1.15 + ((h >>> 5) & 3) * .22; c += `<circle cx="${4 + x * 4}" cy="${4 + y * 4}" r="${r}"/>`; if (x < 2) c += `<circle cx="${20 - x * 4}" cy="${4 + y * 4}" r="${r}"/>`; }
+  }
+  return `<span class="av${lg ? ' lg' : ''}"><svg viewBox="0 0 24 24" aria-hidden="true">${c}</svg></span>`;
+}
+function toast(msg) {
+  const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; $('#toasts').appendChild(t);
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 350); }, 4200);
+}
+const pairTag = p => `<span class="chain${Q(p).verified ? '' : ' unv'}">Pairs with ${esc(Q(p).sym)}</span>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}`;
+const projCell = p => `${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b>
+  <span class="meta">${pairTag(p)}${p.mine ? '<span class="tag">Yours</span>' : ''}${state.positions[p.id] ? `<span class="tag in num">${fmtC(state.positions[p.id], p.q)} ${esc(Q(p).sym)} in</span>` : ''}</span></span>`;
+const progCell = p => `<span class="c-prog"><span class="bar"><i data-bar style="width:${pctOf(p)}%"></i></span><span class="pct num" data-pct>${Math.floor(pctOf(p) + 1e-7)}%</span></span>`;
+
+/* ------------------------------------------------------------ segmented */
+const seg = {};
+function initSeg(el, onChange) {
+  const ind = $('.seg-ind', el), btns = $$('button', el);
+  const place = () => { const a = $('button[aria-pressed="true"]', el); if (!a || !a.offsetWidth) return; ind.style.transform = `translateX(${a.offsetLeft}px)`; ind.style.width = a.offsetWidth + 'px'; };
+  const set = v => { btns.forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === v))); place(); };
+  btns.forEach(b => b.addEventListener('click', () => { set(b.dataset.v); onChange(b.dataset.v); }));
+  addEventListener('resize', place); place();
+  return { place, set };
+}
+const placeSegs = () => Object.values(seg).forEach(s => s.place());
+
+/* ================================================================= HOME */
+function renderHome() {
+  const live = state.presales.filter(p => p.status === 'live').sort((a, b) => pctOf(b) - pctOf(a));
+  $('#liveCount').textContent = live.length === 1 ? '1 presale live' : `${live.length} presales live`;
+  $('#heroLive').textContent = live.length ? `${live.length} presale${live.length === 1 ? '' : 's'} live on Solana` : 'No presales live right now';
+  $('#rows').innerHTML = live.length ? live.map(p => `<a class="row live" href="#/app/terminal/${p.id}" data-row="${p.id}">
+      <span class="c-proj">${projCell(p)}</span>${progCell(p)}
+      <span class="c-raised num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
+      <span class="c-time num" data-time>${timeCell(p)}</span>
+      <span class="c-act"><span class="pill-sm">Buy</span></span></a>`).join('')
+    : '<div class="empty">No presales are live right now. <a href="#/app/launch">Start one</a></div>';
+}
+function syncMech() {
+  const m = $('#mech'), v = +m.value, hit = v >= 100;
+  m.style.setProperty('--p', v + '%');
+  $('#mechOut').textContent = hit ? '100 of 100 SOL, fills and closes early' : `${v} of 100 SOL, ${v}% at the deadline`;
+  $('#endRefund').classList.toggle('off', hit); $('#endSeed').classList.toggle('off', !hit);
+}
+const FAQ = [
+  ['What happens if a presale misses its target?', 'The presale fails at the deadline. No tokens are released and the supply is burned. Every backer withdraws exactly what they paid, the 1% fee included, in the asset they paid with. The only cost is two Solana network fees.'],
+  ['Can I pull my funds out before the deadline?', 'No. Withdrawals are switched off while a presale is live. If backers could leave early, a large wallet could fake momentum and pull out at the last minute.'],
+  ['What price do I get?', 'The same as everyone else. Half of the supply goes to backers, so the price is the target divided by that half. The Meteora pool opens at that same price.'],
+  ['What can a presale be paired with?', 'SOL, USDC, a tokenized stock such as NVDAx or TSLAx, or any other token by pasting its mint address. The creator picks the pair when the presale opens. Backers buy in with that asset, the pool is paired against it, and refunds come back in it. Assets outside the verified list carry an Unverified tag, so check the mint before you buy.'],
+  ['What does Seed charge?', 'A 1% protocol fee on each buy. Pay 2 SOL and 1.98 SOL goes to the raise. The fee sits in the vault with the raise and is returned in full if the presale misses, so Seed only earns when a presale seeds. Opening a presale is free.'],
+  ['What happens the moment it fills?', 'The presale ends early, even if the deadline is days away. The full raise goes into a Meteora DAMM v2 pool against the other half of the supply, and the liquidity is locked for good. From that point backers can claim their tokens.'],
+  ['Who holds the money while a presale is open?', 'Meteora\u2019s Presale Vault program. The creator cannot touch it and neither can we. If the presale misses, only backers can withdraw. If it fills, the only permitted withdrawal is the one that opens and locks the pool.'],
+  ['Which wallets work?', 'Any Solana wallet, including Phantom, Solflare and Backpack.']
+];
+
+/* ============================================================= TERMINAL */
+const isWide = () => matchMedia('(min-width:1100px)').matches;
+function visible() {
+  const q = ui.q.trim().toLowerCase();
+  const l = state.presales.filter(p => (ui.fStatus === 'all' || p.status === ui.fStatus) && (ui.fAsset === 'all' || (ui.fAsset === 'stock' ? !!Q(p).stock : ui.fAsset === 'other' ? p.q !== 'SOL' && p.q !== 'USDC' && !Q(p).stock : p.q === ui.fAsset)) && (!q || (p.name + ' ' + p.ticker).toLowerCase().includes(q)));
+  const liveFirst = (a, b) => (a.status === 'live' ? 0 : 1) - (b.status === 'live' ? 0 : 1);
+  if (ui.sort === 'filled') l.sort((a, b) => liveFirst(a, b) || pctOf(b) - pctOf(a));
+  else if (ui.sort === 'new') l.sort((a, b) => b.openedAt - a.openedAt);
+  else l.sort((a, b) => liveFirst(a, b) || (a.status === 'live' ? a.endsAt - b.endsAt : (b.resolvedAt || 0) - (a.resolvedAt || 0)));
+  return l;
+}
+const qbLabel = p => fmtC(Math.min(quickFor(p), payLeft(p)), p.q);
+function actCell(p) {
+  const C = Q(p), pos = state.positions[p.id];
+  if (p.status === 'live') return `<button class="qb" data-qb="${p.id}">Buy <span class="num" data-qbamt>${qbLabel(p)}</span> ${esc(C.sym)}</button>`;
+  if (pos && !state.claimed[p.id]) return `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
+  return `<span class="tag">${p.status === 'seeded' ? 'Seeded' : 'Refunded'}</span>`;
+}
+function renderStats() {
+  const live = state.presales.filter(p => p.status === 'live');
+  const soon = live.slice().sort((a, b) => a.endsAt - b.endsAt)[0], top = live.slice().sort((a, b) => pctOf(b) - pctOf(a))[0];
+  const pairs = [...new Set(live.map(p => Q(p).sym))];
+  $('#stats').innerHTML = `<span class="plus" style="left:25%;top:0"></span><span class="plus" style="left:50%;top:0"></span><span class="plus" style="left:75%;top:0"></span>
+    <div class="stat"><dt>Live presales</dt><dd>${live.length}<small>of ${state.presales.length} listed</small></dd></div>
+    <div class="stat"><dt>Closest to seeding</dt><dd>${top ? `${Math.floor(pctOf(top) + 1e-7)}%<small>${esc(top.name)}</small>` : 'None'}</dd></div>
+    <div class="stat"><dt>Pair assets live</dt><dd>${pairs.length}<small>${esc(pairs.slice(0, 4).join(', '))}</small></dd></div>
+    <div class="stat"><dt>Next deadline</dt><dd>${soon ? `<span data-next="${soon.id}">${fmtLeft(soon.endsAt - Date.now())}</span><small>${esc(soon.name)}</small>` : 'None'}</dd></div>`;
+}
+function renderTerminal() {
+  const l = visible();
+  if (isWide() && (!ui.sel || !find(ui.sel))) ui.sel = (l[0] || state.presales[0] || {}).id || null;
+  $('#trows').innerHTML = l.length ? l.map(p => `<div class="trow ${p.status}${ui.sel === p.id ? ' sel' : ''}" data-row="${p.id}">
+      <button class="pick" data-pick="${p.id}" aria-label="Select ${esc(p.name)}, ${Math.floor(pctOf(p) + 1e-7)} percent filled">${projCell(p)}</button>${progCell(p)}
+      <span class="t-r num c-raisedT"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
+      <span class="t-r num c-pace" data-pace>${paceTxt(p)}</span>
+      <span class="t-r num c-timeT" data-time>${timeCell(p)}</span>
+      <span class="t-act">${actCell(p)}</span></div>`).join('')
+    : `<div class="empty">${ui.q ? `Nothing matches "${esc(ui.q)}". Clear the search or widen the filters.` : ui.fStatus === 'live' ? 'No presales are live with these filters. <a href="#/app/launch">Start one</a>' : 'Nothing here yet with these filters.'}</div>`;
+  const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live' && ui.fStatus !== 'seeded' && ui.fStatus !== 'refunding' && l.length > 0;
+  hint.hidden = !show; if (show) hint.textContent = 'To see both endings: fill the rest of Osprey and it seeds on the spot. Buy Moss and its deadline passes in about three minutes.';
+  renderStats(); renderDetail();
+}
+function patchRows(p) {
+  const pc = pctOf(p);
+  $$(`[data-row="${p.id}"]`).forEach(row => {
+    const s = (k, fn) => { const e = $(k, row); if (e) fn(e); };
+    s('[data-bar]', e => e.style.width = pc + '%'); s('[data-pct]', e => e.textContent = Math.floor(pc + 1e-7) + '%');
+    s('[data-raised]', e => e.textContent = fmtC(p.raised, p.q, true)); s('[data-pace]', e => e.textContent = paceTxt(p));
+    s('[data-qbamt]', e => e.textContent = qbLabel(p));
+  });
+}
+function select(id, fromUser) {
+  ui.sel = id;
+  $$('.trow').forEach(r => r.classList.toggle('sel', r.dataset.row === id));
+  try { history.replaceState(null, '', '#/app/terminal/' + id); } catch (e) {}
+  renderDetail();
+  if (fromUser && !isWide()) openSheet();
+}
+function openSheet() { const d = $('#sheet'); if (!d.open) { d.showModal(); d.appendChild($('#toasts')); } }
+$('#sheet').addEventListener('close', () => document.body.appendChild($('#toasts')));
+$('#sheet').addEventListener('click', e => { if (e.target === $('#sheet')) $('#sheet').close(); });
+
+$('#trows').addEventListener('click', e => {
+  const qb = e.target.closest('[data-qb]'), cl = e.target.closest('[data-claim]'), pk = e.target.closest('[data-pick]');
+  if (qb) return quickBuy(find(qb.dataset.qb), qb);
+  if (cl) return claim(find(cl.dataset.claim), cl);
+  if (pk) select(pk.dataset.pick, true);
+});
+
+/* ---------------------------------------------------------------- buying */
+let busy = false;
+async function ensureWallet() { if (state.wallet) return true; await connect(); return false; }
+function record(p, who, amt) {
+  p.hist.push([Date.now(), p.raised]); if (p.hist.length > 140) p.hist.splice(1, 1);
+  p.acts.unshift({ w: who, a: amt, t: Date.now(), you: who === 'You' }); p.acts.length = Math.min(p.acts.length, 8);
+}
+async function executeBuy(p, amt) {
+  const C = Q(p);
+  if (p.status !== 'live') { toast(`${p.name} is closed to new buys.`); return false; }
+  let pay = Math.min(amt, payLeft(p));
+  if (!(pay > 0)) { toast(`Set an amount above zero to buy ${p.name}.`); return false; }
+  if (pay > balOf(p.q)) { toast(balOf(p.q) > 0 ? `Your wallet holds ${fmtAmt(balOf(p.q), p.q)} ${C.sym}. Lower the amount to buy.` : `Your wallet holds no ${C.sym}. This presale only takes ${C.sym}.`); return false; }
+  busy = true; await adapter.contribute(p, pay); busy = false;
+  if (p.status !== 'live') { toast(`${p.name} closed before your transaction landed. Nothing was taken.`); return false; }
+  pay = Math.min(pay, payLeft(p));
+  const net = Math.min(netOf(pay), leftOf(p));
+  if (!state.positions[p.id]) p.backers++;
+  state.positions[p.id] = r6((state.positions[p.id] || 0) + pay);
+  state.wallet.bal[p.q] = r6(balOf(p.q) - pay);
+  p.raised = r6(p.raised + net); record(p, 'You', pay);
+  if (p.raised >= p.target - 1e-6) { p.raised = p.target; p.status = 'seeded'; p.resolvedAt = Date.now(); toast(`${p.name} seeded. Your tokens are ready to claim.`); }
+  else toast(`Bought ${fmtC(pay, p.q)} ${C.sym} of ${p.name}`);
+  save(); renderAll();
+  const row = $(`.trow[data-row="${p.id}"]`); if (row) row.classList.add('flash');
+  return true;
+}
+async function quickBuy(p, btn) {
+  if (!p || busy) return;
+  if (!(await ensureWallet())) { toast('Wallet connected. Press quick buy again to send it.'); return; }
+  btn.disabled = true; btn.textContent = 'Confirm…';
+  const ok = await executeBuy(p, quickFor(p));
+  if (!ok) renderTerminal();
+}
+async function claim(p, btn) {
+  if (!p || busy || !state.positions[p.id] || state.claimed[p.id]) return;
+  if (!(await ensureWallet())) return;
+  const C = Q(p), amt = state.positions[p.id];
+  busy = true; btn.disabled = true; btn.textContent = 'Confirm in wallet…';
+  if (p.status === 'seeded') { await adapter.claimTokens(p); state.claimed[p.id] = 'tokens'; toast(`Claimed ${fmtTok(tokensFor(p, amt))} $${p.ticker}`); }
+  else { await adapter.claimRefund(p); state.wallet.bal[p.q] = r6(balOf(p.q) + amt); state.claimed[p.id] = 'refund'; toast(`Refund claimed: ${fmtAmt(amt, p.q)} ${C.sym} is back in your wallet`); }
+  busy = false; save(); renderAll();
+}
+
+/* ---------------------------------------------------------------- detail */
+const ICON_OK = '<svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.8"/></svg>';
+const ICON_FEE = '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M5.8 10.2l4.4-4.4"/></svg>';
+const ICON_BACK = '<svg viewBox="0 0 16 16"><path d="M6.5 3.5L3 7l3.5 3.5M3 7h6.5a3.5 3.5 0 010 7H8"/></svg>';
+function chartSVG(p) {
+  const W = 364, Hh = 132, pt = 14, pb = 20, t0 = p.openedAt, t1 = p.endsAt, live = p.status === 'live';
+  const X = t => (Math.min(Math.max(t, t0), t1) - t0) / (t1 - t0) * W, Y = v => pt + (1 - v / p.target) * (Hh - pt - pb);
+  const end = live ? Date.now() : (p.resolvedAt || t1);
+  const pts = p.hist.filter(h => h[0] <= end).map(([t, v]) => [X(t), Y(v)]); pts.push([X(end), Y(p.raised)]);
+  const line = pts.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ');
+  const ex = X(end), ey = Y(p.raised);
+  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Fill over time: ${Math.floor(pctOf(p) + 1e-7)} percent of target">
+    <path d="${line} L${ex.toFixed(1)} ${Y(0)} L0 ${Y(0)} Z" fill="rgba(86,104,160,.13)"/>
+    <path d="M0 ${Y(p.target)}H${W}" stroke="#131A2E" stroke-width="1" stroke-dasharray="2 4" opacity=".55"/>
+    <path d="M0 ${Y(0)}H${W}" stroke="rgba(61,75,124,.25)" stroke-width="1"/>
+    ${live ? `<path d="M${ex.toFixed(1)} ${ey.toFixed(1)}L${W} ${Y(p.target)}" stroke="#A8B3D6" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/><path d="M${ex.toFixed(1)} ${pt}V${Y(0)}" stroke="rgba(61,75,124,.22)" stroke-width="1"/>` : ''}
+    <path d="${line}" fill="none" stroke="${p.status === 'refunding' ? '#A8B3D6' : '#5668A0'}" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="3.5" fill="#fff" stroke="#3D4B7C" stroke-width="2"/>
+    <g font-family="JetBrains Mono, monospace" font-size="10.5" fill="#98A0B8"><text x="0" y="${Hh - 4}">Opened ${fmtDay(t0)}</text><text x="${W}" y="${Hh - 4}" text-anchor="end">Deadline ${fmtDay(t1)}</text><text x="${W}" y="${Y(p.target) - 5}" text-anchor="end" fill="#5F6883">Target ${fmtC(p.target, p.q)}</text></g></svg>`;
+}
+function readoutHTML(p) {
+  const C = Q(p), pc = pctOf(p);
+  return `<div class="big"><b><span>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num">${Math.floor(pc + 1e-7)}%</span></div>
+    <div class="bar"><i style="width:${pc}%"></i></div>
+    <div class="sub"><span>${p.status === 'live' ? `Ends in <span class="num" data-dtime>${fmtLeft(p.endsAt - Date.now())}</span>` : p.status === 'seeded' ? 'Target met' : 'Deadline passed'}</span><span><span class="num">${p.backers}</span> backers</span></div>`;
+}
+const actsHTML = p => `<h4>Recent buys</h4>` + (p.acts.length ? p.acts.slice(0, 6).map(a => `<div class="${a.you ? 'you' : ''}"><span>${esc(a.w)}</span><span>${fmtC(a.a, p.q)} ${esc(Q(p).sym)}</span><span>${fmtAgo(Date.now() - a.t)}</span></div>`).join('') : '<div><span>No buys yet. The first one is yours to make.</span><span></span><span></span></div>');
+function detailHTML(p) {
+  const C = Q(p), sym = esc(C.sym), pos = state.positions[p.id] || 0, claimed = state.claimed[p.id], pc = pctOf(p);
+  const statusTxt = { live: 'Live', seeded: 'Seeded', refunding: 'Refunded' }[p.status];
+  let body = '';
+  if (p.status === 'live') {
+    const bal = state.wallet ? balOf(p.q) : null;
+    body = `<div class="pace"><span>Pace needed to seed</span><b data-dpace>${paceTxt(p)}</b></div>
+      <div class="amt"><div class="amt-top"><label for="amtIn">Amount</label><span class="num">${bal === null ? '' : `Balance ${fmtAmt(bal, p.q)} ${sym}`}</span></div>
+        <div class="inp"><input id="amtIn" inputmode="decimal" autocomplete="off" placeholder="0" value="${Math.min(quickFor(p), payLeft(p))}"><span class="suf">${sym}</span></div>
+        <div class="chips">${chipsFor(p).map(c => `<button data-chip="${c}">${fmtC(c, p.q)}</button>`).join('')}<button data-chip="fill">Fill the rest</button></div></div>
+      <div class="promise"><div>${ICON_FEE}<span id="feeLine"></span></div>
+        <div>${ICON_OK}<span>If it seeds, you claim <b class="num" id="getTok"></b> $${esc(p.ticker)}.</span></div>
+        <div>${ICON_BACK}<span>If it hasn't seeded by ${fmtDate(p.endsAt)}, you claim back every ${sym} you paid, fee included.</span></div></div>
+      ${pos ? `<div class="mine"><span>You're in for</span><span class="num">${fmtAmt(pos, p.q)} ${sym}</span></div>` : ''}
+      <div class="err" id="amtErr" role="alert" style="margin-top:12px"></div>
+      <button class="btn btn-navy btn-lg btn-block" id="goBtn"></button>`;
+  } else if (p.status === 'seeded') {
+    body = `<div class="state"><b>Seeded ${fmtDay(p.resolvedAt)}</b>The target was met. $${esc(p.ticker)} opened against ${sym} in a Meteora DAMM v2 pool at the presale price. The liquidity is locked for good.</div>
+      <dl class="split"><div><dt>Locked in the pool</dt><dd>${fmtAmt(p.target, p.q)} ${sym}</dd></div><div><dt>Protocol fee, 1% of buys</dt><dd>${fmtAmt(p.target / NET - p.target, p.q)} ${sym}</dd></div></dl>` +
+      (pos ? (claimed ? `<div class="mine"><span>Claimed</span><span class="num">${fmtTok(tokensFor(p, pos))} $${esc(p.ticker)}</span></div>` : `<button class="btn btn-navy btn-lg btn-block" data-dclaim>Claim ${fmtTok(tokensFor(p, pos))} $${esc(p.ticker)}</button>`) : '');
+  } else {
+    body = `<div class="state"><b>Didn't seed</b>The deadline passed at ${Math.floor(pc + 1e-7)}% of the target. No tokens were released and the supply was burned. All ${p.backers} backers can claim back everything they paid in ${sym}, the 1% fee included.</div>` +
+      (pos ? (claimed ? `<div class="mine"><span>Refund claimed</span><span class="num">${fmtAmt(pos, p.q)} ${sym}</span></div>` : `<button class="btn btn-navy btn-lg btn-block" data-dclaim>Claim refund of ${fmtAmt(pos, p.q)} ${sym}</button>`) : '');
+  }
+  return `<div class="sh-head">${avatar(p, true)}<div class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b>
+      <span class="meta">${pairTag(p)}<span class="tag${p.status === 'live' ? ' in' : ''}">${statusTxt}</span>${p.mine ? '<span class="tag">Yours</span>' : ''}</span></div>
+      <button class="x" data-close aria-label="Close">×</button></div>
+    <p class="idea">${esc(p.idea)}</p>
+    <div class="readout ${p.status}" data-dreadout><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>${readoutHTML(p)}</div>
+    <div class="chart"><div class="legend"><span><i></i>Raised</span>${p.status === 'live' ? '<span><i class="dash"></i>Pace needed</span>' : ''}</div><div data-dchart>${chartSVG(p)}</div></div>
+    ${body}
+    <dl class="specs"><div><dt>Price</dt><dd class="num">1 ${sym} = ${fmtTok(SUPPLY * A / p.target)} ${esc(p.ticker)}</dd></div>
+      <div><dt>Pair asset</dt><dd>${C.stock ? `${sym}, tokenized ${esc(C.stock)} stock` : `${sym}, ${C.verified ? 'verified mint' : 'unverified mint'} <span class="num">${esc(shortMint(C.mint))}</span>`}</dd></div>
+      <div><dt>Held by</dt><dd>Meteora Presale Vault</dd></div>
+      <div><dt>Seeds to</dt><dd>${DEX}, locked for good</dd></div><div><dt>Protocol fee</dt><dd>1% of each buy, returned if it refunds</dd></div></dl>
+    ${C.verified ? '' : `<div class="state warnbox"><b>Check this mint before you buy</b>The pair asset is not on the verified list. A symbol can be copied, a mint address cannot.<br><span class="num" style="word-break:break-all">${esc(C.mint)}</span></div>`}
+    <div class="dlinks"><button class="ca" data-ca aria-label="Copy presale vault address"><i>Vault</i><span>${p.contract}</span><span aria-hidden="true">⧉</span></button><a class="bar-link" href="#/docs/seeding">Where the raise goes</a></div>
+    <div class="acts" data-dacts>${actsHTML(p)}</div>`;
+}
+let detailBox = null;
+function renderDetail() {
+  const p = find(ui.sel), wide = isWide();
+  if (wide && $('#sheet').open) $('#sheet').close();
+  const box = wide ? $('#detail') : $('#sheetBody'), other = wide ? $('#sheetBody') : $('#detail');
+  other.innerHTML = ''; detailBox = box;
+  if (!p) { box.innerHTML = '<div class="dempty">Select a presale to see its fill chart and buy a custom amount.</div>'; return; }
+  box.innerHTML = detailHTML(p);
+  const q = s => $(s, box);
+  q('[data-close]').onclick = () => $('#sheet').close();
+  q('[data-ca]').onclick = () => { try { navigator.clipboard.writeText(p.contract).catch(() => {}); } catch (e) {} toast('Vault address copied'); };
+  const dc = q('[data-dclaim]'); if (dc) dc.onclick = () => claim(p, dc);
+  if (p.status === 'live') {
+    const inp = q('#amtIn');
+    inp.addEventListener('input', () => syncAmount(p));
+    $$('[data-chip]', box).forEach(b => b.onclick = () => { inp.value = b.dataset.chip === 'fill' ? payLeft(p) : b.dataset.chip; syncAmount(p); inp.focus(); });
+    q('#goBtn').onclick = async () => {
+      if (busy) return;
+      if (!(await ensureWallet())) { renderDetail(); return; }
+      const { amt, err } = readAmount(p); if (err || !amt) return;
+      const b = q('#goBtn'); b.disabled = true; b.textContent = 'Confirm in wallet…';
+      if (!(await executeBuy(p, amt))) renderDetail();
+    };
+    syncAmount(p);
+  }
+}
+function patchDetail(p) {
+  if (!detailBox || ui.sel !== p.id) return;
+  const s = (k, html) => { const e = $(k, detailBox); if (e) e.innerHTML = html; };
+  s('[data-dreadout]', '<span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>' + readoutHTML(p));
+  s('[data-dchart]', chartSVG(p)); s('[data-dacts]', actsHTML(p)); s('[data-dpace]', paceTxt(p));
+}
+function readAmount(p) {
+  const raw = ($('#amtIn').value || '').replace(/,/g, '').trim(), n = parseFloat(raw), C = Q(p), left = payLeft(p);
+  if (!raw || isNaN(n) || n <= 0) return { amt: 0, err: '', empty: true };
+  if (!/^\d*\.?\d*$/.test(raw)) return { amt: 0, err: 'Enter the amount as a number, like 2.5.' };
+  let amt = n, note = '';
+  if (amt > left) { amt = left; note = `Only ${fmtAmt(left, p.q)} ${C.sym} fits in this presale, fee included, so that is all you would pay.`; }
+  if (state.wallet && amt > balOf(p.q)) return { amt, err: balOf(p.q) > 0 ? `Your wallet holds ${fmtAmt(balOf(p.q), p.q)} ${C.sym}. Enter that much or less.` : `Your wallet holds no ${C.sym}. This presale only takes ${C.sym}, so swap into it first.` };
+  return { amt: r6(amt), err: '', note };
+}
+function syncAmount(p) {
+  const btn = $('#goBtn'); if (!btn || busy) return;
+  const { amt, err, note, empty } = readAmount(p), C = Q(p);
+  $('#getTok').textContent = amt ? fmtTok(tokensFor(p, amt)) : '0';
+  $('#feeLine').innerHTML = amt ? `<b class="num">${fmtAmt(netOf(amt), p.q)}</b> ${esc(C.sym)} goes to the raise. <b class="num">${fmtAmt(feeOf(amt), p.q) === '0' ? feeOf(amt) : fmtAmt(feeOf(amt), p.q)}</b> ${esc(C.sym)} is the 1% protocol fee.` : '1% of each buy is the protocol fee. The rest goes to the raise.';
+  const e = $('#amtErr'); e.textContent = err || note || ''; e.style.color = err ? '' : 'var(--muted)';
+  if (!state.wallet) { btn.disabled = false; btn.textContent = 'Connect wallet to buy'; return; }
+  btn.disabled = !!err || !!empty || !amt;
+  btn.textContent = amt && !err ? `Buy ${fmtC(amt, p.q)} ${C.sym} of ${p.name}` : `Buy ${p.name}`;
+}
+
+/* ---------------------------------------------------------------- wallet */
+const walletAssets = () => state.wallet ? Object.keys(state.wallet.bal).filter(k => state.wallet.bal[k] > 0 || k === 'SOL' || k === 'USDC') : [];
+const balRows = () => walletAssets().map(k => `<div class="bal"><span>${esc(asset(k).sym)}</span><span class="num">${fmtAmt(balOf(k), k)}</span></div>`).join('');
+function renderWallet() {
+  const b = $('#walletBtn');
+  if (state.wallet) { b.innerHTML = `<span class="wdot"></span><span class="num" style="font-weight:500">${state.wallet.addr}</span>`; $('#walletBals').innerHTML = balRows(); }
+  else b.textContent = 'Connect wallet';
+  const n = Object.keys(state.positions).filter(id => !state.claimed[id]).length; $('#ctPos').textContent = n || '';
+  syncOpenBtn(); seg.tabs && seg.tabs.place();
+}
+async function connect() {
+  const b = $('#walletBtn'); b.disabled = true; b.textContent = 'Connecting…';
+  state.wallet = await adapter.connect(); b.disabled = false; save(); renderAll(); toast('Demo wallet connected');
+}
+$('#walletBtn').onclick = async e => { e.stopPropagation(); if (!state.wallet) return connect(); const o = $('#walletPop').classList.toggle('open'); $('#walletBtn').setAttribute('aria-expanded', o); };
+$('#disconnectBtn').onclick = () => { state.wallet = null; save(); $('#walletPop').classList.remove('open'); renderAll(); toast('Wallet disconnected'); };
+document.addEventListener('click', e => { if (!e.target.closest('#walletPop')) $('#walletPop').classList.remove('open'); if (!e.target.closest('#menuBtn')) { $('#mobnav').classList.remove('open'); $('#menuBtn').setAttribute('aria-expanded', false); } });
+$('#menuBtn').onclick = e => { e.stopPropagation(); const o = $('#mobnav').classList.toggle('open'); $('#menuBtn').setAttribute('aria-expanded', o); };
+
+/* ---------------------------------------------------------------- launch */
+const draft = { pair: 'SOL', stock: 'NVDAx', hours: 72 };
+const B58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+/* resolve the pair asset from the form: a known key, or a custom mint (flagged unverified) */
+function draftAsset() {
+  if (draft.pair === 'stock') return { key: draft.stock, a: ASSETS[draft.stock] };
+  if (draft.pair !== 'any') return { key: draft.pair, a: ASSETS[draft.pair] };
+  const mint = $('#fMint').value.trim();
+  if (!mint) return { key: null, err: 'Paste the mint address of the token to pair with.' };
+  if (!B58.test(mint)) return { key: null, err: 'That is not a valid Solana mint address. It should be 32 to 44 base58 characters.' };
+  const known = Object.keys(ASSETS).find(k => ASSETS[k].mint === mint);
+  if (known) return { key: known, a: ASSETS[known] };
+  const key = 'm_' + mint.slice(0, 10);
+  return { key, a: { sym: mint.slice(0, 4).toUpperCase(), mint, dp: 2, verified: false }, custom: true };
+}
+const readDraft = () => ({ name: $('#fName').value.trim(), ticker: $('#fTicker').value.trim().toUpperCase(), idea: $('#fIdea').value.trim(), hours: draft.hours, target: parseFloat(($('#fTarget').value || '').replace(/,/g, '')) });
+function validateDraft(d, da) {
+  if (d.name.length < 2) return 'Give the project a name of at least two characters.';
+  if (!/^[A-Z0-9]{2,6}$/.test(d.ticker)) return 'The ticker needs 2 to 6 letters or digits.';
+  if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) return `$${d.ticker} is already in use by a live presale. Pick another ticker.`;
+  if (d.idea.length < 10) return 'Describe the idea in at least ten characters so backers know what they are funding.';
+  if (da.err) return da.err;
+  if (isNaN(d.target) || d.target <= 0) return `Set a target in ${da.a.sym}.`;
+  if (da.a.min && (d.target < da.a.min || d.target > da.a.max)) return `${da.a.sym} targets run from ${da.a.min.toLocaleString('en-US')} to ${da.a.max.toLocaleString('en-US')} ${da.a.sym}.`;
+  return '';
+}
+function renderPreview() {
+  const d = readDraft(), da = draftAsset(), C = da.a || { sym: 'TOKEN', dp: 2, verified: false }, ok = !isNaN(d.target) && d.target > 0, sym = esc(C.sym);
+  const f = n => Number(n.toFixed(C.dp)).toLocaleString('en-US', { maximumFractionDigits: C.dp });
+  const p = { name: d.name || 'Your project', ticker: d.ticker || 'TICKER' };
+  $('#mintRow').hidden = draft.pair !== 'any'; $('#stockRow').hidden = draft.pair !== 'stock';
+  $$('#stockRow [data-stock]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.stock === draft.stock)));
+  $('#mintInfo').textContent = draft.pair !== 'any' ? '' : da.err ? '' : da.custom ? 'Unverified mint. Backers will see a warning.' : `Recognised as ${C.sym}`;
+  $('#fCur').textContent = C.sym; $('#ideaCt').textContent = `${$('#fIdea').value.length} / 80`;
+  $('#fTarget').placeholder = { SOL: '200', USDC: '50000' }[da.key] || (C.stock ? '300' : '100000');
+  $('#pvCard').innerHTML = `<div class="c-proj">${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div>
+    <div class="c-prog"><span class="bar"><i style="width:0%"></i></span><span class="pct num">0%</span></div>`;
+  const label = { 24: '24 hours', 72: '3 days', 168: '7 days' }[d.hours];
+  $('#pvFacts').innerHTML = [
+    ['Backers pay', ok ? `<span class="num">1 ${sym} = ${fmtTok(SUPPLY * A / d.target)} $${esc(p.ticker)}</span>` : 'Set a target'],
+    ['Closes', `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
+    ['If it fills', ok ? `<span class="num">${f(d.target)} ${sym}</span> locked in a Meteora pool` : 'Locked in a Meteora pool'],
+    ['Protocol fee', ok ? `1% on top of each buy, about <span class="num">${f(d.target / NET - d.target)} ${sym}</span>` : '1% on top of each buy'],
+    ['Value at open', ok ? `<span class="num">${f(d.target / A)} ${sym}</span> fully diluted` : 'Set a target'],
+    ['If it misses', `Buys and fees go back to backers after ${label}. The supply is burned`]
+  ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+}
+function syncOpenBtn() { const b = $('#openBtn'); if (b && !b.disabled) b.textContent = state.wallet ? 'Open presale' : 'Connect wallet to open'; }
+$('#form').addEventListener('input', () => { $('#fErr').textContent = ''; renderPreview(); });
+$('#openBtn').onclick = async () => {
+  if (busy) return;
+  if (!(await ensureWallet())) return;
+  const d = readDraft(), da = draftAsset(), err = validateDraft(d, da); $('#fErr').textContent = err; if (err) return;
+  const b = $('#openBtn'); busy = true; b.disabled = true; b.textContent = 'Confirm in wallet…';
+  const id = d.ticker.toLowerCase() + '-' + Date.now().toString(36), now = Date.now();
+  if (da.custom) state.custom[da.key] = da.a;
+  const p = { id, name: d.name, ticker: d.ticker, idea: d.idea, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, contract: addr(id), mine: true, hist: [[now, 0]], acts: [] };
+  await adapter.openPresale(p); busy = false; b.disabled = false;
+  state.presales.unshift(p); save();
+  ['#fName', '#fTicker', '#fIdea', '#fTarget', '#fMint'].forEach(s => $(s).value = ''); renderPreview();
+  ui.fStatus = 'live'; ui.fAsset = 'all'; ui.q = ''; $('#q').value = ''; seg.status.set('live'); seg.assetF.set('all'); ui.sel = id;
+  toast(`Opened ${p.name}. It is live until ${fmtDate(p.endsAt)}`);
+  location.hash = '#/app/terminal/' + id;
+};
+$('#stockRow').addEventListener('click', e => { const b = e.target.closest('[data-stock]'); if (!b) return; draft.stock = b.dataset.stock; $('#fErr').textContent = ''; renderPreview(); });
+$('#mintRow').addEventListener('click', e => { const b = e.target.closest('[data-mint]'); if (!b) return; $('#fMint').value = ASSETS[b.dataset.mint].mint; $('#fErr').textContent = ''; renderPreview(); });
+function renderMine() {
+  const l = state.presales.filter(p => p.mine);
+  $('#mineList').innerHTML = l.length ? l.map(p => `<a class="row ${p.status}" href="#/app/terminal/${p.id}" data-row="${p.id}"><span class="c-proj">${projCell(p)}</span>${progCell(p)}
+      <span class="c-raised num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span><span class="c-time num" data-time>${timeCell(p)}</span><span class="c-act"><span class="pill-sm">View</span></span></a>`).join('')
+    : '<div class="empty">You have not opened a presale yet. Fill in the six fields above to open your first.</div>';
+}
+
+/* ------------------------------------------------------------- portfolio */
+function renderPortfolio() {
+  const ids = Object.keys(state.positions); let nLive = 0, nRef = 0, nTok = 0;
+  ids.forEach(id => { const p = find(id); if (!p) return; if (p.status === 'live') nLive++; else if (!state.claimed[id]) { if (p.status === 'refunding') nRef++; else nTok++; } });
+  $('#pstats').innerHTML = `<span class="plus" style="left:25%;top:0"></span><span class="plus" style="left:50%;top:0"></span><span class="plus" style="left:75%;top:0"></span>
+    <div class="stat"><dt>Positions</dt><dd>${ids.length}</dd></div><div class="stat"><dt>In live presales</dt><dd>${nLive}</dd></div>
+    <div class="stat"><dt>Refunds to claim</dt><dd>${nRef}</dd></div><div class="stat"><dt>Token claims ready</dt><dd>${nTok}</dd></div>`;
+  $('#prows').innerHTML = ids.length ? ids.map(id => { const p = find(id); if (!p) return ''; const sym = esc(Q(p).sym), a = state.positions[id], cl = state.claimed[id];
+      const st = { live: 'Live', seeded: 'Seeded', refunding: 'Refunded' }[p.status];
+      const yours = p.status === 'live' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)} if it seeds` : p.status === 'seeded' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)}` : `${fmtAmt(a, p.q)} ${sym}`;
+      const act = p.status === 'live' ? `<a class="qb" href="#/app/terminal/${p.id}">View</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
+      return `<div class="prow"><span class="c-proj">${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta">${pairTag(p)}</span></span></span>
+        <span class="num">${fmtAmt(a, p.q)} ${sym}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
+    : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#/app">Buy into a presale from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
+  $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` : '<p style="color:var(--muted);font-size:14px;margin-top:10px">No wallet connected.</p>';
+}
+$('#prows').addEventListener('click', e => { const cl = e.target.closest('[data-claim]'); if (cl) claim(find(cl.dataset.claim), cl); });
+
+/* ------------------------------------------------------------------ docs */
+const calc = { q: 'SOL' };
+function fmtPrice(n) { if (n >= 1) return fmtSig(n); const d = Math.min(14, Math.ceil(-Math.log10(n)) + 2); return n.toFixed(d).replace(/0+$/, '').replace(/\.$/, ''); }
+function renderCalc() {
+  const T = parseFloat(($('#cT').value || '').replace(/,/g, '')), g = parseFloat(($('#cC').value || '').replace(/,/g, '')), cur = calc.q, out = $('#calcOut');
+  if (!(T > 0) || !(g >= 0)) { out.innerHTML = '<div><dt>Enter a target above zero</dt><dd></dd></div>'; return; }
+  const gross = Math.min(g || 0, T / NET), net = Math.min(gross * NET, T), fee = gross - net, P = T / (A * SUPPLY), s = net / T;
+  out.innerHTML = [
+    ['Goes to the raise', `${fmtSig(net)} ${cur}`], ['Protocol fee, 1% of the buy', `${fmtSig(fee)} ${cur}`],
+    ['Price per token', `${fmtPrice(P)} ${cur}`], [`Tokens per 1 ${cur} in the raise`, fmtTok(1 / P)], ['Your tokens', fmtTok(net / P)],
+    ['Your share of supply', (s * A * 100).toFixed(3) + '%'], ['Locked in the Meteora pool', `${fmtSig(T)} ${cur}`], ['Total fees if it seeds', `${fmtSig(T / NET - T)} ${cur}`],
+    ['Fully diluted value at open', `${fmtSig(P * SUPPLY)} ${cur}`],
+    ['You recover selling all at open', s > 0 ? `${fmtSig(net / (1 + s))} ${cur} (${(100 * NET / (1 + s)).toFixed(1)}% of what you paid)` : `0 ${cur}`],
+    ['You get back if it misses', `${fmtSig(gross)} ${cur}`]
+  ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('') + (g > T / NET ? `<div><dt>Your buy is trimmed to what fits the ${fmtSig(T)} ${cur} target</dt><dd></dd></div>` : '');
+}
+function initDocs() {
+  const secs = $$('.doc-sec');
+  $('#toc').innerHTML = secs.map(s => `<a href="#/docs/${s.id.slice(2)}" data-sec="${s.id}">${s.dataset.t}</a>`).join('');
+  const spy = () => { if (ui.view !== 'docs') return; let cur = secs[0]; for (const s of secs) if (s.getBoundingClientRect().top <= innerHeight * .35) cur = s; $$('#toc a').forEach(a => a.classList.toggle('on', a.dataset.sec === cur.id)); };
+  addEventListener('scroll', spy, { passive: true }); initDocs.spy = spy;
+  $('#cT').addEventListener('input', renderCalc); $('#cC').addEventListener('input', renderCalc);
+  seg.calc = initSeg($('#calcSeg'), v => { calc.q = v; const d = { SOL: [100, 4], USDC: [60000, 500], JUP: [120000, 2000] }[v]; $('#cT').value = d[0]; $('#cC').value = d[1]; renderCalc(); });
+  renderCalc();
+}
+
+/* ---------------------------------------------------------------- router */
+function route() {
+  const h = location.hash || '#'; let view = 'home', anchor = null, sec = null;
+  if (h.startsWith('#/app')) { view = 'app'; const parts = h.slice(2).split('/'); ui.tab = ['terminal', 'launch', 'portfolio'].includes(parts[1]) ? parts[1] : 'terminal';
+    if (parts[2] && find(parts[2])) { const p = find(parts[2]); ui.sel = p.id; if (ui.fStatus !== 'all' && p.status !== ui.fStatus) { ui.fStatus = 'all'; seg.status.set('all'); } } }
+  else if (h.startsWith('#/docs')) { view = 'docs'; sec = h.split('/')[2] || null; }
+  else if (h.length > 1) anchor = h;
+  const changed = view !== ui.view; ui.view = view;
+  ['home', 'app', 'docs'].forEach(v => { $('#view-' + v).hidden = v !== view; document.body.classList.toggle('in-' + v, v === view); });
+  if ($('#sheet').open) $('#sheet').close();
+  document.title = view === 'app' ? 'Seed app: terminal, launch, portfolio' : view === 'docs' ? 'Seed docs: how it works, with the math' : 'Seed: presales that seed or refund';
+  if (view === 'app') {
+    ['terminal', 'launch', 'portfolio'].forEach(t => $('#tab-' + t).hidden = t !== ui.tab); seg.tabs.set(ui.tab);
+    renderAll(); if (changed) scrollTo(0, 0);
+    if (ui.tab === 'terminal' && h.split('/')[3] && find(h.split('/')[3]) && !isWide() && changed) openSheet();
+  } else if (view === 'docs') {
+    if (sec && $('#d-' + sec)) $('#d-' + sec).scrollIntoView(); else if (changed) scrollTo(0, 0);
+    initDocs.spy && initDocs.spy();
+  } else {
+    if (changed) { renderHome(); window.bgRefresh && bgRefresh(); }
+    if (anchor) { let t = null; try { t = $(anchor); } catch (e) {} if (t) t.scrollIntoView(); } else if (changed) scrollTo(0, 0);
+  }
+  requestAnimationFrame(placeSegs);
+}
+addEventListener('hashchange', route);
+
+/* ---------------------------------------------------------------- render */
+function renderAll() { renderWallet(); renderHome(); syncQuickUI(); renderTerminal(); renderMine(); renderPortfolio(); }
+
+/* ------------------------------------------------------------- nav pill */
+(function () {
+  const pill = $('#navpill'), ind = $('.ind', pill), links = $$('a', pill), spyLinks = links.filter(a => /^#[a-z]/i.test(a.getAttribute('href'))); let active = null;
+  const move = a => { if (!a) { ind.style.opacity = 0; return; } ind.style.opacity = 1; ind.style.transform = `translateX(${a.offsetLeft}px)`; ind.style.width = a.offsetWidth + 'px'; };
+  links.forEach(a => a.addEventListener('mouseenter', () => move(a)));
+  pill.addEventListener('mouseleave', () => move(active));
+  const onScroll = () => { if (ui.view !== 'home') return; let cur = null; for (const a of spyLinks) { const s = $(a.getAttribute('href')); if (s && s.getBoundingClientRect().top <= innerHeight * .42) cur = a; }
+    if (cur !== active) { active = cur; links.forEach(l => l.classList.toggle('on', l === cur)); move(cur); } };
+  addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', () => move(active));
+})();
+
+/* ----------------------------------------------------------------- clock */
+function tick(silent) {
+  const now = Date.now(); let changed = false;
+  for (const p of state.presales) if (p.status === 'live' && now >= p.endsAt) {
+    p.status = 'refunding'; p.resolvedAt = p.endsAt; changed = true; const pos = state.positions[p.id];
+    if (silent !== true) toast(pos ? `${p.name} missed its target. Your ${fmtAmt(pos, p.q)} ${Q(p).sym} refund is ready to claim.` : `${p.name} missed its target. Backers can claim refunds.`);
+  }
+  if (changed) { save(); renderAll(); }
+  $$('.live[data-row]').forEach(row => { const p = find(row.dataset.row); if (!p) return; const t = $('[data-time]', row); if (t) t.textContent = fmtLeft(p.endsAt - now); const pc = $('[data-pace]', row); if (pc) pc.textContent = paceTxt(p); });
+  const sel = find(ui.sel); if (sel && detailBox) { const t = $('[data-dtime]', detailBox); if (t) t.textContent = fmtLeft(sel.endsAt - now); const dp = $('[data-dpace]', detailBox); if (dp) dp.textContent = paceTxt(sel); }
+  const nx = $('[data-next]'); if (nx) { const p = find(nx.dataset.next); if (p) nx.textContent = fmtLeft(p.endsAt - now); }
+}
+/* simulated buys arriving; never completes a presale, so the last step is yours */
+function simulate() {
+  if (document.hidden || busy) return;
+  const pool = state.presales.filter(p => p.status === 'live' && pctOf(p) < 95 && p.endsAt - Date.now() > 20e3 && !(p.mine && p.raised === 0 && Date.now() - p.openedAt < 15e3));
+  if (!pool.length) return;
+  const p = pool[Math.floor(Math.random() * pool.length)], amt = r6(Math.min(p.target * .95 - p.raised, p.target * (0.0008 + Math.random() * 0.004)));
+  if (!(amt > 0)) return;
+  p.raised = r6(p.raised + amt); p.backers++; record(p, addr(String(Math.random())), r6(amt / NET));
+  patchRows(p); patchDetail(p); save();
+  renderStats();
+}
+document.addEventListener('click', e => { if (!e.target.closest('[data-reset]')) return; try { localStorage.removeItem(KEY); } catch (x) {} state = fresh(); ui.sel = null; syncQuickUI(); renderAll(); toast('Demo reset'); });
+
+/* quick buy presets are kept per pair asset */
+function syncQuickUI() {
+  const keys = [...new Set(['SOL', 'USDC', ...state.presales.filter(p => p.status === 'live').map(p => p.q)])];
+  if (!keys.includes(ui.qbAsset)) ui.qbAsset = 'SOL';
+  $('#qbAsset').innerHTML = keys.map(k => `<option value="${esc(k)}"${k === ui.qbAsset ? ' selected' : ''}>${esc(asset(k).sym)}</option>`).join('');
+  const cur = state.quick[ui.qbAsset], any = state.presales.find(p => p.q === ui.qbAsset);
+  $('#qbAmt').value = cur != null ? cur : any ? quickFor(any) : '';
+}
+
+/* ------------------------------------------------------------------ boot */
+function boot() {
+  load();
+  $('#faqList').innerHTML = FAQ.map(([q, a], i) => `<div class="qa${i ? '' : ' open'}"><button aria-expanded="${!i}"><span>${q}</span><span class="mk" aria-hidden="true">+</span></button><div class="a"><div><p>${a}</p></div></div></div>`).join('');
+  $('#faqList').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const qa = b.parentElement, was = qa.classList.contains('open');
+    $$('.qa').forEach(x => { x.classList.remove('open'); $('button', x).setAttribute('aria-expanded', 'false'); }); if (!was) { qa.classList.add('open'); b.setAttribute('aria-expanded', 'true'); } });
+  $('#mech').addEventListener('input', syncMech);
+  seg.tabs = initSeg($('#tabSeg'), v => { location.hash = '#/app/' + v; });
+  seg.status = initSeg($('#statusSeg'), v => { ui.fStatus = v; renderTerminal(); });
+  seg.assetF = initSeg($('#assetSeg'), v => { ui.fAsset = v; renderTerminal(); });
+  seg.pair = initSeg($('#pairSeg'), v => { draft.pair = v; $('#fErr').textContent = ''; renderPreview(); if (v === 'any') $('#fMint').focus(); });
+  seg.time = initSeg($('#timeSeg'), v => { draft.hours = +v; renderPreview(); });
+  $('#q').addEventListener('input', e => { ui.q = e.target.value; renderTerminal(); });
+  $('#sort').addEventListener('change', e => { ui.sort = e.target.value; renderTerminal(); });
+  $('#qbAsset').addEventListener('change', e => { ui.qbAsset = e.target.value; syncQuickUI(); });
+  $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
+  syncQuickUI();
+  let wide = isWide(); addEventListener('resize', () => { if (isWide() !== wide) { wide = isWide(); if (ui.view === 'app') renderTerminal(); } });
+  initDocs(); renderPreview(); syncMech(); tick(true); renderAll(); route();
+  setInterval(() => tick(), 1000); setInterval(simulate, 3600);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeSegs);
+}
+
+/* ==========================================================================
+   BACKGROUNDS
+   Noise core is the same hash / smoothstep value-noise / 3-octave fbm as the
+   Rush FlowField port. What is new: domain warping, a wandering drift heading,
+   a tide band, a cursor lens with ripples, click rings, scroll parallax, and a
+   rotating phyllotaxis sphere that carries the same noise as its continents.
+   ========================================================================== */
+const hash = (x, y) => { let r = (0x165667b1 * x + 0x27d4eb2f * y) | 0; r = ((r ^ (r >>> 13)) * 0x4bf19f61) | 0; return ((r ^ (r >>> 16)) >>> 0) / 0xffffffff; };
+const noise = (x, y) => {
+  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf);
+  const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1), top = a + (b - a) * u;
+  return top + yf * yf * (3 - 2 * yf) * (c + (d - c) * u - top);
+};
+const fbm = (x, y) => 0.5714 * noise(x, y) + 0.2857 * noise(2 * x, 2 * y) + 0.1429 * noise(4 * x, 4 * y);
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const COARSE = matchMedia('(pointer: coarse)').matches;
+const pointer = { x: -9999, y: -9999, last: 0, seen: false };
+addEventListener('pointermove', e => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.last = performance.now(); pointer.seen = true; kick(); }, { passive: true });
+
+class FlowField {
+  constructor(canvas, o) {
+    this.c = canvas; this.ctx = canvas.getContext('2d', { alpha: true }); this.o = o; this.step = 8;
+    this.palette = Array.from({ length: 12 }, (_, i) => `rgba(${o.rgb},${(o.minA + (o.maxA - o.minA) * (i + 1) / 12).toFixed(3)})`);
+    this.buckets = Array.from({ length: 12 }, () => []);
+    this.intro = REDUCED ? 150 : 0; this.ox = Math.random() * 900; this.oy = Math.random() * 900; this.lx = -9999; this.ly = -9999; this.rings = []; this.nextRing = 240;
+    this.resize();
+  }
+  resize() {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    if (this.o.fixed) { this.w = innerWidth; this.h = innerHeight; } else { const r = this.c.parentElement.getBoundingClientRect(); this.w = r.width; this.h = r.height; }
+    this.c.width = Math.floor(this.w * dpr); this.c.height = Math.floor(this.h * dpr);
+    if (this.o.fixed) { this.c.style.width = this.w + 'px'; this.c.style.height = this.h + 'px'; }
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    this.cols = Math.ceil(this.w / this.step) + 1; this.rows = Math.ceil(this.h / this.step) + 1;
+    this.WX = new Float32Array(this.cols + 2); this.WY = new Float32Array(this.cols + 2);
+  }
+  ring(x, y, a) { if (this.rings.length < 4) this.rings.push({ x, y, r: 0, a }); }
+  frame(t, f) {
+    const { ctx, w, h, step: s, cols, rows, buckets, WX, WY, o } = this, k = 0.022 * s / 8 * (w < 700 ? 1.7 : 1), kw = k * 0.5, wt = t * 0.9;
+    ctx.clearRect(0, 0, w, h);
+    for (let i = 0; i < 12; i++) buckets[i].length = 0;
+    // drift heading wanders instead of scrolling in a straight line
+    const th = 1.15 + 0.85 * Math.sin(t * 0.21) + 0.3 * Math.sin(t * 0.057 + 2);
+    this.ox += Math.cos(th) * 0.0024 * f; this.oy += Math.sin(th) * 0.0024 * f;
+    const eased = 1 - Math.pow(1 - Math.min(1, this.intro / 150), 3);
+    const thr = o.thr + 0.65 * (1 - eased) + 0.02 * Math.sin(t * 0.8), range = o.range;
+    if (this.intro < 150) this.intro += f;
+    const sc = o.fixed ? scrollY * 0.35 / 8 * 0.022 : 0;
+    // cursor lens eases after the pointer
+    const live = o.lens && pointer.seen && !COARSE;
+    if (live) { const tx = pointer.x, ty = pointer.y; if (this.lx < -9000) { this.lx = tx; this.ly = ty; } this.lx += (tx - this.lx) * 0.09 * f; this.ly += (ty - this.ly) * 0.09 * f; }
+    const lx = this.lx, ly = this.ly, L = 190, L2 = L * L;
+    // ambient + click rings
+    if (o.lens && !REDUCED) { this.nextRing -= f; if (this.nextRing <= 0) { this.ring(Math.random() * w, Math.random() * h, 0.09); this.nextRing = 300 + Math.random() * 260; } }
+    const rings = this.rings;
+    for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i]; r.r += 4.2 * f; r.a *= Math.pow(0.988, f); if (r.a < 0.008 || r.r > Math.max(w, h) * 1.2) rings.splice(i, 1); }
+    const amp = 1.25;
+    for (let row = 0; row < rows; row++) {
+      const y = row * s, sy = k * row + this.oy + sc, even = (row & 1) === 0;
+      for (let col = 0; col < cols; col++) {
+        const x = col * s;
+        if (even && (col & 1) === 0) { // warp field at half resolution
+          const a = (noise(kw * col + 3.1 + wt, kw * row - 0.6 * wt + sc * .5) - .5) * amp, b = (noise(kw * col - 7.7 - 0.5 * wt, kw * row + 1.3 + wt + sc * .5) - .5) * amp;
+          WX[col] = WX[col + 1] = a; WY[col] = WY[col + 1] = b;
+        }
+        let v = fbm(k * col + this.ox + WX[col], sy + WY[col]) + 0.028 * Math.sin(0.009 * (x + y * 0.6) - t * 1.3);
+        if (live) { const dx = x - lx, dy = y - ly, d2 = dx * dx + dy * dy; if (d2 < L2) { const q = 1 - d2 / L2; v += 0.15 * q * q + 0.05 * q * Math.sin(Math.sqrt(d2) * 0.085 - t * 7); } }
+        for (let i = 0; i < rings.length; i++) { const r = rings[i], dx = x - r.x; if (dx > r.r + 30 || dx < -r.r - 30) continue; const dy = y - r.y, band = Math.abs(Math.sqrt(dx * dx + dy * dy) - r.r); if (band < 30) v += r.a * (1 - band / 30); }
+        if (v < thr) continue;
+        buckets[Math.min(11, ((v - thr) / range * 12) | 0)].push(x, y);
+      }
+    }
+    for (let i = 0; i < 12; i++) {
+      const b = buckets[i]; if (!b.length) continue;
+      const d = o.grow ? (i < 5 ? 1.5 : i < 9 ? 2 : 2.5) : 2, off = (d - 2) / 2;
+      ctx.fillStyle = this.palette[i];
+      for (let j = 0; j < b.length; j += 2) ctx.fillRect(b[j] - off, b[j + 1] - off, d, d);
+    }
+  }
+}
+
+class SeedSphere {
+  constructor(hero, base, reveal) {
+    this.hero = hero; this.base = base; this.reveal = reveal; this.ctx = base.getContext('2d'); this.rctx = reveal.getContext('2d');
+    this.rot = 0.6; this.par = { x: 0, y: 0 }; this.frameN = 0; this.pulses = []; this.nextPulse = 60;
+    this.pos = { x: -999, y: -999 }; this.echo = { x: -999, y: -999 }; this.rad = 115;
+    this.resize();
+  }
+  resize() {
+    const r = this.hero.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
+    this.w = r.width; this.h = r.height;
+    for (const c of [this.base, this.reveal]) { c.width = Math.floor(this.w * dpr); c.height = Math.floor(this.h * dpr); }
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); this.rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    // same placement as the Calia globe: min(1080px, 94vw), centred at 56% and pushed down
+    this.R = Math.min(1080, 0.94 * this.w) / 2; this.cx = this.w / 2; this.cy = 0.56 * this.h + this.R * 0.35;
+    const spacing = this.w < 700 ? 7.5 : 11.5; this.dotScale = spacing / 9;
+    const N = this.N = Math.max(1500, Math.min(30000, Math.floor(4 * Math.PI * this.R * this.R / (spacing * spacing))));
+    // Fibonacci lattice: the packing a seed head uses
+    const P = this.P = new Float32Array(N * 3), ga = Math.PI * (3 - Math.sqrt(5));
+    for (let i = 0; i < N; i++) { const y = 1 - 2 * (i + .5) / N, rr = Math.sqrt(1 - y * y), th = i * ga; P[i * 3] = Math.cos(th) * rr; P[i * 3 + 1] = y; P[i * 3 + 2] = Math.sin(th) * rr; }
+    this.land = new Float32Array(N); this.fresh = true;
+  }
+  landAt(x, y, z, t) {
+    const s = 2.3, d = t * 0.32, s2 = 5.1;
+    const n1 = (noise(x * s + d + 5, y * s + 9) + noise(y * s + 31, z * s + d + 17) + noise(z * s + 53, x * s - d + 71)) / 3;
+    const n2 = (noise(x * s2 + 13, y * s2 - d + 3) + noise(y * s2 + 41, z * s2 + 29) + noise(z * s2 - d + 67, x * s2 + 83)) / 3;
+    return 0.66 * n1 + 0.34 * n2;
+  }
+  frame(t, f, now) {
+    const { ctx, rctx, w, h, R, cx, cy, P, N, land } = this, rect = this.hero.getBoundingClientRect();
+    this.frameN++;
+    // --- spotlight: exact lerp 0.1, plus a slower echo and an idle wander
+    const idle = COARSE || !pointer.seen || now - pointer.last > 3500;
+    let tx, ty;
+    if (idle && !REDUCED) { const top = Math.max(cy - R, h * 0.3), mid = (top + Math.min(h, cy + R)) / 2; tx = cx + Math.sin(t * 0.9) * Math.min(R * 0.62, w * 0.4); ty = mid + Math.cos(t * 0.63) * (mid - top) * 0.55; }
+    else { tx = pointer.x - rect.left; ty = pointer.y - rect.top; }
+    if (this.pos.x < -900) { this.pos.x = this.echo.x = tx; this.pos.y = this.echo.y = ty; }
+    const px = this.pos.x, py = this.pos.y;
+    this.pos.x += (tx - px) * 0.1; this.pos.y += (ty - py) * 0.1;
+    this.echo.x += (tx - this.echo.x) * 0.045; this.echo.y += (ty - this.echo.y) * 0.045;
+    const speed = Math.hypot(this.pos.x - px, this.pos.y - py); this.rad += (115 + Math.min(55, speed * 2.2) - this.rad) * 0.12;
+    const stops = 'rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.12) 88%, rgba(0,0,0,0) 100%';
+    const m = `radial-gradient(circle ${this.rad.toFixed(1)}px at ${this.pos.x.toFixed(1)}px ${this.pos.y.toFixed(1)}px, ${stops}), radial-gradient(circle 62px at ${this.echo.x.toFixed(1)}px ${this.echo.y.toFixed(1)}px, ${stops})`;
+    this.reveal.style.maskImage = m; this.reveal.style.webkitMaskImage = m;
+
+    // --- rotation with pointer parallax
+    if (!REDUCED) this.rot += 0.0013 * f;
+    if (pointer.seen && !COARSE) { this.par.x += ((pointer.x / innerWidth - .5) * .5 - this.par.x) * .04; this.par.y += ((pointer.y / innerHeight - .5) * .14 - this.par.y) * .04; }
+    const A = this.rot + this.par.x, B = -0.34 + this.par.y, ca = Math.cos(A), sa = Math.sin(A), cb = Math.cos(B), sb = Math.sin(B);
+
+    ctx.clearRect(0, 0, w, h); rctx.clearRect(0, 0, w, h);
+    // halo, then an opaque disc so the flow field reads as sky behind the sphere
+    const g = ctx.createRadialGradient(cx, cy, R * 0.98, cx, cy, R * 1.09); g.addColorStop(0, 'rgba(86,104,160,.13)'); g.addColorStop(1, 'rgba(86,104,160,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.09, 0, 6.2832); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, 6.2832); ctx.fill();
+    ctx.strokeStyle = 'rgba(61,75,124,.18)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, 6.2832); ctx.stroke();
+
+    const LB = this.LB || (this.LB = Array.from({ length: 6 }, () => [])), SB = this.SB || (this.SB = Array.from({ length: 6 }, () => []));
+    const RL = this.RL || (this.RL = []), RS = this.RS || (this.RS = []);
+    for (let i = 0; i < 6; i++) { LB[i].length = 0; SB[i].length = 0; } RL.length = 0; RS.length = 0;
+    const third = this.frameN % 3, all = this.fresh, r1 = this.rad + 12, r1q = r1 * r1, r2q = 74 * 74, ex = this.echo.x, ey = this.echo.y, sx0 = this.pos.x, sy0 = this.pos.y, ds = this.dotScale;
+    for (let i = 0; i < N; i++) {
+      const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
+      const x1 = x * ca + z * sa, z1 = -x * sa + z * ca, y2 = y * cb - z1 * sb, z2 = y * sb + z1 * cb;
+      if (z2 <= 0.03) continue;
+      const sx = cx + x1 * R, sy = cy - y2 * R;
+      if (sy > h + 6 || sy < -6 || sx < -6 || sx > w + 6) continue;
+      if (all || i % 3 === third) land[i] = this.landAt(x, y, z, t);
+      const isLand = land[i] > 0.5, r = (0.3 + 2.0 * z2) * ds * (isLand ? 1 : 0.52), bi = Math.min(5, (z2 * 6) | 0);
+      (isLand ? LB : SB)[bi].push(sx, sy, r);
+      const dx = sx - sx0, dy = sy - sy0, ddx = sx - ex, ddy = sy - ey;
+      if (dx * dx + dy * dy < r1q || ddx * ddx + ddy * ddy < r2q) (isLand ? RL : RS).push(sx, sy, r, z2);
+    }
+    this.fresh = false;
+    const dots = (c, arr, mul) => { c.beginPath(); for (let j = 0; j < arr.length; j += 3) { const r = arr[j + 2] * mul; if (r < 0.85) c.rect(arr[j] - r, arr[j + 1] - r, r * 2, r * 2); else { c.moveTo(arr[j] + r, arr[j + 1]); c.arc(arr[j], arr[j + 1], r, 0, 6.2832); } } c.fill(); };
+    for (let i = 0; i < 6; i++) {
+      const zz = (i + .5) / 6;
+      ctx.fillStyle = `rgba(19,26,46,${(0.10 + 0.30 * zz).toFixed(3)})`; dots(ctx, LB[i], 1);
+      ctx.fillStyle = `rgba(19,26,46,${(0.035 + 0.085 * zz).toFixed(3)})`; dots(ctx, SB[i], 1);
+    }
+    // seeds landing: small rings that open on land and fade
+    if (!REDUCED) { this.nextPulse -= f; if (this.nextPulse <= 0) { this.pulses.push({ i: (Math.random() * N) | 0, age: 0 }); this.nextPulse = 38 + Math.random() * 50; } }
+    ctx.lineWidth = 1.2;
+    for (let k = this.pulses.length - 1; k >= 0; k--) {
+      const p = this.pulses[k]; p.age += f; if (p.age > 110) { this.pulses.splice(k, 1); continue; }
+      const i = p.i, x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], x1 = x * ca + z * sa, z1 = -x * sa + z * ca, y2 = y * cb - z1 * sb, z2 = y * sb + z1 * cb;
+      if (z2 < 0.25 || land[i] <= 0.5) { if (p.age < 3) this.pulses.splice(k, 1); continue; }
+      const q = p.age / 110, e = 1 - Math.pow(1 - q, 3);
+      ctx.strokeStyle = `rgba(61,75,124,${(0.55 * (1 - q)).toFixed(3)})`; ctx.beginPath(); ctx.ellipse(cx + x1 * R, cy - y2 * R, (3 + 24 * e), (3 + 24 * e) * (0.35 + 0.65 * z2), 0, 0, 6.2832); ctx.stroke();
+      ctx.fillStyle = `rgba(61,75,124,${(0.9 * (1 - q)).toFixed(3)})`; ctx.beginPath(); ctx.arc(cx + x1 * R, cy - y2 * R, 2.4, 0, 6.2832); ctx.fill();
+    }
+    // reveal layer: only dots near the spotlight are drawn, the CSS mask does the feathering
+    rctx.fillStyle = '#fff'; rctx.beginPath(); rctx.arc(cx, cy, R, 0, 6.2832); rctx.fill();
+    rctx.fillStyle = 'rgba(168,179,214,.55)'; rctx.beginPath(); for (let j = 0; j < RS.length; j += 4) { const r = RS[j + 2] * 1.35; rctx.moveTo(RS[j] + r, RS[j + 1]); rctx.arc(RS[j], RS[j + 1], r, 0, 6.2832); } rctx.fill();
+    rctx.fillStyle = 'rgba(61,75,124,.92)'; rctx.beginPath(); for (let j = 0; j < RL.length; j += 4) { const r = RL[j + 2] * 1.3; rctx.moveTo(RL[j] + r, RL[j + 1]); rctx.arc(RL[j], RL[j + 1], r, 0, 6.2832); } rctx.fill();
+    rctx.strokeStyle = 'rgba(86,104,160,.32)'; rctx.lineWidth = .8; rctx.beginPath(); for (let j = 0; j < RL.length; j += 4) { if (RL[j + 3] < .45) continue; const r = RL[j + 2] * 1.3 + 2.4; rctx.moveTo(RL[j] + r, RL[j + 1]); rctx.arc(RL[j], RL[j + 1], r, 0, 6.2832); } rctx.stroke();
+  }
+}
+
+const field = new FlowField($('#field'), { fixed: true, rgb: '86,104,160', minA: 0.1, maxA: 0.62, thr: 0.525, range: 0.27, lens: true, grow: true });
+const ctaField = new FlowField($('#ctaField'), { fixed: false, rgb: '236,238,250', minA: 0.05, maxA: 0.85, thr: 0.5, range: 0.3, lens: false, grow: false });
+const sphere = new SeedSphere($('#hero'), $('#sphere-base'), $('#sphere-reveal'));
+const vis = { hero: true, cta: false };
+new IntersectionObserver(es => es.forEach(e => { vis[e.target.id] = e.isIntersecting; kick(); }), { rootMargin: '80px' }).observe($('#hero'));
+new IntersectionObserver(es => es.forEach(e => { vis.cta = e.isIntersecting; kick(); })).observe($('#cta'));
+addEventListener('pointerdown', e => { if (!REDUCED) field.ring(e.clientX, e.clientY, 0.2); }, { passive: true });
+
+let T = 0, lastNow = 0, raf = 0, cost = 0, slow = 0, kickUntil = 0;
+function loop(now) {
+  raf = 0;
+  const f = lastNow ? Math.min(3, (now - lastNow) / 16.667) : 1; lastNow = now;
+  if (!REDUCED) T += 0.0042 * f;
+  const t0 = performance.now();
+  field.frame(T, f);
+  if (vis.hero) sphere.frame(T, f, now);
+  if (vis.cta) ctaField.frame(T * 1.0 + 40, f);
+  // drop field resolution if this machine can't hold the frame budget
+  cost += (performance.now() - t0 - cost) * 0.08;
+  if (cost > 12 && field.step < 14) { if (++slow > 50) { field.step += 2; field.resize(); slow = 0; cost = 6; } } else slow = 0;
+  if (!document.hidden && (!REDUCED || now < kickUntil)) raf = requestAnimationFrame(loop);
+}
+function kick() { if (REDUCED) kickUntil = performance.now() + 900; if (!raf && !document.hidden) { lastNow = 0; raf = requestAnimationFrame(loop); } }
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { field.resize(); ctaField.resize(); sphere.resize(); kick(); }, 120); });
+document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else kick(); });
+kick();
+window.bgRefresh = () => { sphere.resize(); ctaField.resize(); field.resize(); kick(); };
+boot();
+</script>
+</body>
+</html>
