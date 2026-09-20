@@ -305,6 +305,11 @@ dialog[open]{animation:sheetIn .5s var(--out)}
 .promise div{display:flex;gap:10px;align-items:flex-start}
 .promise svg{flex:none;width:16px;height:16px;margin-top:3px;stroke:var(--navy);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sheet .btn-block{margin-top:20px}
+#walletDlg{width:min(400px,calc(100vw - 24px))}
+.wlist{display:grid;gap:8px;margin-top:18px}
+.wlist button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:1px solid var(--hair-2);border-radius:14px;font-weight:600;font-size:15px;transition:background .2s,border-color .2s}
+.wlist button:hover{background:var(--mist);border-color:var(--navy)}
+.wlist small{font-weight:400;font-size:12.5px;color:var(--muted)}
 .state{margin-top:20px;border-radius:16px;background:var(--mist);padding:16px 18px;font-size:14.5px;color:var(--ink-2)}
 .state b{display:block;font-size:16px;letter-spacing:-.02em;color:var(--ink);margin-bottom:3px}
 .mine{margin-top:14px;display:flex;justify-content:space-between;font-size:13.5px;padding:11px 14px;border-radius:12px;background:var(--navy-wash);color:var(--navy-deep)}
@@ -347,7 +352,7 @@ dialog[open]{animation:sheetIn .5s var(--out)}
   .btn-lg{padding:13px 20px;font-size:14.5px}
   .mech-top,.end,.rule,.form,.preview{padding:22px 18px}
   .seg button{padding:7px 12px}
-  dialog{margin:auto auto 0;width:100vw}
+  dialog,#walletDlg{margin:auto auto 0;width:100vw}
   .sheet{border-radius:26px 26px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0px))}
   .specs{grid-template-columns:1fr 1fr}
 }
@@ -726,7 +731,7 @@ a.row{color:inherit}
       </div>
       <nav aria-label="Footer"><a href="#/app">Terminal</a><a href="#/app/launch">Start a presale</a><a href="#/docs">Docs</a><a href="#faq">FAQ</a><button data-reset>Reset demo</button></nav>
     </div>
-    <div class="fine"><span>© 2026 Seed</span><span>Prototype. Wallet and presale data are simulated. No transactions are sent.</span></div>
+    <div class="fine"><span>© 2026 Seed</span><span>Prototype. Presale data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.</span></div>
   </div>
 </footer>
 </div>
@@ -748,7 +753,7 @@ a.row{color:inherit}
     <button class="themebtn" data-theme-toggle aria-label="Switch to light mode"><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     <button class="btn btn-ink" id="walletBtn" aria-haspopup="true" aria-expanded="false">Connect wallet</button>
     <div class="pop" id="walletPop" role="menu">
-      <h4>Demo wallet</h4>
+      <h4 id="walletName">Demo wallet</h4>
       <div id="walletBals"></div>
       <button id="disconnectBtn">Disconnect</button>
     </div>
@@ -834,7 +839,7 @@ a.row{color:inherit}
     </div>
   </section>
 </main>
-<div class="appfoot"><span>Prototype. Wallet and presale data are simulated. No transactions are sent.</span><button data-reset>Reset demo</button></div>
+<div class="appfoot"><span>Prototype. Presale data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.</span><button data-reset>Reset demo</button></div>
 </div>
 
 <!-- ######################################################################
@@ -1225,6 +1230,7 @@ a.row{color:inherit}
 </div>
 
 <dialog id="sheet" aria-label="Presale"><div class="sheet" id="sheetBody"></div></dialog>
+<dialog id="walletDlg" aria-label="Connect a wallet"><div class="sheet" id="walletDlgBody"></div></dialog>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script>
@@ -1250,14 +1256,22 @@ const ASSETS = {
   JUP:  { sym: 'JUP',  mint: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',  dp: 2, chips: [100, 500, 2500],  verified: true },
   BONK: { sym: 'BONK', mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', dp: 0, chips: [1e6, 5e6, 2.5e7], verified: true }
 };
-/* tokenized stocks (xStocks). Mints come from Meteora's approved list at integration time, so none are hard-coded here. */
-const STOCKS = { NVDAx: 'NVIDIA', AAPLx: 'Apple', TSLAx: 'Tesla', HOODx: 'Robinhood', COINx: 'Coinbase', MSFTx: 'Microsoft', SPYx: 'S&P 500 ETF', GOOGLx: 'Alphabet', AMZNx: 'Amazon', METAx: 'Meta' };
-Object.keys(STOCKS).forEach(k => ASSETS[k] = { sym: k, mint: '', dp: 3, chips: [0.5, 2, 10], verified: true, stock: STOCKS[k] });
+/* tokenized stocks (xStocks, Token-2022). Each mint is the one entry Jupiter lists as verified for that symbol, checked 2026-09-20.
+   Unverified copies of these symbols exist, so match on the mint, never the symbol. */
+const STOCKS = {
+  NVDAx: ['NVIDIA', 'Xsc9qvGR1efVDFGLrVsmkzv3qi45LTBjeUKSPmx9qEh'], AAPLx: ['Apple', 'XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp'],
+  TSLAx: ['Tesla', 'XsDoVfqeBukxuZHWhdvWHBhgEHjGNst4MLodqsJHzoB'], HOODx: ['Robinhood', 'XsvNBAYkrDRNhA7wPHQfX3ZUXZyZLdnCQDfHZ56bzpg'],
+  COINx: ['Coinbase', 'Xs7ZdzSHLU9ftNJsii5fCeJhoRWSC32SQGzGQtePxNu'], MSFTx: ['Microsoft', 'XspzcW1PRtgf6Wj92HCiZdjzKCyFekVD8P5Ueh3dRMX'],
+  SPYx: ['S&P 500 ETF', 'XsoCS1TfEyfFhfvj8EtZ528L3CaKBDBRqRapnBbDF2W'], GOOGLx: ['Alphabet', 'XsCPL9dNWBMvFtTmwcCA5v3xWPSMEBCszbQdiLLq6aN'],
+  AMZNx: ['Amazon', 'Xs3eBt7uRfJX8QUs4suhyU8p2M6DoUDrJyWBa8LLZsg'], METAx: ['Meta', 'Xsa62P5mvPszXL1krVUnU5ar38bBSVcWAB6fmPCo5Zu']
+};
+Object.keys(STOCKS).forEach(k => ASSETS[k] = { sym: k, mint: STOCKS[k][1], dp: 3, chips: [0.5, 2, 10], verified: true, stock: STOCKS[k][0] });
 const asset = k => ASSETS[k] || (state.custom && state.custom[k]) || { sym: k, mint: '', dp: 2, verified: false };
 const Q = p => asset(p.q);
 const chipsFor = p => Q(p).chips || [0.01, 0.05, 0.1].map(f => Number((p.target * f).toPrecision(2)));
 const quickFor = p => state.quick[p.q] != null ? state.quick[p.q] : Number((p.target * 0.01).toPrecision(2));
 const shortMint = m => m ? m.slice(0, 4) + '…' + m.slice(-4) : '';
+const B58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const SUPPLY = 1e9, A = 0.5, FEE = 0.01;          // supply, backer share, protocol fee
 const H = 3600e3, D = 24 * H, KEY = 'seed.v4';
 
@@ -1303,13 +1317,63 @@ function load() {
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
 
-/* ---- adapter (simulated). Swap these for wallet-adapter + Anchor client calls into the Seed program. */
+/* ---- chain reads (live). Keyless public RPCs, tried in order. They are rate limited, so calls are spaced and retried;
+   production wants a keyed endpoint with this domain allow-listed. api.mainnet-beta.solana.com refuses browser origins. */
+const RPCS = ['https://public.rpc.solanavibestation.com'];
+const JUP_SEARCH = 'https://lite-api.jup.ag/tokens/v2/search?query=';
+const TOKEN_PROGRAMS = ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'];
+async function rpc(method, params) {
+  let last;
+  for (const url of RPCS) for (let i = 0; i < 3; i++) {
+    try {
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) });
+      const j = await r.json();
+      if (!j.error) return j.result;
+      last = new Error(j.error.message || 'RPC error');
+      if (r.status !== 429 && j.error.code !== -32005) break;          // only a rate limit is worth retrying
+      await wait(800 * (i + 1));
+    } catch (e) { last = e; break; }
+  }
+  throw last || new Error('RPC unreachable');
+}
+/* balances for the assets Seed knows: native SOL plus token accounts under both token programs, matched by mint */
+async function chainBalances(owner) {
+  const byMint = {}, bal = {};
+  Object.keys(ASSETS).forEach(k => { if (k !== 'SOL' && ASSETS[k].mint) byMint[ASSETS[k].mint] = k; });
+  Object.keys(state.custom || {}).forEach(k => { if (state.custom[k].mint) byMint[state.custom[k].mint] = k; });
+  bal.SOL = (await rpc('getBalance', [owner])).value / 1e9;
+  for (const programId of TOKEN_PROGRAMS) {
+    const res = await rpc('getTokenAccountsByOwner', [owner, { programId }, { encoding: 'jsonParsed' }]);
+    for (const a of res.value) { const i = a.account.data.parsed.info, k = byMint[i.mint]; if (k) bal[k] = r6((bal[k] || 0) + Number(i.tokenAmount.uiAmountString)); }
+  }
+  return bal;
+}
+
+/* ---- wallets (live). Injected providers only; the demo wallet stays so every flow can be tried without funds. */
+const WALLETS = [
+  { id: 'phantom', name: 'Phantom', get: () => (window.phantom && window.phantom.solana && window.phantom.solana.isPhantom) ? window.phantom.solana : null },
+  { id: 'solflare', name: 'Solflare', get: () => (window.solflare && window.solflare.isSolflare) ? window.solflare : null },
+  { id: 'backpack', name: 'Backpack', get: () => (window.backpack && window.backpack.isBackpack) ? window.backpack : null }
+];
+const providerOf = id => { const w = WALLETS.find(x => x.id === id); return w ? w.get() : null; };
+const isReal = () => !!(state.wallet && state.wallet.pk);
+
+/* ---- adapter. connect() is live. The presale calls are still simulated and only run for the demo wallet: with a real
+   wallet they refuse rather than pretend, until there is a Seed program to call. */
+const NOT_LIVE = 'The Seed program is not deployed yet, so nothing was sent. Switch to the demo wallet to try this.';
+const sim = ms => async () => { if (isReal()) throw new Error(NOT_LIVE); await wait(ms); };
 const adapter = {
-  async connect() { await wait(450); return { addr: '7xKp…9fQa', bal: { SOL: 38, USDC: 2400, JUP: 1800, BONK: 25000000, NVDAx: 14 } }; },
-  async contribute(p, amt) { await wait(900); },
-  async claimRefund(p) { await wait(800); },
-  async claimTokens(p) { await wait(800); },
-  async openPresale(p) { await wait(1000); }
+  async connect(id) {
+    if (id === 'demo') { await wait(450); return { kind: 'demo', name: 'Demo wallet', addr: '7xKp…9fQa', bal: { SOL: 38, USDC: 2400, JUP: 1800, BONK: 25000000, NVDAx: 14 } }; }
+    const w = WALLETS.find(x => x.id === id), prov = w && w.get();
+    if (!prov) throw new Error(`${w ? w.name : 'That wallet'} is not available in this browser.`);
+    const r = await prov.connect(), pk = String((r && r.publicKey) || prov.publicKey || '');
+    if (!B58.test(pk)) throw new Error(`${w.name} did not return an address.`);
+    const wallet = { kind: id, name: w.name, pk, addr: shortMint(pk), bal: {}, stale: false };
+    try { wallet.bal = await chainBalances(pk); } catch (e) { wallet.stale = true; }
+    return wallet;
+  },
+  contribute: sim(900), claimRefund: sim(800), claimTokens: sim(800), openPresale: sim(1000)
 };
 
 /* ------------------------------------------------------------ formatting */
@@ -1396,7 +1460,7 @@ const FAQ = [
   ['What does Seed charge?', 'A 1% protocol fee on each buy. Pay 2 SOL and 1.98 SOL goes to the raise. The fee sits in the vault with the raise and is returned in full if the presale misses, so Seed only earns when a presale seeds. Opening a presale is free.'],
   ['What happens the moment it fills?', 'The presale ends early, even if the deadline is days away. The full raise goes into a Meteora DAMM v2 pool against the other half of the supply, and the liquidity is locked for good. From that point backers can claim their tokens.'],
   ['Who holds the money while a presale is open?', 'Meteora\u2019s Presale Vault program. The creator cannot touch it and neither can we. If the presale misses, only backers can withdraw. If it fills, the only permitted withdrawal is the one that opens and locks the pool.'],
-  ['Which wallets work?', 'Any Solana wallet, including Phantom, Solflare and Backpack.']
+  ['Which wallets work?', 'Phantom, Solflare and Backpack. Without one of them, a demo wallet with simulated funds lets you try every flow.']
 ];
 
 /* ============================================================= TERMINAL */
@@ -1481,7 +1545,7 @@ async function executeBuy(p, amt) {
   let pay = Math.min(amt, payLeft(p));
   if (!(pay > 0)) { toast(`Set an amount above zero to buy ${p.name}.`); return false; }
   if (pay > balOf(p.q)) { toast(balOf(p.q) > 0 ? `Your wallet holds ${fmtAmt(balOf(p.q), p.q)} ${C.sym}. Lower the amount to buy.` : `Your wallet holds no ${C.sym}. This presale only takes ${C.sym}.`); return false; }
-  busy = true; await adapter.contribute(p, pay); busy = false;
+  busy = true; try { await adapter.contribute(p, pay); } catch (e) { busy = false; toast(e.message); return false; } busy = false;
   if (p.status !== 'live') { toast(`${p.name} closed before your transaction landed. Nothing was taken.`); return false; }
   pay = Math.min(pay, payLeft(p));
   const net = Math.min(netOf(pay), leftOf(p));
@@ -1497,7 +1561,7 @@ async function executeBuy(p, amt) {
 }
 async function quickBuy(p, btn) {
   if (!p || busy) return;
-  if (!(await ensureWallet())) { toast('Wallet connected. Press quick buy again to send it.'); return; }
+  if (!(await ensureWallet())) { if (state.wallet) toast('Wallet connected. Press quick buy again to send it.'); return; }
   btn.disabled = true; btn.textContent = 'Confirm…';
   const ok = await executeBuy(p, quickFor(p));
   if (!ok) renderTerminal();
@@ -1507,8 +1571,10 @@ async function claim(p, btn) {
   if (!(await ensureWallet())) return;
   const C = Q(p), amt = state.positions[p.id];
   busy = true; btn.disabled = true; btn.textContent = 'Confirm in wallet…';
-  if (p.status === 'seeded') { await adapter.claimTokens(p); state.claimed[p.id] = 'tokens'; toast(`Claimed ${fmtTok(tokensFor(p, amt))} $${p.ticker}`); }
-  else { await adapter.claimRefund(p); state.wallet.bal[p.q] = r6(balOf(p.q) + amt); state.claimed[p.id] = 'refund'; toast(`Refund claimed: ${fmtAmt(amt, p.q)} ${C.sym} is back in your wallet`); }
+  try {
+    if (p.status === 'seeded') { await adapter.claimTokens(p); state.claimed[p.id] = 'tokens'; toast(`Claimed ${fmtTok(tokensFor(p, amt))} $${p.ticker}`); }
+    else { await adapter.claimRefund(p); state.wallet.bal[p.q] = r6(balOf(p.q) + amt); state.claimed[p.id] = 'refund'; toast(`Refund claimed: ${fmtAmt(amt, p.q)} ${C.sym} is back in your wallet`); }
+  } catch (e) { toast(e.message); }
   busy = false; save(); renderAll();
 }
 
@@ -1624,7 +1690,7 @@ function syncAmount(p) {
   const { amt, err, note, empty } = readAmount(p), C = Q(p);
   $('#getTok').textContent = amt ? fmtTok(tokensFor(p, amt)) : '0';
   $('#feeLine').innerHTML = amt ? `<b class="num">${fmtAmt(netOf(amt), p.q)}</b> ${esc(C.sym)} goes to the raise. <b class="num">${fmtAmt(feeOf(amt), p.q) === '0' ? feeOf(amt) : fmtAmt(feeOf(amt), p.q)}</b> ${esc(C.sym)} is the 1% protocol fee.` : '1% of each buy is the protocol fee. The rest goes to the raise.';
-  const e = $('#amtErr'); e.textContent = err || note || ''; e.style.color = err ? '' : 'var(--muted)';
+  const e = $('#amtErr'); e.textContent = err || note || (isReal() ? 'Buying is not live yet. The demo wallet runs the full flow.' : ''); e.style.color = err ? '' : 'var(--muted)';
   if (!state.wallet) { btn.disabled = false; btn.textContent = 'Connect wallet to buy'; return; }
   btn.disabled = !!err || !!empty || !amt;
   btn.textContent = amt && !err ? `Buy ${fmtC(amt, p.q)} ${C.sym} of ${p.name}` : `Buy ${p.name}`;
@@ -1635,23 +1701,88 @@ const walletAssets = () => state.wallet ? Object.keys(state.wallet.bal).filter(k
 const balRows = () => walletAssets().map(k => `<div class="bal"><span>${esc(asset(k).sym)}</span><span class="num">${fmtAmt(balOf(k), k)}</span></div>`).join('');
 function renderWallet() {
   const b = $('#walletBtn');
-  if (state.wallet) { b.innerHTML = `<span class="wdot"></span><span class="num" style="font-weight:500">${state.wallet.addr}</span>`; $('#walletBals').innerHTML = balRows(); }
+  if (state.wallet) {
+    b.innerHTML = `<span class="wdot"></span><span class="num" style="font-weight:500">${esc(state.wallet.addr)}</span>`;
+    $('#walletName').textContent = state.wallet.name || 'Demo wallet';
+    $('#walletBals').innerHTML = balRows() + (state.wallet.stale ? '<p class="where" style="margin-top:8px">Balances could not be loaded from Solana. Open this menu again to retry.</p>' : '');
+  }
   else b.textContent = 'Connect wallet';
   const n = Object.keys(state.positions).filter(id => !state.claimed[id]).length; $('#ctPos').textContent = n || '';
   syncOpenBtn(); seg.tabs && seg.tabs.place();
 }
-async function connect() {
-  const b = $('#walletBtn'); b.disabled = true; b.textContent = 'Connecting…';
-  state.wallet = await adapter.connect(); b.disabled = false; save(); renderAll(); toast('Demo wallet connected');
+/* positions are simulated, so they belong to the demo wallet: a real wallet starts with none and hands them back when it leaves */
+function enterReal() { if (!state.demoBook) { state.demoBook = { positions: state.positions, claimed: state.claimed }; state.positions = {}; state.claimed = {}; } }
+function leaveReal() { if (state.demoBook) { state.positions = state.demoBook.positions; state.claimed = state.demoBook.claimed; delete state.demoBook; } }
+function dropWallet(msg) { leaveReal(); state.wallet = null; save(); $('#walletPop').classList.remove('open'); renderAll(); if (detailBox) renderDetail(); if (msg) toast(msg); }
+let balAt = 0;
+async function refreshBalances(force) {
+  if (!isReal() || (!force && Date.now() - balAt < 20e3)) return;
+  balAt = Date.now(); const pk = state.wallet.pk; let bal = null;
+  try { bal = await chainBalances(pk); } catch (e) {}
+  if (!isReal() || state.wallet.pk !== pk) return;
+  if (bal) state.wallet.bal = bal; state.wallet.stale = !bal;
+  save(); renderWallet(); renderPortfolio(); const s = find(ui.sel); if (s) syncAmount(s);
 }
-$('#walletBtn').onclick = async e => { e.stopPropagation(); if (!state.wallet) return connect(); const o = $('#walletPop').classList.toggle('open'); $('#walletBtn').setAttribute('aria-expanded', o); };
-$('#disconnectBtn').onclick = () => { state.wallet = null; save(); $('#walletPop').classList.remove('open'); renderAll(); toast('Wallet disconnected'); };
+const watched = new WeakSet();
+function watch(prov) {
+  if (!prov || !prov.on || watched.has(prov)) return; watched.add(prov);
+  prov.on('disconnect', () => { if (isReal() && providerOf(state.wallet.kind) === prov) dropWallet('Wallet disconnected'); });
+  prov.on('accountChanged', k => {
+    if (!isReal() || providerOf(state.wallet.kind) !== prov) return;
+    if (!k) return dropWallet('Wallet disconnected');
+    state.wallet.pk = String(k); state.wallet.addr = shortMint(state.wallet.pk); state.wallet.bal = {}; save(); renderAll(); refreshBalances(true);
+  });
+}
+async function connectWith(id) {
+  const b = $('#walletBtn'); b.disabled = true; b.textContent = 'Connecting…';
+  try {
+    const w = await adapter.connect(id);
+    if (w.pk) { enterReal(); watch(providerOf(id)); balAt = Date.now(); } else leaveReal();
+    state.wallet = w; toast(w.stale ? `${w.name} connected. Balances could not be loaded.` : `${w.name} connected`);
+  } catch (e) { toast(e && e.code === 4001 ? 'Connection cancelled in the wallet.' : (e && e.message) || 'The wallet did not connect.'); }
+  b.disabled = false; save(); renderAll(); if (detailBox) renderDetail();
+}
+/* with no wallet extension there is nothing to choose, so the demo wallet connects in one click as before.
+   The pick connects directly: a dialog's close event is not delivered while the tab is in the background. */
+let choosing = null;
+function connect() {
+  const found = WALLETS.filter(w => w.get());
+  if (!found.length) return connectWith('demo');
+  if (choosing) return choosing;
+  return choosing = new Promise(done => {
+    const d = $('#walletDlg');
+    const finish = id => { d.onclick = d.oncancel = null; choosing = null; if (d.open) d.close(); (id ? connectWith(id) : Promise.resolve()).then(done); };
+    $('#walletDlgBody').innerHTML = `<div class="sh-head"><span class="nm"><b>Connect a wallet</b></span><button class="x" data-wx aria-label="Close">&times;</button></div>
+      <div class="wlist">${found.map(w => `<button data-w="${w.id}"><span>${w.name}</span><small>Detected</small></button>`).join('')}<button data-w="demo"><span>Demo wallet</span><small>Simulated funds</small></button></div>
+      <p class="where" style="margin-top:14px">A real wallet is only read for its address and balances. Buying, claiming and opening are not live yet and run on the demo wallet.</p>`;
+    d.onclick = e => { const b = e.target.closest('[data-w]'); if (b) finish(b.dataset.w); else if (e.target === d || e.target.closest('[data-wx]')) finish(); };
+    d.oncancel = () => finish();
+    d.showModal();
+  });
+}
+/* a saved session is not a connection. On load it is dropped before first paint, and only comes back if the wallet itself
+   confirms that it still trusts this site. The silent reconnect can hang without settling, so it gets four seconds. */
+async function resume() {
+  if (!isReal()) return;
+  const was = state.wallet, prov = providerOf(was.kind);
+  dropWallet();
+  if (!prov) return;
+  try {
+    const r = await Promise.race([prov.connect({ onlyIfTrusted: true }), wait(4000).then(() => { throw 0; })]);
+    const pk = String((r && r.publicKey) || prov.publicKey || '');
+    if (!B58.test(pk) || state.wallet) return;
+    enterReal(); watch(prov);
+    state.wallet = { kind: was.kind, name: was.name, pk, addr: shortMint(pk), bal: pk === was.pk ? was.bal : {}, stale: false };
+    save(); renderAll(); if (detailBox) renderDetail(); refreshBalances(true);
+  } catch (e) {}
+}
+$('#walletBtn').onclick = async e => { e.stopPropagation(); if (!state.wallet) return connect(); const o = $('#walletPop').classList.toggle('open'); $('#walletBtn').setAttribute('aria-expanded', o); if (o) refreshBalances(); };
+$('#disconnectBtn').onclick = () => { if (isReal()) { const prov = providerOf(state.wallet.kind); try { prov && prov.disconnect && prov.disconnect(); } catch (x) {} } dropWallet('Wallet disconnected'); };
 document.addEventListener('click', e => { if (!e.target.closest('#walletPop')) $('#walletPop').classList.remove('open'); if (!e.target.closest('#menuBtn')) { $('#mobnav').classList.remove('open'); $('#menuBtn').setAttribute('aria-expanded', false); } });
 $('#menuBtn').onclick = e => { e.stopPropagation(); const o = $('#mobnav').classList.toggle('open'); $('#menuBtn').setAttribute('aria-expanded', o); };
 
 /* ---------------------------------------------------------------- launch */
 const draft = { pair: 'SOL', stock: 'NVDAx', hours: 72 };
-const B58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 /* resolve the pair asset from the form: a known key, or a custom mint (flagged unverified) */
 function draftAsset() {
   if (draft.pair === 'stock') return { key: draft.stock, a: ASSETS[draft.stock] };
@@ -1661,8 +1792,31 @@ function draftAsset() {
   if (!B58.test(mint)) return { key: null, err: 'That is not a valid Solana mint address. It should be 32 to 44 base58 characters.' };
   const known = Object.keys(ASSETS).find(k => ASSETS[k].mint === mint);
   if (known) return { key: known, a: ASSETS[known] };
-  const key = 'm_' + mint.slice(0, 10);
-  return { key, a: { sym: mint.slice(0, 4).toUpperCase(), mint, dp: 2, verified: false }, custom: true };
+  lookupMint(mint); const i = mintInfo[mint], key = 'm_' + mint.slice(0, 10);
+  if (i.s === 'wait') return { key: null, wait: true, err: 'Still checking that mint on Solana. Try again in a moment.' };
+  if (i.s === 'bad') return { key: null, bad: true, err: 'That address is not an SPL token mint. Paste the mint, not a wallet or a token account.' };
+  return { key, a: { sym: i.sym || mint.slice(0, 4).toUpperCase(), name: i.name, mint, dp: 2, decimals: i.decimals, verified: !!i.verified }, custom: true, off: i.s === 'off' };
+}
+/* a pasted mint is checked on chain (is it a mint, under which token program) and against Jupiter's list (symbol, verified).
+   s: wait | ok | bad (not a mint) | off (Solana unreachable: listed as unverified rather than blocked) */
+const mintInfo = {}; let mintTimer, mintPending;
+function lookupMint(mint) {
+  if (mintInfo[mint]) return;
+  if (mintPending && mintInfo[mintPending] && mintInfo[mintPending].s === 'wait') delete mintInfo[mintPending];
+  clearTimeout(mintTimer); mintPending = mint; mintInfo[mint] = { s: 'wait' };
+  mintTimer = setTimeout(async () => {
+    let info;
+    try {
+      const v = (await rpc('getAccountInfo', [mint, { encoding: 'jsonParsed' }])).value, parsed = v && v.data && v.data.parsed;
+      if (!v || !TOKEN_PROGRAMS.includes(v.owner) || !parsed || parsed.type !== 'mint') info = { s: 'bad' };
+      else {
+        let t = null; try { t = (await (await fetch(JUP_SEARCH + encodeURIComponent(mint))).json()).find(x => x.id === mint) || null; } catch (e) {}
+        info = { s: 'ok', decimals: parsed.info.decimals, sym: t && t.symbol ? String(t.symbol).slice(0, 10) : '', name: t && t.name ? String(t.name).slice(0, 40) : '', verified: !!(t && t.isVerified) };
+      }
+    } catch (e) { info = { s: 'off' }; }
+    if (mintInfo[mint]) mintInfo[mint] = info;
+    if ($('#fMint').value.trim() === mint) renderPreview();
+  }, 350);
 }
 const readDraft = () => ({ name: $('#fName').value.trim(), ticker: $('#fTicker').value.trim().toUpperCase(), idea: $('#fIdea').value.trim(), hours: draft.hours, target: parseFloat(($('#fTarget').value || '').replace(/,/g, '')) });
 function validateDraft(d, da) {
@@ -1681,7 +1835,10 @@ function renderPreview() {
   const p = { name: d.name || 'Your project', ticker: d.ticker || 'TICKER' };
   $('#mintRow').hidden = draft.pair !== 'any'; $('#stockRow').hidden = draft.pair !== 'stock';
   $$('#stockRow [data-stock]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.stock === draft.stock)));
-  $('#mintInfo').textContent = draft.pair !== 'any' ? '' : da.err ? '' : da.custom ? 'Unverified mint. Backers will see a warning.' : `Recognised as ${C.sym}`;
+  $('#mintInfo').textContent = draft.pair !== 'any' ? '' : da.wait ? 'Checking on Solana…' : da.bad ? 'Not a token mint.' : da.err ? '' : !da.custom ? `Recognised as ${C.sym}`
+    : da.off ? 'Solana could not be reached to check this mint. It will be listed as unverified.'
+    : C.verified ? `${C.name || C.sym} (${C.sym}), verified on Jupiter`
+    : `A real SPL mint${da.a.name ? `, ${da.a.name}` : ''}, but not on Jupiter's verified list. Backers will see a warning.`;
   $('#fCur').textContent = C.sym; $('#ideaCt').textContent = `${$('#fIdea').value.length} / 80`;
   $('#fTarget').placeholder = { SOL: '200', USDC: '50000' }[da.key] || (C.stock ? '300' : '100000');
   $('#pvCard').innerHTML = `<div class="c-proj">${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div>
@@ -1706,7 +1863,8 @@ $('#openBtn').onclick = async () => {
   const id = d.ticker.toLowerCase() + '-' + Date.now().toString(36), now = Date.now();
   if (da.custom) state.custom[da.key] = da.a;
   const p = { id, name: d.name, ticker: d.ticker, idea: d.idea, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, contract: addr(id), mine: true, hist: [[now, 0]], acts: [] };
-  await adapter.openPresale(p); busy = false; b.disabled = false;
+  try { await adapter.openPresale(p); } catch (e) { busy = false; b.disabled = false; syncOpenBtn(); $('#fErr').textContent = e.message; if (da.custom && !state.presales.some(x => x.q === da.key)) delete state.custom[da.key]; return; }
+  busy = false; b.disabled = false;
   state.presales.unshift(p); save();
   ['#fName', '#fTicker', '#fIdea', '#fTarget', '#fMint'].forEach(s => $(s).value = ''); renderPreview();
   ui.fStatus = 'live'; ui.fAsset = 'all'; ui.q = ''; $('#q').value = ''; seg.status.set('live'); seg.assetF.set('all'); ui.sel = id;
@@ -1858,7 +2016,7 @@ function boot() {
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();
   let wide = isWide(); addEventListener('resize', () => { if (isWide() !== wide) { wide = isWide(); if (ui.view === 'app') renderTerminal(); } });
-  initDocs(); renderPreview(); syncMech(); tick(true); renderAll(); route();
+  initDocs(); renderPreview(); syncMech(); tick(true); renderAll(); route(); resume();
   setInterval(() => tick(), 1000); setInterval(simulate, 3600);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeSegs);
 }
