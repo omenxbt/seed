@@ -1,12 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="dark light">
-<meta name="theme-color" content="#0A1E4F">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#F3F7FD">
 <title>Seed: presales that seed or refund</title>
-<script>try{if(localStorage.getItem('seed.theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}</script>
 <link rel="preload" as="image" href="sky.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,9 +13,9 @@
 <style>
 /* ------------------------------------------------------------------ tokens */
 :root{
-  /* dark (default), sky glass: every page sits on sky photos, so surfaces are frosted white glass over them and the ink is dark.
+  /* sky glass, the one theme: every page sits on sky photos, so surfaces are frosted white glass over them and the ink is dark.
      Fills and accents are pariter.xyz's blue (#2E63E7, hover #2554C7). Surfaces stack whiter as they come forward: panel, well, card.
-     --paper is the well and --ink the text in both themes. */
+     --paper is the well, --ink the text. */
   color-scheme:light;
   /* the landing page's ground: each stop is the centre-column colour of sky.jpg at the row that lands there, so the photo's blue is already
      underneath it when it dissolves and only the clouds fade. Below the hero it drifts toward periwinkle at a fixed rate. */
@@ -51,23 +50,6 @@
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
-/* light: the original Seed palette */
-:root[data-theme="light"]{
-  color-scheme:light;
-  --ground:none; --ground-app:none; --ground-docs:none;
-  --page:#ffffff; --paper:#ffffff; --card:#fff; --raised:#fff; --chip:#fff; --mist:#F5F7FC; --hover:rgba(232,236,247,.45);
-  --panel:rgba(255,255,255,.9); --panel-solid:rgba(255,255,255,.94); --bar:rgba(255,255,255,.84);
-  --panel-line:rgba(61,75,124,.16); --panel-shadow:none; --frost:blur(10px);
-  --veil:rgba(255,255,255,.92); --fade:rgba(255,255,255,0); --scrim:rgba(19,26,46,.34);
-  --ink:#131A2E; --ink-2:#2A3454; --muted:#5F6883; --faint:#98A0B8;
-  --navy:#5668A0; --navy-deep:#3D4B7C; --navy-soft:#A8B3D6; --navy-wash:#E8ECF7;
-  --solid:#131A2E; --solid-hover:#2A3454; --accent:#3D4B7C; --accent-hover:#344170;
-  --hair:rgba(61,75,124,.16); --hair-2:rgba(61,75,124,.30); --ring:rgba(86,104,160,.14); --err:#9B3D4E;
-  --glass:rgba(255,255,255,.62); --glass-line:rgba(255,255,255,.85);
-  --warn:#B9853B; --warn-line:rgba(185,133,59,.45); --warn-bg:#FBF4E6; --warn-ink:#8A5A17; --warn-ink-2:#6B4A1A; --warn-strong:#5A3C10;
-  --lift:0 8px 30px -12px rgba(40,55,110,.28);
-  --sh-ind:rgba(40,55,110,.28); --sh-pop:rgba(30,45,100,.35); --sh-sheet:rgba(25,38,90,.5); --sh-toast:rgba(19,26,46,.6);
-}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 /* no native scrollbars, on the page or on any panel. Everything still scrolls by wheel, touch and keyboard. */
 *{scrollbar-width:none}
@@ -78,7 +60,7 @@ body{background:var(--page);color:var(--ink);font-family:var(--sans);font-size:1
 button,input{font:inherit;color:inherit;letter-spacing:inherit}
 button{cursor:pointer;background:none;border:0}
 a{color:inherit;text-decoration:none}
-:root[data-theme="dark"] ::selection{background:var(--solid);color:#fff}
+::selection{background:var(--solid);color:#fff}
 :focus-visible{outline:2px solid var(--navy);outline-offset:3px;border-radius:6px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
 .wrap{width:100%;max-width:1160px;margin:0 auto;padding:0 24px}
@@ -115,12 +97,6 @@ main{position:relative;z-index:1}
 .wdot{width:7px;height:7px;border-radius:50%;background:#7FC8A9;box-shadow:0 0 0 3px rgba(127,200,169,.25)}
 .menubtn{display:none;width:42px;height:42px;border-radius:50%;place-items:center}
 .menubtn svg{width:18px;height:18px;stroke:var(--ink);stroke-width:1.8;fill:none;stroke-linecap:round}
-.themebtn{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;color:var(--ink-2);transition:color .2s,background .25s}
-.themebtn:hover{color:var(--ink)}
-.themebtn svg{width:17px;height:17px;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.appbar .themebtn{width:37px;height:37px;border:1px solid var(--hair)}
-.appbar .themebtn:hover{background:var(--mist)}
-:root[data-theme="light"] .themebtn .sun,:root:not([data-theme="light"]) .themebtn .moon{display:none}
 .pop{position:absolute;right:0;top:calc(100% + 10px);width:264px;border-radius:18px;padding:16px;background:var(--card);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);border:1px solid var(--hair);box-shadow:0 24px 60px -20px var(--sh-pop);display:none}
 .pop.open{display:block}
 .pop h4{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px}
@@ -167,8 +143,8 @@ h1 .l2{display:block;font-weight:600;font-size:clamp(36px,5.7vw,76px);letter-spa
 /* ---------------------------------------------------------------- sections */
 h2{font-weight:600;font-size:clamp(30px,4.3vw,50px);line-height:1.04;letter-spacing:-.045em}
 h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;line-height:1}
-/* in dark the nav passes over navy cards as well as sky, so the wordmark gets the same glass the pills have */
-:root[data-theme="dark"] .nav .brand{margin-left:-6px;padding:7px 14px 7px 10px;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--glass-line);box-shadow:var(--lift)}
+/* the landing nav floats over sky, glass and globe alike, so the wordmark gets the same glass the pills have */
+.nav .brand{margin-left:-6px;padding:7px 14px 7px 10px;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--glass-line);box-shadow:var(--lift)}
 .panel{position:relative;border:1px solid var(--panel-line);border-radius:22px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);box-shadow:var(--panel-shadow)}
 
 /* segmented control (sliding ink indicator) */
@@ -339,7 +315,7 @@ dialog[open]{animation:sheetIn .5s var(--out)}
   .wrap{padding:0 16px}
   .nav{padding-left:14px;padding-right:14px}
   .navright{gap:8px}
-  .nav .themebtn,.menubtn{width:38px;height:38px}
+  .menubtn{width:38px;height:38px}
   .btn{padding:10px 16px;font-size:13.5px}
   .btn-lg{padding:13px 20px;font-size:14.5px}
   .form,.preview,.ppage{padding:22px 18px}
@@ -376,6 +352,8 @@ a.row{color:inherit}
 .textlink{font-size:14px;font-weight:500;color:var(--muted)}
 .textlink:hover{color:var(--ink)}
 .appmain{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:24px 22px 40px}
+/* the board splits the whole window into its three columns; the app's other pages keep a readable measure */
+#view-app.wide .appmain,#view-app.wide .appfoot{max-width:none}
 .apphead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin:10px 0 20px}
 .apphead h1{font-weight:600;font-size:clamp(26px,3vw,36px);letter-spacing:-.045em;line-height:1.05}
 .apphead h1 i{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;margin-right:.18em}
@@ -654,7 +632,6 @@ a.row{color:inherit}
     <a href="#/docs" aria-label="Docs" title="Docs"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8.5L19 8v12.5H6z"/><path d="M14 3.5V8.5h5M9 12.5h7M9 16h7"/></svg></a>
   </nav>
   <div class="navright">
-    <button class="themebtn glass" data-theme-toggle aria-label="Switch to light mode"><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     <a class="btn btn-ink" href="#/app" target="_blank" rel="noopener">Launch App</a>
     <button class="menubtn glass" id="menuBtn" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/></svg></button>
   </div>
@@ -718,7 +695,6 @@ a.row{color:inherit}
   </div>
   <div class="right">
     <a class="textlink" href="#/docs">Docs</a>
-    <button class="themebtn" data-theme-toggle aria-label="Switch to light mode"><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
     <button class="btn btn-ink" id="walletBtn" aria-haspopup="true" aria-expanded="false">Connect wallet</button>
     <div class="pop" id="walletPop" role="menu">
       <h4 id="walletName">Demo wallet</h4>
@@ -813,7 +789,7 @@ a.row{color:inherit}
 <header class="appbar">
   <a href="#" class="brand" aria-label="Seed home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.00" cy="12.00" r="1.55"/><circle cx="9.97" cy="13.86" r="1.49"/><circle cx="12.34" cy="8.13" r="1.43"/><circle cx="14.90" cy="15.78" r="1.37"/><circle cx="6.58" cy="11.04" r="1.31"/><circle cx="17.19" cy="8.70" r="1.25"/><circle cx="10.25" cy="18.51" r="1.19"/><circle cx="8.65" cy="5.54" r="1.13"/><circle cx="19.31" cy="14.67" r="1.07"/><circle cx="4.37" cy="15.15" r="1.01"/><circle cx="15.69" cy="4.12" r="0.95"/><circle cx="14.73" cy="20.70" r="0.89"/><circle cx="3.76" cy="7.22" r="0.83"/></svg>Seed <small>docs</small></a>
   <span></span>
-  <div class="right"><a class="textlink" href="#">Home</a><button class="themebtn" data-theme-toggle aria-label="Switch to light mode"><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button><a class="btn btn-ink" href="#/app" target="_blank" rel="noopener">Launch App</a></div>
+  <div class="right"><a class="textlink" href="#">Home</a><a class="btn btn-ink" href="#/app" target="_blank" rel="noopener">Launch App</a></div>
 </header>
 <div class="docs">
   <nav class="toc" id="toc" aria-label="Docs sections"></nav>
@@ -1895,6 +1871,7 @@ function route() {
   document.title = pg ? `${pg.name} ($${pg.ticker}) presale on Seed` : view === 'app' ? 'Seed app: terminal, launch, portfolio' : view === 'docs' ? 'Seed docs: how it works, with the math' : 'Seed: presales that seed or refund';
   if (view === 'app') {
     ['terminal', 'launch', 'portfolio', 'presale'].forEach(t => $('#tab-' + t).hidden = t !== ui.tab); seg.tabs.set(ui.tab === 'presale' ? 'terminal' : ui.tab);
+    $('#view-app').classList.toggle('wide', ui.tab === 'terminal');
     renderAll(); if (changed || prevTab !== ui.tab) scrollTo(0, 0);
   } else if (view === 'docs') {
     if (sec && $('#d-' + sec)) $('#d-' + sec).scrollIntoView(); else if (changed) scrollTo(0, 0);
@@ -1995,18 +1972,15 @@ const COARSE = matchMedia('(pointer: coarse)').matches;
 const pointer = { x: -9999, y: -9999, last: 0, seen: false };
 addEventListener('pointermove', e => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.last = performance.now(); pointer.seen = true; kick(); }, { passive: true });
 
-// canvas colours (the stylesheet tokens cover everything else). The flow field is tinted for what is under it: white in light, otherwise
-// the view's sky. The globe sits on the hero sky, which is bright in both themes, so it has one palette: ink dots on a translucent
-// disc that lets the clouds read through.
+// canvas colours (the stylesheet tokens cover everything else). The flow field is tinted for the sky under it, which depends on the
+// view. The globe sits on the hero's blue sky: ink dots on a translucent disc that lets the clouds read through.
 const CANVAS = {
   ground: { field: ['46,99,231', 0.06, 0.4] },   // landing page, blue sky: deep blue dots
   dusk: { field: ['140,72,128', 0.06, 0.36] },   // the app, sunset: plum dots
   docs: { field: ['78,84,176', 0.06, 0.36] },    // the docs run from one sky to the other: a violet that reads on both
-  light: { field: ['86,104,160', 0.1, 0.62] },
   sky: { disc: 'rgba(255,255,255,.5)', halo: '255,255,255', rim: 'rgba(61,75,124,.2)', land: ['19,26,46', 0.10, 0.30], sea: ['19,26,46', 0.035, 0.085], pulse: '61,75,124', rSea: 'rgba(168,179,214,.55)', rLand: 'rgba(61,75,124,.92)', rRing: 'rgba(86,104,160,.32)' }
 };
-const themeNow = () => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
-const tintNow = () => (themeNow() === 'light' ? CANVAS.light : ui.view === 'app' ? CANVAS.dusk : ui.view === 'docs' ? CANVAS.docs : CANVAS.ground).field;
+const tintNow = () => (ui.view === 'app' ? CANVAS.dusk : ui.view === 'docs' ? CANVAS.docs : CANVAS.ground).field;
 
 class FlowField {
   constructor(canvas, o) {
@@ -2102,7 +2076,7 @@ class SeedSphere {
     return 0.66 * n1 + 0.34 * n2;
   }
   frame(t, f, now) {
-    const { ctx, rctx, w, h, R, cx, cy, P, N, land } = this, rect = this.hero.getBoundingClientRect(), pal = CANVAS.sky;   // the hero is sky in both themes
+    const { ctx, rctx, w, h, R, cx, cy, P, N, land } = this, rect = this.hero.getBoundingClientRect(), pal = CANVAS.sky;
     this.frameN++;
     // --- spotlight: exact lerp 0.1, plus a slower echo and an idle wander
     const idle = COARSE || !pointer.seen || now - pointer.last > 3500;
@@ -2198,24 +2172,16 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
 document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else kick(); });
 kick();
 window.bgRefresh = () => { sphere.resize(); field.resize(); kick(); };
-// theme: dark unless the visitor chose light; the <head> script applies a stored choice before first paint
-/* what depends on the theme and the view together: the dot tints and the browser's own chrome colour */
+/* what depends on the view: the dot field's tint and the browser's own chrome colour */
 function syncChrome() {
-  field.tint(...tintNow());
-  $('meta[name="theme-color"]').content = themeNow() === 'light' ? '#ffffff' : ui.view === 'app' ? '#A9A6CE' : '#F3F7FD';
+  field.tint(...tintNow()); kick();
+  $('meta[name="theme-color"]').content = ui.view === 'app' ? '#A9A6CE' : '#F3F7FD';
 }
-function applyTheme(t) {
-  document.documentElement.dataset.theme = t; syncChrome();
-  $$('[data-theme-toggle]').forEach(b => b.setAttribute('aria-label', `Switch to ${t === 'light' ? 'dark' : 'light'} mode`));
-  kick();
-}
-document.addEventListener('click', e => { if (!e.target.closest('[data-theme-toggle]')) return; const t = themeNow() === 'light' ? 'dark' : 'light'; try { localStorage.setItem('seed.theme', t); } catch (x) {} applyTheme(t); });
-applyTheme(themeNow());
+syncChrome();
 /* presale pages open in their own tab, so several copies of the app can be running. Each holds the state in memory and saves all of it,
    which would let a stale tab overwrite a buy made in another. So a tab takes on whatever another tab saves. If you are mid-amount,
    the page is patched rather than rebuilt so the field keeps its focus and what you typed. */
 addEventListener('storage', e => {
-  if (e.key === 'seed.theme') return applyTheme(e.newValue === 'light' ? 'light' : 'dark');
   if (e.key !== KEY || busy) return;
   const typing = document.activeElement && document.activeElement.id === 'amtIn';
   load();
