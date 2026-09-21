@@ -219,7 +219,18 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .bar{flex:1;height:6px;border-radius:999px;background:var(--navy-wash);overflow:hidden;container-type:inline-size}
 /* the fill is a window onto a scale as wide as the whole track (100cqw), not a scale squeezed into the fill, so the colour at its
    tip says how far along the raise is: a third is still red, two thirds is yellow-green, a seeded bar ends in green */
-.bar i{display:block;height:100%;border-radius:999px;background:var(--progress) left/100% 100% no-repeat;background-size:100cqw 100%;transition:width .8s var(--out)}
+.bar i{position:relative;overflow:hidden;display:block;height:100%;border-radius:999px;background:var(--progress) left/100% 100% no-repeat;background-size:100cqw 100%;transition:width .8s var(--out)}
+/* three motions. A bar sweeps in from empty the first time its row appears (.fresh, staggered by --i; the landing list holds the sweep
+   until it scrolls into view). A live raise carries a slow sheen. A buy landing ticks the row: a quick sheen and the percentage pops. */
+.fresh .bar i{animation:barIn 1.2s var(--out) both;animation-delay:calc(var(--i,0)*70ms)}
+#rows:not(.seen) .fresh .bar i{animation-play-state:paused}
+@keyframes barIn{from{width:0}}
+.live .bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);transform:translateX(-100%);animation:sheen 3.2s ease-in-out infinite;animation-delay:calc(var(--i,0)*.4s)}
+@keyframes sheen{0%,55%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+.bump .bar i::after{animation:tick .9s ease-out 1}
+@keyframes tick{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.bump .pct{animation:pctPop .7s var(--out)}
+@keyframes pctPop{30%{transform:scale(1.22);color:var(--navy-deep)}}
 .refunding .bar i{background:repeating-linear-gradient(135deg,var(--navy-soft) 0 4px,transparent 4px 7px)}
 .pct{font-size:12.5px;color:var(--ink-2);width:38px;text-align:right}
 .c-raised,.c-time{text-align:right;font-size:13px}
@@ -419,6 +430,7 @@ dialog[open]{animation:sheetIn .5s var(--out)}
 @media (prefers-reduced-motion:reduce){
   .reveal,#sphere-base,dialog[open],.toast{animation-duration:.01s;animation-delay:0s}
   .pulse::after{animation:none}
+  .fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct{animation:none}
 }
 
 /* ================================================================== views */
@@ -474,8 +486,7 @@ a.row{color:inherit}
 
 /* terminal grid */
 .tgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
-@media (min-width:1100px){.tgrid{grid-template-columns:minmax(0,1fr) 408px}}
-.tcols,.trow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.25fr) minmax(0,1.3fr) minmax(0,1fr) 98px 132px;gap:14px;align-items:center;padding:0 18px}
+.tcols,.trow{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1.9fr) minmax(0,1.2fr) minmax(0,1fr) 110px 140px;gap:18px;align-items:center;padding:0 22px}
 .tcols{padding-top:10px;padding-bottom:10px;border-bottom:1px solid var(--hair);font-size:12px;color:var(--faint);font-weight:500}
 .tcols span:nth-child(n+3){text-align:right}
 .trow{position:relative;padding-top:12px;padding-bottom:12px;border-bottom:1px solid var(--hair);transition:background .2s}
@@ -497,19 +508,22 @@ a.row{color:inherit}
 .qb:active{transform:translateY(1px)}
 .qb[disabled]{opacity:.5;cursor:wait}
 .qb .num{font-weight:500}
-@media (max-width:1359px){.tcols,.trow{grid-template-columns:minmax(0,2fr) minmax(0,1.25fr) minmax(0,1.3fr) 98px 132px}.c-pace{display:none}}
+@media (max-width:1099px){.tcols,.trow{grid-template-columns:minmax(0,2fr) minmax(0,1.25fr) minmax(0,1.3fr) 98px 132px}.c-pace{display:none}}
 
-/* detail panel */
-.detail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 80px);max-height:calc(100dvh - 100px);overflow:auto;padding:22px;border-radius:22px}
-.detail .sh-head .nm b{font-size:19px}
-.detail .x{display:none}
-.detail .idea{font-size:19px;margin-top:14px}
-.detail .btn-block{margin-top:18px}
-.detail .specs{grid-template-columns:1fr;gap:0;padding-top:6px}
-.detail .specs div{display:flex;justify-content:space-between;gap:16px;padding:7px 0;align-items:baseline}
-.detail .specs dd{margin-top:0;text-align:right}
+/* presale details: one sheet at every width. Stacked on a phone; on a wide screen the raise sits on the left (readout, chart, recent
+   buys) and the buy on the right (amount, terms, facts), so everything is in view without scrolling a narrow column. */
+@media (min-width:900px){
+  #sheet{width:min(1000px,calc(100vw - 48px))}
+  #sheet .sheet{padding:30px 32px}
+  .dcols{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:0 36px;align-items:start}
+  .dcols .d-buy{grid-column:2;grid-row:1 / span 2}
+  .dcols .d-buy>:first-child{margin-top:20px}
+  .dcols .d-acts{grid-column:1}
+  #sheet .specs{grid-template-columns:1fr;gap:0;padding-top:6px}
+  #sheet .specs div{display:flex;justify-content:space-between;gap:16px;padding:7px 0;align-items:baseline}
+  #sheet .specs dd{margin-top:0;text-align:right}
+}
 .dlinks{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}.dlinks .ca{margin-top:0}
-.dempty{padding:60px 20px;text-align:center;color:var(--muted);font-size:14.5px}
 .chart{margin-top:14px;border:1px solid var(--hair);position:relative;background:var(--paper);padding:12px 12px 6px}
 .chart svg{display:block;width:100%;height:auto;overflow:visible}
 .chart .legend{display:flex;gap:16px;font-size:11.5px;color:var(--muted);margin-bottom:6px;flex-wrap:wrap}
@@ -594,7 +608,6 @@ a.row{color:inherit}
 
 /* ============================================================ responsive */
 @media (max-width:1099px){
-  .detail{display:none}
   .two{grid-template-columns:1fr}
 }
 @media (max-width:900px){
@@ -852,7 +865,6 @@ a.row{color:inherit}
         <div id="trows"></div>
         <div class="panel-foot" id="tryHint" hidden></div>
       </div>
-      <aside class="panel detail" id="detail" aria-label="Selected presale"></aside>
     </div>
   </section>
 
@@ -1500,11 +1512,16 @@ function initSeg(el, onChange) {
 const placeSegs = () => Object.values(seg).forEach(s => s.place());
 
 /* ================================================================= HOME */
+/* bars sweep in only for rows that were not already on screen, so a buy or a re-sort does not replay every bar */
+const shown = { home: new Set(), term: new Set() };
+function freshIn(k, list) { const prev = shown[k]; shown[k] = new Set(list.map(p => p.id)); return p => prev.has(p.id) ? '' : ' fresh'; }
 function renderHome() {
   const live = state.presales.filter(p => p.status === 'live').sort((a, b) => pctOf(b) - pctOf(a));
   $('#liveCount').textContent = live.length === 1 ? '1 presale live' : `${live.length} presales live`;
   $('#heroLive').textContent = live.length ? `${live.length} presale${live.length === 1 ? '' : 's'} live on Solana` : 'No presales live right now';
-  $('#rows').innerHTML = live.length ? live.map(p => `<a class="row live" href="#/app/terminal/${p.id}" data-row="${p.id}">
+  if (!$('#rows').classList.contains('seen')) shown.home = new Set();   // not looked at yet, so every row is still new
+  const fresh = freshIn('home', live);
+  $('#rows').innerHTML = live.length ? live.map((p, i) => `<a class="row live${fresh(p)}" style="--i:${i}" href="#/app/terminal/${p.id}" data-row="${p.id}">
       <span class="c-proj">${projCell(p)}</span>${progCell(p)}
       <span class="c-raised num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
       <span class="c-time num" data-time>${timeCell(p)}</span>
@@ -1529,7 +1546,6 @@ const FAQ = [
 ];
 
 /* ============================================================= TERMINAL */
-const isWide = () => matchMedia('(min-width:1100px)').matches;
 function visible() {
   const q = ui.q.trim().toLowerCase();
   const l = state.presales.filter(p => (ui.fStatus === 'all' || p.status === ui.fStatus) && (ui.fAsset === 'all' || (ui.fAsset === 'stock' ? !!Q(p).stock : ui.fAsset === 'other' ? p.q !== 'SOL' && p.q !== 'USDC' && !Q(p).stock : p.q === ui.fAsset)) && (!q || (p.name + ' ' + p.ticker).toLowerCase().includes(q)));
@@ -1557,10 +1573,9 @@ function renderStats() {
     <div class="stat"><dt>Next deadline</dt><dd>${soon ? `<span data-next="${soon.id}">${fmtLeft(soon.endsAt - Date.now())}</span><small>${esc(soon.name)}</small>` : 'None'}</dd></div>`;
 }
 function renderTerminal() {
-  const l = visible();
-  if (isWide() && (!ui.sel || !find(ui.sel))) ui.sel = (l[0] || state.presales[0] || {}).id || null;
-  $('#trows').innerHTML = l.length ? l.map(p => `<div class="trow ${p.status}${ui.sel === p.id ? ' sel' : ''}" data-row="${p.id}">
-      <button class="pick" data-pick="${p.id}" aria-label="Select ${esc(p.name)}, ${Math.floor(pctOf(p) + 1e-7)} percent filled">${projCell(p)}</button>${progCell(p)}
+  const l = visible(), fresh = freshIn('term', l);
+  $('#trows').innerHTML = l.length ? l.map((p, i) => `<div class="trow ${p.status}${ui.sel === p.id ? ' sel' : ''}${fresh(p)}" style="--i:${i}" data-row="${p.id}">
+      <button class="pick" data-pick="${p.id}" aria-label="Open ${esc(p.name)}, ${Math.floor(pctOf(p) + 1e-7)} percent filled">${projCell(p)}</button>${progCell(p)}
       <span class="t-r num c-raisedT"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
       <span class="t-r num c-pace" data-pace>${paceTxt(p)}</span>
       <span class="t-r num c-timeT" data-time>${timeCell(p)}</span>
@@ -1570,11 +1585,12 @@ function renderTerminal() {
   hint.hidden = !show; if (show) hint.textContent = 'To see both endings: fill the rest of Osprey and it seeds on the spot. Buy Moss and its deadline passes in about three minutes.';
   renderStats(); renderDetail();
 }
+function bump(row) { row.classList.remove('bump'); void row.offsetWidth; row.classList.add('bump'); setTimeout(() => row.classList.remove('bump'), 950); }
 function patchRows(p) {
   const pc = pctOf(p);
   $$(`[data-row="${p.id}"]`).forEach(row => {
     const s = (k, fn) => { const e = $(k, row); if (e) fn(e); };
-    s('[data-bar]', e => e.style.width = pc + '%'); s('[data-pct]', e => e.textContent = Math.floor(pc + 1e-7) + '%');
+    s('[data-bar]', e => { if (pc > parseFloat(e.style.width) + 1e-6) bump(row); e.style.width = pc + '%'; }); s('[data-pct]', e => e.textContent = Math.floor(pc + 1e-7) + '%');
     s('[data-raised]', e => e.textContent = fmtC(p.raised, p.q, true)); s('[data-pace]', e => e.textContent = paceTxt(p));
     s('[data-qbamt]', e => e.textContent = qbLabel(p));
   });
@@ -1584,11 +1600,19 @@ function select(id, fromUser) {
   $$('.trow').forEach(r => r.classList.toggle('sel', r.dataset.row === id));
   try { history.replaceState(null, '', '#/app/terminal/' + id); } catch (e) {}
   renderDetail();
-  if (fromUser && !isWide()) openSheet();
+  if (fromUser) openSheet();
 }
 function openSheet() { const d = $('#sheet'); if (!d.open) { d.showModal(); d.appendChild($('#toasts')); } }
-$('#sheet').addEventListener('close', () => document.body.appendChild($('#toasts')));
-$('#sheet').addEventListener('click', e => { if (e.target === $('#sheet')) $('#sheet').close(); });
+/* closing drops the selection with it: the row highlight and the presale in the address both belong to the open sheet */
+function closeSheet() {
+  const d = $('#sheet'); if (d.open) d.close();
+  document.body.appendChild($('#toasts'));
+  if (!ui.sel) return;
+  ui.sel = null; $$('.trow.sel').forEach(r => r.classList.remove('sel'));
+  if (location.hash.startsWith('#/app/terminal/')) try { history.replaceState(null, '', '#/app/terminal'); } catch (e) {}
+}
+$('#sheet').addEventListener('close', () => { if (!$('#sheet').open) closeSheet(); });   // Esc; skipped if a route has already reopened it
+$('#sheet').addEventListener('click', e => { if (e.target === $('#sheet')) closeSheet(); });
 
 $('#trows').addEventListener('click', e => {
   const qb = e.target.closest('[data-qb]'), cl = e.target.closest('[data-claim]'), pk = e.target.closest('[data-pick]');
@@ -1698,8 +1722,10 @@ function detailHTML(p) {
       <span class="meta">${pairTag(p)}<span class="tag${p.status === 'live' ? ' in' : ''}">${statusTxt}</span>${p.mine ? '<span class="tag">Yours</span>' : ''}</span></div>
       <button class="x" data-close aria-label="Close">×</button></div>
     <p class="idea">${esc(p.idea)}</p>
+    <div class="dcols"><div class="d-raise">
     <div class="readout ${p.status}" data-dreadout><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>${readoutHTML(p)}</div>
     <div class="chart"><div class="legend"><span><i></i>Raised</span>${p.status === 'live' ? '<span><i class="dash"></i>Pace needed</span>' : ''}</div><div data-dchart>${chartSVG(p)}</div></div>
+    </div><div class="d-buy">
     ${body}
     <dl class="specs"><div><dt>Price</dt><dd class="num">1 ${sym} = ${fmtTok(SUPPLY * A / p.target)} ${esc(p.ticker)}</dd></div>
       <div><dt>Pair asset</dt><dd>${C.stock ? `${sym}, tokenized ${esc(C.stock)} stock` : `${sym}, ${C.verified ? 'verified mint' : 'unverified mint'} <span class="num">${esc(shortMint(C.mint))}</span>`}</dd></div>
@@ -1707,18 +1733,15 @@ function detailHTML(p) {
       <div><dt>Seeds to</dt><dd>${DEX}, locked for good</dd></div><div><dt>Protocol fee</dt><dd>1% of each buy, returned if it refunds</dd></div></dl>
     ${C.verified ? '' : `<div class="state warnbox"><b>Check this mint before you buy</b>The pair asset is not on the verified list. A symbol can be copied, a mint address cannot.<br><span class="num" style="word-break:break-all">${esc(C.mint)}</span></div>`}
     <div class="dlinks"><button class="ca" data-ca aria-label="Copy presale vault address"><i>Vault</i><span>${p.contract}</span><span aria-hidden="true">⧉</span></button><a class="bar-link" href="#/docs/seeding">Where the raise goes</a></div>
-    <div class="acts" data-dacts>${actsHTML(p)}</div>`;
+    </div><div class="acts d-acts" data-dacts>${actsHTML(p)}</div></div>`;
 }
 let detailBox = null;
 function renderDetail() {
-  const p = find(ui.sel), wide = isWide();
-  if (wide && $('#sheet').open) $('#sheet').close();
-  const box = wide ? $('#detail') : $('#sheetBody'), other = wide ? $('#sheetBody') : $('#detail');
-  other.innerHTML = ''; detailBox = box;
-  if (!p) { box.innerHTML = '<div class="dempty">Select a presale to see its fill chart and buy a custom amount.</div>'; return; }
+  const p = find(ui.sel), box = $('#sheetBody'); detailBox = box;
+  if (!p) { box.innerHTML = ''; closeSheet(); return; }
   box.innerHTML = detailHTML(p);
   const q = s => $(s, box);
-  q('[data-close]').onclick = () => $('#sheet').close();
+  q('[data-close]').onclick = closeSheet;
   q('[data-ca]').onclick = () => { try { navigator.clipboard.writeText(p.contract).catch(() => {}); } catch (e) {} toast('Vault address copied'); };
   const dc = q('[data-dclaim]'); if (dc) dc.onclick = () => claim(p, dc);
   if (p.status === 'live') {
@@ -1991,19 +2014,21 @@ function initDocs() {
 
 /* ---------------------------------------------------------------- router */
 function route() {
-  const h = location.hash || '#'; let view = 'home', anchor = null, sec = null;
+  const h = location.hash || '#', prevTab = ui.tab; let view = 'home', anchor = null, sec = null;
   if (h.startsWith('#/app')) { view = 'app'; const parts = h.slice(2).split('/'); ui.tab = ['terminal', 'launch', 'portfolio'].includes(parts[1]) ? parts[1] : 'terminal';
     if (parts[2] && find(parts[2])) { const p = find(parts[2]); ui.sel = p.id; if (ui.fStatus !== 'all' && p.status !== ui.fStatus) { ui.fStatus = 'all'; seg.status.set('all'); } } }
   else if (h.startsWith('#/docs')) { view = 'docs'; sec = h.split('/')[2] || null; }
   else if (h.length > 1) anchor = h;
   const changed = view !== ui.view; ui.view = view; document.documentElement.dataset.view = view; syncChrome();
   ['home', 'app', 'docs'].forEach(v => { $('#view-' + v).hidden = v !== view; document.body.classList.toggle('in-' + v, v === view); });
-  if ($('#sheet').open) $('#sheet').close();
+  const deep = view === 'app' && ui.tab === 'terminal' && !!find(h.split('/')[3]);
+  if (!deep) closeSheet();
+  if (changed || prevTab !== ui.tab) { shown.home = new Set(); shown.term = new Set(); if (view === 'home') $('#rows').classList.remove('seen'); }
   document.title = view === 'app' ? 'Seed app: terminal, launch, portfolio' : view === 'docs' ? 'Seed docs: how it works, with the math' : 'Seed: presales that seed or refund';
   if (view === 'app') {
     ['terminal', 'launch', 'portfolio'].forEach(t => $('#tab-' + t).hidden = t !== ui.tab); seg.tabs.set(ui.tab);
     renderAll(); if (changed) scrollTo(0, 0);
-    if (ui.tab === 'terminal' && h.split('/')[3] && find(h.split('/')[3]) && !isWide() && changed) openSheet();
+    if (deep) openSheet();
   } else if (view === 'docs') {
     if (sec && $('#d-' + sec)) $('#d-' + sec).scrollIntoView(); else if (changed) scrollTo(0, 0);
     initDocs.spy && initDocs.spy();
@@ -2080,7 +2105,6 @@ function boot() {
   $('#qbAsset').addEventListener('change', e => { ui.qbAsset = e.target.value; syncQuickUI(); });
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();
-  let wide = isWide(); addEventListener('resize', () => { if (isWide() !== wide) { wide = isWide(); if (ui.view === 'app') renderTerminal(); } });
   initDocs(); renderPreview(); syncMech(); tick(true); renderAll(); route(); resume();
   setInterval(() => tick(), 1000); setInterval(simulate, 3600);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeSegs);
@@ -2286,6 +2310,7 @@ const sphere = new SeedSphere($('#hero'), $('#sphere-base'), $('#sphere-reveal')
 const vis = { hero: true, cta: false };
 new IntersectionObserver(es => es.forEach(e => { vis[e.target.id] = e.isIntersecting; kick(); }), { rootMargin: '80px' }).observe($('#hero'));
 new IntersectionObserver(es => es.forEach(e => { vis.cta = e.isIntersecting; kick(); })).observe($('#cta'));
+new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('seen'); }), { threshold: 0.25 }).observe($('#rows'));
 addEventListener('pointerdown', e => { if (!REDUCED) field.ring(e.clientX, e.clientY, 0.2); }, { passive: true });
 
 let T = 0, lastNow = 0, raf = 0, cost = 0, slow = 0, kickUntil = 0;
