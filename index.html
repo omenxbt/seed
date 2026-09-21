@@ -34,6 +34,8 @@
   --serif:'Instrument Serif','Iowan Old Style',Georgia,'Times New Roman',serif;
   --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
   --ease:cubic-bezier(.65,0,.35,1); --out:cubic-bezier(.16,1,.3,1);
+  /* mask stops for a photo dissolving into the page: smoothstep, so the slope is zero at both ends and no edge shows */
+  --dissolve:#000 60%,rgba(0,0,0,.94) 65.5%,rgba(0,0,0,.78) 71%,rgba(0,0,0,.575) 76.6%,rgba(0,0,0,.35) 82.2%,rgba(0,0,0,.156) 87.7%,rgba(0,0,0,.03) 93.3%,transparent 97%;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
@@ -113,10 +115,10 @@ main,footer{position:relative;z-index:1}
 
 /* -------------------------------------------------------------------- hero */
 .hero{position:relative;height:100dvh;min-height:660px;overflow:hidden}
-/* the sky and globe dissolve on an eased curve (zero slope at both ends, so no edge) and the page ground and its dot field show
-   through. They are their own layer so the copy above them is never faded, however short the window is. */
+/* the sky and globe dissolve into the page, and the page ground and its dot field show through. They are their own layer so the
+   copy above them is never faded, however short the window is. */
 .hero-sky{position:absolute;inset:0;background:#BFE0FB url(sky.jpg) center/cover no-repeat;
-  -webkit-mask-image:linear-gradient(to bottom,#000 60%,rgba(0,0,0,.94) 65.5%,rgba(0,0,0,.78) 71%,rgba(0,0,0,.575) 76.6%,rgba(0,0,0,.35) 82.2%,rgba(0,0,0,.156) 87.7%,rgba(0,0,0,.03) 93.3%,transparent 97%);mask-image:linear-gradient(to bottom,#000 60%,rgba(0,0,0,.94) 65.5%,rgba(0,0,0,.78) 71%,rgba(0,0,0,.575) 76.6%,rgba(0,0,0,.35) 82.2%,rgba(0,0,0,.156) 87.7%,rgba(0,0,0,.03) 93.3%,transparent 97%)}
+  -webkit-mask-image:linear-gradient(to bottom,var(--dissolve));mask-image:linear-gradient(to bottom,var(--dissolve))}
 .hero canvas{position:absolute;inset:0;width:100%;height:100%}
 #sphere-base{z-index:10;opacity:0;animation:globeIn 2s var(--out) .1s forwards}
 #sphere-reveal{z-index:30;pointer-events:none}
@@ -273,13 +275,18 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .cta .hero-cta{margin-top:30px}
 .btn-white{background:#fff;color:var(--on-light)}.btn-white:hover{background:#E8ECF7}
 .btn-ghost{border:1px solid var(--ghost-line);color:var(--ghost)}.btn-ghost:hover{background:rgba(255,255,255,.08)}
+/* the page ends on a sunset: the hero's dissolve, mirrored. The footer alone is too short to hold a fade, so the layer is anchored to
+   the bottom of the view and rises behind the closing section. Its lower 60% is solid sky, which always covers the footer. */
+#view-home{position:relative}
+.dusk{position:absolute;left:0;right:0;bottom:0;height:1000px;z-index:0;pointer-events:none;background:#F5C3C8 url(sunset.jpg) center bottom/cover no-repeat;
+  -webkit-mask-image:linear-gradient(to top,var(--dissolve));mask-image:linear-gradient(to top,var(--dissolve))}
 footer{padding:64px 0 40px}
 .foot{display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap;align-items:flex-start}
-.foot p{color:var(--muted);font-size:14px;max-width:40ch;margin-top:12px}
-.foot nav{display:flex;gap:26px;font-size:14px;color:var(--muted);flex-wrap:wrap}
+.foot p{color:var(--ink-2);font-size:14px;max-width:40ch;margin-top:12px}
+.foot nav{display:flex;gap:26px;font-size:14px;color:var(--ink-2);flex-wrap:wrap}
 .foot nav a:hover,.foot nav button:hover{color:var(--navy-deep)}
-.foot nav button{color:var(--muted)}
-.fine{margin-top:40px;padding-top:20px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--faint);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.foot nav button{color:var(--ink-2)}
+.fine{margin-top:40px;padding-top:20px;border-top:1px solid var(--hair-2);font-size:12.5px;color:var(--ink-2);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 /* ------------------------------------------------------------------ sheet */
 dialog{border:0;padding:0;overflow:visible;background:transparent;color:inherit;max-width:none;max-height:none;margin:auto;width:min(540px,calc(100vw - 24px))}
@@ -728,7 +735,8 @@ a.row{color:inherit}
   </section>
 </main>
 
-<footer>
+<div class="dusk" aria-hidden="true"></div>
+<footer class="sky">
   <div class="wrap">
     <div class="foot">
       <div>
@@ -2254,7 +2262,7 @@ function applyTheme(t) {
 }
 document.addEventListener('click', e => { if (!e.target.closest('[data-theme-toggle]')) return; const t = themeNow() === 'light' ? 'dark' : 'light'; try { localStorage.setItem('seed.theme', t); } catch (x) {} applyTheme(t); });
 applyTheme(themeNow());
-const navSky = () => $('.nav').classList.toggle('sky', scrollY < $('#hero').offsetHeight * 0.78);
+const navSky = () => { const d = $('.dusk').getBoundingClientRect(); $('.nav').classList.toggle('sky', scrollY < $('#hero').offsetHeight * 0.78 || (d.height > 0 && d.bottom - d.height * 0.78 < 40)); };
 addEventListener('scroll', navSky, { passive: true }); addEventListener('resize', navSky); navSky();
 boot();
 </script>
