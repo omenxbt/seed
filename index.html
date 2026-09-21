@@ -17,12 +17,9 @@
      Fills and accents are pariter.xyz's blue (#2E63E7, hover #2554C7). Surfaces stack whiter as they come forward: panel, well, card.
      --paper is the well, --ink the text. */
   color-scheme:light;
-  /* the landing page's ground: each stop is the centre-column colour of sky.jpg at the row that lands there, so the photo's blue is already
+  /* the ground under the landing page and the app: each stop is the centre-column colour of sky.jpg at the row that lands there, so the photo's blue is already
      underneath it when it dissolves and only the clouds fade. Below the hero it drifts toward periwinkle at a fixed rate. */
   --ground:linear-gradient(to bottom,#B0DEFC calc(var(--hero-h)*.6),#A5DAFD calc(var(--hero-h)*.7),#9AD5FD calc(var(--hero-h)*.8),#8FD1FE var(--hero-h),#9799C9 calc(var(--hero-h) + 2600px));
-  /* the app's ground, under the sunset: the centre-column colours of sunset.jpg at the rows where it dissolves, then a drift back up the
-     photo's own range (peach to its pink-lavender) at a fixed rate, since the app's pages vary in length */
-  --ground-app:linear-gradient(to bottom,#FCC8CC calc(var(--hero-h)*.6),#FDC6BD calc(var(--hero-h)*.7),#FDBFAB calc(var(--hero-h)*.8),#FDAA96 var(--hero-h),#E2C5DD calc(var(--hero-h) + 2600px));
   /* the docs' ground runs from one photo to the other: the blue sky's rows, a drift to the sunset's top row, then the sunset's own rows where it fades in */
   --ground-docs:linear-gradient(to bottom,#B0DEFC calc(var(--hero-h)*.6),#A5DAFD calc(var(--hero-h)*.7),#9AD5FD calc(var(--hero-h)*.8),#8FD1FE var(--hero-h),#9799C9 calc(100% - var(--dusk-h)),#ACA8CF calc(100% - var(--dusk-h)*.9),#BFB7D8 calc(100% - var(--dusk-h)*.8),#D0BFDD calc(100% - var(--dusk-h)*.7),#E2C5DD calc(100% - var(--dusk-h)*.6),#FDC8CB calc(100% - var(--dusk-h)*.4),#FDA697);
   --page:#F3F7FD; --paper:rgba(255,255,255,.5); --card:rgba(255,255,255,.8); --raised:#fff; --chip:rgba(255,255,255,.5); --mist:rgba(255,255,255,.5); --hover:rgba(255,255,255,.32);
@@ -238,14 +235,12 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 /* on a glass card a white button has nothing to stand against, so the closing call to action takes the blue fill */
 #view-home{position:relative}
 .ground{position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--ground)}
-/* the landing page is the blue sky; the app opens under the sunset, built the same way. Both layers sit under the dot field, so the glyphs stay on top */
+/* the app opens on the same blue sky and ground as the landing page. Both layers sit under the dot field, so the glyphs stay on top */
 #view-app{position:relative;min-height:var(--hero-h)}
-.ground.app{background:var(--ground-app)}
-.app-sky{position:absolute;top:0;left:0;right:0;height:var(--hero-h);z-index:-1;pointer-events:none;background-color:#F5C3C8;background-image:url(sunset.jpg)}
+.app-sky{position:absolute;top:0;left:0;right:0;height:var(--hero-h);z-index:-1;pointer-events:none}
 /* the docs run from the blue sky at the top to the sunset at the bottom (the hero's dissolve, mirrored), over a ground sampled from both */
 #view-docs{position:relative}
 .ground.under-docs{background:var(--ground-docs)}
-.app-sky.blue{background-color:#BFE0FB;background-image:url(sky.jpg)}
 .dusk{position:absolute;left:0;right:0;bottom:0;height:var(--dusk-h);z-index:-1;pointer-events:none;background:#F5C3C8 url(sunset.jpg) center/cover no-repeat;
   -webkit-mask-image:linear-gradient(to top,var(--dissolve));mask-image:linear-gradient(to top,var(--dissolve))}
 
@@ -683,7 +678,7 @@ a.row{color:inherit}
      APP
      ###################################################################### -->
 <div class="view" id="view-app" hidden>
-<div class="ground app" aria-hidden="true"></div>
+<div class="ground" aria-hidden="true"></div>
 <div class="app-sky" aria-hidden="true"></div>
 <header class="appbar">
   <a href="#" class="brand" aria-label="Seed home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.00" cy="12.00" r="1.55"/><circle cx="9.97" cy="13.86" r="1.49"/><circle cx="12.34" cy="8.13" r="1.43"/><circle cx="14.90" cy="15.78" r="1.37"/><circle cx="6.58" cy="11.04" r="1.31"/><circle cx="17.19" cy="8.70" r="1.25"/><circle cx="10.25" cy="18.51" r="1.19"/><circle cx="8.65" cy="5.54" r="1.13"/><circle cx="19.31" cy="14.67" r="1.07"/><circle cx="4.37" cy="15.15" r="1.01"/><circle cx="15.69" cy="4.12" r="0.95"/><circle cx="14.73" cy="20.70" r="0.89"/><circle cx="3.76" cy="7.22" r="0.83"/></svg>Seed</a>
@@ -784,7 +779,7 @@ a.row{color:inherit}
      ###################################################################### -->
 <div class="view" id="view-docs" hidden>
 <div class="ground under-docs" aria-hidden="true"></div>
-<div class="app-sky blue" aria-hidden="true"></div>
+<div class="app-sky" aria-hidden="true"></div>
 <div class="dusk" aria-hidden="true"></div>
 <header class="appbar">
   <a href="#" class="brand" aria-label="Seed home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.00" cy="12.00" r="1.55"/><circle cx="9.97" cy="13.86" r="1.49"/><circle cx="12.34" cy="8.13" r="1.43"/><circle cx="14.90" cy="15.78" r="1.37"/><circle cx="6.58" cy="11.04" r="1.31"/><circle cx="17.19" cy="8.70" r="1.25"/><circle cx="10.25" cy="18.51" r="1.19"/><circle cx="8.65" cy="5.54" r="1.13"/><circle cx="19.31" cy="14.67" r="1.07"/><circle cx="4.37" cy="15.15" r="1.01"/><circle cx="15.69" cy="4.12" r="0.95"/><circle cx="14.73" cy="20.70" r="0.89"/><circle cx="3.76" cy="7.22" r="0.83"/></svg>Seed <small>docs</small></a>
@@ -1975,12 +1970,11 @@ addEventListener('pointermove', e => { pointer.x = e.clientX; pointer.y = e.clie
 // canvas colours (the stylesheet tokens cover everything else). The flow field is tinted for the sky under it, which depends on the
 // view. The globe sits on the hero's blue sky: ink dots on a translucent disc that lets the clouds read through.
 const CANVAS = {
-  ground: { field: ['46,99,231', 0.06, 0.4] },   // landing page, blue sky: deep blue dots
-  dusk: { field: ['140,72,128', 0.06, 0.36] },   // the app, sunset: plum dots
+  ground: { field: ['46,99,231', 0.06, 0.4] },   // landing page and app, blue sky: deep blue dots
   docs: { field: ['78,84,176', 0.06, 0.36] },    // the docs run from one sky to the other: a violet that reads on both
   sky: { disc: 'rgba(255,255,255,.5)', halo: '255,255,255', rim: 'rgba(61,75,124,.2)', land: ['19,26,46', 0.10, 0.30], sea: ['19,26,46', 0.035, 0.085], pulse: '61,75,124', rSea: 'rgba(168,179,214,.55)', rLand: 'rgba(61,75,124,.92)', rRing: 'rgba(86,104,160,.32)' }
 };
-const tintNow = () => (ui.view === 'app' ? CANVAS.dusk : ui.view === 'docs' ? CANVAS.docs : CANVAS.ground).field;
+const tintNow = () => (ui.view === 'docs' ? CANVAS.docs : CANVAS.ground).field;
 
 class FlowField {
   constructor(canvas, o) {
@@ -2172,11 +2166,8 @@ let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() 
 document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else kick(); });
 kick();
 window.bgRefresh = () => { sphere.resize(); field.resize(); kick(); };
-/* what depends on the view: the dot field's tint and the browser's own chrome colour */
-function syncChrome() {
-  field.tint(...tintNow()); kick();
-  $('meta[name="theme-color"]').content = ui.view === 'app' ? '#A9A6CE' : '#F3F7FD';
-}
+/* the dot field's tint depends on the view */
+function syncChrome() { field.tint(...tintNow()); kick(); }
 syncChrome();
 /* presale pages open in their own tab, so several copies of the app can be running. Each holds the state in memory and saves all of it,
    which would let a stale tab overwrite a buy made in another. So a tab takes on whatever another tab saves. If you are mid-amount,
