@@ -19,31 +19,29 @@
      Here --paper is the ground and --ink the text in every set, so in navy the ground is dark and the ink is light.
      Only the docs still wear this: on the landing page and the dashboard dark is the sky-glass set further down. */
   color-scheme:dark;
-  /* the landing page's ground: each stop is the centre-column colour of sky.jpg or sunset.jpg at the row that lands there, so the blue
-     of each photo is already underneath it when it dissolves and only the clouds fade. Between the two it runs sky blue to the sunset's top row. */
-  --ground:linear-gradient(to bottom,#B0DEFC calc(var(--hero-h)*.6),#A5DAFD calc(var(--hero-h)*.7),#9AD5FD calc(var(--hero-h)*.8),#8FD1FE var(--hero-h),#9799C9 calc(100% - var(--dusk-h)),#ACA8CF calc(100% - var(--dusk-h)*.9),#BFB7D8 calc(100% - var(--dusk-h)*.8),#D0BFDD calc(100% - var(--dusk-h)*.7),#E2C5DD calc(100% - var(--dusk-h)*.6),#FDC8CB calc(100% - var(--dusk-h)*.4),#FDA697);
+  /* the landing page's ground: each stop is the centre-column colour of sky.jpg at the row that lands there, so the photo's blue is already
+     underneath it when it dissolves and only the clouds fade. Below the hero it drifts toward periwinkle at a fixed rate. */
+  --ground:linear-gradient(to bottom,#B0DEFC calc(var(--hero-h)*.6),#A5DAFD calc(var(--hero-h)*.7),#9AD5FD calc(var(--hero-h)*.8),#8FD1FE var(--hero-h),#9799C9 calc(var(--hero-h) + 2600px));
   /* the app's ground, under the sunset: the centre-column colours of sunset.jpg at the rows where it dissolves, then a drift back up the
      photo's own range (peach to its pink-lavender) at a fixed rate, since the app's pages vary in length */
   --ground-app:linear-gradient(to bottom,#FCC8CC calc(var(--hero-h)*.6),#FDC6BD calc(var(--hero-h)*.7),#FDBFAB calc(var(--hero-h)*.8),#FDAA96 var(--hero-h),#E2C5DD calc(var(--hero-h) + 2600px));
   --page:#0A1E4F; --paper:#0A1E4F; --card:#12295F; --raised:#1E3A7A; --chip:transparent; --mist:rgba(143,180,255,.1); --hover:rgba(143,180,255,.08);
-  --panel:rgba(18,41,95,.9); --panel-soft:rgba(18,41,95,.6); --panel-solid:rgba(18,41,95,.94); --bar:rgba(10,30,79,.88);
-  --panel-line:#1E3A7A; --panel-shadow:none; --frost:blur(10px); --track:#1E3A7A;
+  --panel:rgba(18,41,95,.9); --panel-solid:rgba(18,41,95,.94); --bar:rgba(10,30,79,.88);
+  --panel-line:#1E3A7A; --panel-shadow:none; --frost:blur(10px);
   --veil:rgba(10,30,79,.92); --fade:rgba(10,30,79,0); --scrim:rgba(8,17,49,.62);
-  --ink:#F2F5FB; --ink-2:#B7C6E8; --muted:#A9B6D4; --faint:#6E82B4; --on-light:#0A1E4F;
+  --ink:#F2F5FB; --ink-2:#B7C6E8; --muted:#A9B6D4; --faint:#6E82B4;
   --navy:#8FB4FF; --navy-deep:#8FB4FF; --navy-soft:#6E82B4; --navy-wash:#1E3A7A;
   --solid:#2E63E7; --solid-hover:#2554C7; --accent:#2E63E7; --accent-hover:#2554C7;
   --hair:#1E3A7A; --hair-2:rgba(143,180,255,.35); --ring:rgba(143,180,255,.22); --err:#FFA3A3;
   --glass:rgba(18,41,95,.62); --glass-line:rgba(143,180,255,.22); --glass-hover:rgba(30,58,122,.9);
-  --cta:linear-gradient(160deg,#12295F 0%,#1E3A7A 55%,#2E63E7 130%); --cta-line:1px solid #1E3A7A; --cta-text:#B7C6E8; --cta-ink:#fff; --ghost:#8FB4FF; --ghost-line:#8FB4FF;
   --warn:#E0B15E; --warn-line:rgba(224,177,94,.5); --warn-bg:rgba(224,177,94,.12); --warn-ink:#EBC98F; --warn-ink-2:#EBC98F; --warn-strong:#F7DDB0;
   --lift:0 16px 40px -12px rgba(0,0,0,.35);
-  --sh-ind:rgba(0,0,0,.35); --sh-pop:rgba(0,0,0,.5); --sh-thumb:rgba(0,0,0,.45); --sh-sheet:rgba(0,0,0,.55); --sh-toast:rgba(0,0,0,.5);
+  --sh-ind:rgba(0,0,0,.35); --sh-pop:rgba(0,0,0,.5); --sh-sheet:rgba(0,0,0,.55); --sh-toast:rgba(0,0,0,.5);
   --sans:'Instrument Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
   --serif:'Instrument Serif','Iowan Old Style',Georgia,'Times New Roman',serif;
   --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
   --ease:cubic-bezier(.65,0,.35,1); --out:cubic-bezier(.16,1,.3,1);
-  /* the hero is one screen tall; the sunset is sized so its photo (1168x784) is never cropped vertically, which pins its top row to one colour */
-  --hero-h:max(100dvh,660px); --dusk-h:max(1000px,67.12vw);
+  --hero-h:max(100dvh,660px);   /* the hero, and the app's sky layer, are one screen tall */
   /* how far along a raise is: red, through yellow, to green at the target */
   --progress:linear-gradient(90deg,#F2554C,#F6C445 50%,#34C17B);
   /* mask stops for a photo dissolving into the page: smoothstep, so the slope is zero at both ends and no edge shows */
@@ -56,18 +54,17 @@
   color-scheme:light;
   --ground:none; --ground-app:none;
   --page:#ffffff; --paper:#ffffff; --card:#fff; --raised:#fff; --chip:#fff; --mist:#F5F7FC; --hover:rgba(232,236,247,.45);
-  --panel:rgba(255,255,255,.9); --panel-soft:rgba(255,255,255,.7); --panel-solid:rgba(255,255,255,.94); --bar:rgba(255,255,255,.84);
-  --panel-line:rgba(61,75,124,.16); --panel-shadow:none; --frost:blur(10px); --track:#E8ECF7;
+  --panel:rgba(255,255,255,.9); --panel-solid:rgba(255,255,255,.94); --bar:rgba(255,255,255,.84);
+  --panel-line:rgba(61,75,124,.16); --panel-shadow:none; --frost:blur(10px);
   --veil:rgba(255,255,255,.92); --fade:rgba(255,255,255,0); --scrim:rgba(19,26,46,.34);
-  --ink:#131A2E; --ink-2:#2A3454; --muted:#5F6883; --faint:#98A0B8; --on-light:#131A2E;
+  --ink:#131A2E; --ink-2:#2A3454; --muted:#5F6883; --faint:#98A0B8;
   --navy:#5668A0; --navy-deep:#3D4B7C; --navy-soft:#A8B3D6; --navy-wash:#E8ECF7;
   --solid:#131A2E; --solid-hover:#2A3454; --accent:#3D4B7C; --accent-hover:#344170;
   --hair:rgba(61,75,124,.16); --hair-2:rgba(61,75,124,.30); --ring:rgba(86,104,160,.14); --err:#9B3D4E;
   --glass:rgba(255,255,255,.62); --glass-line:rgba(255,255,255,.85); --glass-hover:rgba(255,255,255,.9);
-  --cta:#18213F; --cta-line:0; --cta-text:rgba(255,255,255,.78); --cta-ink:#fff; --ghost:#fff; --ghost-line:rgba(255,255,255,.3);
   --warn:#B9853B; --warn-line:rgba(185,133,59,.45); --warn-bg:#FBF4E6; --warn-ink:#8A5A17; --warn-ink-2:#6B4A1A; --warn-strong:#5A3C10;
   --lift:0 8px 30px -12px rgba(40,55,110,.28);
-  --sh-ind:rgba(40,55,110,.28); --sh-pop:rgba(30,45,100,.35); --sh-thumb:rgba(40,55,110,.45); --sh-sheet:rgba(25,38,90,.5); --sh-toast:rgba(19,26,46,.6);
+  --sh-ind:rgba(40,55,110,.28); --sh-pop:rgba(30,45,100,.35); --sh-sheet:rgba(25,38,90,.5); --sh-toast:rgba(19,26,46,.6);
 }
 /* dark, sky glass: the landing page and the dashboard. Their ground is sky, so every surface is frosted white glass over it and the
    ink is dark; fills and accents stay Pariter's blue. Surfaces stack whiter as they come forward: panel, then well, then card.
@@ -75,18 +72,17 @@
 :root[data-theme="dark"]:not([data-view="docs"]){
   color-scheme:light;
   --page:#F3F7FD; --paper:rgba(255,255,255,.5); --card:rgba(255,255,255,.8); --raised:#fff; --chip:rgba(255,255,255,.5); --mist:rgba(255,255,255,.5); --hover:rgba(255,255,255,.32);
-  --panel:rgba(255,255,255,.38); --panel-soft:rgba(255,255,255,.3); --panel-solid:rgba(255,255,255,.6); --bar:rgba(255,255,255,.42);
-  --panel-line:rgba(255,255,255,.72); --panel-shadow:0 18px 50px -24px rgba(30,60,130,.45),inset 0 1px 0 rgba(255,255,255,.55); --frost:blur(18px) saturate(1.6); --track:#DDE7FA;
+  --panel:rgba(255,255,255,.38); --panel-solid:rgba(255,255,255,.6); --bar:rgba(255,255,255,.42);
+  --panel-line:rgba(255,255,255,.72); --panel-shadow:0 18px 50px -24px rgba(30,60,130,.45),inset 0 1px 0 rgba(255,255,255,.55); --frost:blur(18px) saturate(1.6);
   --veil:rgba(255,255,255,.92); --fade:rgba(255,255,255,0); --scrim:rgba(10,30,79,.3);
-  --ink:#0A1E4F; --ink-2:#23386B; --muted:#3F4F78; --faint:#5A6A94; --on-light:#0A1E4F;
+  --ink:#0A1E4F; --ink-2:#23386B; --muted:#3F4F78; --faint:#5A6A94;
   --navy:#2E63E7; --navy-deep:#2554C7; --navy-soft:#7A9AE6; --navy-wash:rgba(46,99,231,.13);
   --solid:#2E63E7; --solid-hover:#2554C7; --accent:#2E63E7; --accent-hover:#2554C7;
   --hair:rgba(10,30,79,.12); --hair-2:rgba(10,30,79,.26); --ring:rgba(46,99,231,.2); --err:#A8324A;
   --glass:rgba(255,255,255,.55); --glass-line:rgba(255,255,255,.8); --glass-hover:rgba(255,255,255,.85);
-  --cta:rgba(255,255,255,.34); --cta-line:1px solid rgba(255,255,255,.72); --cta-text:#23386B; --cta-ink:#0A1E4F; --ghost:#23386B; --ghost-line:rgba(10,30,79,.3);
   --warn:#B9853B; --warn-line:rgba(185,133,59,.5); --warn-bg:rgba(251,244,230,.8); --warn-ink:#8A5A17; --warn-ink-2:#6B4A1A; --warn-strong:#5A3C10;
   --lift:0 14px 40px -16px rgba(30,60,130,.4);
-  --sh-ind:rgba(30,60,130,.25); --sh-pop:rgba(30,60,130,.4); --sh-thumb:rgba(30,60,130,.45); --sh-sheet:rgba(20,40,100,.5); --sh-toast:rgba(20,40,100,.5);
+  --sh-ind:rgba(30,60,130,.25); --sh-pop:rgba(30,60,130,.4); --sh-sheet:rgba(20,40,100,.5); --sh-toast:rgba(20,40,100,.5);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 /* no native scrollbars, on the page or on any panel. Everything still scrolls by wheel, touch and keyboard. */
@@ -102,9 +98,10 @@ a{color:inherit;text-decoration:none}
 :focus-visible{outline:2px solid var(--navy);outline-offset:3px;border-radius:6px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
 .wrap{width:100%;max-width:1160px;margin:0 auto;padding:0 24px}
+.wrap.wide{max-width:1400px}
 
 #field{position:fixed;inset:0;z-index:0;pointer-events:none}
-main,footer{position:relative;z-index:1}
+main{position:relative;z-index:1}
 
 /* --------------------------------------------------------------------- nav */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;
@@ -176,11 +173,8 @@ h1 .l2{display:block;font-weight:600;font-size:clamp(36px,5.7vw,76px);letter-spa
 
 /* ---------------------------------------------------------------- sections */
 .sec{padding:clamp(72px,10vw,128px) 0}
-.sec-head{display:grid;grid-template-columns:7fr 5fr;gap:40px;align-items:end;margin-bottom:40px}
 h2{font-weight:600;font-size:clamp(30px,4.3vw,50px);line-height:1.04;letter-spacing:-.045em}
 h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;line-height:1}
-.sec-head p{color:var(--muted);max-width:44ch;font-size:16px}
-:root[data-theme="dark"] .sec-head p{color:var(--ink-2)}   /* muted washes out on the blue ground */
 /* in dark the nav passes over navy cards as well as sky, so the wordmark gets the same glass the pills have */
 :root[data-theme="dark"] .nav .brand{margin-left:-6px;padding:7px 14px 7px 10px;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--glass-line);box-shadow:var(--lift)}
 .panel{position:relative;border:1px solid var(--panel-line);border-radius:22px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);box-shadow:var(--panel-shadow)}
@@ -193,13 +187,9 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .seg button .ct{font-family:var(--mono);font-weight:400;font-size:11.5px;opacity:.7;margin-left:5px}
 
 /* ------------------------------------------------------------ presale list */
-.panel-bar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;border-bottom:1px solid var(--hair);flex-wrap:wrap}
-.panel-bar .live{display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:500;color:var(--ink-2)}
 .tag{display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;border-radius:999px;padding:3px 9px;border:1px solid var(--hair-2);color:var(--muted);background:var(--chip)}
 .tag.in{border-color:transparent;background:var(--navy-wash);color:var(--navy-deep)}
-.cols,.row{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(0,1.7fr) minmax(0,1.15fr) minmax(0,1fr) 92px;gap:18px;align-items:center;padding:0 22px}
-.cols{padding-top:11px;padding-bottom:11px;border-bottom:1px solid var(--hair);font-size:12.5px;color:var(--faint);font-weight:500}
-.cols span:nth-child(3),.cols span:nth-child(4){text-align:right}
+.row{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(0,1.7fr) minmax(0,1.15fr) minmax(0,1fr) 92px;gap:18px;align-items:center;padding:0 22px}
 .row{width:100%;text-align:left;padding-top:15px;padding-bottom:15px;border-bottom:1px solid var(--hair);transition:background .2s}
 .row:last-child{border-bottom:0;border-radius:0 0 21px 21px}
 .row:hover{background:var(--hover)}
@@ -224,7 +214,7 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 /* three motions. A bar sweeps in from empty the first time its row appears (.fresh, staggered by --i; the landing list holds the sweep
    until it scrolls into view). A live raise carries a slow sheen. A buy landing ticks the row: a quick sheen and the percentage pops. */
 .fresh .bar i{animation:barIn 1.2s var(--out) both;animation-delay:calc(var(--i,0)*70ms)}
-#rows:not(.seen) .fresh .bar i{animation-play-state:paused}
+#cards:not(.seen) .fresh .bar i,#cards:not(.seen) .pc.fresh{animation-play-state:paused}
 @keyframes barIn{from{width:0}}
 .live .bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);transform:translateX(-100%);animation:sheen 3.2s ease-in-out infinite;animation-delay:calc(var(--i,0)*.4s)}
 @keyframes sheen{0%,55%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
@@ -245,41 +235,12 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .panel-foot{padding:13px 22px;border-top:1px solid var(--hair);font-size:13px;color:var(--muted)}
 
 /* ------------------------------------------------------------- mechanism */
-.mech-top{padding:26px 28px 22px;border-bottom:1px solid var(--hair)}
-.mech-label{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:16px;flex-wrap:wrap}
-.mech-label label{font-weight:600;font-size:15px}
-.mech-label output{font-size:13px;color:var(--ink-2)}
-input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;background:transparent;cursor:ew-resize;display:block}
-input[type=range]::-webkit-slider-runnable-track{height:8px;border-radius:999px;background:linear-gradient(to right,transparent var(--p,64%),var(--track) var(--p,64%)),var(--progress)}
-input[type=range]::-moz-range-track{height:8px;border-radius:999px;background:var(--track)}
-input[type=range]::-moz-range-progress{height:8px;border-radius:999px;background:var(--progress)}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;margin-top:-9px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-shadow:0 4px 12px -3px var(--sh-thumb)}
-input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:2px solid var(--accent);box-shadow:0 4px 12px -3px var(--sh-thumb)}
-.scale{display:flex;justify-content:space-between;font-size:11.5px;color:var(--faint);margin-top:4px}
-.fork{position:relative;display:grid;grid-template-columns:1fr 1fr}
-.fork::before{content:"";position:absolute;top:24px;bottom:24px;left:50%;width:1px;background:var(--hair)}
-.end{padding:28px;transition:opacity .45s,filter .45s}
-.end.off{opacity:.32;filter:saturate(.4)}
-.end h3{font-size:21px;font-weight:600;letter-spacing:-.03em;display:flex;align-items:center;gap:10px}
-.end p{color:var(--muted);margin-top:8px;max-width:42ch;font-size:14.5px}
-.ledger{margin-top:20px;border:1px solid var(--hair);position:relative;background:var(--paper)}
-.ledger div{display:grid;grid-template-columns:1fr auto auto;gap:14px;padding:9px 13px;font-size:12.5px;border-bottom:1px solid var(--hair)}
-.ledger div:last-child{border-bottom:0}
-.ledger div span:nth-child(1){color:var(--muted)}.ledger div span:nth-child(2){color:var(--faint)}
-.ledger div span:nth-child(3){color:var(--navy-deep);font-weight:500;min-width:14ch;text-align:right}
 .tick{position:absolute;width:9px;height:9px;border:0 solid var(--navy);pointer-events:none}
 .tick.tl{top:-1px;left:-1px;border-top-width:1.5px;border-left-width:1.5px}.tick.tr{top:-1px;right:-1px;border-top-width:1.5px;border-right-width:1.5px}
 .tick.bl{bottom:-1px;left:-1px;border-bottom-width:1.5px;border-left-width:1.5px}.tick.br{bottom:-1px;right:-1px;border-bottom-width:1.5px;border-right-width:1.5px}
 .plus{position:absolute;width:13px;height:13px;transform:translate(-50%,-50%);pointer-events:none;z-index:3}
 .plus::before,.plus::after{content:"";position:absolute;background:var(--navy)}
 .plus::before{left:6px;top:0;width:1.5px;height:13px}.plus::after{top:6px;left:0;height:1.5px;width:13px}
-.rules{position:relative;display:grid;grid-template-columns:repeat(3,1fr);margin-top:22px}
-.rules::before,.rules::after{content:"";position:absolute;top:24px;bottom:24px;width:1px;background:var(--hair)}
-.rules::before{left:33.333%}.rules::after{left:66.666%}
-.rule{padding:28px}
-.rule svg{width:100%;height:74px;margin-bottom:20px;display:block}
-.rule h3{font-size:18.5px;font-weight:600;letter-spacing:-.03em}
-.rule p{color:var(--muted);margin-top:7px;font-size:14.5px;max-width:34ch}
 
 /* ----------------------------------------------------------------- create */
 .create{display:grid;grid-template-columns:1.05fr .95fr}
@@ -304,49 +265,15 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .facts dt{color:var(--muted)}.facts dd{text-align:right;color:var(--ink)}
 
 /* -------------------------------------------------------------------- faq */
-.faq-grid{display:grid;grid-template-columns:4fr 8fr;gap:40px;align-items:start}
-.faq-grid h2{position:sticky;top:110px}
-.faq{display:flex;flex-direction:column;gap:12px}
-.qa{border:1px solid var(--panel-line);border-radius:20px;background:var(--panel-soft);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:background .3s,box-shadow .3s}
-.qa.open{background:var(--card);box-shadow:var(--lift)}
-.qa button{width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:18px;padding:20px 24px;font-weight:600;font-size:17px;letter-spacing:-.025em}
-.qa .mk{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--navy-wash);color:var(--navy-deep);font-family:var(--mono);font-size:16px;transition:transform .35s var(--ease),background .3s,color .3s}
-.qa.open .mk{background:var(--accent);color:#fff;transform:rotate(45deg)}
-.qa .a{display:grid;grid-template-rows:0fr;transition:grid-template-rows .45s cubic-bezier(.4,0,.2,1)}
-.qa.open .a{grid-template-rows:1fr}
-.qa .a>div{overflow:hidden}
-.qa .a p{padding:0 24px 22px;color:var(--muted);max-width:66ch}
 
 /* -------------------------------------------------------------------- cta */
-.cta{position:relative;overflow:hidden;border-radius:28px;background:var(--cta);border:var(--cta-line);color:var(--cta-ink);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);text-align:center;padding:clamp(44px,6vw,76px) 24px}
-.cta canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.cta>*:not(canvas){position:relative}
-.cta h2{margin:0 auto}
-.cta p{color:var(--cta-text);max-width:46ch;margin:18px auto 0;font-size:16.5px}
-.cta .hero-cta{margin-top:30px}
-.btn-white{background:#fff;color:var(--on-light)}.btn-white:hover{background:#E8ECF7}
-.btn-ghost{border:1px solid var(--ghost-line);color:var(--ghost)}.btn-ghost:hover{background:rgba(255,255,255,.08)}
 /* on a glass card a white button has nothing to stand against, so the closing call to action takes the blue fill */
-:root[data-theme="dark"]:not([data-view="docs"]) .btn-white{background:var(--solid);color:#fff}
-:root[data-theme="dark"]:not([data-view="docs"]) .btn-white:hover{background:var(--solid-hover)}
-:root[data-theme="dark"]:not([data-view="docs"]) .btn-ghost:hover{background:var(--mist)}
-/* the page ends on a sunset: the hero's dissolve, mirrored. The footer alone is too short to hold a fade, so the layer is anchored to
-   the bottom of the view and rises behind the closing section. Its lower 60% is solid sky, which always covers the footer. */
 #view-home{position:relative}
 .ground{position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--ground)}
 /* the landing page is the blue sky; the app opens under the sunset, built the same way. Both layers sit under the dot field, so the glyphs stay on top */
 #view-app{position:relative;min-height:var(--hero-h)}
 .ground.app{background:var(--ground-app)}
 .app-sky{position:absolute;top:0;left:0;right:0;height:var(--hero-h);z-index:-1;pointer-events:none;background-color:#F5C3C8;background-image:url(sunset.jpg)}
-.dusk{position:absolute;left:0;right:0;bottom:0;height:var(--dusk-h);z-index:0;pointer-events:none;background:#F5C3C8 url(sunset.jpg) center/cover no-repeat;
-  -webkit-mask-image:linear-gradient(to top,var(--dissolve));mask-image:linear-gradient(to top,var(--dissolve))}
-footer{padding:64px 0 40px}
-.foot{display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap;align-items:flex-start}
-.foot p{color:var(--ink-2);font-size:14px;max-width:40ch;margin-top:12px}
-.foot nav{display:flex;gap:26px;font-size:14px;color:var(--ink-2);flex-wrap:wrap}
-.foot nav a:hover,.foot nav button:hover{color:var(--navy-deep)}
-.foot nav button{color:var(--ink-2)}
-.fine{margin-top:40px;padding-top:20px;border-top:1px solid var(--hair-2);font-size:12.5px;color:var(--ink-2);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 /* ------------------------------------------------------------------ sheet */
 dialog{border:0;padding:0;overflow:visible;background:transparent;color:inherit;max-width:none;max-height:none;margin:auto;width:min(540px,calc(100vw - 24px))}
@@ -402,15 +329,11 @@ dialog[open]{animation:sheetIn .5s var(--out)}
   .mobnav.open{display:flex;flex-direction:column;position:fixed;top:calc(74px + env(safe-area-inset-top,0px));left:16px;right:16px;z-index:99;border-radius:20px;padding:10px;background:var(--card);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);border:1px solid var(--hair);box-shadow:0 24px 60px -20px var(--sh-pop)}
   .mobnav a{padding:13px 14px;border-radius:12px;font-weight:500}
   .mobnav a:hover{background:var(--mist)}
-  .sec-head{grid-template-columns:1fr;gap:14px;margin-bottom:28px}
-  .faq-grid{grid-template-columns:1fr;gap:24px}.faq-grid h2{position:static}
-  .cols{display:none}
   .row{grid-template-columns:1fr auto;grid-template-areas:"proj act" "prog prog" "raised time";row-gap:12px;padding:16px 18px}
   .c-proj{grid-area:proj}.c-act{grid-area:act}.c-prog{grid-area:prog}.c-raised{grid-area:raised;text-align:left}.c-time{grid-area:time}
-  .panel-bar{padding:14px 18px}
-  .fork,.rules,.create{grid-template-columns:1fr}
-  .fork::before,.rules::before,.rules::after,.create::before{display:none}
-  .end+.end,.rule+.rule,.preview{border-top:1px solid var(--hair)}
+  .create{grid-template-columns:1fr}
+  .create::before{display:none}
+  .preview{border-top:1px solid var(--hair)}
   .plus{display:none}
   .form{grid-template-columns:1fr}
   .hero-copy{top:17%}
@@ -422,7 +345,7 @@ dialog[open]{animation:sheetIn .5s var(--out)}
   .nav .themebtn,.menubtn{width:38px;height:38px}
   .btn{padding:10px 16px;font-size:13.5px}
   .btn-lg{padding:13px 20px;font-size:14.5px}
-  .mech-top,.end,.rule,.form,.preview,.ppage{padding:22px 18px}
+  .form,.preview,.ppage{padding:22px 18px}
   .seg button{padding:7px 12px}
   .explore{padding:14px;border-radius:22px}.explore .panel-foot{margin:14px -14px -14px}
   .cards{grid-template-columns:1fr 1fr;gap:10px}
@@ -434,7 +357,7 @@ dialog[open]{animation:sheetIn .5s var(--out)}
 @media (prefers-reduced-motion:reduce){
   .reveal,#sphere-base,dialog[open],.toast{animation-duration:.01s;animation-delay:0s}
   .pulse::after{animation:none}
-  .pc.fresh,.fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct,.bump [data-dpct]{animation:none}
+  .pc.fresh,.br.fresh,.fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct,.bump [data-dpct]{animation:none}
 }
 
 /* ================================================================== views */
@@ -474,9 +397,6 @@ a.row{color:inherit}
 .stat dd small{font-size:12.5px;color:var(--faint);letter-spacing:-.02em;margin-left:4px}
 
 /* toolbar */
-.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
-.toolbar .seg button{padding:6px 13px;font-size:12.5px}
-.toolbar .grow{flex:1}
 .mini{display:flex;align-items:center;border:1px solid var(--hair);border-radius:999px;background:var(--paper);height:37px;padding:0 14px;gap:8px;transition:border-color .2s,box-shadow .2s}
 .mini:focus-within{border-color:var(--navy);box-shadow:0 0 0 4px var(--ring)}
 .mini input,.mini select{border:0;outline:0;background:transparent;font-size:13px;min-width:0}
@@ -489,18 +409,56 @@ a.row{color:inherit}
 .quick .mini span{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
 
 /* terminal grid */
-/* presale browser: a search row, then one panel holding the title, the filters and a grid of cards. A card is a presale; the whole card
-   is a link to its page (new tab), with the quick-buy or claim button raised above that link. */
+/* the terminal is a board: new ideas (live, under halfway), seeding (live, past halfway), seeded. Three tall glass columns that scroll on
+   their own. A row is a presale and links to its page in a new tab; the quick-buy pill is raised above that link. */
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
+.col{display:flex;flex-direction:column;height:calc(100dvh - 186px);min-height:460px;padding:20px 14px 0;border-radius:24px}
+.col-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 8px 16px}
+.col-head h2{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:600;letter-spacing:-.035em;line-height:1.1}
+.col-head h2 svg{flex:none;width:22px;height:22px;stroke:var(--navy-deep);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.col-head h2 .tag{font-size:12px;letter-spacing:-.01em}
+.col-note{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.col-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px;padding:2px 0 16px}
+.col-empty{padding:34px 12px;text-align:center;color:var(--muted);font-size:14px}
+.col-empty a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
+.br{position:relative;flex:none;display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--hair);border-radius:16px;background:var(--paper);transition:box-shadow .25s,border-color .25s}
+.br:hover{border-color:var(--hair-2);box-shadow:var(--lift)}
+.br .pick::after{border-radius:16px}
+.br-av{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,hsl(var(--h) 90% 93%/.95),hsl(calc(var(--h) + 55) 90% 87%/.85))}
+.br-av svg{width:56%;height:56%;fill:hsl(calc(var(--h) + 20) 42% 44%)}
+.br-main{min-width:0}
+.br .pick{display:flex;align-items:baseline;gap:7px;min-width:0;white-space:nowrap}
+.br .pick b{font-size:14.5px;font-weight:600;letter-spacing:-.01em}
+.br .pick span{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.br-meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.br-meta .tag{font-size:10.5px;padding:1px 7px}
+.br .c-prog{margin-top:8px;gap:8px}
+.br .bar{height:4px}
+.br .pct{font-size:11.5px;width:32px}
+.br-side{display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right;white-space:nowrap}
+.br-val{font-size:13px;color:var(--ink)}
+.br-val em{font-style:normal;color:var(--faint);font-size:11.5px}
+.br-sub{font-size:11.5px;color:var(--muted)}
+.br .t-act{margin-top:5px}
+.br .t-act:empty{display:none}
+.br .qb{background:var(--accent);border-color:var(--accent);color:#fff;padding:8px 14px}
+.br .qb:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.board-note{margin-top:14px;font-size:13px;color:var(--muted)}
+.board-note a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
+@media (max-width:1000px){.board{grid-template-columns:1fr}.col{height:auto;min-height:0}.col-list{overflow:visible}}
+/* presale browser, on the landing page: a search row, then one panel holding the title, the filters and a grid of cards. A card is a
+   presale and the whole card links to its page in a new tab. Buying happens in the app, so here the button is part of that link. */
 .xbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 14px}
 .xbar .mini.search{flex:1 1 320px;height:46px;padding:0 18px;border-radius:16px}
 .xbar .mini.search input{width:100%;font-size:14.5px}
 .xbar .btn{height:46px;border-radius:16px;padding:0 20px}
 .explore{padding:22px;border-radius:26px}
 .explore .panel-foot{margin:18px -22px -22px}
+.explore .panel-foot button{margin-left:6px;color:var(--ink-2);border-bottom:1px solid var(--hair-2)}
 .xhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px 24px;flex-wrap:wrap;margin-bottom:18px}
-.xhead h1{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-weight:600;font-size:clamp(26px,2.6vw,34px);letter-spacing:-.045em;line-height:1.05}
-.xhead h1 i{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;margin-right:.18em}
-.xhead h1 .tag{font-size:12.5px;letter-spacing:-.01em}
+.xhead h2{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-weight:600;font-size:clamp(26px,2.6vw,34px);letter-spacing:-.045em;line-height:1.05}
+.xhead h2 i{display:inline;font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;line-height:inherit;margin-right:.18em}
+.xhead h2 .tag{font-size:12.5px;letter-spacing:-.01em}
 .xhead p{color:var(--muted);font-size:14px;margin-top:8px;max-width:74ch}
 .xfilters{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 .xfilters .seg{max-width:100%;overflow-x:auto}
@@ -509,8 +467,8 @@ a.row{color:inherit}
 .cards .empty{grid-column:1/-1}
 .pc{position:relative;display:flex;flex-direction:column;min-width:0;padding:12px;border:1px solid var(--hair);border-radius:18px;background:var(--paper);transition:transform .25s var(--out),box-shadow .25s,border-color .25s}
 .pc:hover{transform:translateY(-3px);box-shadow:var(--lift);border-color:var(--hair-2)}
-.pc.flash{animation:flash 1.8s ease-out}
-.pc.fresh{animation:cardIn .6s var(--out) backwards;animation-delay:calc(var(--i,0)*50ms)}
+.pc.flash,.br.flash{animation:flash 1.8s ease-out}
+.pc.fresh,.br.fresh{animation:cardIn .6s var(--out) backwards;animation-delay:calc(var(--i,0)*50ms)}
 @keyframes cardIn{from{opacity:0;transform:translateY(14px)}}
 .pick::after{content:"";position:absolute;inset:0;border-radius:18px}
 .pick:focus-visible{outline:none}.pick:focus-visible::after{outline:2px solid var(--navy);outline-offset:2px}
@@ -697,8 +655,6 @@ a.row{color:inherit}
   <nav class="navpill glass" id="navpill" aria-label="Sections">
     <span class="ind" aria-hidden="true"></span>
     <a href="#presales">Presales</a>
-    <a href="#how">How it works</a>
-    <a href="#faq">FAQ</a>
     <a href="#/docs" class="ext">Docs</a>
   </nav>
   <div class="navright">
@@ -708,7 +664,7 @@ a.row{color:inherit}
   </div>
 </header>
 <nav class="mobnav" id="mobnav" aria-label="Sections">
-  <a href="#presales">Presales</a><a href="#how">How it works</a><a href="#faq">FAQ</a><a href="#/docs">Docs</a><a href="#/app" target="_blank" rel="noopener">Launch App</a>
+  <a href="#presales">Presales</a><a href="#/docs">Docs</a><a href="#/app" target="_blank" rel="noopener">Launch App</a>
 </nav>
 
 <main id="top">
@@ -732,115 +688,30 @@ a.row{color:inherit}
   </section>
 
   <section class="sec" id="presales">
-    <div class="wrap">
-      <div class="sec-head">
-        <h2>Open presales</h2>
-        <p>Each one has a target, a deadline and a pair asset. Buy in with that asset, then wait for it to resolve. There is nothing to trade until it seeds into Meteora.</p>
+    <div class="wrap wide">
+      <div class="xbar">
+        <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="q" placeholder="Search presales by name or ticker" autocomplete="off" aria-label="Search presales"></label>
+        <a class="btn btn-ink" href="#/app/launch" target="_blank" rel="noopener"><span aria-hidden="true">+</span> Start a presale</a>
       </div>
-      <div class="panel">
-        <div class="panel-bar">
-          <div class="live"><span class="pulse"></span><span id="liveCount"></span><span class="tag">Demo data</span></div>
-          <a class="bar-link" href="#/app" target="_blank" rel="noopener">Open the terminal</a>
-        </div>
-        <div class="cols" aria-hidden="true"><span>Project</span><span>Filled</span><span>Raised</span><span>Ends in</span><span></span></div>
-        <div id="rows"></div>
-      </div>
-    </div>
-  </section>
-
-<section class="sec" id="how">
-    <div class="wrap">
-      <div class="sec-head">
-        <h2><i>Every presale ends</i>one of two ways</h2>
-        <p>Drag the slider to the deadline and see what each backer walks away with.</p>
-      </div>
-      <div class="panel">
-        <span class="plus" style="left:50%;top:0"></span>
-        <div class="mech-top">
-          <div class="mech-label">
-            <label for="mech">Raised when the clock runs out</label>
-            <output id="mechOut" class="num" for="mech"></output>
-          </div>
-          <input type="range" id="mech" min="0" max="100" value="64" step="1">
-          <div class="scale num"><span>0%</span><span>Target 100 SOL</span></div>
-        </div>
-        <div class="fork">
-          <span class="plus" style="left:50%;top:0"></span>
-          <div class="end" id="endRefund">
-            <h3>Short of the target</h3>
-            <p>No tokens are released and the supply is burned. Every backer withdraws exactly what they paid, fee included, straight from the presale vault.</p>
-            <div class="ledger num"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
-              <div><span>7xKp…9fQa</span><span>paid 4</span><span>gets 4 SOL</span></div>
-              <div><span>Dm3t…Rw2e</span><span>paid 15</span><span>gets 15 SOL</span></div>
-              <div><span>9aHc…kL5v</span><span>paid 1</span><span>gets 1 SOL</span></div>
-            </div>
-          </div>
-          <div class="end" id="endSeed">
-            <h3>Target reached</h3>
-            <p>The presale ends the moment it fills. The whole raise is locked as liquidity in a Meteora pool, and backers claim their tokens at the presale price.</p>
-            <div class="ledger num"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
-              <div><span>7xKp…9fQa</span><span>paid 4</span><span>gets 19,800,000</span></div>
-              <div><span>Dm3t…Rw2e</span><span>paid 15</span><span>gets 74,250,000</span></div>
-              <div><span>9aHc…kL5v</span><span>paid 1</span><span>gets 4,950,000</span></div>
-            </div>
+      <div class="panel explore">
+        <div class="xhead">
+          <div><h2><span><i>Open</i>presales</span><span class="tag" id="xCount"></span><span class="tag">Demo data</span></h2><p id="xSub"></p></div>
+          <div class="xfilters">
+            <div class="seg" id="assetSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span>
+              <button data-v="all" aria-pressed="true">All pairs</button><button data-v="SOL" aria-pressed="false">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="stock" aria-pressed="false">Stocks</button><button data-v="other" aria-pressed="false">Other</button></div>
+            <div class="seg" id="statusSeg" role="group" aria-label="Status"><span class="seg-ind" aria-hidden="true"></span>
+              <button data-v="all" aria-pressed="false">All</button><button data-v="live" aria-pressed="true">Live</button><button data-v="seeded" aria-pressed="false">Seeded</button><button data-v="refunding" aria-pressed="false">Refunded</button></div>
+            <div class="seg" id="sortSeg" role="group" aria-label="Sort"><span class="seg-ind" aria-hidden="true"></span>
+              <button data-v="ending" aria-pressed="true">Ending soon</button><button data-v="filled" aria-pressed="false">Most filled</button><button data-v="new" aria-pressed="false">Newest</button></div>
           </div>
         </div>
-      </div>
-
-      <div class="panel rules">
-        <span class="plus" style="left:33.333%;top:0"></span><span class="plus" style="left:66.666%;top:0"></span>
-        <span class="plus" style="left:33.333%;top:100%"></span><span class="plus" style="left:66.666%;top:100%"></span>
-        <div class="rule">
-          <svg viewBox="0 0 240 74" aria-hidden="true"><g style="fill:var(--navy)"><circle cx="30" cy="37" r="7"/><circle cx="66" cy="37" r="7"/><circle cx="102" cy="37" r="7"/><circle cx="138" cy="37" r="7"/><circle cx="174" cy="37" r="7"/><circle cx="210" cy="37" r="7"/></g><path d="M20 58h200" style="stroke:var(--navy-soft)" stroke-width="1.5" stroke-dasharray="2 5"/></svg>
-          <h3>One price for everyone</h3>
-          <p>No curve and no early-bird discount. The first backer pays what the last one pays.</p>
-        </div>
-        <div class="rule">
-          <svg viewBox="0 0 240 74" aria-hidden="true"><g fill="none" style="stroke:var(--navy)" stroke-width="1.5"><rect x="92" y="12" width="56" height="50" rx="10"/><path d="M148 28h46M148 46h46" stroke-dasharray="2 5" style="stroke:var(--navy-soft)"/><path d="M46 37h46"/></g><g style="fill:var(--navy)"><circle cx="40" cy="37" r="5"/><circle cx="120" cy="37" r="6"/></g><g style="fill:var(--navy-soft)"><circle cx="200" cy="28" r="4"/><circle cx="200" cy="46" r="4"/></g></svg>
-          <h3>Two exits, no third</h3>
-          <p>Funds sit in Meteora's Presale Vault. They can only leave into the liquidity pool or back to the wallets they came from.</p>
-        </div>
-        <div class="rule">
-          <svg viewBox="0 0 240 74" aria-hidden="true"><circle cx="120" cy="37" r="25" fill="none" style="stroke:var(--navy-soft)" stroke-width="1.5" stroke-dasharray="3 6"/><circle cx="120" cy="37" r="4" style="fill:var(--navy)"/></svg>
-          <h3>Nothing circulates until it seeds</h3>
-          <p>The full supply sits in the vault while the presale fills, so there is nothing to snipe or dump.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-
-  <section class="sec" id="faq">
-    <div class="wrap">
-      <div class="faq-grid"><h2>Questions</h2><div class="faq" id="faqList"></div></div>
-    </div>
-  </section>
-
-  <section class="sec" style="padding-top:0">
-    <div class="wrap">
-      <div class="cta" id="cta">
-        <canvas id="ctaField" aria-hidden="true"></canvas>
-        <h2><i>Open a presale</i>in about a minute</h2>
-        <p>Pick a pair, a target and a deadline. Backers carry no fill risk: it seeds, or they get back everything they paid.</p>
-        <div class="hero-cta"><a href="#/app/launch" target="_blank" rel="noopener" class="btn btn-white btn-lg">Start a presale</a><a href="#/app" target="_blank" rel="noopener" class="btn btn-ghost btn-lg">Open the terminal</a></div>
+        <div class="cards" id="cards"></div>
+        <div class="panel-foot">Prototype. Presale data is simulated and no transactions are sent. A connected wallet is only read for its address and balances. <button data-reset>Reset demo</button></div>
       </div>
     </div>
   </section>
 </main>
 
-<div class="dusk" aria-hidden="true"></div>
-<footer>
-  <div class="wrap">
-    <div class="foot">
-      <div>
-        <a href="#top" class="brand" style="font-size:19px">Seed</a>
-        <p>Fixed-price presales on Solana, built on Meteora's Presale Vault and DAMM v2. They seed, or they refund.</p>
-      </div>
-      <nav aria-label="Footer"><a href="#/app" target="_blank" rel="noopener">Terminal</a><a href="#/app/launch" target="_blank" rel="noopener">Start a presale</a><a href="#/docs">Docs</a><a href="#faq">FAQ</a><button data-reset>Reset demo</button></nav>
-    </div>
-    <div class="fine"><span>© 2026 Seed</span><span>Prototype. Presale data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.</span></div>
-  </div>
-</footer>
 </div>
 
 <!-- ######################################################################
@@ -873,28 +744,20 @@ a.row{color:inherit}
   <!-- ------------------------------------------------------ TERMINAL -->
   <section id="tab-terminal">
     <div class="xbar">
-      <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="q" placeholder="Search presales by name or ticker" autocomplete="off" aria-label="Search presales"></label>
+      <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="bq" placeholder="Search the board by name or ticker" autocomplete="off" aria-label="Search the board"></label>
       <div class="quick"><span>Quick buy</span>
         <label class="mini"><input id="qbAmt" inputmode="decimal" aria-label="Quick buy amount"></label>
         <label class="mini"><select id="qbAsset" aria-label="Quick buy asset"></select></label>
       </div>
       <a class="btn btn-ink" href="#/app/launch"><span aria-hidden="true">+</span> Start a presale</a>
     </div>
-    <div class="panel explore">
-      <div class="xhead">
-        <div><h1><span><i>Presale</i>terminal</span><span class="tag" id="xCount"></span></h1><p id="xSub"></p></div>
-        <div class="xfilters">
-        <div class="seg" id="assetSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span>
-          <button data-v="all" aria-pressed="true">All pairs</button><button data-v="SOL" aria-pressed="false">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="stock" aria-pressed="false">Stocks</button><button data-v="other" aria-pressed="false">Other</button></div>
-        <div class="seg" id="statusSeg" role="group" aria-label="Status"><span class="seg-ind" aria-hidden="true"></span>
-          <button data-v="all" aria-pressed="false">All</button><button data-v="live" aria-pressed="true">Live</button><button data-v="seeded" aria-pressed="false">Seeded</button><button data-v="refunding" aria-pressed="false">Refunded</button></div>
-        <div class="seg" id="sortSeg" role="group" aria-label="Sort"><span class="seg-ind" aria-hidden="true"></span>
-          <button data-v="ending" aria-pressed="true">Ending soon</button><button data-v="filled" aria-pressed="false">Most filled</button><button data-v="new" aria-pressed="false">Newest</button></div>
-        </div>
-      </div>
-      <div class="cards" id="trows"></div>
-      <div class="panel-foot" id="tryHint" hidden></div>
+    <div class="board">
+      <section class="panel col" aria-labelledby="h-new"><header class="col-head"><h2 id="h-new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5"/></svg>New ideas<span class="tag" id="n-new"></span></h2><span class="col-note">Under 50% filled</span></header><div class="col-list" id="col-new"></div></section>
+      <section class="panel col" aria-labelledby="h-seeding"><header class="col-head"><h2 id="h-seeding"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9"/><path d="M12 12c0-3.5-2.5-6-6.5-6 0 3.5 2.5 6 6.5 6z"/><path d="M12 14.5c0-3 2.2-5 5.8-5 0 3-2.2 5-5.8 5z"/></svg>Seeding<span class="tag" id="n-seeding"></span></h2><span class="col-note">Past halfway</span></header><div class="col-list" id="col-seeding"></div></section>
+      <section class="panel col" aria-labelledby="h-seeded"><header class="col-head"><h2 id="h-seeded"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.6 2.6 4.9-5.4"/></svg>Seeded<span class="tag" id="n-seeded"></span></h2><span class="col-note">Target met</span></header><div class="col-list" id="col-seeded"></div></section>
     </div>
+    <p class="board-note" id="tryHint" hidden></p>
+    <p class="board-note" id="refundNote" hidden></p>
   </section>
 
   <!-- ------------------------------------------------------- PRESALE -->
@@ -1418,7 +1281,7 @@ function seedData() {
 
 const QUICK0 = () => ({ SOL: 2, USDC: 250, JUP: 500, BONK: 5000000, NVDAx: 1 });
 let state = { wallet: null, presales: [], positions: {}, claimed: {}, quick: QUICK0(), custom: {} };
-const ui = { view: 'home', tab: 'terminal', sel: null, fStatus: 'live', fAsset: 'all', q: '', sort: 'ending', qbAsset: 'SOL' };
+const ui = { view: 'home', tab: 'terminal', sel: null, fStatus: 'live', fAsset: 'all', q: '', bq: '', sort: 'ending', qbAsset: 'SOL' };
 function fresh() { return { wallet: null, presales: seedData(), positions: {}, claimed: {}, quick: QUICK0(), custom: {} }; }
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q) { state = Object.assign(fresh(), s); return; } } catch (e) {}
@@ -1549,34 +1412,24 @@ const placeSegs = () => Object.values(seg).forEach(s => s.place());
 const shown = { home: new Set(), term: new Set() };
 function freshIn(k, list) { const prev = shown[k]; shown[k] = new Set(list.map(p => p.id)); return p => prev.has(p.id) ? '' : ' fresh'; }
 function renderHome() {
-  const live = state.presales.filter(p => p.status === 'live').sort((a, b) => pctOf(b) - pctOf(a));
-  $('#liveCount').textContent = live.length === 1 ? '1 presale live' : `${live.length} presales live`;
+  const live = state.presales.filter(p => p.status === 'live');
   $('#heroLive').textContent = live.length ? `${live.length} presale${live.length === 1 ? '' : 's'} live on Solana` : 'No presales live right now';
-  if (!$('#rows').classList.contains('seen')) shown.home = new Set();   // not looked at yet, so every row is still new
-  const fresh = freshIn('home', live);
-  $('#rows').innerHTML = live.length ? live.map((p, i) => `<a class="row live${fresh(p)}" style="--i:${i}" href="#/app/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}">
-      <span class="c-proj">${projCell(p)}</span>${progCell(p)}
-      <span class="c-raised num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
-      <span class="c-time num" data-time>${timeCell(p)}</span>
-      <span class="c-act"><span class="pill-sm">Buy</span></span></a>`).join('')
-    : '<div class="empty">No presales are live right now. <a href="#/app/launch">Start one</a></div>';
+  if (!$('#cards').classList.contains('seen')) shown.home = new Set();   // not looked at yet, so every card is still new
+  const l = visible(), fresh = freshIn('home', l);
+  const chip = { live: '<span class="tag in">Live</span>', seeded: '<span class="tag ok">Seeded</span>', refunding: '<span class="tag">Refunded</span>' };
+  $('#cards').innerHTML = l.length ? l.map((p, i) => `<div class="pc ${p.status}${fresh(p)}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
+      <div class="art"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg>
+        <div class="chips">${chip[p.status]}<span class="tag">${esc(Q(p).sym)} pair</span>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}</div></div>
+      <a class="pick" href="#/app/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b class="cname">${esc(p.name)}</b></a>
+      <span class="ctk">$${esc(p.ticker)}</span>
+      <div class="cval"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></div>
+      ${progCell(p)}
+      <dl class="cmeta">${p.status === 'live' ? `<div><dt>Ends in</dt><dd class="num" data-time>${timeCell(p)}</dd></div><div><dt>Pace needed</dt><dd class="num" data-pace>${paceTxt(p)}</dd></div>`
+        : `<div><dt>${p.status === 'seeded' ? 'Seeded' : 'Closed'}</dt><dd>${fmtDay(p.resolvedAt || p.endsAt)}</dd></div><div><dt>Backers</dt><dd class="num">${p.backers}</dd></div>`}</dl>
+      <span class="t-act">${p.status === 'live' ? `<span class="qb">Buy with ${esc(Q(p).sym)}</span>` : ''}</span></div>`).join('')
+    : `<div class="empty">${ui.q ? `Nothing matches "${esc(ui.q)}". Clear the search or widen the filters.` : ui.fStatus === 'live' ? 'No presales are live with these filters. <a href="#/app/launch" target="_blank" rel="noopener">Start one</a>' : 'Nothing here yet with these filters.'}</div>`;
+  renderStats();
 }
-function syncMech() {
-  const m = $('#mech'), v = +m.value, hit = v >= 100;
-  m.style.setProperty('--p', v + '%');
-  $('#mechOut').textContent = hit ? '100 of 100 SOL, fills and closes early' : `${v} of 100 SOL, ${v}% at the deadline`;
-  $('#endRefund').classList.toggle('off', hit); $('#endSeed').classList.toggle('off', !hit);
-}
-const FAQ = [
-  ['What happens if a presale misses its target?', 'The presale fails at the deadline. No tokens are released and the supply is burned. Every backer withdraws exactly what they paid, the 1% fee included, in the asset they paid with. The only cost is two Solana network fees.'],
-  ['Can I pull my funds out before the deadline?', 'No. Withdrawals are switched off while a presale is live. If backers could leave early, a large wallet could fake momentum and pull out at the last minute.'],
-  ['What price do I get?', 'The same as everyone else. Half of the supply goes to backers, so the price is the target divided by that half. The Meteora pool opens at that same price.'],
-  ['What can a presale be paired with?', 'SOL, USDC, a tokenized stock such as NVDAx or TSLAx, or any other token by pasting its mint address. The creator picks the pair when the presale opens. Backers buy in with that asset, the pool is paired against it, and refunds come back in it. Assets outside the verified list carry an Unverified tag, so check the mint before you buy.'],
-  ['What does Seed charge?', 'A 1% protocol fee on each buy. Pay 2 SOL and 1.98 SOL goes to the raise. The fee sits in the vault with the raise and is returned in full if the presale misses, so Seed only earns when a presale seeds. Opening a presale is free.'],
-  ['What happens the moment it fills?', 'The presale ends early, even if the deadline is days away. The full raise goes into a Meteora DAMM v2 pool against the other half of the supply, and the liquidity is locked for good. From that point backers can claim their tokens.'],
-  ['Who holds the money while a presale is open?', 'Meteora\u2019s Presale Vault program. The creator cannot touch it and neither can we. If the presale misses, only backers can withdraw. If it fills, the only permitted withdrawal is the one that opens and locks the pool.'],
-  ['Which wallets work?', 'Phantom, Solflare and Backpack. Without one of them, a demo wallet with simulated funds lets you try every flow.']
-];
 
 /* ============================================================= TERMINAL */
 function visible() {
@@ -1603,23 +1456,31 @@ function renderStats() {
   $('#xSub').innerHTML = live.length ? `Paired with ${esc(pairs.slice(0, 4).join(', '))}${pairs.length > 4 ? ' and more' : ''}. ${esc(top.name)} is closest to seeding at ${Math.floor(pctOf(top) + 1e-7)}%. Next deadline in <span class="num" data-next="${soon.id}">${fmtLeft(soon.endsAt - Date.now())}</span>, ${esc(soon.name)}.`
     : 'No presales are live right now. Seeded and refunded ones are under their filters.';
 }
+/* which column a presale sits in. Refunded ones are not on the board: they are named under it, and claims live in the portfolio. */
+const colOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : 'seeding') : null;
 function renderTerminal() {
-  const l = visible(), fresh = freshIn('term', l);
-  const chip = { live: '<span class="tag in">Live</span>', seeded: '<span class="tag ok">Seeded</span>', refunding: '<span class="tag">Refunded</span>' };
-  $('#trows').innerHTML = l.length ? l.map((p, i) => `<div class="pc ${p.status}${fresh(p)}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
-      <div class="art"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg>
-        <div class="chips">${chip[p.status]}<span class="tag">${esc(Q(p).sym)} pair</span>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}</div></div>
-      <a class="pick" href="#/app/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b class="cname">${esc(p.name)}</b></a>
-      <span class="ctk">$${esc(p.ticker)}</span>
-      <div class="cval"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></div>
-      ${progCell(p)}
-      <dl class="cmeta">${p.status === 'live' ? `<div><dt>Ends in</dt><dd class="num" data-time>${timeCell(p)}</dd></div><div><dt>Pace needed</dt><dd class="num" data-pace>${paceTxt(p)}</dd></div>`
-        : `<div><dt>${p.status === 'seeded' ? 'Seeded' : 'Closed'}</dt><dd>${fmtDay(p.resolvedAt || p.endsAt)}</dd></div><div><dt>Backers</dt><dd class="num">${p.backers}</dd></div>`}</dl>
-      <span class="t-act">${actCell(p)}</span></div>`).join('')
-    : `<div class="empty">${ui.q ? `Nothing matches "${esc(ui.q)}". Clear the search or widen the filters.` : ui.fStatus === 'live' ? 'No presales are live with these filters. <a href="#/app/launch">Start one</a>' : 'Nothing here yet with these filters.'}</div>`;
-  const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live' && ui.fStatus !== 'seeded' && ui.fStatus !== 'refunding' && l.length > 0;
+  const q = ui.bq.trim().toLowerCase(), hit = state.presales.filter(p => !q || (p.name + ' ' + p.ticker).toLowerCase().includes(q));
+  const cols = { new: hit.filter(p => colOf(p) === 'new').sort((a, b) => b.openedAt - a.openedAt), seeding: hit.filter(p => colOf(p) === 'seeding').sort((a, b) => pctOf(b) - pctOf(a)),
+    seeded: hit.filter(p => colOf(p) === 'seeded').sort((a, b) => (b.resolvedAt || 0) - (a.resolvedAt || 0)) };
+  const fresh = freshIn('term', [...cols.new, ...cols.seeding, ...cols.seeded]);
+  const none = { new: 'No new ideas right now. <a href="#/app/launch">Start one</a>', seeding: 'Nothing is past halfway yet.', seeded: 'Nothing has seeded yet.' };
+  for (const k of ['new', 'seeding', 'seeded']) {
+    $('#n-' + k).textContent = cols[k].length;
+    $('#col-' + k).innerHTML = cols[k].length ? cols[k].map((p, i) => `<div class="br ${p.status}${fresh(p)}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
+      <span class="br-av"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>
+      <div class="br-main"><a class="pick" href="#/app/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>
+        <div class="br-meta"><span class="tag">${esc(Q(p).sym)} pair</span>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}<span>${p.status === 'live' ? `Ends in <span class="num" data-time>${timeCell(p)}</span>` : timeCell(p)}</span></div>
+        ${progCell(p)}</div>
+      <div class="br-side"><span class="br-val num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
+        ${p.status === 'live' ? `<span class="br-sub num" title="Pace needed to seed" data-pace>${paceTxt(p)}</span>` : `<span class="br-sub">${p.backers} backers</span>`}<span class="t-act">${actCell(p)}</span></div></div>`).join('')
+      : `<div class="col-empty">${q ? `Nothing here matches "${esc(ui.bq.trim())}".` : none[k]}</div>`;
+  }
+  const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live';
   hint.hidden = !show; if (show) hint.textContent = 'To see both endings: fill the rest of Osprey and it seeds on the spot. Buy Moss and its deadline passes in about three minutes.';
-  renderStats(); renderDetail();
+  const dead = state.presales.filter(p => p.status === 'refunding'), owed = dead.some(p => state.positions[p.id] && !state.claimed[p.id]), note = $('#refundNote');
+  note.hidden = !dead.length;
+  if (dead.length) note.innerHTML = `${dead.map(p => `<a href="#/app/presale/${p.id}" target="_blank" rel="noopener">${esc(p.name)}</a>`).join(', ')} missed ${dead.length === 1 ? 'its' : 'their'} target and refunded every backer.${owed ? ' You have a refund to claim in <a href="#/app/portfolio">your portfolio</a>.' : ''}`;
+  renderDetail();
 }
 function bump(row) { row.classList.remove('bump'); void row.offsetWidth; row.classList.add('bump'); setTimeout(() => row.classList.remove('bump'), 950); }
 function patchRows(p) {
@@ -1631,7 +1492,7 @@ function patchRows(p) {
     s('[data-qbamt]', e => e.textContent = qbLabel(p));
   });
 }
-$('#trows').addEventListener('click', e => {
+$('.board').addEventListener('click', e => {
   const qb = e.target.closest('[data-qb]'), cl = e.target.closest('[data-claim]');
   if (qb) return quickBuy(find(qb.dataset.qb), qb);
   if (cl) return claim(find(cl.dataset.claim), cl);
@@ -1661,7 +1522,7 @@ async function executeBuy(p, amt) {
   if (p.raised >= p.target - 1e-6) { p.raised = p.target; p.status = 'seeded'; p.resolvedAt = Date.now(); toast(`${p.name} seeded. Your tokens are ready to claim.`); }
   else toast(`Bought ${fmtC(pay, p.q)} ${C.sym} of ${p.name}`);
   save(); renderAll();
-  const row = $(`.pc[data-row="${p.id}"]`); if (row) row.classList.add('flash');
+  $$(`[data-row="${p.id}"]`).forEach(r => r.classList.add('flash'));
   return true;
 }
 async function quickBuy(p, btn) {
@@ -2040,7 +1901,7 @@ function route() {
   else if (h.length > 1) anchor = h;
   const changed = view !== ui.view; ui.view = view; document.documentElement.dataset.view = view; syncChrome();
   ['home', 'app', 'docs'].forEach(v => { $('#view-' + v).hidden = v !== view; document.body.classList.toggle('in-' + v, v === view); });
-  if (changed || prevTab !== ui.tab) { shown.home = new Set(); shown.term = new Set(); if (view === 'home') $('#rows').classList.remove('seen'); }
+  if (changed || prevTab !== ui.tab) { shown.home = new Set(); shown.term = new Set(); if (view === 'home') $('#cards').classList.remove('seen'); }
   const pg = view === 'app' && ui.tab === 'presale' && find(ui.sel);
   document.title = pg ? `${pg.name} ($${pg.ticker}) presale on Seed` : view === 'app' ? 'Seed app: terminal, launch, portfolio' : view === 'docs' ? 'Seed docs: how it works, with the math' : 'Seed: presales that seed or refund';
   if (view === 'app') {
@@ -2090,8 +1951,10 @@ function simulate() {
   if (!pool.length) return;
   const p = pool[Math.floor(Math.random() * pool.length)], amt = r6(Math.min(p.target * .95 - p.raised, p.target * (0.0008 + Math.random() * 0.004)));
   if (!(amt > 0)) return;
+  const was = colOf(p);
   p.raised = r6(p.raised + amt); p.backers++; record(p, addr(String(Math.random())), r6(amt / NET));
-  patchRows(p); patchDetail(p); save();
+  if (colOf(p) !== was) renderTerminal(); else patchRows(p);
+  patchDetail(p); save();
   renderStats();
 }
 document.addEventListener('click', e => { if (!e.target.closest('[data-reset]')) return; try { localStorage.removeItem(KEY); } catch (x) {} state = fresh(); ui.sel = null; syncQuickUI(); renderAll(); toast('Demo reset'); });
@@ -2108,21 +1971,18 @@ function syncQuickUI() {
 /* ------------------------------------------------------------------ boot */
 function boot() {
   load();
-  $('#faqList').innerHTML = FAQ.map(([q, a], i) => `<div class="qa${i ? '' : ' open'}"><button aria-expanded="${!i}"><span>${q}</span><span class="mk" aria-hidden="true">+</span></button><div class="a"><div><p>${a}</p></div></div></div>`).join('');
-  $('#faqList').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; const qa = b.parentElement, was = qa.classList.contains('open');
-    $$('.qa').forEach(x => { x.classList.remove('open'); $('button', x).setAttribute('aria-expanded', 'false'); }); if (!was) { qa.classList.add('open'); b.setAttribute('aria-expanded', 'true'); } });
-  $('#mech').addEventListener('input', syncMech);
   seg.tabs = initSeg($('#tabSeg'), v => { location.hash = '#/app/' + v; });
-  seg.status = initSeg($('#statusSeg'), v => { ui.fStatus = v; renderTerminal(); });
-  seg.assetF = initSeg($('#assetSeg'), v => { ui.fAsset = v; renderTerminal(); });
+  seg.status = initSeg($('#statusSeg'), v => { ui.fStatus = v; renderHome(); });
+  seg.assetF = initSeg($('#assetSeg'), v => { ui.fAsset = v; renderHome(); });
   seg.pair = initSeg($('#pairSeg'), v => { draft.pair = v; $('#fErr').textContent = ''; renderPreview(); if (v === 'any') $('#fMint').focus(); });
   seg.time = initSeg($('#timeSeg'), v => { draft.hours = +v; renderPreview(); });
-  $('#q').addEventListener('input', e => { ui.q = e.target.value; renderTerminal(); });
-  seg.sort = initSeg($('#sortSeg'), v => { ui.sort = v; renderTerminal(); });
+  $('#q').addEventListener('input', e => { ui.q = e.target.value; renderHome(); });
+  $('#bq').addEventListener('input', e => { ui.bq = e.target.value; renderTerminal(); });
+  seg.sort = initSeg($('#sortSeg'), v => { ui.sort = v; renderHome(); });
   $('#qbAsset').addEventListener('change', e => { ui.qbAsset = e.target.value; syncQuickUI(); });
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();
-  initDocs(); renderPreview(); syncMech(); tick(true); renderAll(); route(); resume();
+  initDocs(); renderPreview(); tick(true); renderAll(); route(); resume();
   setInterval(() => tick(), 1000); setInterval(simulate, 3600);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeSegs);
 }
@@ -2153,7 +2013,6 @@ const CANVAS = {
   dark: { field: ['143,180,255', 0.07, 0.45] },
   ground: { field: ['46,99,231', 0.06, 0.4] },   // dark theme, landing page: the ground is blue sky, so the dots go deep blue
   dusk: { field: ['140,72,128', 0.06, 0.36] },   // dark theme, the app: the ground is sunset, so the dots go plum
-  cta: { light: ['236,238,250', 0.05, 0.85], dark: ['46,99,231', 0.04, 0.45] },   // closing card: a dark card in light, glass in dark
   light: { field: ['86,104,160', 0.1, 0.62] },
   sky: { disc: 'rgba(255,255,255,.5)', halo: '255,255,255', rim: 'rgba(61,75,124,.2)', land: ['19,26,46', 0.10, 0.30], sea: ['19,26,46', 0.035, 0.085], pulse: '61,75,124', rSea: 'rgba(168,179,214,.55)', rLand: 'rgba(61,75,124,.92)', rRing: 'rgba(86,104,160,.32)' }
 };
@@ -2323,12 +2182,11 @@ class SeedSphere {
 }
 
 const field = new FlowField($('#field'), { fixed: true, rgb: pal.field[0], minA: pal.field[1], maxA: pal.field[2], thr: 0.525, range: 0.27, lens: true, grow: true });
-const ctaField = new FlowField($('#ctaField'), { fixed: false, rgb: '236,238,250', minA: 0.05, maxA: 0.85, thr: 0.5, range: 0.3, lens: false, grow: false });
 const sphere = new SeedSphere($('#hero'), $('#sphere-base'), $('#sphere-reveal'));
-const vis = { hero: true, cta: false };
+const vis = { hero: true };
 new IntersectionObserver(es => es.forEach(e => { vis[e.target.id] = e.isIntersecting; kick(); }), { rootMargin: '80px' }).observe($('#hero'));
-new IntersectionObserver(es => es.forEach(e => { vis.cta = e.isIntersecting; kick(); })).observe($('#cta'));
-new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('seen'); }), { threshold: 0.25 }).observe($('#rows'));
+// fires once the grid's top edge is a little way into the viewport. Not a visible-fraction threshold: a long enough grid could never reach one
+new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('seen'); }), { rootMargin: '0px 0px -12% 0px' }).observe($('#cards'));
 addEventListener('pointerdown', e => { if (!REDUCED) field.ring(e.clientX, e.clientY, 0.2); }, { passive: true });
 
 let T = 0, lastNow = 0, raf = 0, cost = 0, slow = 0, kickUntil = 0;
@@ -2339,22 +2197,21 @@ function loop(now) {
   const t0 = performance.now();
   field.frame(T, f);
   if (vis.hero) sphere.frame(T, f, now);
-  if (vis.cta) ctaField.frame(T * 1.0 + 40, f);
   // drop field resolution if this machine can't hold the frame budget
   cost += (performance.now() - t0 - cost) * 0.08;
   if (cost > 12 && field.step < 14) { if (++slow > 50) { field.step += 2; field.resize(); slow = 0; cost = 6; } } else slow = 0;
   if (!document.hidden && (!REDUCED || now < kickUntil)) raf = requestAnimationFrame(loop);
 }
 function kick() { if (REDUCED) kickUntil = performance.now() + 900; if (!raf && !document.hidden) { lastNow = 0; raf = requestAnimationFrame(loop); } }
-let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { field.resize(); ctaField.resize(); sphere.resize(); kick(); }, 120); });
+let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { field.resize(); sphere.resize(); kick(); }, 120); });
 document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else kick(); });
 kick();
-window.bgRefresh = () => { sphere.resize(); ctaField.resize(); field.resize(); kick(); };
+window.bgRefresh = () => { sphere.resize(); field.resize(); kick(); };
 // theme: dark unless the visitor chose light; the <head> script applies a stored choice before first paint
 /* what depends on the theme and the view together: the dot tints and the browser's own chrome colour */
 function syncChrome() {
   const app = ui.view === 'app';
-  field.tint(...(onSky() ? (app ? CANVAS.dusk : CANVAS.ground) : CANVAS[themeNow()]).field); ctaField.tint(...CANVAS.cta[themeNow()]);
+  field.tint(...(onSky() ? (app ? CANVAS.dusk : CANVAS.ground) : CANVAS[themeNow()]).field);
   $('meta[name="theme-color"]').content = themeNow() === 'light' ? '#ffffff' : onSky() ? (app ? '#A9A6CE' : '#F3F7FD') : '#0A1E4F';
 }
 function applyTheme(t) {
