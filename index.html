@@ -424,6 +424,9 @@ dialog[open]{animation:sheetIn .5s var(--out)}
   .btn-lg{padding:13px 20px;font-size:14.5px}
   .mech-top,.end,.rule,.form,.preview,.ppage{padding:22px 18px}
   .seg button{padding:7px 12px}
+  .explore{padding:14px;border-radius:22px}.explore .panel-foot{margin:14px -14px -14px}
+  .cards{grid-template-columns:1fr 1fr;gap:10px}
+  .pc{padding:10px}.cval{font-size:17px}.xfilters{justify-content:flex-start}
   dialog,#walletDlg{margin:auto auto 0;width:100vw}
   .sheet{border-radius:26px 26px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0px))}
   .specs{grid-template-columns:1fr 1fr}
@@ -431,7 +434,7 @@ dialog[open]{animation:sheetIn .5s var(--out)}
 @media (prefers-reduced-motion:reduce){
   .reveal,#sphere-base,dialog[open],.toast{animation-duration:.01s;animation-delay:0s}
   .pulse::after{animation:none}
-  .fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct,.bump [data-dpct]{animation:none}
+  .pc.fresh,.fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct,.bump [data-dpct]{animation:none}
 }
 
 /* ================================================================== views */
@@ -486,29 +489,55 @@ a.row{color:inherit}
 .quick .mini span{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
 
 /* terminal grid */
-.tgrid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
-.tcols,.trow{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1.9fr) minmax(0,1.2fr) minmax(0,1fr) 110px 140px;gap:18px;align-items:center;padding:0 22px}
-.tcols{padding-top:10px;padding-bottom:10px;border-bottom:1px solid var(--hair);font-size:12px;color:var(--faint);font-weight:500}
-.tcols span:nth-child(n+3){text-align:right}
-.trow{position:relative;padding-top:12px;padding-bottom:12px;border-bottom:1px solid var(--hair);transition:background .2s}
-.trow:last-child{border-bottom:0;border-radius:0 0 21px 21px}
-.trow:hover{background:var(--hover)}
-.trow.flash{animation:flash 1.8s ease-out}
-.pick{display:flex;align-items:center;gap:12px;min-width:0;text-align:left;width:100%}
-.pick::after{content:"";position:absolute;inset:0}
-.pick:focus-visible{outline:none}.pick:focus-visible::after{outline:2px solid var(--navy);outline-offset:-2px}
-.trow .av{width:36px;height:36px;border-radius:10px}.trow .av svg{width:24px;height:24px}
-.trow .nm b{font-size:14.5px}
-.trow .meta{font-size:12px;flex-wrap:wrap;row-gap:4px}
-.t-r{text-align:right;font-size:12.5px;color:var(--ink-2);white-space:nowrap}
-.t-r em{font-style:normal;color:var(--faint)}
+/* presale browser: a search row, then one panel holding the title, the filters and a grid of cards. A card is a presale; the whole card
+   is a link to its page (new tab), with the quick-buy or claim button raised above that link. */
+.xbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 14px}
+.xbar .mini.search{flex:1 1 320px;height:46px;padding:0 18px;border-radius:16px}
+.xbar .mini.search input{width:100%;font-size:14.5px}
+.xbar .btn{height:46px;border-radius:16px;padding:0 20px}
+.explore{padding:22px;border-radius:26px}
+.explore .panel-foot{margin:18px -22px -22px}
+.xhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px 24px;flex-wrap:wrap;margin-bottom:18px}
+.xhead h1{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-weight:600;font-size:clamp(26px,2.6vw,34px);letter-spacing:-.045em;line-height:1.05}
+.xhead h1 i{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;margin-right:.18em}
+.xhead h1 .tag{font-size:12.5px;letter-spacing:-.01em}
+.xhead p{color:var(--muted);font-size:14px;margin-top:8px;max-width:74ch}
+.xfilters{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.xfilters .seg{max-width:100%;overflow-x:auto}
+.xfilters .seg button{padding:6px 13px;font-size:12.5px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px}
+.cards .empty{grid-column:1/-1}
+.pc{position:relative;display:flex;flex-direction:column;min-width:0;padding:12px;border:1px solid var(--hair);border-radius:18px;background:var(--paper);transition:transform .25s var(--out),box-shadow .25s,border-color .25s}
+.pc:hover{transform:translateY(-3px);box-shadow:var(--lift);border-color:var(--hair-2)}
+.pc.flash{animation:flash 1.8s ease-out}
+.pc.fresh{animation:cardIn .6s var(--out) backwards;animation-delay:calc(var(--i,0)*50ms)}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px)}}
+.pick::after{content:"";position:absolute;inset:0;border-radius:18px}
+.pick:focus-visible{outline:none}.pick:focus-visible::after{outline:2px solid var(--navy);outline-offset:2px}
+/* the tile stands in for artwork: the presale's dot glyph on a pastel wash, both hued from its ticker (--h) */
+.art{position:relative;aspect-ratio:1/1;border-radius:13px;display:grid;place-items:center;overflow:hidden;background:linear-gradient(150deg,hsl(var(--h) 90% 93%/.95),hsl(calc(var(--h) + 55) 90% 87%/.85))}
+.art svg{width:46%;height:46%;fill:hsl(calc(var(--h) + 20) 42% 44%)}
+.art .chips{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:4px;flex-wrap:wrap}
+.art .tag{background:rgba(255,255,255,.85);border-color:transparent;color:#23386B;font-size:11px;padding:2px 8px}
+.art .tag.in{background:var(--solid);color:#fff}
+.art .tag.ok{background:#2FAE6E;color:#fff}
+.cname{display:block;margin-top:12px;font-weight:600;font-size:15px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ctk{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:-.02em}
+.cval{margin-top:10px;font-family:var(--mono);font-size:20px;font-weight:500;letter-spacing:-.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cval em{font-style:normal;font-size:12px;color:var(--faint);letter-spacing:-.02em}
+.pc .c-prog{margin-top:8px}
+.cmeta{margin-top:10px;font-size:11.5px;color:var(--muted)}
+.cmeta div{display:flex;justify-content:space-between;gap:8px;padding:3px 0;white-space:nowrap}
+.cmeta dd{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis}
+.pc .t-act{margin-top:auto;padding-top:12px;text-align:left}
+.pc .t-act:empty{display:none}
+.pc .qb{width:100%;padding:9px 12px;font-size:12.5px}
 .t-act{text-align:right;position:relative;z-index:1}
 .qb{border:1px solid var(--hair-2);background:var(--chip);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:600;white-space:nowrap;transition:background .2s,color .2s,border-color .2s,transform .15s}
 .qb:hover,.qb.hot{background:var(--accent);border-color:var(--accent);color:#fff}
 .qb:active{transform:translateY(1px)}
 .qb[disabled]{opacity:.5;cursor:wait}
 .qb .num{font-weight:500}
-@media (max-width:1099px){.tcols,.trow{grid-template-columns:minmax(0,2fr) minmax(0,1.25fr) minmax(0,1.3fr) 98px 132px}.c-pace{display:none}}
 
 /* a presale's own page. Every list opens it in a new browser tab, so the list stays where it was. Stacked on a phone; on a wide screen
    the raise sits on the left (readout, chart, recent buys) and the buy on the right (amount, terms, facts). */
@@ -622,9 +651,7 @@ a.row{color:inherit}
   .stats{grid-template-columns:1fr 1fr}
   .stat:nth-child(3)::before{display:none}
   .stat:nth-child(n+3){border-top:1px solid var(--hair)}
-  .tcols,.pcols{display:none}
-  .trow{grid-template-columns:1fr auto;grid-template-areas:"proj act" "prog prog" "raised time";row-gap:10px;padding:14px 16px}
-  .trow .pick{grid-area:proj}.trow .t-act{grid-area:act}.trow .c-prog{grid-area:prog}.trow .c-raisedT{grid-area:raised;text-align:left}.trow .c-timeT{grid-area:time}
+  .pcols{display:none}
   .prow{grid-template-columns:1fr auto;row-gap:8px;padding:14px 16px}
   .prow>span:nth-child(2),.prow>span:nth-child(3){display:none}
   .prow>span:nth-child(4){grid-column:1;text-align:left}
@@ -845,34 +872,32 @@ a.row{color:inherit}
 <main class="appmain">
   <!-- ------------------------------------------------------ TERMINAL -->
   <section id="tab-terminal">
-    <div class="apphead">
-      <h1><i>Presale</i>terminal</h1>
-      <p>Every presale on Seed in one table, whatever it is paired with. Quick buy sends your preset amount in one click. Click a presale to open its page in a new tab, with the fill chart and a custom amount.</p>
-    </div>
-    <dl class="panel stats" id="stats"></dl>
-    <div class="toolbar">
-      <div class="seg" id="statusSeg" role="group" aria-label="Status"><span class="seg-ind" aria-hidden="true"></span>
-        <button data-v="all" aria-pressed="false">All</button><button data-v="live" aria-pressed="true">Live</button><button data-v="seeded" aria-pressed="false">Seeded</button><button data-v="refunding" aria-pressed="false">Refunded</button></div>
-      <div class="seg" id="assetSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span>
-        <button data-v="all" aria-pressed="true">All pairs</button><button data-v="SOL" aria-pressed="false">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="stock" aria-pressed="false">Stocks</button><button data-v="other" aria-pressed="false">Other</button></div>
-      <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="q" placeholder="Search name or ticker" autocomplete="off" aria-label="Search presales"></label>
-      <label class="mini"><select id="sort" aria-label="Sort"><option value="ending">Ending soon</option><option value="filled">Most filled</option><option value="new">Newest</option></select></label>
-      <span class="grow"></span>
+    <div class="xbar">
+      <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="q" placeholder="Search presales by name or ticker" autocomplete="off" aria-label="Search presales"></label>
       <div class="quick"><span>Quick buy</span>
         <label class="mini"><input id="qbAmt" inputmode="decimal" aria-label="Quick buy amount"></label>
         <label class="mini"><select id="qbAsset" aria-label="Quick buy asset"></select></label>
       </div>
+      <a class="btn btn-ink" href="#/app/launch"><span aria-hidden="true">+</span> Start a presale</a>
     </div>
-    <div class="tgrid">
-      <div class="panel">
-        <div class="tcols" aria-hidden="true"><span>Project</span><span>Filled</span><span>Raised</span><span class="c-pace">Pace needed</span><span>Ends in</span><span></span></div>
-        <div id="trows"></div>
-        <div class="panel-foot" id="tryHint" hidden></div>
+    <div class="panel explore">
+      <div class="xhead">
+        <div><h1><span><i>Presale</i>terminal</span><span class="tag" id="xCount"></span></h1><p id="xSub"></p></div>
+        <div class="xfilters">
+        <div class="seg" id="assetSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span>
+          <button data-v="all" aria-pressed="true">All pairs</button><button data-v="SOL" aria-pressed="false">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="stock" aria-pressed="false">Stocks</button><button data-v="other" aria-pressed="false">Other</button></div>
+        <div class="seg" id="statusSeg" role="group" aria-label="Status"><span class="seg-ind" aria-hidden="true"></span>
+          <button data-v="all" aria-pressed="false">All</button><button data-v="live" aria-pressed="true">Live</button><button data-v="seeded" aria-pressed="false">Seeded</button><button data-v="refunding" aria-pressed="false">Refunded</button></div>
+        <div class="seg" id="sortSeg" role="group" aria-label="Sort"><span class="seg-ind" aria-hidden="true"></span>
+          <button data-v="ending" aria-pressed="true">Ending soon</button><button data-v="filled" aria-pressed="false">Most filled</button><button data-v="new" aria-pressed="false">Newest</button></div>
+        </div>
       </div>
+      <div class="cards" id="trows"></div>
+      <div class="panel-foot" id="tryHint" hidden></div>
     </div>
   </section>
 
-  <!-- -------------------------------------------------------- LAUNCH -->
+  <!-- ------------------------------------------------------- PRESALE -->
   <section id="tab-presale" hidden>
     <a class="textlink back" href="#/app/terminal">&larr; All presales</a>
     <div class="panel ppage" id="presalePage"></div>
@@ -1489,14 +1514,15 @@ function paceTxt(p) { if (p.status !== 'live') return ''; const v = paceOf(p); r
 function timeCell(p) { return p.status === 'live' ? fmtLeft(p.endsAt - Date.now()) : (p.status === 'seeded' ? 'Seeded ' : 'Closed ') + fmtDay(p.resolvedAt || p.endsAt); }
 const find = id => state.presales.find(p => p.id === id);
 
-function avatar(p, lg) {
+function glyph(p) {
   let h = hashStr(p.ticker + '/' + p.name), c = '';
   for (let y = 0; y < 5; y++) for (let x = 0; x < 3; x++) {
     h = Math.imul(h ^ (h >>> 15), 0x85ebca6b) >>> 0;
     if ((h & 7) > 2) { const r = 1.15 + ((h >>> 5) & 3) * .22; c += `<circle cx="${4 + x * 4}" cy="${4 + y * 4}" r="${r}"/>`; if (x < 2) c += `<circle cx="${20 - x * 4}" cy="${4 + y * 4}" r="${r}"/>`; }
   }
-  return `<span class="av${lg ? ' lg' : ''}"><svg viewBox="0 0 24 24" aria-hidden="true">${c}</svg></span>`;
+  return c;
 }
+const avatar = (p, lg) => `<span class="av${lg ? ' lg' : ''}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>`;
 function toast(msg) {
   const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; $('#toasts').appendChild(t);
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 350); }, 4200);
@@ -1567,25 +1593,28 @@ function actCell(p) {
   const C = Q(p), pos = state.positions[p.id];
   if (p.status === 'live') return `<button class="qb" data-qb="${p.id}">Buy <span class="num" data-qbamt>${qbLabel(p)}</span> ${esc(C.sym)}</button>`;
   if (pos && !state.claimed[p.id]) return `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
-  return `<span class="tag">${p.status === 'seeded' ? 'Seeded' : 'Refunded'}</span>`;
+  return '';   // the card's status chip already says seeded or refunded
 }
 function renderStats() {
   const live = state.presales.filter(p => p.status === 'live');
   const soon = live.slice().sort((a, b) => a.endsAt - b.endsAt)[0], top = live.slice().sort((a, b) => pctOf(b) - pctOf(a))[0];
   const pairs = [...new Set(live.map(p => Q(p).sym))];
-  $('#stats').innerHTML = `<span class="plus" style="left:25%;top:0"></span><span class="plus" style="left:50%;top:0"></span><span class="plus" style="left:75%;top:0"></span>
-    <div class="stat"><dt>Live presales</dt><dd>${live.length}<small>of ${state.presales.length} listed</small></dd></div>
-    <div class="stat"><dt>Closest to seeding</dt><dd>${top ? `${Math.floor(pctOf(top) + 1e-7)}%<small>${esc(top.name)}</small>` : 'None'}</dd></div>
-    <div class="stat"><dt>Pair assets live</dt><dd>${pairs.length}<small>${esc(pairs.slice(0, 4).join(', '))}</small></dd></div>
-    <div class="stat"><dt>Next deadline</dt><dd>${soon ? `<span data-next="${soon.id}">${fmtLeft(soon.endsAt - Date.now())}</span><small>${esc(soon.name)}</small>` : 'None'}</dd></div>`;
+  $('#xCount').textContent = `${live.length} live of ${state.presales.length}`;
+  $('#xSub').innerHTML = live.length ? `Paired with ${esc(pairs.slice(0, 4).join(', '))}${pairs.length > 4 ? ' and more' : ''}. ${esc(top.name)} is closest to seeding at ${Math.floor(pctOf(top) + 1e-7)}%. Next deadline in <span class="num" data-next="${soon.id}">${fmtLeft(soon.endsAt - Date.now())}</span>, ${esc(soon.name)}.`
+    : 'No presales are live right now. Seeded and refunded ones are under their filters.';
 }
 function renderTerminal() {
   const l = visible(), fresh = freshIn('term', l);
-  $('#trows').innerHTML = l.length ? l.map((p, i) => `<div class="trow ${p.status}${fresh(p)}" style="--i:${i}" data-row="${p.id}">
-      <a class="pick" href="#/app/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled">${projCell(p)}</a>${progCell(p)}
-      <span class="t-r num c-raisedT"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
-      <span class="t-r num c-pace" data-pace>${paceTxt(p)}</span>
-      <span class="t-r num c-timeT" data-time>${timeCell(p)}</span>
+  const chip = { live: '<span class="tag in">Live</span>', seeded: '<span class="tag ok">Seeded</span>', refunding: '<span class="tag">Refunded</span>' };
+  $('#trows').innerHTML = l.length ? l.map((p, i) => `<div class="pc ${p.status}${fresh(p)}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
+      <div class="art"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg>
+        <div class="chips">${chip[p.status]}<span class="tag">${esc(Q(p).sym)} pair</span>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}</div></div>
+      <a class="pick" href="#/app/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b class="cname">${esc(p.name)}</b></a>
+      <span class="ctk">$${esc(p.ticker)}</span>
+      <div class="cval"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></div>
+      ${progCell(p)}
+      <dl class="cmeta">${p.status === 'live' ? `<div><dt>Ends in</dt><dd class="num" data-time>${timeCell(p)}</dd></div><div><dt>Pace needed</dt><dd class="num" data-pace>${paceTxt(p)}</dd></div>`
+        : `<div><dt>${p.status === 'seeded' ? 'Seeded' : 'Closed'}</dt><dd>${fmtDay(p.resolvedAt || p.endsAt)}</dd></div><div><dt>Backers</dt><dd class="num">${p.backers}</dd></div>`}</dl>
       <span class="t-act">${actCell(p)}</span></div>`).join('')
     : `<div class="empty">${ui.q ? `Nothing matches "${esc(ui.q)}". Clear the search or widen the filters.` : ui.fStatus === 'live' ? 'No presales are live with these filters. <a href="#/app/launch">Start one</a>' : 'Nothing here yet with these filters.'}</div>`;
   const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live' && ui.fStatus !== 'seeded' && ui.fStatus !== 'refunding' && l.length > 0;
@@ -1632,7 +1661,7 @@ async function executeBuy(p, amt) {
   if (p.raised >= p.target - 1e-6) { p.raised = p.target; p.status = 'seeded'; p.resolvedAt = Date.now(); toast(`${p.name} seeded. Your tokens are ready to claim.`); }
   else toast(`Bought ${fmtC(pay, p.q)} ${C.sym} of ${p.name}`);
   save(); renderAll();
-  const row = $(`.trow[data-row="${p.id}"]`); if (row) row.classList.add('flash');
+  const row = $(`.pc[data-row="${p.id}"]`); if (row) row.classList.add('flash');
   return true;
 }
 async function quickBuy(p, btn) {
@@ -2089,7 +2118,7 @@ function boot() {
   seg.pair = initSeg($('#pairSeg'), v => { draft.pair = v; $('#fErr').textContent = ''; renderPreview(); if (v === 'any') $('#fMint').focus(); });
   seg.time = initSeg($('#timeSeg'), v => { draft.hours = +v; renderPreview(); });
   $('#q').addEventListener('input', e => { ui.q = e.target.value; renderTerminal(); });
-  $('#sort').addEventListener('change', e => { ui.sort = e.target.value; renderTerminal(); });
+  seg.sort = initSeg($('#sortSeg'), v => { ui.sort = v; renderTerminal(); });
   $('#qbAsset').addEventListener('change', e => { ui.qbAsset = e.target.value; syncQuickUI(); });
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();
