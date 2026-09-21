@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#0A1E4F">
 <title>Seed: presales that seed or refund</title>
 <script>try{if(localStorage.getItem('seed.theme')==='light')document.documentElement.dataset.theme='light'}catch(e){}</script>
+<link rel="preload" as="image" href="sky.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -36,8 +37,8 @@
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
-/* light: the original Seed palette */
-:root[data-theme="light"]{
+/* light: the original Seed palette. Also worn by anything on the hero sky (.sky), which is bright in both themes */
+:root[data-theme="light"],.sky{
   color-scheme:light;
   --paper:#ffffff; --card:#fff; --raised:#fff; --chip:#fff; --mist:#F5F7FC; --hover:rgba(232,236,247,.45);
   --panel:rgba(255,255,255,.9); --panel-soft:rgba(255,255,255,.7); --panel-solid:rgba(255,255,255,.94); --bar:rgba(255,255,255,.84);
@@ -53,6 +54,7 @@
   --sh-ind:rgba(40,55,110,.28); --sh-pop:rgba(30,45,100,.35); --sh-thumb:rgba(40,55,110,.45); --sh-sheet:rgba(25,38,90,.5); --sh-toast:rgba(19,26,46,.6);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+.sky{color:var(--ink)}
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px);-webkit-text-size-adjust:100%}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -111,6 +113,10 @@ main,footer{position:relative;z-index:1}
 
 /* -------------------------------------------------------------------- hero */
 .hero{position:relative;height:100dvh;min-height:660px;overflow:hidden}
+/* the sky and globe dissolve on an eased curve (zero slope at both ends, so no edge) and the page ground and its dot field show
+   through. They are their own layer so the copy above them is never faded, however short the window is. */
+.hero-sky{position:absolute;inset:0;background:#BFE0FB url(sky.jpg) center/cover no-repeat;
+  -webkit-mask-image:linear-gradient(to bottom,#000 60%,rgba(0,0,0,.94) 65.5%,rgba(0,0,0,.78) 71%,rgba(0,0,0,.575) 76.6%,rgba(0,0,0,.35) 82.2%,rgba(0,0,0,.156) 87.7%,rgba(0,0,0,.03) 93.3%,transparent 97%);mask-image:linear-gradient(to bottom,#000 60%,rgba(0,0,0,.94) 65.5%,rgba(0,0,0,.78) 71%,rgba(0,0,0,.575) 76.6%,rgba(0,0,0,.35) 82.2%,rgba(0,0,0,.156) 87.7%,rgba(0,0,0,.03) 93.3%,transparent 97%)}
 .hero canvas{position:absolute;inset:0;width:100%;height:100%}
 #sphere-base{z-index:10;opacity:0;animation:globeIn 2s var(--out) .1s forwards}
 #sphere-reveal{z-index:30;pointer-events:none}
@@ -129,7 +135,6 @@ h1 .l2{display:block;font-weight:600;font-size:clamp(36px,5.7vw,76px);letter-spa
 .hero-cta{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;justify-content:center}
 .reveal{opacity:0;animation:heroReveal 1.1s var(--out) forwards}
 @keyframes heroReveal{0%{opacity:0;filter:blur(12px);transform:translateY(28px)}to{opacity:1;filter:blur(0);transform:none}}
-.hero-foot{position:absolute;left:0;right:0;bottom:0;height:120px;z-index:40;pointer-events:none;background:linear-gradient(to bottom,var(--fade),var(--paper) 92%)}
 
 /* ---------------------------------------------------------------- sections */
 .sec{padding:clamp(72px,10vw,128px) 0}
@@ -608,9 +613,11 @@ a.row{color:inherit}
 
 <main id="top">
   <section class="hero" id="hero">
-    <canvas id="sphere-base" aria-hidden="true"></canvas>
-    <canvas id="sphere-reveal" aria-hidden="true"></canvas>
-    <div class="hero-copy">
+    <div class="hero-sky">
+      <canvas id="sphere-base" aria-hidden="true"></canvas>
+      <canvas id="sphere-reveal" aria-hidden="true"></canvas>
+    </div>
+    <div class="hero-copy sky">
       <div class="livechip glass reveal" style="animation-delay:.1s"><span class="pulse"></span><span id="heroLive">Presales live</span></div>
       <h1>
         <span class="l1 reveal" style="animation-delay:.25s">Seeded in full,</span>
@@ -622,7 +629,6 @@ a.row{color:inherit}
         <a href="#/docs" class="btn btn-glass glass btn-lg">Read the docs</a>
       </div>
     </div>
-    <div class="hero-foot"></div>
   </section>
 
   <section class="sec" id="presales">
@@ -2040,11 +2046,13 @@ const COARSE = matchMedia('(pointer: coarse)').matches;
 const pointer = { x: -9999, y: -9999, last: 0, seen: false };
 addEventListener('pointermove', e => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.last = performance.now(); pointer.seen = true; kick(); }, { passive: true });
 
-// canvas colours per theme (the stylesheet tokens cover everything else). Dark alphas are lower so
-// light dots on navy land at the same contrast the dark dots have on white.
+// canvas colours (the stylesheet tokens cover everything else). The flow field follows the theme; its dark alphas are lower so
+// light dots on navy land at the same contrast the dark dots have on white. The globe sits on the hero sky, which is bright in
+// both themes, so it has one palette: ink dots on a translucent disc that lets the clouds read through.
 const CANVAS = {
-  dark: { field: ['143,180,255', 0.07, 0.45], disc: '#0A1E4F', halo: '143,180,255', rim: 'rgba(143,180,255,.22)', land: ['242,245,251', 0.08, 0.22], sea: ['183,198,232', 0.028, 0.064], pulse: '143,180,255', rSea: 'rgba(110,130,180,.4)', rLand: 'rgba(143,180,255,.92)', rRing: 'rgba(143,180,255,.28)' },
-  light: { field: ['86,104,160', 0.1, 0.62], disc: '#fff', halo: '86,104,160', rim: 'rgba(61,75,124,.18)', land: ['19,26,46', 0.10, 0.30], sea: ['19,26,46', 0.035, 0.085], pulse: '61,75,124', rSea: 'rgba(168,179,214,.55)', rLand: 'rgba(61,75,124,.92)', rRing: 'rgba(86,104,160,.32)' }
+  dark: { field: ['143,180,255', 0.07, 0.45] },
+  light: { field: ['86,104,160', 0.1, 0.62] },
+  sky: { disc: 'rgba(255,255,255,.5)', halo: '255,255,255', rim: 'rgba(61,75,124,.2)', land: ['19,26,46', 0.10, 0.30], sea: ['19,26,46', 0.035, 0.085], pulse: '61,75,124', rSea: 'rgba(168,179,214,.55)', rLand: 'rgba(61,75,124,.92)', rRing: 'rgba(86,104,160,.32)' }
 };
 const themeNow = () => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
 let pal = CANVAS[themeNow()];
@@ -2140,7 +2148,7 @@ class SeedSphere {
     return 0.66 * n1 + 0.34 * n2;
   }
   frame(t, f, now) {
-    const { ctx, rctx, w, h, R, cx, cy, P, N, land } = this, rect = this.hero.getBoundingClientRect();
+    const { ctx, rctx, w, h, R, cx, cy, P, N, land } = this, rect = this.hero.getBoundingClientRect(), pal = CANVAS.sky;   // the hero is sky in both themes
     this.frameN++;
     // --- spotlight: exact lerp 0.1, plus a slower echo and an idle wander
     const idle = COARSE || !pointer.seen || now - pointer.last > 3500;
@@ -2246,6 +2254,8 @@ function applyTheme(t) {
 }
 document.addEventListener('click', e => { if (!e.target.closest('[data-theme-toggle]')) return; const t = themeNow() === 'light' ? 'dark' : 'light'; try { localStorage.setItem('seed.theme', t); } catch (x) {} applyTheme(t); });
 applyTheme(themeNow());
+const navSky = () => $('.nav').classList.toggle('sky', scrollY < $('#hero').offsetHeight * 0.78);
+addEventListener('scroll', navSky, { passive: true }); addEventListener('resize', navSky); navSky();
 boot();
 </script>
 </body>
