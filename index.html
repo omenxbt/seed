@@ -229,7 +229,7 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 @keyframes sheen{0%,55%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 .bump .bar i::after{animation:tick .9s ease-out 1}
 @keyframes tick{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
-.bump .pct{animation:pctPop .7s var(--out)}
+.bump .pct,.bump [data-dpct]{display:inline-block;animation:pctPop .7s var(--out)}
 @keyframes pctPop{30%{transform:scale(1.22);color:var(--navy-deep)}}
 .refunding .bar i{background:repeating-linear-gradient(135deg,var(--navy-soft) 0 4px,transparent 4px 7px)}
 .pct{font-size:12.5px;color:var(--ink-2);width:38px;text-align:right}
@@ -421,7 +421,7 @@ dialog[open]{animation:sheetIn .5s var(--out)}
   .nav .themebtn,.menubtn{width:38px;height:38px}
   .btn{padding:10px 16px;font-size:13.5px}
   .btn-lg{padding:13px 20px;font-size:14.5px}
-  .mech-top,.end,.rule,.form,.preview{padding:22px 18px}
+  .mech-top,.end,.rule,.form,.preview,.ppage{padding:22px 18px}
   .seg button{padding:7px 12px}
   dialog,#walletDlg{margin:auto auto 0;width:100vw}
   .sheet{border-radius:26px 26px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0px))}
@@ -430,7 +430,7 @@ dialog[open]{animation:sheetIn .5s var(--out)}
 @media (prefers-reduced-motion:reduce){
   .reveal,#sphere-base,dialog[open],.toast{animation-duration:.01s;animation-delay:0s}
   .pulse::after{animation:none}
-  .fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct{animation:none}
+  .fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct,.bump [data-dpct]{animation:none}
 }
 
 /* ================================================================== views */
@@ -492,7 +492,6 @@ a.row{color:inherit}
 .trow{position:relative;padding-top:12px;padding-bottom:12px;border-bottom:1px solid var(--hair);transition:background .2s}
 .trow:last-child{border-bottom:0;border-radius:0 0 21px 21px}
 .trow:hover{background:var(--hover)}
-.trow.sel{background:var(--navy-wash)}
 .trow.flash{animation:flash 1.8s ease-out}
 .pick{display:flex;align-items:center;gap:12px;min-width:0;text-align:left;width:100%}
 .pick::after{content:"";position:absolute;inset:0}
@@ -510,18 +509,22 @@ a.row{color:inherit}
 .qb .num{font-weight:500}
 @media (max-width:1099px){.tcols,.trow{grid-template-columns:minmax(0,2fr) minmax(0,1.25fr) minmax(0,1.3fr) 98px 132px}.c-pace{display:none}}
 
-/* presale details: one sheet at every width. Stacked on a phone; on a wide screen the raise sits on the left (readout, chart, recent
-   buys) and the buy on the right (amount, terms, facts), so everything is in view without scrolling a narrow column. */
+/* a presale's own page. Every list opens it in a new browser tab, so the list stays where it was. Stacked on a phone; on a wide screen
+   the raise sits on the left (readout, chart, recent buys) and the buy on the right (amount, terms, facts). */
+#tab-presale{max-width:1120px;margin:0 auto}
+.back{display:inline-block;margin:4px 0 14px}
+.ppage{padding:30px 32px}
+.ppage .sh-head .nm b{font-size:26px}
+.ppage .idea{font-size:23px}
+.ppage .btn-block{margin-top:20px}
 @media (min-width:900px){
-  #sheet{width:min(1000px,calc(100vw - 48px))}
-  #sheet .sheet{padding:30px 32px}
-  .dcols{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:0 36px;align-items:start}
+  .dcols{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:0 40px;align-items:start}
   .dcols .d-buy{grid-column:2;grid-row:1 / span 2}
   .dcols .d-buy>:first-child{margin-top:20px}
   .dcols .d-acts{grid-column:1}
-  #sheet .specs{grid-template-columns:1fr;gap:0;padding-top:6px}
-  #sheet .specs div{display:flex;justify-content:space-between;gap:16px;padding:7px 0;align-items:baseline}
-  #sheet .specs dd{margin-top:0;text-align:right}
+  .ppage .specs{grid-template-columns:1fr;gap:0;padding-top:6px}
+  .ppage .specs div{display:flex;justify-content:space-between;gap:16px;padding:7px 0;align-items:baseline}
+  .ppage .specs dd{margin-top:0;text-align:right}
 }
 .dlinks{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}.dlinks .ca{margin-top:0}
 .chart{margin-top:14px;border:1px solid var(--hair);position:relative;background:var(--paper);padding:12px 12px 6px}
@@ -843,7 +846,7 @@ a.row{color:inherit}
   <section id="tab-terminal">
     <div class="apphead">
       <h1><i>Presale</i>terminal</h1>
-      <p>Every presale on Seed in one table, whatever it is paired with. Quick buy sends your preset amount in one click. Select a row for the fill chart and a custom amount.</p>
+      <p>Every presale on Seed in one table, whatever it is paired with. Quick buy sends your preset amount in one click. Click a presale to open its page in a new tab, with the fill chart and a custom amount.</p>
     </div>
     <dl class="panel stats" id="stats"></dl>
     <div class="toolbar">
@@ -869,6 +872,10 @@ a.row{color:inherit}
   </section>
 
   <!-- -------------------------------------------------------- LAUNCH -->
+  <section id="tab-presale" hidden>
+    <a class="textlink back" href="#/app/terminal">&larr; All presales</a>
+    <div class="panel ppage" id="presalePage"></div>
+  </section>
   <section id="tab-launch" hidden>
     <div class="apphead">
       <h1><i>Start</i>a presale</h1>
@@ -1193,7 +1200,7 @@ a.row{color:inherit}
           <li><b>Pace needed</b> is how much has to arrive per hour, from now until the deadline, for the presale to seed. Compare it with the slope of the fill chart. When the dashed line is steeper than the solid one, the presale is behind.</li>
           <li><b>Quick buy</b> sends your preset amount in one click. Presets are kept per asset, so a SOL presale uses your SOL preset and a USDC presale uses your USDC preset. The preset is what you pay, fee included. Like any buy, it is trimmed to what fits.</li>
         </ul>
-        <p>Selecting a row opens the fill chart, a custom amount field and the most recent buys.</p>
+        <p>Clicking a presale opens its own page in a new tab, with the fill chart, a custom amount field and the most recent buys. The terminal stays open where you left it, and the two tabs keep each other up to date.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
         <h3>Filled</h3>
@@ -1306,7 +1313,6 @@ a.row{color:inherit}
 </div>
 </div>
 
-<dialog id="sheet" aria-label="Presale"><div class="sheet" id="sheetBody"></div></dialog>
 <dialog id="walletDlg" aria-label="Connect a wallet"><div class="sheet" id="walletDlgBody"></div></dialog>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
@@ -1521,7 +1527,7 @@ function renderHome() {
   $('#heroLive').textContent = live.length ? `${live.length} presale${live.length === 1 ? '' : 's'} live on Solana` : 'No presales live right now';
   if (!$('#rows').classList.contains('seen')) shown.home = new Set();   // not looked at yet, so every row is still new
   const fresh = freshIn('home', live);
-  $('#rows').innerHTML = live.length ? live.map((p, i) => `<a class="row live${fresh(p)}" style="--i:${i}" href="#/app/terminal/${p.id}" data-row="${p.id}">
+  $('#rows').innerHTML = live.length ? live.map((p, i) => `<a class="row live${fresh(p)}" style="--i:${i}" href="#/app/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}">
       <span class="c-proj">${projCell(p)}</span>${progCell(p)}
       <span class="c-raised num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
       <span class="c-time num" data-time>${timeCell(p)}</span>
@@ -1574,8 +1580,8 @@ function renderStats() {
 }
 function renderTerminal() {
   const l = visible(), fresh = freshIn('term', l);
-  $('#trows').innerHTML = l.length ? l.map((p, i) => `<div class="trow ${p.status}${ui.sel === p.id ? ' sel' : ''}${fresh(p)}" style="--i:${i}" data-row="${p.id}">
-      <button class="pick" data-pick="${p.id}" aria-label="Open ${esc(p.name)}, ${Math.floor(pctOf(p) + 1e-7)} percent filled">${projCell(p)}</button>${progCell(p)}
+  $('#trows').innerHTML = l.length ? l.map((p, i) => `<div class="trow ${p.status}${fresh(p)}" style="--i:${i}" data-row="${p.id}">
+      <a class="pick" href="#/app/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled">${projCell(p)}</a>${progCell(p)}
       <span class="t-r num c-raisedT"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
       <span class="t-r num c-pace" data-pace>${paceTxt(p)}</span>
       <span class="t-r num c-timeT" data-time>${timeCell(p)}</span>
@@ -1595,30 +1601,10 @@ function patchRows(p) {
     s('[data-qbamt]', e => e.textContent = qbLabel(p));
   });
 }
-function select(id, fromUser) {
-  ui.sel = id;
-  $$('.trow').forEach(r => r.classList.toggle('sel', r.dataset.row === id));
-  try { history.replaceState(null, '', '#/app/terminal/' + id); } catch (e) {}
-  renderDetail();
-  if (fromUser) openSheet();
-}
-function openSheet() { const d = $('#sheet'); if (!d.open) { d.showModal(); d.appendChild($('#toasts')); } }
-/* closing drops the selection with it: the row highlight and the presale in the address both belong to the open sheet */
-function closeSheet() {
-  const d = $('#sheet'); if (d.open) d.close();
-  document.body.appendChild($('#toasts'));
-  if (!ui.sel) return;
-  ui.sel = null; $$('.trow.sel').forEach(r => r.classList.remove('sel'));
-  if (location.hash.startsWith('#/app/terminal/')) try { history.replaceState(null, '', '#/app/terminal'); } catch (e) {}
-}
-$('#sheet').addEventListener('close', () => { if (!$('#sheet').open) closeSheet(); });   // Esc; skipped if a route has already reopened it
-$('#sheet').addEventListener('click', e => { if (e.target === $('#sheet')) closeSheet(); });
-
 $('#trows').addEventListener('click', e => {
-  const qb = e.target.closest('[data-qb]'), cl = e.target.closest('[data-claim]'), pk = e.target.closest('[data-pick]');
+  const qb = e.target.closest('[data-qb]'), cl = e.target.closest('[data-claim]');
   if (qb) return quickBuy(find(qb.dataset.qb), qb);
   if (cl) return claim(find(cl.dataset.claim), cl);
-  if (pk) select(pk.dataset.pick, true);
 });
 
 /* ---------------------------------------------------------------- buying */
@@ -1689,9 +1675,9 @@ function chartSVG(p) {
 }
 function readoutHTML(p) {
   const C = Q(p), pc = pctOf(p);
-  return `<div class="big"><b><span>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num">${Math.floor(pc + 1e-7)}%</span></div>
-    <div class="bar"><i style="width:${pc}%"></i></div>
-    <div class="sub"><span>${p.status === 'live' ? `Ends in <span class="num" data-dtime>${fmtLeft(p.endsAt - Date.now())}</span>` : p.status === 'seeded' ? 'Target met' : 'Deadline passed'}</span><span><span class="num">${p.backers}</span> backers</span></div>`;
+  return `<div class="big"><b><span data-draised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num" data-dpct>${Math.floor(pc + 1e-7)}%</span></div>
+    <div class="bar"><i data-dbar style="width:${pc}%"></i></div>
+    <div class="sub"><span>${p.status === 'live' ? `Ends in <span class="num" data-dtime>${fmtLeft(p.endsAt - Date.now())}</span>` : p.status === 'seeded' ? 'Target met' : 'Deadline passed'}</span><span><span class="num" data-dbackers>${p.backers}</span> backers</span></div>`;
 }
 const actsHTML = p => `<h4>Recent buys</h4>` + (p.acts.length ? p.acts.slice(0, 6).map(a => `<div class="${a.you ? 'you' : ''}"><span>${esc(a.w)}</span><span>${fmtC(a.a, p.q)} ${esc(Q(p).sym)}</span><span>${fmtAgo(Date.now() - a.t)}</span></div>`).join('') : '<div><span>No buys yet. The first one is yours to make.</span><span></span><span></span></div>');
 function detailHTML(p) {
@@ -1719,8 +1705,7 @@ function detailHTML(p) {
       (pos ? (claimed ? `<div class="mine"><span>Refund claimed</span><span class="num">${fmtAmt(pos, p.q)} ${sym}</span></div>` : `<button class="btn btn-navy btn-lg btn-block" data-dclaim>Claim refund of ${fmtAmt(pos, p.q)} ${sym}</button>`) : '');
   }
   return `<div class="sh-head">${avatar(p, true)}<div class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b>
-      <span class="meta">${pairTag(p)}<span class="tag${p.status === 'live' ? ' in' : ''}">${statusTxt}</span>${p.mine ? '<span class="tag">Yours</span>' : ''}</span></div>
-      <button class="x" data-close aria-label="Close">×</button></div>
+      <span class="meta">${pairTag(p)}<span class="tag${p.status === 'live' ? ' in' : ''}">${statusTxt}</span>${p.mine ? '<span class="tag">Yours</span>' : ''}</span></div></div>
     <p class="idea">${esc(p.idea)}</p>
     <div class="dcols"><div class="d-raise">
     <div class="readout ${p.status}" data-dreadout><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>${readoutHTML(p)}</div>
@@ -1735,13 +1720,15 @@ function detailHTML(p) {
     <div class="dlinks"><button class="ca" data-ca aria-label="Copy presale vault address"><i>Vault</i><span>${p.contract}</span><span aria-hidden="true">⧉</span></button><a class="bar-link" href="#/docs/seeding">Where the raise goes</a></div>
     </div><div class="acts d-acts" data-dacts>${actsHTML(p)}</div></div>`;
 }
-let detailBox = null;
+let detailBox = null, detailShown = null;
 function renderDetail() {
-  const p = find(ui.sel), box = $('#sheetBody'); detailBox = box;
-  if (!p) { box.innerHTML = ''; closeSheet(); return; }
+  const box = $('#presalePage'); detailBox = box;
+  if (ui.tab !== 'presale') { box.innerHTML = ''; detailShown = null; return; }
+  const p = find(ui.sel);
+  if (!p) { box.innerHTML = '<div class="empty">That presale is not in this demo any more. It may have been reset.<br><a href="#/app/terminal">Back to all presales</a></div>'; return; }
   box.innerHTML = detailHTML(p);
   const q = s => $(s, box);
-  q('[data-close]').onclick = closeSheet;
+  if (detailShown !== p.id) { detailShown = p.id; const r = q('[data-dreadout]'); r.classList.add('fresh'); setTimeout(() => r.classList.remove('fresh'), 1600); }   // sweep once per visit
   q('[data-ca]').onclick = () => { try { navigator.clipboard.writeText(p.contract).catch(() => {}); } catch (e) {} toast('Vault address copied'); };
   const dc = q('[data-dclaim]'); if (dc) dc.onclick = () => claim(p, dc);
   if (p.status === 'live') {
@@ -1760,9 +1747,10 @@ function renderDetail() {
 }
 function patchDetail(p) {
   if (!detailBox || ui.sel !== p.id) return;
-  const s = (k, html) => { const e = $(k, detailBox); if (e) e.innerHTML = html; };
-  s('[data-dreadout]', '<span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>' + readoutHTML(p));
-  s('[data-dchart]', chartSVG(p)); s('[data-dacts]', actsHTML(p)); s('[data-dpace]', paceTxt(p));
+  const s = (k, fn) => { const e = $(k, detailBox); if (e) fn(e); }, pc = pctOf(p);
+  s('[data-dbar]', e => { if (pc > parseFloat(e.style.width) + 1e-6) bump($('[data-dreadout]', detailBox)); e.style.width = pc + '%'; });
+  s('[data-draised]', e => e.textContent = fmtC(p.raised, p.q, true)); s('[data-dpct]', e => e.textContent = Math.floor(pc + 1e-7) + '%'); s('[data-dbackers]', e => e.textContent = p.backers);
+  s('[data-dchart]', e => e.innerHTML = chartSVG(p)); s('[data-dacts]', e => e.innerHTML = actsHTML(p)); s('[data-dpace]', e => e.textContent = paceTxt(p));
 }
 function readAmount(p) {
   const raw = ($('#amtIn').value || '').replace(/,/g, '').trim(), n = parseFloat(raw), C = Q(p), left = payLeft(p);
@@ -1957,13 +1945,13 @@ $('#openBtn').onclick = async () => {
   ['#fName', '#fTicker', '#fIdea', '#fTarget', '#fMint'].forEach(s => $(s).value = ''); renderPreview();
   ui.fStatus = 'live'; ui.fAsset = 'all'; ui.q = ''; $('#q').value = ''; seg.status.set('live'); seg.assetF.set('all'); ui.sel = id;
   toast(`Opened ${p.name}. It is live until ${fmtDate(p.endsAt)}`);
-  location.hash = '#/app/terminal/' + id;
+  location.hash = '#/app/presale/' + id;   // same tab: a new one opened after the wallet round trip would be blocked as a popup
 };
 $('#stockRow').addEventListener('click', e => { const b = e.target.closest('[data-stock]'); if (!b) return; draft.stock = b.dataset.stock; $('#fErr').textContent = ''; renderPreview(); });
 $('#mintRow').addEventListener('click', e => { const b = e.target.closest('[data-mint]'); if (!b) return; $('#fMint').value = ASSETS[b.dataset.mint].mint; $('#fErr').textContent = ''; renderPreview(); });
 function renderMine() {
   const l = state.presales.filter(p => p.mine);
-  $('#mineList').innerHTML = l.length ? l.map(p => `<a class="row ${p.status}" href="#/app/terminal/${p.id}" data-row="${p.id}"><span class="c-proj">${projCell(p)}</span>${progCell(p)}
+  $('#mineList').innerHTML = l.length ? l.map(p => `<a class="row ${p.status}" href="#/app/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}"><span class="c-proj">${projCell(p)}</span>${progCell(p)}
       <span class="c-raised num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span><span class="c-time num" data-time>${timeCell(p)}</span><span class="c-act"><span class="pill-sm">View</span></span></a>`).join('')
     : '<div class="empty">You have not opened a presale yet. Fill in the six fields above to open your first.</div>';
 }
@@ -1978,7 +1966,7 @@ function renderPortfolio() {
   $('#prows').innerHTML = ids.length ? ids.map(id => { const p = find(id); if (!p) return ''; const sym = esc(Q(p).sym), a = state.positions[id], cl = state.claimed[id];
       const st = { live: 'Live', seeded: 'Seeded', refunding: 'Refunded' }[p.status];
       const yours = p.status === 'live' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)} if it seeds` : p.status === 'seeded' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)}` : `${fmtAmt(a, p.q)} ${sym}`;
-      const act = p.status === 'live' ? `<a class="qb" href="#/app/terminal/${p.id}">View</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
+      const act = p.status === 'live' ? `<a class="qb" href="#/app/presale/${p.id}" target="_blank" rel="noopener">View</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
       return `<div class="prow"><span class="c-proj">${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta">${pairTag(p)}</span></span></span>
         <span class="num">${fmtAmt(a, p.q)} ${sym}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
     : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#/app">Buy into a presale from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
@@ -2015,20 +2003,19 @@ function initDocs() {
 /* ---------------------------------------------------------------- router */
 function route() {
   const h = location.hash || '#', prevTab = ui.tab; let view = 'home', anchor = null, sec = null;
-  if (h.startsWith('#/app')) { view = 'app'; const parts = h.slice(2).split('/'); ui.tab = ['terminal', 'launch', 'portfolio'].includes(parts[1]) ? parts[1] : 'terminal';
-    if (parts[2] && find(parts[2])) { const p = find(parts[2]); ui.sel = p.id; if (ui.fStatus !== 'all' && p.status !== ui.fStatus) { ui.fStatus = 'all'; seg.status.set('all'); } } }
+  if (h.startsWith('#/app')) { view = 'app'; const parts = h.slice(2).split('/');
+    if ((parts[1] === 'presale' || parts[1] === 'terminal') && parts[2]) { ui.tab = 'presale'; ui.sel = parts[2]; }   // terminal/<id> is the older address of the same page
+    else { ui.tab = ['terminal', 'launch', 'portfolio'].includes(parts[1]) ? parts[1] : 'terminal'; ui.sel = null; } }
   else if (h.startsWith('#/docs')) { view = 'docs'; sec = h.split('/')[2] || null; }
   else if (h.length > 1) anchor = h;
   const changed = view !== ui.view; ui.view = view; document.documentElement.dataset.view = view; syncChrome();
   ['home', 'app', 'docs'].forEach(v => { $('#view-' + v).hidden = v !== view; document.body.classList.toggle('in-' + v, v === view); });
-  const deep = view === 'app' && ui.tab === 'terminal' && !!find(h.split('/')[3]);
-  if (!deep) closeSheet();
   if (changed || prevTab !== ui.tab) { shown.home = new Set(); shown.term = new Set(); if (view === 'home') $('#rows').classList.remove('seen'); }
-  document.title = view === 'app' ? 'Seed app: terminal, launch, portfolio' : view === 'docs' ? 'Seed docs: how it works, with the math' : 'Seed: presales that seed or refund';
+  const pg = view === 'app' && ui.tab === 'presale' && find(ui.sel);
+  document.title = pg ? `${pg.name} ($${pg.ticker}) presale on Seed` : view === 'app' ? 'Seed app: terminal, launch, portfolio' : view === 'docs' ? 'Seed docs: how it works, with the math' : 'Seed: presales that seed or refund';
   if (view === 'app') {
-    ['terminal', 'launch', 'portfolio'].forEach(t => $('#tab-' + t).hidden = t !== ui.tab); seg.tabs.set(ui.tab);
-    renderAll(); if (changed) scrollTo(0, 0);
-    if (deep) openSheet();
+    ['terminal', 'launch', 'portfolio', 'presale'].forEach(t => $('#tab-' + t).hidden = t !== ui.tab); seg.tabs.set(ui.tab === 'presale' ? 'terminal' : ui.tab);
+    renderAll(); if (changed || prevTab !== ui.tab) scrollTo(0, 0);
   } else if (view === 'docs') {
     if (sec && $('#d-' + sec)) $('#d-' + sec).scrollIntoView(); else if (changed) scrollTo(0, 0);
     initDocs.spy && initDocs.spy();
@@ -2345,6 +2332,17 @@ function applyTheme(t) {
 }
 document.addEventListener('click', e => { if (!e.target.closest('[data-theme-toggle]')) return; const t = themeNow() === 'light' ? 'dark' : 'light'; try { localStorage.setItem('seed.theme', t); } catch (x) {} applyTheme(t); });
 applyTheme(themeNow());
+/* presale pages open in their own tab, so several copies of the app can be running. Each holds the state in memory and saves all of it,
+   which would let a stale tab overwrite a buy made in another. So a tab takes on whatever another tab saves. If you are mid-amount,
+   the page is patched rather than rebuilt so the field keeps its focus and what you typed. */
+addEventListener('storage', e => {
+  if (e.key === 'seed.theme') return applyTheme(e.newValue === 'light' ? 'light' : 'dark');
+  if (e.key !== KEY || busy) return;
+  const typing = document.activeElement && document.activeElement.id === 'amtIn';
+  load();
+  if (!typing) return renderAll();
+  renderWallet(); state.presales.forEach(patchRows); const p = find(ui.sel); if (p) patchDetail(p);
+});
 boot();
 </script>
 </body>
