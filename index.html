@@ -146,9 +146,13 @@ body.in-home{overflow:hidden}
 .hero-copy{position:relative;z-index:50;flex:none;display:flex;flex-direction:column;align-items:center;text-align:center;padding:calc(86px + env(safe-area-inset-top,0px)) 20px 0;pointer-events:none}
 .hero h1 .l1{font-size:clamp(32px,4.2vw,60px)}
 .hero h1 .l2{font-size:clamp(28px,3.7vw,52px)}
-.hero-panel{position:relative;z-index:50;flex:1;min-height:0;display:flex;flex-direction:column;margin-top:22px;padding-bottom:20px}
+/* the panel rises into place with a transform only. It must not take .reveal: that ends holding filter:blur(0), and an ancestor with a
+   filter (or opacity under 1) becomes the backdrop root, so the glass inside it would have nothing behind it to blur. */
+.hero-panel{position:relative;z-index:50;flex:1;min-height:0;display:flex;flex-direction:column;margin-top:22px;padding-bottom:20px;animation:panelIn .9s var(--out) .25s backwards}
+@keyframes panelIn{from{transform:translateY(24px)}}
 .hero-panel .xbar{flex:none;margin:0 0 12px}
-.hero-panel .explore{flex:1;min-height:0;display:flex;flex-direction:column;padding-top:18px}
+/* this glass lies straight over the globe's dots, so it is frosted harder than the rest: the globe reads as a soft shape, not as dots */
+.hero-panel .explore{flex:1;min-height:0;display:flex;flex-direction:column;padding-top:18px;-webkit-backdrop-filter:blur(30px) saturate(1.5);backdrop-filter:blur(30px) saturate(1.5)}
 .hero-panel .xhead{flex:none;margin-bottom:14px}
 .hero-panel .cards{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;align-content:start;padding:2px 2px 6px}
 .hero-panel .panel-foot{flex:none}
@@ -348,7 +352,7 @@ dialog[open]{animation:sheetIn .5s var(--out)}
   .specs{grid-template-columns:1fr 1fr}
 }
 @media (prefers-reduced-motion:reduce){
-  .reveal,#sphere-base,dialog[open],.toast{animation-duration:.01s;animation-delay:0s}
+  .reveal,.hero-panel,#sphere-base,dialog[open],.toast{animation-duration:.01s;animation-delay:0s}
   .pc.fresh,.br.fresh,.fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct,.bump [data-dpct]{animation:none}
 }
 
@@ -440,7 +444,7 @@ a.row{color:inherit}
 /* presale browser, on the landing page: a search row, then one panel holding the title, the filters and a grid of cards. A card is a
    presale and the whole card links to its page in a new tab. Buying happens in the app, so here the button is part of that link. */
 .xbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 14px}
-.xbar .mini.search{flex:1 1 320px;height:46px;padding:0 18px;border-radius:16px}
+.xbar .mini.search{flex:1 1 320px;height:46px;padding:0 18px;border-radius:16px;-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost)}
 .xbar .mini.search input{width:100%;font-size:14.5px}
 .xbar .btn{height:46px;border-radius:16px;padding:0 20px}
 .explore{padding:22px;border-radius:26px}
@@ -672,7 +676,7 @@ a.row{color:inherit}
       </h1>
       <p class="hero-sub reveal" style="animation-delay:.4s">A presale launchpad on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL, USDC, a tokenized stock or any token. If it misses its target by the deadline, every wallet gets back what it paid.</p>
     </div>
-    <div class="hero-panel wrap wide reveal" style="animation-delay:.55s">
+    <div class="hero-panel wrap wide">
       <div class="xbar">
         <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="q" placeholder="Search presales by name or ticker" autocomplete="off" aria-label="Search presales"></label>
         <a class="btn btn-ink" href="#/app/launch" target="_blank" rel="noopener"><span aria-hidden="true">+</span> Start a presale</a>
