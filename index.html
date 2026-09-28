@@ -4,33 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light">
-<meta name="theme-color" content="#F3F7FD">
-<title>Seed: presales that seed or refund</title>
-<link rel="preload" as="image" href="sky.jpg">
+<meta name="theme-color" content="#B0DEFC">
+<title>Seed: seeded in full, or refunded in full</title>
+<meta name="description" content="Seeded in full, or refunded in full. A presale launchpad on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL, USDC, a tokenized stock or any token. If it misses its target by the deadline, every wallet gets back what it paid.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ------------------------------------------------------------------ tokens */
 :root{
-  /* sky glass, the one theme: every page sits on sky photos, so surfaces are frosted white glass over them and the ink is dark.
+  /* sky glass, the one theme: every page sits on one sky gradient, so surfaces are frosted white glass over it and the ink is dark.
      Fills and accents are pariter.xyz's blue (#2E63E7, hover #2554C7). Surfaces stack whiter as they come forward: panel, well, card.
      --paper is the well, --ink the text. */
   color-scheme:light;
-  /* the ground under the landing page and the app: each stop is the centre-column colour of sky.jpg at the row that lands there, so the photo's blue is already
-     underneath it when it dissolves and only the clouds fade. Below the hero it drifts toward periwinkle at a fixed rate. */
-  --ground:linear-gradient(to bottom,#B0DEFC calc(var(--hero-h)*.6),#A5DAFD calc(var(--hero-h)*.7),#9AD5FD calc(var(--hero-h)*.8),#8FD1FE var(--hero-h),#9799C9 calc(var(--hero-h) + 2600px));
-  /* the docs' ground runs from one photo to the other: the blue sky's rows, a drift to the sunset's top row, then the sunset's own rows where it fades in */
-  --ground-docs:linear-gradient(to bottom,#B0DEFC calc(var(--hero-h)*.6),#A5DAFD calc(var(--hero-h)*.7),#9AD5FD calc(var(--hero-h)*.8),#8FD1FE var(--hero-h),#9799C9 calc(100% - var(--dusk-h)),#ACA8CF calc(100% - var(--dusk-h)*.9),#BFB7D8 calc(100% - var(--dusk-h)*.8),#D0BFDD calc(100% - var(--dusk-h)*.7),#E2C5DD calc(100% - var(--dusk-h)*.6),#FDC8CB calc(100% - var(--dusk-h)*.4),#FDA697);
-  --page:#F3F7FD; --paper:rgba(255,255,255,.5); --card:rgba(255,255,255,.8); --raised:#fff; --chip:rgba(255,255,255,.5); --mist:rgba(255,255,255,.5); --hover:rgba(255,255,255,.32);
-  --panel:rgba(255,255,255,.38); --panel-solid:rgba(255,255,255,.6); --bar:rgba(255,255,255,.42);
+  --paper:rgba(255,255,255,.5); --card:rgba(255,255,255,.8); --raised:#fff; --chip:rgba(255,255,255,.5); --mist:rgba(255,255,255,.5); --hover:rgba(255,255,255,.32);
+  --panel:rgba(255,255,255,.72); --panel-solid:rgba(255,255,255,.6); --bar:rgba(255,255,255,.42);
   --panel-line:rgba(255,255,255,.72); --panel-shadow:0 18px 50px -24px rgba(30,60,130,.45),inset 0 1px 0 rgba(255,255,255,.55); --frost:blur(18px) saturate(1.6);
-  --veil:rgba(255,255,255,.92); --fade:rgba(255,255,255,0); --scrim:rgba(10,30,79,.3);
+  --scrim:rgba(10,30,79,.3);
   --ink:#0A1E4F; --ink-2:#23386B; --muted:#3F4F78; --faint:#5A6A94;
   --navy:#2E63E7; --navy-deep:#2554C7; --navy-soft:#7A9AE6; --navy-wash:rgba(46,99,231,.13);
   --solid:#2E63E7; --solid-hover:#2554C7; --accent:#2E63E7; --accent-hover:#2554C7;
   --hair:rgba(10,30,79,.12); --hair-2:rgba(10,30,79,.26); --ring:rgba(46,99,231,.2); --err:#A8324A;
-  --glass:rgba(255,255,255,.55); --glass-line:rgba(255,255,255,.8);
   --warn:#B9853B; --warn-line:rgba(185,133,59,.5); --warn-bg:rgba(251,244,230,.8); --warn-ink:#8A5A17; --warn-ink-2:#6B4A1A; --warn-strong:#5A3C10;
   --lift:0 14px 40px -16px rgba(30,60,130,.4);
   --sh-ind:rgba(30,60,130,.25); --sh-pop:rgba(30,60,130,.4); --sh-sheet:rgba(20,40,100,.5); --sh-toast:rgba(20,40,100,.5);
@@ -38,12 +32,8 @@
   --serif:'Instrument Serif','Iowan Old Style',Georgia,'Times New Roman',serif;
   --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
   --ease:cubic-bezier(.65,0,.35,1); --out:cubic-bezier(.16,1,.3,1);
-  /* the sky layers are one screen tall; the docs' sunset is sized so its photo (1168x784) is never cropped vertically, which pins its top row to one colour */
-  --hero-h:max(100dvh,660px); --dusk-h:max(1000px,67.12vw);
   /* how far along a raise is: red, through yellow, to green at the target */
   --progress:linear-gradient(90deg,#F2554C,#F6C445 50%,#34C17B);
-  /* mask stops for a photo dissolving into the page: smoothstep, so the slope is zero at both ends and no edge shows */
-  --dissolve:#000 60%,rgba(0,0,0,.94) 65.5%,rgba(0,0,0,.78) 71%,rgba(0,0,0,.575) 76.6%,rgba(0,0,0,.35) 82.2%,rgba(0,0,0,.156) 87.7%,rgba(0,0,0,.03) 93.3%,transparent 97%;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
 }
@@ -53,34 +43,18 @@
 *::-webkit-scrollbar{display:none}
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px);-webkit-text-size-adjust:100%}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
-body{background:var(--page);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+/* one flat sky, fixed to the viewport, so the panels scroll over it. It is on html and body both, so overscroll on iOS and Mac shows sky, not white. */
+html,body{min-height:100vh;background:#B0DEFC linear-gradient(180deg,#B0DEFC 0%,#8FD1FE 38%,#9799C9 68%,#E2C5DD 84%,#FDC8CB 93%,#FDA697 100%) no-repeat;background-attachment:fixed}
+body{color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 button,input{font:inherit;color:inherit;letter-spacing:inherit}
 button{cursor:pointer;background:none;border:0}
 a{color:inherit;text-decoration:none}
 ::selection{background:var(--solid);color:#fff}
 :focus-visible{outline:2px solid var(--navy);outline-offset:3px;border-radius:6px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
-.wrap{width:100%;max-width:1160px;margin:0 auto;padding:0 24px}
-.wrap.wide{max-width:1400px}
 
-#field{position:fixed;inset:0;z-index:0;pointer-events:none}
-main{position:relative;z-index:1}
-
-/* --------------------------------------------------------------------- nav */
-.nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;
-  padding:calc(16px + env(safe-area-inset-top,0px)) 20px 16px}
 .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:22px;letter-spacing:-.04em}
 .brand svg{width:26px;height:26px;fill:var(--navy-deep)}
-.glass{background:var(--glass);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--glass-line);box-shadow:var(--lift)}
-.navpill{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;border-radius:999px;padding:6px 8px}
-.navpill a,.navpill .off{position:relative;z-index:1;display:grid;place-items:center;padding:8px 13px;border-radius:999px;color:var(--muted);transition:color .3s}
-.navpill svg{width:17px;height:17px;fill:currentColor}
-.navpill svg.line{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.navpill .off,.mobnav .off{opacity:.38;cursor:not-allowed}
-.navpill a:hover,.navpill a.on{color:var(--ink)}
-.navpill .ind{position:absolute;top:6px;bottom:6px;left:0;border-radius:999px;background:var(--raised);box-shadow:0 2px 8px -2px var(--sh-ind);
-  transition:transform .45s var(--ease),width .45s var(--ease),opacity .3s;opacity:0;will-change:transform}
-.navright{display:flex;align-items:center;gap:10px;position:relative}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-weight:600;font-size:14px;padding:11px 22px;
   transition:transform .15s,background .25s,box-shadow .25s,opacity .2s;white-space:nowrap}
 .btn:active{transform:translateY(1px)}
@@ -92,8 +66,6 @@ main{position:relative;z-index:1}
 .btn-lg{font-size:15px;padding:14px 26px}
 .btn-block{width:100%}
 .wdot{width:7px;height:7px;border-radius:50%;background:#7FC8A9;box-shadow:0 0 0 3px rgba(127,200,169,.25)}
-.menubtn{display:none;width:42px;height:42px;border-radius:50%;place-items:center}
-.menubtn svg{width:18px;height:18px;stroke:var(--ink);stroke-width:1.8;fill:none;stroke-linecap:round}
 .pop{position:absolute;right:0;top:calc(100% + 10px);width:264px;border-radius:18px;padding:16px;background:var(--card);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);border:1px solid var(--hair);box-shadow:0 24px 60px -20px var(--sh-pop);display:none}
 .pop.open{display:block}
 .pop h4{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px}
@@ -101,47 +73,13 @@ main{position:relative;z-index:1}
 .pop .bal span:first-child{color:var(--muted)}
 .pop button{margin-top:12px;width:100%;padding:10px;border-radius:999px;border:1px solid var(--hair-2);font-weight:600;font-size:13.5px}
 .pop button:hover{background:var(--mist)}
-.mobnav{display:none}
 
-/* -------------------------------------------------------------------- hero */
-/* the landing page is one screen and does not scroll: the headline sits on top and the presale panel takes what is left, scrolling inside itself */
-body.in-home{overflow:hidden}
-.hero{position:relative;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
-/* the sky and globe dissolve into the page, and the page ground and its dot field show through. They are their own layer so the
-   copy above them is never faded, however short the window is. */
-.hero-sky{position:absolute;inset:0}
-.hero-sky,.app-sky{background:#BFE0FB url(sky.jpg) center/cover no-repeat;
-  -webkit-mask-image:linear-gradient(to bottom,var(--dissolve));mask-image:linear-gradient(to bottom,var(--dissolve))}
-.hero canvas{position:absolute;inset:0;width:100%;height:100%}
-#sphere-base{z-index:10;opacity:0;animation:globeIn 2s var(--out) .1s forwards}
-#sphere-reveal{z-index:30;pointer-events:none}
-@keyframes globeIn{0%{opacity:0;transform:scale(1.06)}to{opacity:1;transform:scale(1)}}
-.hero-copy{position:relative;z-index:50;flex:none;display:flex;flex-direction:column;align-items:center;text-align:center;padding:calc(86px + env(safe-area-inset-top,0px)) 20px 0;pointer-events:none}
-.hero h1 .l1{font-size:clamp(32px,4.2vw,60px)}
-.hero h1 .l2{font-size:clamp(28px,3.7vw,52px)}
-/* the panel rises into place with a transform only. It must not take .reveal: that ends holding filter:blur(0), and an ancestor with a
-   filter (or opacity under 1) becomes the backdrop root, so the glass inside it would have nothing behind it to blur. */
-.hero-panel{position:relative;z-index:50;flex:1;min-height:0;display:flex;flex-direction:column;margin-top:22px;padding-bottom:20px;animation:panelIn .9s var(--out) .25s backwards}
-@keyframes panelIn{from{transform:translateY(24px)}}
-.hero-panel .xbar{flex:none;margin:0 0 12px}
-/* this glass lies straight over the globe's dots, so it is frosted harder than the rest: the globe reads as a soft shape, not as dots */
-.hero-panel .explore{flex:1;min-height:0;display:flex;flex-direction:column;padding-top:18px;-webkit-backdrop-filter:blur(30px) saturate(1.5);backdrop-filter:blur(30px) saturate(1.5)}
-.hero-panel .xhead{flex:none;margin-bottom:14px}
-.hero-panel .cards{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;align-content:start;padding:2px 2px 6px}
-.hero-panel .panel-foot{flex:none}
 h1{line-height:.96;font-weight:400}
 h1 .l1{display:block;font-family:var(--serif);font-style:italic;font-size:clamp(42px,6.6vw,88px);letter-spacing:-.025em}
 h1 .l2{display:block;font-weight:600;font-size:clamp(36px,5.7vw,76px);letter-spacing:-.05em;margin-top:2px}
-.hero-sub{max-width:78ch;margin-top:12px;color:var(--ink-2);font-size:clamp(15px,1.25vw,17px);line-height:1.5;
-  background:radial-gradient(closest-side,var(--veil),var(--fade));padding:6px 10px}
-.reveal{opacity:0;animation:heroReveal 1.1s var(--out) forwards}
-@keyframes heroReveal{0%{opacity:0;filter:blur(12px);transform:translateY(28px)}to{opacity:1;filter:blur(0);transform:none}}
-
 /* ---------------------------------------------------------------- sections */
 h2{font-weight:600;font-size:clamp(30px,4.3vw,50px);line-height:1.04;letter-spacing:-.045em}
 h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;line-height:1}
-/* the landing nav floats over sky, glass and globe alike, so the wordmark gets the same glass the pills have */
-.nav .brand{margin-left:-6px;padding:7px 14px 7px 10px;border-radius:999px;background:var(--glass);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid var(--glass-line);box-shadow:var(--lift)}
 .panel{position:relative;border:1px solid var(--panel-line);border-radius:22px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);box-shadow:var(--panel-shadow)}
 
 /* segmented control (sliding ink indicator) */
@@ -176,10 +114,9 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 /* the fill is a window onto a scale as wide as the whole track (100cqw), not a scale squeezed into the fill, so the colour at its
    tip says how far along the raise is: a third is still red, two thirds is yellow-green, a seeded bar ends in green */
 .bar i{position:relative;overflow:hidden;display:block;height:100%;border-radius:999px;background:var(--progress) left/100% 100% no-repeat;background-size:100cqw 100%;transition:width .8s var(--out)}
-/* three motions. A bar sweeps in from empty the first time its row appears (.fresh, staggered by --i; the landing list holds the sweep
-   until it scrolls into view). A live raise carries a slow sheen. A buy landing ticks the row: a quick sheen and the percentage pops. */
+/* three motions. A bar sweeps in from empty the first time its row appears (.fresh, staggered by --i). A live raise carries a slow sheen.
+   A buy landing ticks the row: a quick sheen and the percentage pops. */
 .fresh .bar i{animation:barIn 1.2s var(--out) both;animation-delay:calc(var(--i,0)*70ms)}
-#cards:not(.seen) .fresh .bar i,#cards:not(.seen) .pc.fresh{animation-play-state:paused}
 @keyframes barIn{from{width:0}}
 .live .bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);transform:translateX(-100%);animation:sheen 3.2s ease-in-out infinite;animation-delay:calc(var(--i,0)*.4s)}
 @keyframes sheen{0%,55%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
@@ -197,7 +134,6 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .row:hover .pill-sm,.pill-sm.hot{background:var(--accent);border-color:var(--accent);color:#fff}
 .empty{padding:54px 22px;text-align:center;color:var(--muted)}
 .empty a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
-.panel-foot{padding:13px 22px;border-top:1px solid var(--hair);font-size:13px;color:var(--muted)}
 
 /* ------------------------------------------------------------- mechanism */
 .tick{position:absolute;width:9px;height:9px;border:0 solid var(--navy);pointer-events:none}
@@ -231,18 +167,7 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 
 /* -------------------------------------------------------------------- faq */
 
-/* -------------------------------------------------------------------- cta */
-/* on a glass card a white button has nothing to stand against, so the closing call to action takes the blue fill */
-#view-home{position:relative}
-.ground{position:absolute;inset:0;z-index:-1;pointer-events:none;background:var(--ground)}
-/* the app opens on the same blue sky and ground as the landing page. Both layers sit under the dot field, so the glyphs stay on top */
-#view-app{position:relative;min-height:var(--hero-h)}
-.app-sky{position:absolute;top:0;left:0;right:0;height:var(--hero-h);z-index:-1;pointer-events:none}
-/* the docs run from the blue sky at the top to the sunset at the bottom (the hero's dissolve, mirrored), over a ground sampled from both */
-#view-docs{position:relative}
-.ground.under-docs{background:var(--ground-docs)}
-.dusk{position:absolute;left:0;right:0;bottom:0;height:var(--dusk-h);z-index:-1;pointer-events:none;background:#F5C3C8 url(sunset.jpg) center/cover no-repeat;
-  -webkit-mask-image:linear-gradient(to top,var(--dissolve));mask-image:linear-gradient(to top,var(--dissolve))}
+#view-app,#view-docs{position:relative}
 
 /* ------------------------------------------------------------------ sheet */
 dialog{border:0;padding:0;overflow:visible;background:transparent;color:inherit;max-width:none;max-height:none;margin:auto;width:min(540px,calc(100vw - 24px))}
@@ -293,11 +218,6 @@ dialog[open]{animation:sheetIn .5s var(--out)}
 
 /* ------------------------------------------------------------- responsive */
 @media (max-width:900px){
-  .navpill{display:none}
-  .menubtn{display:grid}
-  .mobnav.open{display:flex;flex-direction:column;position:fixed;top:calc(74px + env(safe-area-inset-top,0px));left:16px;right:16px;z-index:99;border-radius:20px;padding:10px;background:var(--card);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);border:1px solid var(--hair);box-shadow:0 24px 60px -20px var(--sh-pop)}
-  .mobnav a,.mobnav .off{padding:13px 14px;border-radius:12px;font-weight:500}
-  .mobnav a:hover{background:var(--mist)}
   .row{grid-template-columns:1fr auto;grid-template-areas:"proj act" "prog prog" "raised time";row-gap:12px;padding:16px 18px}
   .c-proj{grid-area:proj}.c-act{grid-area:act}.c-prog{grid-area:prog}.c-raised{grid-area:raised;text-align:left}.c-time{grid-area:time}
   .create{grid-template-columns:1fr}
@@ -307,31 +227,21 @@ dialog[open]{animation:sheetIn .5s var(--out)}
   .form{grid-template-columns:1fr}
 }
 @media (max-width:520px){
-  .wrap{padding:0 16px}
-  .nav{padding-left:14px;padding-right:14px}
-  .navright{gap:8px}
-  .menubtn{width:38px;height:38px}
   .btn{padding:10px 16px;font-size:13.5px}
   .btn-lg{padding:13px 20px;font-size:14.5px}
   .form,.preview,.ppage{padding:22px 18px}
   .seg button{padding:7px 12px}
-  .explore{padding:14px;border-radius:22px}.explore .panel-foot{margin:14px -14px -14px}
-  .cards{grid-template-columns:1fr 1fr;gap:10px}
-  .pc{padding:10px}.cval{font-size:17px}.xfilters{justify-content:flex-start}
   dialog,#walletDlg{margin:auto auto 0;width:100vw}
   .sheet{border-radius:26px 26px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0px))}
   .specs{grid-template-columns:1fr 1fr}
 }
 @media (prefers-reduced-motion:reduce){
-  .reveal,.hero-panel,#sphere-base,dialog[open],.toast{animation-duration:.01s;animation-delay:0s}
-  .pc.fresh,.br.fresh,.fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct,.bump [data-dpct]{animation:none}
+  dialog[open],.toast{animation-duration:.01s;animation-delay:0s}
+  .br.fresh,.fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct,.bump [data-dpct]{animation:none}
 }
 
 /* ================================================================== views */
 .view[hidden]{display:none}
-#field{transition:opacity .6s}
-body.in-app #field{opacity:.42}
-body.in-docs #field{opacity:.3}
 a.row{color:inherit}
 .bar-link{font-size:13.5px;font-weight:600;color:var(--navy-deep);border-bottom:1px solid var(--hair-2);padding-bottom:1px}
 .bar-link:hover{border-color:var(--navy-deep)}
@@ -346,14 +256,22 @@ a.row{color:inherit}
 .appbar .btn{padding:9px 18px;font-size:13.5px}
 .textlink{font-size:14px;font-weight:500;color:var(--muted)}
 .textlink:hover{color:var(--ink)}
+/* X, Discord and docs, left of the Docs link: 16px glyphs in ink at 70% */
+.icons{display:flex;align-items:center;gap:14px}
+.ico{display:grid;place-items:center;width:16px;height:16px;color:color-mix(in srgb,var(--ink) 70%,transparent);transition:color .2s}
+.ico svg{width:16px;height:16px;fill:currentColor}
+.ico svg.line{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+a.ico:hover{color:var(--ink)}
+.ico.off{opacity:.38;cursor:not-allowed}
 .appmain{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:24px 22px 40px}
 /* the board splits the whole window into its three columns; the app's other pages keep a readable measure */
-#view-app.wide .appmain,#view-app.wide .appfoot{max-width:none}
+#view-app.wide .appmain{max-width:none;padding-bottom:16px}
+#view-app.wide .appfoot{display:none}   /* the board carries its own foot line */
 .apphead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin:10px 0 20px}
 .apphead h1{font-weight:600;font-size:clamp(26px,3vw,36px);letter-spacing:-.045em;line-height:1.05}
 .apphead h1 i{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;margin-right:.18em}
 .apphead p{color:var(--muted);font-size:14.5px;max-width:52ch}
-.appfoot{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 22px 40px;font-size:12.5px;color:var(--faint);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.appfoot{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 22px 40px;font-size:12.5px;color:var(--ink-2);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .appfoot button{color:var(--muted);border-bottom:1px solid var(--hair-2)}
 
 /* stats strip */
@@ -382,10 +300,18 @@ a.row{color:inherit}
 .board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
 .col{display:flex;flex-direction:column;height:calc(100dvh - 186px);min-height:460px;padding:20px 14px 0;border-radius:24px}
 .col-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 8px 16px}
-.col-head h2{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:600;letter-spacing:-.035em;line-height:1.1}
+.col-head h2{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:600;letter-spacing:-.035em;line-height:1.1;white-space:nowrap}
 .col-head h2 svg{flex:none;width:22px;height:22px;stroke:var(--navy-deep);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .col-head h2 .tag{font-size:12px;letter-spacing:-.01em}
+.col-side{display:flex;align-items:center;gap:10px;min-width:0}
 .col-note{font-size:12.5px;color:var(--muted);white-space:nowrap}
+/* a narrow column keeps its title and its sort; the note is the first thing to go */
+.col{container-type:inline-size}
+@container (max-width:400px){.col-note{display:none}}
+/* each column sorts on its own: a small dropdown in its head */
+.col-sort{height:28px;padding:0 6px 0 10px;gap:4px;border-radius:999px}
+.col-sort select{font-size:12px;font-weight:600;color:var(--ink-2)}
+.col-sort svg{width:11px;height:11px}
 .col-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px;padding:2px 0 16px}
 .col-empty{padding:34px 12px;text-align:center;color:var(--muted);font-size:14px}
 .col-empty a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
@@ -411,53 +337,39 @@ a.row{color:inherit}
 .br .t-act:empty{display:none}
 .br .qb{background:var(--accent);border-color:var(--accent);color:#fff;padding:8px 14px}
 .br .qb:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
-.board-note{margin-top:14px;font-size:13px;color:var(--muted)}
+/* one line under the columns: the refunded-presales note on the left, the prototype disclaimer and reset on the right. The columns are
+   sized so this line sits at the foot of the window. */
+.board-foot{display:flex;align-items:baseline;gap:4px 24px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--ink-2)}
+.board-foot #tryHint{flex:1 1 100%}   /* the demo hint takes its own line; the refund note and the disclaimer share the next */
+.board-foot .foot-note{margin-left:auto;color:var(--ink-2)}
+.board-foot button{color:var(--ink);border-bottom:1px solid var(--hair-2);margin-left:6px}
+.board-note{font-size:12.5px;color:var(--ink-2)}
 .board-note a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
 @media (max-width:1000px){.board{grid-template-columns:1fr}.col{height:auto;min-height:0}.col-list{overflow:visible}}
-/* presale browser, on the landing page: a search row, then one panel holding the title, the filters and a grid of cards. A card is a
-   presale and the whole card links to its page in a new tab. Buying happens in the app, so here the button is part of that link. */
-.xbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 14px}
+/* on a wide window the board fills the window: header, toolbar, columns, then the foot line, with no page scroll. The columns take
+   whatever height is left, so the foot line always sits at the bottom edge. Under 1000px the columns stack and the page scrolls. */
+@media (min-width:1001px){
+  #view-app.wide{display:flex;flex-direction:column;height:100dvh}
+  #view-app.wide .appmain{flex:1;min-height:0;width:100%;display:flex;flex-direction:column}
+  #view-app.wide #tab-terminal{flex:1;min-height:0;display:flex;flex-direction:column}
+  #view-app.wide .board{flex:1;min-height:0;align-items:stretch}
+  #view-app.wide .col{height:auto;min-height:0}
+  #view-app.wide .board-foot{flex:none}
+}
+/* the board's toolbar: a search row (search, quick buy, start a presale), then the pair filter, which applies to all three columns */
+.xbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px}
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.filters .seg{max-width:100%;overflow-x:auto}
+.filters .seg button{padding:6px 13px;font-size:12.5px}
 .xbar .mini.search{flex:1 1 320px;height:46px;padding:0 18px;border-radius:16px;-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost)}
 .xbar .mini.search input{width:100%;font-size:14.5px}
 .xbar .btn{height:46px;border-radius:16px;padding:0 20px}
-.explore{padding:22px;border-radius:26px}
-.explore .panel-foot{margin:18px -22px -22px}
-.explore .panel-foot button{margin-left:6px;color:var(--ink-2);border-bottom:1px solid var(--hair-2)}
-.xhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px 24px;flex-wrap:wrap;margin-bottom:18px}
-.xhead h2{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-weight:600;font-size:clamp(26px,2.6vw,34px);letter-spacing:-.045em;line-height:1.05}
-.xhead h2 i{display:inline;font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;line-height:inherit;margin-right:.18em}
-.xhead h2 .tag{font-size:12.5px;letter-spacing:-.01em}
-.xhead p{color:var(--muted);font-size:14px;margin-top:8px;max-width:74ch}
-.xfilters{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.xfilters .seg{max-width:100%;overflow-x:auto}
-.xfilters .seg button{padding:6px 13px;font-size:12.5px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:12px}
-.cards .empty{grid-column:1/-1}
-.pc{position:relative;display:flex;flex-direction:column;min-width:0;padding:12px;border:1px solid var(--hair);border-radius:18px;background:var(--paper);transition:transform .25s var(--out),box-shadow .25s,border-color .25s}
-.pc:hover{transform:translateY(-3px);box-shadow:var(--lift);border-color:var(--hair-2)}
-.pc.flash,.br.flash{animation:flash 1.8s ease-out}
-.pc.fresh,.br.fresh{animation:cardIn .6s var(--out) backwards;animation-delay:calc(var(--i,0)*50ms)}
+
+.br.flash{animation:flash 1.8s ease-out}
+.br.fresh{animation:cardIn .6s var(--out) backwards;animation-delay:calc(var(--i,0)*50ms)}
 @keyframes cardIn{from{opacity:0;transform:translateY(14px)}}
 .pick::after{content:"";position:absolute;inset:0;border-radius:18px}
 .pick:focus-visible{outline:none}.pick:focus-visible::after{outline:2px solid var(--navy);outline-offset:2px}
-/* the tile stands in for artwork: the presale's dot glyph on a pastel wash, both hued from its ticker (--h) */
-.art{position:relative;aspect-ratio:16/11;border-radius:13px;display:grid;place-items:center;overflow:hidden;background:linear-gradient(150deg,hsl(var(--h) 90% 93%/.95),hsl(calc(var(--h) + 55) 90% 87%/.85))}
-.art svg{width:46%;height:46%;fill:hsl(calc(var(--h) + 20) 42% 44%)}
-.art .chips{position:absolute;top:8px;left:8px;right:8px;display:flex;gap:4px;flex-wrap:wrap}
-.art .tag{background:rgba(255,255,255,.85);border-color:transparent;color:#23386B;font-size:11px;padding:2px 8px}
-.art .tag.in{background:var(--solid);color:#fff}
-.art .tag.ok{background:#2FAE6E;color:#fff}
-.cname{display:block;margin-top:12px;font-weight:600;font-size:15px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ctk{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:-.02em}
-.cval{margin-top:10px;font-family:var(--mono);font-size:20px;font-weight:500;letter-spacing:-.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.cval em{font-style:normal;font-size:12px;color:var(--faint);letter-spacing:-.02em}
-.pc .c-prog{margin-top:8px}
-.cmeta{margin-top:10px;font-size:11.5px;color:var(--muted)}
-.cmeta div{display:flex;justify-content:space-between;gap:8px;padding:3px 0;white-space:nowrap}
-.cmeta dd{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis}
-.pc .t-act{margin-top:auto;padding-top:12px;text-align:left}
-.pc .t-act:empty{display:none}
-.pc .qb{width:100%;padding:9px 12px;font-size:12.5px}
 .t-act{text-align:right;position:relative;z-index:1}
 .qb{border:1px solid var(--hair-2);background:var(--chip);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:600;white-space:nowrap;transition:background .2s,color .2s,border-color .2s,transform .15s}
 .qb:hover,.qb.hot{background:var(--accent);border-color:var(--accent);color:#fff}
@@ -611,75 +523,11 @@ a.row{color:inherit}
 </style>
 </head>
 <body>
-<canvas id="field" aria-hidden="true"></canvas>
-
-<!-- ######################################################################
-     HOME
-     ###################################################################### -->
-<div class="view" id="view-home">
-<div class="ground" aria-hidden="true"></div>
-<header class="nav">
-  <a href="#top" class="brand" aria-label="Seed home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.00" cy="12.00" r="1.55"/><circle cx="9.97" cy="13.86" r="1.49"/><circle cx="12.34" cy="8.13" r="1.43"/><circle cx="14.90" cy="15.78" r="1.37"/><circle cx="6.58" cy="11.04" r="1.31"/><circle cx="17.19" cy="8.70" r="1.25"/><circle cx="10.25" cy="18.51" r="1.19"/><circle cx="8.65" cy="5.54" r="1.13"/><circle cx="19.31" cy="14.67" r="1.07"/><circle cx="4.37" cy="15.15" r="1.01"/><circle cx="15.69" cy="4.12" r="0.95"/><circle cx="14.73" cy="20.70" r="0.89"/><circle cx="3.76" cy="7.22" r="0.83"/></svg>Seed</a>
-  <nav class="navpill glass" id="navpill" aria-label="Links">
-    <span class="ind" aria-hidden="true"></span>
-    <a href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
-    <span class="off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span>
-    <a href="#/docs" aria-label="Docs" title="Docs"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8.5L19 8v12.5H6z"/><path d="M14 3.5V8.5h5M9 12.5h7M9 16h7"/></svg></a>
-  </nav>
-  <div class="navright">
-    <a class="btn btn-ink" href="#/app" target="_blank" rel="noopener">Launch App</a>
-    <button class="menubtn glass" id="menuBtn" aria-label="Menu" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/></svg></button>
-  </div>
-</header>
-<nav class="mobnav" id="mobnav" aria-label="Sections">
-  <a href="https://x.com/" target="_blank" rel="noopener">X</a><span class="off">Discord, coming soon</span><a href="#/docs">Docs</a><a href="#/app" target="_blank" rel="noopener">Launch App</a>
-</nav>
-
-<main id="top">
-  <section class="hero" id="hero">
-    <div class="hero-sky">
-      <canvas id="sphere-base" aria-hidden="true"></canvas>
-      <canvas id="sphere-reveal" aria-hidden="true"></canvas>
-    </div>
-    <div class="hero-copy">
-      <h1>
-        <span class="l1 reveal" style="animation-delay:.1s">Seeded in full,</span>
-        <span class="l2 reveal" style="animation-delay:.25s">or refunded in full</span>
-      </h1>
-      <p class="hero-sub reveal" style="animation-delay:.4s">A presale launchpad on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL, USDC, a tokenized stock or any token. If it misses its target by the deadline, every wallet gets back what it paid.</p>
-    </div>
-    <div class="hero-panel wrap wide">
-      <div class="xbar">
-        <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="q" placeholder="Search presales by name or ticker" autocomplete="off" aria-label="Search presales"></label>
-        <a class="btn btn-ink" href="#/app/launch" target="_blank" rel="noopener"><span aria-hidden="true">+</span> Start a presale</a>
-      </div>
-      <div class="panel explore">
-        <div class="xhead">
-          <div><h2><span><i>Open</i>presales</span><span class="tag" id="xCount"></span><span class="tag">Demo data</span></h2><p id="xSub"></p></div>
-          <div class="xfilters">
-            <div class="seg" id="assetSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span>
-              <button data-v="all" aria-pressed="true">All pairs</button><button data-v="SOL" aria-pressed="false">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="stock" aria-pressed="false">Stocks</button><button data-v="other" aria-pressed="false">Other</button></div>
-            <div class="seg" id="statusSeg" role="group" aria-label="Status"><span class="seg-ind" aria-hidden="true"></span>
-              <button data-v="all" aria-pressed="false">All</button><button data-v="live" aria-pressed="true">Live</button><button data-v="seeded" aria-pressed="false">Seeded</button><button data-v="refunding" aria-pressed="false">Refunded</button></div>
-            <div class="seg" id="sortSeg" role="group" aria-label="Sort"><span class="seg-ind" aria-hidden="true"></span>
-              <button data-v="ending" aria-pressed="true">Ending soon</button><button data-v="filled" aria-pressed="false">Most filled</button><button data-v="new" aria-pressed="false">Newest</button></div>
-          </div>
-        </div>
-        <div class="cards" id="cards"></div>
-        <div class="panel-foot">Prototype. Presale data is simulated and no transactions are sent. A connected wallet is only read for its address and balances. <button data-reset>Reset demo</button></div>
-      </div>
-    </div>
-  </section>
-</main>
-
-</div>
 
 <!-- ######################################################################
      APP
      ###################################################################### -->
-<div class="view" id="view-app" hidden>
-<div class="ground" aria-hidden="true"></div>
-<div class="app-sky" aria-hidden="true"></div>
+<div class="view" id="view-app">
 <header class="appbar">
   <a href="#" class="brand" aria-label="Seed home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.00" cy="12.00" r="1.55"/><circle cx="9.97" cy="13.86" r="1.49"/><circle cx="12.34" cy="8.13" r="1.43"/><circle cx="14.90" cy="15.78" r="1.37"/><circle cx="6.58" cy="11.04" r="1.31"/><circle cx="17.19" cy="8.70" r="1.25"/><circle cx="10.25" cy="18.51" r="1.19"/><circle cx="8.65" cy="5.54" r="1.13"/><circle cx="19.31" cy="14.67" r="1.07"/><circle cx="4.37" cy="15.15" r="1.01"/><circle cx="15.69" cy="4.12" r="0.95"/><circle cx="14.73" cy="20.70" r="0.89"/><circle cx="3.76" cy="7.22" r="0.83"/></svg>Seed</a>
   <div class="seg tabs" id="tabSeg" role="group" aria-label="App sections">
@@ -689,6 +537,7 @@ a.row{color:inherit}
     <button data-v="portfolio" aria-pressed="false">Portfolio<span class="ct" id="ctPos"></span></button>
   </div>
   <div class="right">
+    <span class="icons"><a class="ico" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><span class="ico off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span><a class="ico" href="#/docs" aria-label="Docs" title="Docs"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8.5L19 8v12.5H6z"/><path d="M14 3.5V8.5h5M9 12.5h7M9 16h7"/></svg></a></span>
     <a class="textlink" href="#/docs">Docs</a>
     <button class="btn btn-ink" id="walletBtn" aria-haspopup="true" aria-expanded="false">Connect wallet</button>
     <div class="pop" id="walletPop" role="menu">
@@ -708,20 +557,26 @@ a.row{color:inherit}
         <label class="mini"><input id="qbAmt" inputmode="decimal" aria-label="Quick buy amount"></label>
         <label class="mini"><select id="qbAsset" aria-label="Quick buy asset"></select></label>
       </div>
-      <a class="btn btn-ink" href="#/app/launch"><span aria-hidden="true">+</span> Start a presale</a>
+      <a class="btn btn-ink" href="#/launch"><span aria-hidden="true">+</span> Start a presale</a>
+    </div>
+    <div class="filters">
+      <div class="seg" id="assetSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span>
+        <button data-v="all" aria-pressed="true">All pairs</button><button data-v="SOL" aria-pressed="false">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="stock" aria-pressed="false">Stocks</button><button data-v="other" aria-pressed="false">Other</button></div>
     </div>
     <div class="board">
-      <section class="panel col" aria-labelledby="h-new"><header class="col-head"><h2 id="h-new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5"/></svg>New ideas<span class="tag" id="n-new"></span></h2><span class="col-note">Under 50% filled</span></header><div class="col-list" id="col-new"></div></section>
-      <section class="panel col" aria-labelledby="h-seeding"><header class="col-head"><h2 id="h-seeding"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9"/><path d="M12 12c0-3.5-2.5-6-6.5-6 0 3.5 2.5 6 6.5 6z"/><path d="M12 14.5c0-3 2.2-5 5.8-5 0 3-2.2 5-5.8 5z"/></svg>Seeding<span class="tag" id="n-seeding"></span></h2><span class="col-note">Past halfway</span></header><div class="col-list" id="col-seeding"></div></section>
-      <section class="panel col" aria-labelledby="h-seeded"><header class="col-head"><h2 id="h-seeded"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.6 2.6 4.9-5.4"/></svg>Seeded<span class="tag" id="n-seeded"></span></h2><span class="col-note">Target met</span></header><div class="col-list" id="col-seeded"></div></section>
+      <section class="panel col" aria-labelledby="h-new"><header class="col-head"><h2 id="h-new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5"/></svg>New ideas<span class="tag" id="n-new"></span></h2><div class="col-side"><span class="col-note">Under 50% filled</span><label class="mini col-sort"><select data-sort="new" aria-label="Sort new"><option value="ending">Ending soon</option><option value="filled">Most filled</option><option value="new" selected>Newest</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></label></div></header><div class="col-list" id="col-new"></div></section>
+      <section class="panel col" aria-labelledby="h-seeding"><header class="col-head"><h2 id="h-seeding"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9"/><path d="M12 12c0-3.5-2.5-6-6.5-6 0 3.5 2.5 6 6.5 6z"/><path d="M12 14.5c0-3 2.2-5 5.8-5 0 3-2.2 5-5.8 5z"/></svg>Seeding<span class="tag" id="n-seeding"></span></h2><div class="col-side"><span class="col-note">Past halfway</span><label class="mini col-sort"><select data-sort="seeding" aria-label="Sort seeding"><option value="ending">Ending soon</option><option value="filled" selected>Most filled</option><option value="new">Newest</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></label></div></header><div class="col-list" id="col-seeding"></div></section>
+      <section class="panel col" aria-labelledby="h-seeded"><header class="col-head"><h2 id="h-seeded"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.6 2.6 4.9-5.4"/></svg>Seeded<span class="tag" id="n-seeded"></span></h2><div class="col-side"><span class="col-note">Target met</span><label class="mini col-sort"><select data-sort="seeded" aria-label="Sort seeded"><option value="ending" selected>Recently seeded</option><option value="filled">Most filled</option><option value="new">Newest</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></label></div></header><div class="col-list" id="col-seeded"></div></section>
     </div>
-    <p class="board-note" id="tryHint" hidden></p>
-    <p class="board-note" id="refundNote" hidden></p>
+    <div class="board-foot">
+      <p class="board-note" id="tryHint" hidden></p><p class="board-note" id="refundNote" hidden></p>
+      <span class="foot-note">Prototype. Presale data is simulated and no transactions are sent. A connected wallet is only read for its address and balances. <button data-reset>Reset demo</button></span>
+    </div>
   </section>
 
   <!-- ------------------------------------------------------- PRESALE -->
   <section id="tab-presale" hidden>
-    <a class="textlink back" href="#/app/terminal">&larr; All presales</a>
+    <a class="textlink back" href="#">&larr; All presales</a>
     <div class="panel ppage" id="presalePage"></div>
   </section>
   <section id="tab-launch" hidden>
@@ -778,19 +633,17 @@ a.row{color:inherit}
      DOCS
      ###################################################################### -->
 <div class="view" id="view-docs" hidden>
-<div class="ground under-docs" aria-hidden="true"></div>
-<div class="app-sky" aria-hidden="true"></div>
-<div class="dusk" aria-hidden="true"></div>
 <header class="appbar">
   <a href="#" class="brand" aria-label="Seed home"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12.00" cy="12.00" r="1.55"/><circle cx="9.97" cy="13.86" r="1.49"/><circle cx="12.34" cy="8.13" r="1.43"/><circle cx="14.90" cy="15.78" r="1.37"/><circle cx="6.58" cy="11.04" r="1.31"/><circle cx="17.19" cy="8.70" r="1.25"/><circle cx="10.25" cy="18.51" r="1.19"/><circle cx="8.65" cy="5.54" r="1.13"/><circle cx="19.31" cy="14.67" r="1.07"/><circle cx="4.37" cy="15.15" r="1.01"/><circle cx="15.69" cy="4.12" r="0.95"/><circle cx="14.73" cy="20.70" r="0.89"/><circle cx="3.76" cy="7.22" r="0.83"/></svg>Seed <small>docs</small></a>
   <span></span>
-  <div class="right"><a class="textlink" href="#">Home</a><a class="btn btn-ink" href="#/app" target="_blank" rel="noopener">Launch App</a></div>
+  <div class="right"><span class="icons"><a class="ico" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><span class="ico off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span></span><a class="textlink" href="#">Terminal</a></div>
 </header>
 <div class="docs">
   <nav class="toc" id="toc" aria-label="Docs sections"></nav>
   <article>
     <div class="doc-hero">
       <h1><span class="l1">How Seed works,</span><span class="l2">with the math</span></h1>
+      <p>A presale launchpad on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL, USDC, a tokenized stock or any token. If it misses its target by the deadline, every wallet gets back what it paid.</p>
       <p>The rules of a presale, the Meteora programs underneath it, how pairing with any asset works, and the 1% protocol fee. Each section has the explanation on the left and the math beside it.</p>
     </div>
 
@@ -1172,7 +1025,7 @@ a.row{color:inherit}
    SEED. Presale state machine: live, then seeded (target hit) or refunding (deadline passed).
    Solana only. Everything that would touch the chain goes through `adapter`, so
    calls into the Seed program can replace the simulated ones without touching the UI.
-   Routes: #(home)  #/app/terminal[/id]  #/app/launch  #/app/portfolio  #/docs[/section]
+   Routes: #(terminal)  #/presale/<id>  #/launch  #/portfolio  #/docs[/section]. The old #/app/... addresses are rewritten to these.
    ========================================================================== */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -1243,7 +1096,7 @@ function seedData() {
 
 const QUICK0 = () => ({ SOL: 2, USDC: 250, JUP: 500, BONK: 5000000, NVDAx: 1 });
 let state = { wallet: null, presales: [], positions: {}, claimed: {}, quick: QUICK0(), custom: {} };
-const ui = { view: 'home', tab: 'terminal', sel: null, fStatus: 'live', fAsset: 'all', q: '', bq: '', sort: 'ending', qbAsset: 'SOL' };
+const ui = { view: '', tab: 'terminal', sel: null, fAsset: 'all', bq: '', sort: { new: 'new', seeding: 'filled', seeded: 'ending' }, qbAsset: 'SOL' };
 function fresh() { return { wallet: null, presales: seedData(), positions: {}, claimed: {}, quick: QUICK0(), custom: {} }; }
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q) { state = Object.assign(fresh(), s); return; } } catch (e) {}
@@ -1369,37 +1222,19 @@ function initSeg(el, onChange) {
 }
 const placeSegs = () => Object.values(seg).forEach(s => s.place());
 
-/* ================================================================= HOME */
-/* bars sweep in only for rows that were not already on screen, so a buy or a re-sort does not replay every bar */
-const shown = { home: new Set(), term: new Set() };
-function freshIn(k, list) { const prev = shown[k]; shown[k] = new Set(list.map(p => p.id)); return p => prev.has(p.id) ? '' : ' fresh'; }
-function renderHome() {
-  if (!$('#cards').classList.contains('seen')) shown.home = new Set();   // not looked at yet, so every card is still new
-  const l = visible(), fresh = freshIn('home', l);
-  const chip = { live: '<span class="tag in">Live</span>', seeded: '<span class="tag ok">Seeded</span>', refunding: '<span class="tag">Refunded</span>' };
-  $('#cards').innerHTML = l.length ? l.map((p, i) => `<div class="pc ${p.status}${fresh(p)}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
-      <div class="art"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg>
-        <div class="chips">${chip[p.status]}<span class="tag">${esc(Q(p).sym)} pair</span>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}</div></div>
-      <a class="pick" href="#/app/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b class="cname">${esc(p.name)}</b></a>
-      <span class="ctk">$${esc(p.ticker)}</span>
-      <div class="cval"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></div>
-      ${progCell(p)}
-      <dl class="cmeta">${p.status === 'live' ? `<div><dt>Ends in</dt><dd class="num" data-time>${timeCell(p)}</dd></div><div><dt>Pace needed</dt><dd class="num" data-pace>${paceTxt(p)}</dd></div>`
-        : `<div><dt>${p.status === 'seeded' ? 'Seeded' : 'Closed'}</dt><dd>${fmtDay(p.resolvedAt || p.endsAt)}</dd></div><div><dt>Backers</dt><dd class="num">${p.backers}</dd></div>`}</dl>
-      <span class="t-act">${p.status === 'live' ? `<span class="qb">Buy with ${esc(Q(p).sym)}</span>` : ''}</span></div>`).join('')
-    : `<div class="empty">${ui.q ? `Nothing matches "${esc(ui.q)}". Clear the search or widen the filters.` : ui.fStatus === 'live' ? 'No presales are live with these filters. <a href="#/app/launch" target="_blank" rel="noopener">Start one</a>' : 'Nothing here yet with these filters.'}</div>`;
-  renderStats();
-}
-
 /* ============================================================= TERMINAL */
-function visible() {
-  const q = ui.q.trim().toLowerCase();
-  const l = state.presales.filter(p => (ui.fStatus === 'all' || p.status === ui.fStatus) && (ui.fAsset === 'all' || (ui.fAsset === 'stock' ? !!Q(p).stock : ui.fAsset === 'other' ? p.q !== 'SOL' && p.q !== 'USDC' && !Q(p).stock : p.q === ui.fAsset)) && (!q || (p.name + ' ' + p.ticker).toLowerCase().includes(q)));
-  const liveFirst = (a, b) => (a.status === 'live' ? 0 : 1) - (b.status === 'live' ? 0 : 1);
-  if (ui.sort === 'filled') l.sort((a, b) => liveFirst(a, b) || pctOf(b) - pctOf(a));
-  else if (ui.sort === 'new') l.sort((a, b) => b.openedAt - a.openedAt);
-  else l.sort((a, b) => liveFirst(a, b) || (a.status === 'live' ? a.endsAt - b.endsAt : (b.resolvedAt || 0) - (a.resolvedAt || 0)));
-  return l;
+/* bars sweep in only for rows that were not already on screen, so a buy or a re-sort does not replay every bar */
+const shown = { term: new Set() };
+function freshIn(k, list) { const prev = shown[k]; shown[k] = new Set(list.map(p => p.id)); return p => prev.has(p.id) ? '' : ' fresh'; }
+/* the pair filter applies to all three columns */
+const pairOk = p => ui.fAsset === 'all' || (ui.fAsset === 'stock' ? !!Q(p).stock : ui.fAsset === 'other' ? p.q !== 'SOL' && p.q !== 'USDC' && !Q(p).stock : p.q === ui.fAsset);
+/* each column sorts on its own. Ending soon: live presales by deadline; in the seeded column it is the most recently seeded first.
+   Most filled: by percentage, then newest. Newest: by when it opened. */
+function sorter(k) {
+  const s = ui.sort[k];
+  if (s === 'filled') return (a, b) => pctOf(b) - pctOf(a) || b.openedAt - a.openedAt;
+  if (s === 'new') return (a, b) => b.openedAt - a.openedAt;
+  return k === 'seeded' ? (a, b) => (b.resolvedAt || 0) - (a.resolvedAt || 0) : (a, b) => a.endsAt - b.endsAt;
 }
 const qbLabel = p => fmtC(Math.min(quickFor(p), payLeft(p)), p.q);
 function actCell(p) {
@@ -1408,38 +1243,29 @@ function actCell(p) {
   if (pos && !state.claimed[p.id]) return `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
   return '';   // the card's status chip already says seeded or refunded
 }
-function renderStats() {
-  const live = state.presales.filter(p => p.status === 'live');
-  const soon = live.slice().sort((a, b) => a.endsAt - b.endsAt)[0], top = live.slice().sort((a, b) => pctOf(b) - pctOf(a))[0];
-  const pairs = [...new Set(live.map(p => Q(p).sym))];
-  $('#xCount').textContent = `${live.length} live of ${state.presales.length}`;
-  $('#xSub').innerHTML = live.length ? `Paired with ${esc(pairs.slice(0, 4).join(', '))}${pairs.length > 4 ? ' and more' : ''}. ${esc(top.name)} is closest to seeding at ${Math.floor(pctOf(top) + 1e-7)}%. Next deadline in <span class="num" data-next="${soon.id}">${fmtLeft(soon.endsAt - Date.now())}</span>, ${esc(soon.name)}.`
-    : 'No presales are live right now. Seeded and refunded ones are under their filters.';
-}
 /* which column a presale sits in. Refunded ones are not on the board: they are named under it, and claims live in the portfolio. */
 const colOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : 'seeding') : null;
 function renderTerminal() {
-  const q = ui.bq.trim().toLowerCase(), hit = state.presales.filter(p => !q || (p.name + ' ' + p.ticker).toLowerCase().includes(q));
-  const cols = { new: hit.filter(p => colOf(p) === 'new').sort((a, b) => b.openedAt - a.openedAt), seeding: hit.filter(p => colOf(p) === 'seeding').sort((a, b) => pctOf(b) - pctOf(a)),
-    seeded: hit.filter(p => colOf(p) === 'seeded').sort((a, b) => (b.resolvedAt || 0) - (a.resolvedAt || 0)) };
+  const q = ui.bq.trim().toLowerCase(), hit = state.presales.filter(p => pairOk(p) && (!q || (p.name + ' ' + p.ticker).toLowerCase().includes(q)));
+  const cols = {}; for (const k of ['new', 'seeding', 'seeded']) cols[k] = hit.filter(p => colOf(p) === k).sort(sorter(k));
   const fresh = freshIn('term', [...cols.new, ...cols.seeding, ...cols.seeded]);
-  const none = { new: 'No new ideas right now. <a href="#/app/launch">Start one</a>', seeding: 'Nothing is past halfway yet.', seeded: 'Nothing has seeded yet.' };
+  const none = { new: 'No new ideas right now. <a href="#/launch">Start one</a>', seeding: 'Nothing is past halfway yet.', seeded: 'Nothing has seeded yet.' };
   for (const k of ['new', 'seeding', 'seeded']) {
     $('#n-' + k).textContent = cols[k].length;
     $('#col-' + k).innerHTML = cols[k].length ? cols[k].map((p, i) => `<div class="br ${p.status}${fresh(p)}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
       <span class="br-av"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>
-      <div class="br-main"><a class="pick" href="#/app/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>
+      <div class="br-main"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>
         <div class="br-meta"><span class="tag">${esc(Q(p).sym)} pair</span>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}<span>${p.status === 'live' ? `Ends in <span class="num" data-time>${timeCell(p)}</span>` : timeCell(p)}</span></div>
         ${progCell(p)}</div>
       <div class="br-side"><span class="br-val num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
         ${p.status === 'live' ? `<span class="br-sub num" title="Pace needed to seed" data-pace>${paceTxt(p)}</span>` : `<span class="br-sub">${p.backers} backers</span>`}<span class="t-act">${actCell(p)}</span></div></div>`).join('')
-      : `<div class="col-empty">${q ? `Nothing here matches "${esc(ui.bq.trim())}".` : none[k]}</div>`;
+      : `<div class="col-empty">${q ? `Nothing here matches "${esc(ui.bq.trim())}".` : ui.fAsset !== 'all' ? 'Nothing here with this pair.' : none[k]}</div>`;
   }
   const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live';
   hint.hidden = !show; if (show) hint.textContent = 'To see both endings: fill the rest of Osprey and it seeds on the spot. Buy Moss and its deadline passes in about three minutes.';
   const dead = state.presales.filter(p => p.status === 'refunding'), owed = dead.some(p => state.positions[p.id] && !state.claimed[p.id]), note = $('#refundNote');
   note.hidden = !dead.length;
-  if (dead.length) note.innerHTML = `${dead.map(p => `<a href="#/app/presale/${p.id}" target="_blank" rel="noopener">${esc(p.name)}</a>`).join(', ')} missed ${dead.length === 1 ? 'its' : 'their'} target and refunded every backer.${owed ? ' You have a refund to claim in <a href="#/app/portfolio">your portfolio</a>.' : ''}`;
+  if (dead.length) note.innerHTML = `${dead.map(p => `<a href="#/presale/${p.id}" target="_blank" rel="noopener">${esc(p.name)}</a>`).join(', ')} missed ${dead.length === 1 ? 'its' : 'their'} target and refunded every backer.${owed ? ' You have a refund to claim in <a href="#/portfolio">your portfolio</a>.' : ''}`;
   renderDetail();
 }
 function bump(row) { row.classList.remove('bump'); void row.offsetWidth; row.classList.add('bump'); setTimeout(() => row.classList.remove('bump'), 950); }
@@ -1576,7 +1402,7 @@ function renderDetail() {
   const box = $('#presalePage'); detailBox = box;
   if (ui.tab !== 'presale') { box.innerHTML = ''; detailShown = null; return; }
   const p = find(ui.sel);
-  if (!p) { box.innerHTML = '<div class="empty">That presale is not in this demo any more. It may have been reset.<br><a href="#/app/terminal">Back to all presales</a></div>'; return; }
+  if (!p) { box.innerHTML = '<div class="empty">That presale is not in this demo any more. It may have been reset.<br><a href="#">Back to all presales</a></div>'; return; }
   box.innerHTML = detailHTML(p);
   const q = s => $(s, box);
   if (detailShown !== p.id) { detailShown = p.id; const r = q('[data-dreadout]'); r.classList.add('fresh'); setTimeout(() => r.classList.remove('fresh'), 1600); }   // sweep once per visit
@@ -1705,8 +1531,7 @@ async function resume() {
 }
 $('#walletBtn').onclick = async e => { e.stopPropagation(); if (!state.wallet) return connect(); const o = $('#walletPop').classList.toggle('open'); $('#walletBtn').setAttribute('aria-expanded', o); if (o) refreshBalances(); };
 $('#disconnectBtn').onclick = () => { if (isReal()) { const prov = providerOf(state.wallet.kind); try { prov && prov.disconnect && prov.disconnect(); } catch (x) {} } dropWallet('Wallet disconnected'); };
-document.addEventListener('click', e => { if (!e.target.closest('#walletPop')) $('#walletPop').classList.remove('open'); if (!e.target.closest('#menuBtn')) { $('#mobnav').classList.remove('open'); $('#menuBtn').setAttribute('aria-expanded', false); } });
-$('#menuBtn').onclick = e => { e.stopPropagation(); const o = $('#mobnav').classList.toggle('open'); $('#menuBtn').setAttribute('aria-expanded', o); };
+document.addEventListener('click', e => { if (!e.target.closest('#walletPop')) $('#walletPop').classList.remove('open'); });
 
 /* ---------------------------------------------------------------- launch */
 const draft = { pair: 'SOL', stock: 'NVDAx', hours: 72 };
@@ -1794,15 +1619,15 @@ $('#openBtn').onclick = async () => {
   busy = false; b.disabled = false;
   state.presales.unshift(p); save();
   ['#fName', '#fTicker', '#fIdea', '#fTarget', '#fMint'].forEach(s => $(s).value = ''); renderPreview();
-  ui.fStatus = 'live'; ui.fAsset = 'all'; ui.q = ''; $('#q').value = ''; seg.status.set('live'); seg.assetF.set('all'); ui.sel = id;
+  ui.fAsset = 'all'; seg.assetF.set('all'); ui.sel = id;
   toast(`Opened ${p.name}. It is live until ${fmtDate(p.endsAt)}`);
-  location.hash = '#/app/presale/' + id;   // same tab: a new one opened after the wallet round trip would be blocked as a popup
+  location.hash = '#/presale/' + id;   // same tab: a new one opened after the wallet round trip would be blocked as a popup
 };
 $('#stockRow').addEventListener('click', e => { const b = e.target.closest('[data-stock]'); if (!b) return; draft.stock = b.dataset.stock; $('#fErr').textContent = ''; renderPreview(); });
 $('#mintRow').addEventListener('click', e => { const b = e.target.closest('[data-mint]'); if (!b) return; $('#fMint').value = ASSETS[b.dataset.mint].mint; $('#fErr').textContent = ''; renderPreview(); });
 function renderMine() {
   const l = state.presales.filter(p => p.mine);
-  $('#mineList').innerHTML = l.length ? l.map(p => `<a class="row ${p.status}" href="#/app/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}"><span class="c-proj">${projCell(p)}</span>${progCell(p)}
+  $('#mineList').innerHTML = l.length ? l.map(p => `<a class="row ${p.status}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}"><span class="c-proj">${projCell(p)}</span>${progCell(p)}
       <span class="c-raised num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span><span class="c-time num" data-time>${timeCell(p)}</span><span class="c-act"><span class="pill-sm">View</span></span></a>`).join('')
     : '<div class="empty">You have not opened a presale yet. Fill in the six fields above to open your first.</div>';
 }
@@ -1817,10 +1642,10 @@ function renderPortfolio() {
   $('#prows').innerHTML = ids.length ? ids.map(id => { const p = find(id); if (!p) return ''; const sym = esc(Q(p).sym), a = state.positions[id], cl = state.claimed[id];
       const st = { live: 'Live', seeded: 'Seeded', refunding: 'Refunded' }[p.status];
       const yours = p.status === 'live' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)} if it seeds` : p.status === 'seeded' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)}` : `${fmtAmt(a, p.q)} ${sym}`;
-      const act = p.status === 'live' ? `<a class="qb" href="#/app/presale/${p.id}" target="_blank" rel="noopener">View</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
+      const act = p.status === 'live' ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">View</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
       return `<div class="prow"><span class="c-proj">${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta">${pairTag(p)}</span></span></span>
         <span class="num">${fmtAmt(a, p.q)} ${sym}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
-    : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#/app">Buy into a presale from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
+    : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#">Buy into a presale from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
   $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` : '<p style="color:var(--muted);font-size:14px;margin-top:10px">No wallet connected.</p>';
 }
 $('#prows').addEventListener('click', e => { const cl = e.target.closest('[data-claim]'); if (cl) claim(find(cl.dataset.claim), cl); });
@@ -1852,46 +1677,43 @@ function initDocs() {
 }
 
 /* ---------------------------------------------------------------- router */
+/* the old addresses (#/app, #/app/terminal[/id], #/app/launch, #/app/presale/<id>, the landing page's #top) are rewritten in place, so
+   links open in other tabs and bookmarks still land */
+function canon(h) {
+  if (h.startsWith('#/app')) { const parts = h.slice(2).split('/'), t = parts[1] || '', id = parts[2];
+    if ((t === 'presale' || t === 'terminal') && id) return '#/presale/' + id;
+    return t === 'launch' || t === 'portfolio' ? '#/' + t : '#'; }
+  if (h.startsWith('#/terminal')) { const id = h.split('/')[2]; return id ? '#/presale/' + id : '#'; }
+  if (h.startsWith('#/docs') || h.startsWith('#/presale/') || h === '#/launch' || h === '#/portfolio') return h;
+  return '#';
+}
 function route() {
-  const h = location.hash || '#', prevTab = ui.tab; let view = 'home', anchor = null, sec = null;
-  if (h.startsWith('#/app')) { view = 'app'; const parts = h.slice(2).split('/');
-    if ((parts[1] === 'presale' || parts[1] === 'terminal') && parts[2]) { ui.tab = 'presale'; ui.sel = parts[2]; }   // terminal/<id> is the older address of the same page
-    else { ui.tab = ['terminal', 'launch', 'portfolio'].includes(parts[1]) ? parts[1] : 'terminal'; ui.sel = null; } }
-  else if (h.startsWith('#/docs')) { view = 'docs'; sec = h.split('/')[2] || null; }
-  else if (h.length > 1) anchor = h;
-  const changed = view !== ui.view; ui.view = view; syncChrome();
-  ['home', 'app', 'docs'].forEach(v => { $('#view-' + v).hidden = v !== view; document.body.classList.toggle('in-' + v, v === view); });
-  if (changed || prevTab !== ui.tab) { shown.home = new Set(); shown.term = new Set(); if (view === 'home') $('#cards').classList.remove('seen'); }
+  let h = location.hash || '#'; const c = canon(h);
+  if (c !== h) { history.replaceState(null, '', location.pathname + location.search + (c === '#' ? '' : c)); h = c; }
+  const prevTab = ui.tab; let view = 'app', sec = null;
+  if (h.startsWith('#/docs')) { view = 'docs'; sec = h.split('/')[2] || null; }
+  else if (h.startsWith('#/presale/')) { ui.tab = 'presale'; ui.sel = h.split('/')[2]; }
+  else { ui.tab = h === '#/launch' ? 'launch' : h === '#/portfolio' ? 'portfolio' : 'terminal'; ui.sel = null; }
+  const changed = view !== ui.view; ui.view = view;
+  ['app', 'docs'].forEach(v => { $('#view-' + v).hidden = v !== view; document.body.classList.toggle('in-' + v, v === view); });
+  if (changed || prevTab !== ui.tab) shown.term = new Set();
   const pg = view === 'app' && ui.tab === 'presale' && find(ui.sel);
-  document.title = pg ? `${pg.name} ($${pg.ticker}) presale on Seed` : view === 'app' ? 'Seed app: terminal, launch, portfolio' : view === 'docs' ? 'Seed docs: how it works, with the math' : 'Seed: presales that seed or refund';
+  document.title = pg ? `${pg.name} ($${pg.ticker}) presale on Seed` : view === 'docs' ? 'Seed docs: how it works, with the math'
+    : ui.tab === 'launch' ? 'Start a presale on Seed' : ui.tab === 'portfolio' ? 'Your positions on Seed' : 'Seed: seeded in full, or refunded in full';
   if (view === 'app') {
     ['terminal', 'launch', 'portfolio', 'presale'].forEach(t => $('#tab-' + t).hidden = t !== ui.tab); seg.tabs.set(ui.tab === 'presale' ? 'terminal' : ui.tab);
     $('#view-app').classList.toggle('wide', ui.tab === 'terminal');
     renderAll(); if (changed || prevTab !== ui.tab) scrollTo(0, 0);
-  } else if (view === 'docs') {
+  } else {
     if (sec && $('#d-' + sec)) $('#d-' + sec).scrollIntoView(); else if (changed) scrollTo(0, 0);
     initDocs.spy && initDocs.spy();
-  } else {
-    if (changed) { renderHome(); window.bgRefresh && bgRefresh(); }
-    if (anchor) { let t = null; try { t = $(anchor); } catch (e) {} if (t) t.scrollIntoView(); } else if (changed) scrollTo(0, 0);
   }
   requestAnimationFrame(placeSegs);
 }
 addEventListener('hashchange', route);
 
 /* ---------------------------------------------------------------- render */
-function renderAll() { renderWallet(); renderHome(); syncQuickUI(); renderTerminal(); renderMine(); renderPortfolio(); }
-
-/* ------------------------------------------------------------- nav pill */
-(function () {
-  const pill = $('#navpill'), ind = $('.ind', pill), links = $$('a', pill), spyLinks = links.filter(a => /^#[a-z]/i.test(a.getAttribute('href'))); let active = null;
-  const move = a => { if (!a) { ind.style.opacity = 0; return; } ind.style.opacity = 1; ind.style.transform = `translateX(${a.offsetLeft}px)`; ind.style.width = a.offsetWidth + 'px'; };
-  links.forEach(a => a.addEventListener('mouseenter', () => move(a)));
-  pill.addEventListener('mouseleave', () => move(active));
-  const onScroll = () => { if (ui.view !== 'home') return; let cur = null; for (const a of spyLinks) { const s = $(a.getAttribute('href')); if (s && s.getBoundingClientRect().top <= innerHeight * .42) cur = a; }
-    if (cur !== active) { active = cur; links.forEach(l => l.classList.toggle('on', l === cur)); move(cur); } };
-  addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', () => move(active));
-})();
+function renderAll() { renderWallet(); syncQuickUI(); renderTerminal(); renderMine(); renderPortfolio(); }
 
 /* ----------------------------------------------------------------- clock */
 function tick(silent) {
@@ -1903,7 +1725,6 @@ function tick(silent) {
   if (changed) { save(); renderAll(); }
   $$('.live[data-row]').forEach(row => { const p = find(row.dataset.row); if (!p) return; const t = $('[data-time]', row); if (t) t.textContent = fmtLeft(p.endsAt - now); const pc = $('[data-pace]', row); if (pc) pc.textContent = paceTxt(p); });
   const sel = find(ui.sel); if (sel && detailBox) { const t = $('[data-dtime]', detailBox); if (t) t.textContent = fmtLeft(sel.endsAt - now); const dp = $('[data-dpace]', detailBox); if (dp) dp.textContent = paceTxt(sel); }
-  const nx = $('[data-next]'); if (nx) { const p = find(nx.dataset.next); if (p) nx.textContent = fmtLeft(p.endsAt - now); }
 }
 /* simulated buys arriving; never completes a presale, so the last step is yours */
 function simulate() {
@@ -1916,7 +1737,6 @@ function simulate() {
   p.raised = r6(p.raised + amt); p.backers++; record(p, addr(String(Math.random())), r6(amt / NET));
   if (colOf(p) !== was) renderTerminal(); else patchRows(p);
   patchDetail(p); save();
-  renderStats();
 }
 document.addEventListener('click', e => { if (!e.target.closest('[data-reset]')) return; try { localStorage.removeItem(KEY); } catch (x) {} state = fresh(); ui.sel = null; syncQuickUI(); renderAll(); toast('Demo reset'); });
 
@@ -1932,14 +1752,12 @@ function syncQuickUI() {
 /* ------------------------------------------------------------------ boot */
 function boot() {
   load();
-  seg.tabs = initSeg($('#tabSeg'), v => { location.hash = '#/app/' + v; });
-  seg.status = initSeg($('#statusSeg'), v => { ui.fStatus = v; renderHome(); });
-  seg.assetF = initSeg($('#assetSeg'), v => { ui.fAsset = v; renderHome(); });
+  seg.tabs = initSeg($('#tabSeg'), v => { location.hash = v === 'terminal' ? '#' : '#/' + v; });
+  seg.assetF = initSeg($('#assetSeg'), v => { ui.fAsset = v; renderTerminal(); });
+  $$('[data-sort]').forEach(el => el.addEventListener('change', () => { ui.sort[el.dataset.sort] = el.value; renderTerminal(); }));
   seg.pair = initSeg($('#pairSeg'), v => { draft.pair = v; $('#fErr').textContent = ''; renderPreview(); if (v === 'any') $('#fMint').focus(); });
   seg.time = initSeg($('#timeSeg'), v => { draft.hours = +v; renderPreview(); });
-  $('#q').addEventListener('input', e => { ui.q = e.target.value; renderHome(); });
   $('#bq').addEventListener('input', e => { ui.bq = e.target.value; renderTerminal(); });
-  seg.sort = initSeg($('#sortSeg'), v => { ui.sort = v; renderHome(); });
   $('#qbAsset').addEventListener('change', e => { ui.qbAsset = e.target.value; syncQuickUI(); });
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();
@@ -1948,227 +1766,6 @@ function boot() {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeSegs);
 }
 
-/* ==========================================================================
-   BACKGROUNDS
-   Noise core is the same hash / smoothstep value-noise / 3-octave fbm as the
-   Rush FlowField port. What is new: domain warping, a wandering drift heading,
-   a tide band, a cursor lens with ripples, click rings, scroll parallax, and a
-   rotating phyllotaxis sphere that carries the same noise as its continents.
-   ========================================================================== */
-const hash = (x, y) => { let r = (0x165667b1 * x + 0x27d4eb2f * y) | 0; r = ((r ^ (r >>> 13)) * 0x4bf19f61) | 0; return ((r ^ (r >>> 16)) >>> 0) / 0xffffffff; };
-const noise = (x, y) => {
-  const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, u = xf * xf * (3 - 2 * xf);
-  const a = hash(xi, yi), b = hash(xi + 1, yi), c = hash(xi, yi + 1), d = hash(xi + 1, yi + 1), top = a + (b - a) * u;
-  return top + yf * yf * (3 - 2 * yf) * (c + (d - c) * u - top);
-};
-const fbm = (x, y) => 0.5714 * noise(x, y) + 0.2857 * noise(2 * x, 2 * y) + 0.1429 * noise(4 * x, 4 * y);
-const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const COARSE = matchMedia('(pointer: coarse)').matches;
-const pointer = { x: -9999, y: -9999, last: 0, seen: false };
-addEventListener('pointermove', e => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.last = performance.now(); pointer.seen = true; kick(); }, { passive: true });
-
-// canvas colours (the stylesheet tokens cover everything else). The flow field is tinted for the sky under it, which depends on the
-// view. The globe sits on the hero's blue sky: ink dots on a translucent disc that lets the clouds read through.
-const CANVAS = {
-  ground: { field: ['46,99,231', 0.06, 0.4] },   // landing page and app, blue sky: deep blue dots
-  docs: { field: ['78,84,176', 0.06, 0.36] },    // the docs run from one sky to the other: a violet that reads on both
-  sky: { disc: 'rgba(255,255,255,.5)', halo: '255,255,255', rim: 'rgba(61,75,124,.2)', land: ['19,26,46', 0.10, 0.30], sea: ['19,26,46', 0.035, 0.085], pulse: '61,75,124', rSea: 'rgba(168,179,214,.55)', rLand: 'rgba(61,75,124,.92)', rRing: 'rgba(86,104,160,.32)' }
-};
-const tintNow = () => (ui.view === 'docs' ? CANVAS.docs : CANVAS.ground).field;
-
-class FlowField {
-  constructor(canvas, o) {
-    this.c = canvas; this.ctx = canvas.getContext('2d', { alpha: true }); this.o = o; this.step = 8;
-    this.tint(o.rgb, o.minA, o.maxA);
-    this.buckets = Array.from({ length: 12 }, () => []);
-    this.intro = REDUCED ? 150 : 0; this.ox = Math.random() * 900; this.oy = Math.random() * 900; this.lx = -9999; this.ly = -9999; this.rings = []; this.nextRing = 240;
-    this.resize();
-  }
-  tint(rgb, minA, maxA) { this.palette = Array.from({ length: 12 }, (_, i) => `rgba(${rgb},${(minA + (maxA - minA) * (i + 1) / 12).toFixed(3)})`); }
-  resize() {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    if (this.o.fixed) { this.w = innerWidth; this.h = innerHeight; } else { const r = this.c.parentElement.getBoundingClientRect(); this.w = r.width; this.h = r.height; }
-    this.c.width = Math.floor(this.w * dpr); this.c.height = Math.floor(this.h * dpr);
-    if (this.o.fixed) { this.c.style.width = this.w + 'px'; this.c.style.height = this.h + 'px'; }
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    this.cols = Math.ceil(this.w / this.step) + 1; this.rows = Math.ceil(this.h / this.step) + 1;
-    this.WX = new Float32Array(this.cols + 2); this.WY = new Float32Array(this.cols + 2);
-  }
-  ring(x, y, a) { if (this.rings.length < 4) this.rings.push({ x, y, r: 0, a }); }
-  frame(t, f) {
-    const { ctx, w, h, step: s, cols, rows, buckets, WX, WY, o } = this, k = 0.022 * s / 8 * (w < 700 ? 1.7 : 1), kw = k * 0.5, wt = t * 0.9;
-    ctx.clearRect(0, 0, w, h);
-    for (let i = 0; i < 12; i++) buckets[i].length = 0;
-    // drift heading wanders instead of scrolling in a straight line
-    const th = 1.15 + 0.85 * Math.sin(t * 0.21) + 0.3 * Math.sin(t * 0.057 + 2);
-    this.ox += Math.cos(th) * 0.0024 * f; this.oy += Math.sin(th) * 0.0024 * f;
-    const eased = 1 - Math.pow(1 - Math.min(1, this.intro / 150), 3);
-    const thr = o.thr + 0.65 * (1 - eased) + 0.02 * Math.sin(t * 0.8), range = o.range;
-    if (this.intro < 150) this.intro += f;
-    const sc = o.fixed ? scrollY * 0.35 / 8 * 0.022 : 0;
-    // cursor lens eases after the pointer
-    const live = o.lens && pointer.seen && !COARSE;
-    if (live) { const tx = pointer.x, ty = pointer.y; if (this.lx < -9000) { this.lx = tx; this.ly = ty; } this.lx += (tx - this.lx) * 0.09 * f; this.ly += (ty - this.ly) * 0.09 * f; }
-    const lx = this.lx, ly = this.ly, L = 190, L2 = L * L;
-    // ambient + click rings
-    if (o.lens && !REDUCED) { this.nextRing -= f; if (this.nextRing <= 0) { this.ring(Math.random() * w, Math.random() * h, 0.09); this.nextRing = 300 + Math.random() * 260; } }
-    const rings = this.rings;
-    for (let i = rings.length - 1; i >= 0; i--) { const r = rings[i]; r.r += 4.2 * f; r.a *= Math.pow(0.988, f); if (r.a < 0.008 || r.r > Math.max(w, h) * 1.2) rings.splice(i, 1); }
-    const amp = 1.25;
-    for (let row = 0; row < rows; row++) {
-      const y = row * s, sy = k * row + this.oy + sc, even = (row & 1) === 0;
-      for (let col = 0; col < cols; col++) {
-        const x = col * s;
-        if (even && (col & 1) === 0) { // warp field at half resolution
-          const a = (noise(kw * col + 3.1 + wt, kw * row - 0.6 * wt + sc * .5) - .5) * amp, b = (noise(kw * col - 7.7 - 0.5 * wt, kw * row + 1.3 + wt + sc * .5) - .5) * amp;
-          WX[col] = WX[col + 1] = a; WY[col] = WY[col + 1] = b;
-        }
-        let v = fbm(k * col + this.ox + WX[col], sy + WY[col]) + 0.028 * Math.sin(0.009 * (x + y * 0.6) - t * 1.3);
-        if (live) { const dx = x - lx, dy = y - ly, d2 = dx * dx + dy * dy; if (d2 < L2) { const q = 1 - d2 / L2; v += 0.15 * q * q + 0.05 * q * Math.sin(Math.sqrt(d2) * 0.085 - t * 7); } }
-        for (let i = 0; i < rings.length; i++) { const r = rings[i], dx = x - r.x; if (dx > r.r + 30 || dx < -r.r - 30) continue; const dy = y - r.y, band = Math.abs(Math.sqrt(dx * dx + dy * dy) - r.r); if (band < 30) v += r.a * (1 - band / 30); }
-        if (v < thr) continue;
-        buckets[Math.min(11, ((v - thr) / range * 12) | 0)].push(x, y);
-      }
-    }
-    for (let i = 0; i < 12; i++) {
-      const b = buckets[i]; if (!b.length) continue;
-      const d = o.grow ? (i < 5 ? 1.5 : i < 9 ? 2 : 2.5) : 2, off = (d - 2) / 2;
-      ctx.fillStyle = this.palette[i];
-      for (let j = 0; j < b.length; j += 2) ctx.fillRect(b[j] - off, b[j + 1] - off, d, d);
-    }
-  }
-}
-
-class SeedSphere {
-  constructor(hero, base, reveal) {
-    this.hero = hero; this.base = base; this.reveal = reveal; this.ctx = base.getContext('2d'); this.rctx = reveal.getContext('2d');
-    this.rot = 0.6; this.par = { x: 0, y: 0 }; this.frameN = 0; this.pulses = []; this.nextPulse = 60;
-    this.pos = { x: -999, y: -999 }; this.echo = { x: -999, y: -999 }; this.rad = 115;
-    this.resize();
-  }
-  resize() {
-    const r = this.hero.getBoundingClientRect(), dpr = Math.min(devicePixelRatio || 1, 2);
-    this.w = r.width; this.h = r.height;
-    for (const c of [this.base, this.reveal]) { c.width = Math.floor(this.w * dpr); c.height = Math.floor(this.h * dpr); }
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); this.rctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    // the globe sits behind the presale panel, centred on it and a little wider, so its limbs show just past the panel's edges
-    const pr = $('.hero-panel .explore').getBoundingClientRect();
-    if (pr.width) { this.R = Math.min(pr.width + 150, this.w - 12) / 2; this.cy = pr.top - r.top + pr.height / 2; }
-    else { this.R = Math.min(1080, 0.94 * this.w) / 2; this.cy = 0.56 * this.h + this.R * 0.35; }   // home view not laid out yet
-    this.cx = this.w / 2;
-    const spacing = this.w < 700 ? 7.5 : 11.5; this.dotScale = spacing / 9;
-    const N = this.N = Math.max(1500, Math.min(30000, Math.floor(4 * Math.PI * this.R * this.R / (spacing * spacing))));
-    // Fibonacci lattice: the packing a seed head uses
-    const P = this.P = new Float32Array(N * 3), ga = Math.PI * (3 - Math.sqrt(5));
-    for (let i = 0; i < N; i++) { const y = 1 - 2 * (i + .5) / N, rr = Math.sqrt(1 - y * y), th = i * ga; P[i * 3] = Math.cos(th) * rr; P[i * 3 + 1] = y; P[i * 3 + 2] = Math.sin(th) * rr; }
-    this.land = new Float32Array(N); this.fresh = true;
-  }
-  landAt(x, y, z, t) {
-    const s = 2.3, d = t * 0.32, s2 = 5.1;
-    const n1 = (noise(x * s + d + 5, y * s + 9) + noise(y * s + 31, z * s + d + 17) + noise(z * s + 53, x * s - d + 71)) / 3;
-    const n2 = (noise(x * s2 + 13, y * s2 - d + 3) + noise(y * s2 + 41, z * s2 + 29) + noise(z * s2 - d + 67, x * s2 + 83)) / 3;
-    return 0.66 * n1 + 0.34 * n2;
-  }
-  frame(t, f, now) {
-    const { ctx, rctx, w, h, R, cx, cy, P, N, land } = this, rect = this.hero.getBoundingClientRect(), pal = CANVAS.sky;
-    this.frameN++;
-    // --- spotlight: exact lerp 0.1, plus a slower echo and an idle wander
-    const idle = COARSE || !pointer.seen || now - pointer.last > 3500;
-    let tx, ty;
-    if (idle && !REDUCED) { const top = Math.max(cy - R, h * 0.3), mid = (top + Math.min(h, cy + R)) / 2; tx = cx + Math.sin(t * 0.9) * Math.min(R * 0.62, w * 0.4); ty = mid + Math.cos(t * 0.63) * (mid - top) * 0.55; }
-    else { tx = pointer.x - rect.left; ty = pointer.y - rect.top; }
-    if (this.pos.x < -900) { this.pos.x = this.echo.x = tx; this.pos.y = this.echo.y = ty; }
-    const px = this.pos.x, py = this.pos.y;
-    this.pos.x += (tx - px) * 0.1; this.pos.y += (ty - py) * 0.1;
-    this.echo.x += (tx - this.echo.x) * 0.045; this.echo.y += (ty - this.echo.y) * 0.045;
-    const speed = Math.hypot(this.pos.x - px, this.pos.y - py); this.rad += (115 + Math.min(55, speed * 2.2) - this.rad) * 0.12;
-    const stops = 'rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.75) 60%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.12) 88%, rgba(0,0,0,0) 100%';
-    const m = `radial-gradient(circle ${this.rad.toFixed(1)}px at ${this.pos.x.toFixed(1)}px ${this.pos.y.toFixed(1)}px, ${stops}), radial-gradient(circle 62px at ${this.echo.x.toFixed(1)}px ${this.echo.y.toFixed(1)}px, ${stops})`;
-    this.reveal.style.maskImage = m; this.reveal.style.webkitMaskImage = m;
-
-    // --- rotation with pointer parallax
-    if (!REDUCED) this.rot += 0.0013 * f;
-    if (pointer.seen && !COARSE) { this.par.x += ((pointer.x / innerWidth - .5) * .5 - this.par.x) * .04; this.par.y += ((pointer.y / innerHeight - .5) * .14 - this.par.y) * .04; }
-    const A = this.rot + this.par.x, B = -0.34 + this.par.y, ca = Math.cos(A), sa = Math.sin(A), cb = Math.cos(B), sb = Math.sin(B);
-
-    ctx.clearRect(0, 0, w, h); rctx.clearRect(0, 0, w, h);
-    // halo, then an opaque disc so the flow field reads as sky behind the sphere
-    const g = ctx.createRadialGradient(cx, cy, R * 0.98, cx, cy, R * 1.09); g.addColorStop(0, `rgba(${pal.halo},.13)`); g.addColorStop(1, `rgba(${pal.halo},0)`);
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 1.09, 0, 6.2832); ctx.fill();
-    ctx.fillStyle = pal.disc; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, 6.2832); ctx.fill();
-    ctx.strokeStyle = pal.rim; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, cy, R + 1, 0, 6.2832); ctx.stroke();
-
-    const LB = this.LB || (this.LB = Array.from({ length: 6 }, () => [])), SB = this.SB || (this.SB = Array.from({ length: 6 }, () => []));
-    const RL = this.RL || (this.RL = []), RS = this.RS || (this.RS = []);
-    for (let i = 0; i < 6; i++) { LB[i].length = 0; SB[i].length = 0; } RL.length = 0; RS.length = 0;
-    const third = this.frameN % 3, all = this.fresh, r1 = this.rad + 12, r1q = r1 * r1, r2q = 74 * 74, ex = this.echo.x, ey = this.echo.y, sx0 = this.pos.x, sy0 = this.pos.y, ds = this.dotScale;
-    for (let i = 0; i < N; i++) {
-      const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
-      const x1 = x * ca + z * sa, z1 = -x * sa + z * ca, y2 = y * cb - z1 * sb, z2 = y * sb + z1 * cb;
-      if (z2 <= 0.03) continue;
-      const sx = cx + x1 * R, sy = cy - y2 * R;
-      if (sy > h + 6 || sy < -6 || sx < -6 || sx > w + 6) continue;
-      if (all || i % 3 === third) land[i] = this.landAt(x, y, z, t);
-      const isLand = land[i] > 0.5, r = (0.3 + 2.0 * z2) * ds * (isLand ? 1 : 0.52), bi = Math.min(5, (z2 * 6) | 0);
-      (isLand ? LB : SB)[bi].push(sx, sy, r);
-      const dx = sx - sx0, dy = sy - sy0, ddx = sx - ex, ddy = sy - ey;
-      if (dx * dx + dy * dy < r1q || ddx * ddx + ddy * ddy < r2q) (isLand ? RL : RS).push(sx, sy, r, z2);
-    }
-    this.fresh = false;
-    const dots = (c, arr, mul) => { c.beginPath(); for (let j = 0; j < arr.length; j += 3) { const r = arr[j + 2] * mul; if (r < 0.85) c.rect(arr[j] - r, arr[j + 1] - r, r * 2, r * 2); else { c.moveTo(arr[j] + r, arr[j + 1]); c.arc(arr[j], arr[j + 1], r, 0, 6.2832); } } c.fill(); };
-    for (let i = 0; i < 6; i++) {
-      const zz = (i + .5) / 6;
-      ctx.fillStyle = `rgba(${pal.land[0]},${(pal.land[1] + pal.land[2] * zz).toFixed(3)})`; dots(ctx, LB[i], 1);
-      ctx.fillStyle = `rgba(${pal.sea[0]},${(pal.sea[1] + pal.sea[2] * zz).toFixed(3)})`; dots(ctx, SB[i], 1);
-    }
-    // seeds landing: small rings that open on land and fade
-    if (!REDUCED) { this.nextPulse -= f; if (this.nextPulse <= 0) { this.pulses.push({ i: (Math.random() * N) | 0, age: 0 }); this.nextPulse = 38 + Math.random() * 50; } }
-    ctx.lineWidth = 1.2;
-    for (let k = this.pulses.length - 1; k >= 0; k--) {
-      const p = this.pulses[k]; p.age += f; if (p.age > 110) { this.pulses.splice(k, 1); continue; }
-      const i = p.i, x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2], x1 = x * ca + z * sa, z1 = -x * sa + z * ca, y2 = y * cb - z1 * sb, z2 = y * sb + z1 * cb;
-      if (z2 < 0.25 || land[i] <= 0.5) { if (p.age < 3) this.pulses.splice(k, 1); continue; }
-      const q = p.age / 110, e = 1 - Math.pow(1 - q, 3);
-      ctx.strokeStyle = `rgba(${pal.pulse},${(0.55 * (1 - q)).toFixed(3)})`; ctx.beginPath(); ctx.ellipse(cx + x1 * R, cy - y2 * R, (3 + 24 * e), (3 + 24 * e) * (0.35 + 0.65 * z2), 0, 0, 6.2832); ctx.stroke();
-      ctx.fillStyle = `rgba(${pal.pulse},${(0.9 * (1 - q)).toFixed(3)})`; ctx.beginPath(); ctx.arc(cx + x1 * R, cy - y2 * R, 2.4, 0, 6.2832); ctx.fill();
-    }
-    // reveal layer: only dots near the spotlight are drawn, the CSS mask does the feathering
-    rctx.fillStyle = pal.disc; rctx.beginPath(); rctx.arc(cx, cy, R, 0, 6.2832); rctx.fill();
-    rctx.fillStyle = pal.rSea; rctx.beginPath(); for (let j = 0; j < RS.length; j += 4) { const r = RS[j + 2] * 1.35; rctx.moveTo(RS[j] + r, RS[j + 1]); rctx.arc(RS[j], RS[j + 1], r, 0, 6.2832); } rctx.fill();
-    rctx.fillStyle = pal.rLand; rctx.beginPath(); for (let j = 0; j < RL.length; j += 4) { const r = RL[j + 2] * 1.3; rctx.moveTo(RL[j] + r, RL[j + 1]); rctx.arc(RL[j], RL[j + 1], r, 0, 6.2832); } rctx.fill();
-    rctx.strokeStyle = pal.rRing; rctx.lineWidth = .8; rctx.beginPath(); for (let j = 0; j < RL.length; j += 4) { if (RL[j + 3] < .45) continue; const r = RL[j + 2] * 1.3 + 2.4; rctx.moveTo(RL[j] + r, RL[j + 1]); rctx.arc(RL[j], RL[j + 1], r, 0, 6.2832); } rctx.stroke();
-  }
-}
-
-const field = new FlowField($('#field'), { fixed: true, rgb: tintNow()[0], minA: tintNow()[1], maxA: tintNow()[2], thr: 0.525, range: 0.27, lens: true, grow: true });
-const sphere = new SeedSphere($('#hero'), $('#sphere-base'), $('#sphere-reveal'));
-const vis = { hero: true };
-new IntersectionObserver(es => es.forEach(e => { vis[e.target.id] = e.isIntersecting; kick(); }), { rootMargin: '80px' }).observe($('#hero'));
-// fires once the grid's top edge is a little way into the viewport. Not a visible-fraction threshold: a long enough grid could never reach one
-new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('seen'); }), { rootMargin: '0px 0px -12% 0px' }).observe($('#cards'));
-addEventListener('pointerdown', e => { if (!REDUCED) field.ring(e.clientX, e.clientY, 0.2); }, { passive: true });
-
-let T = 0, lastNow = 0, raf = 0, cost = 0, slow = 0, kickUntil = 0;
-function loop(now) {
-  raf = 0;
-  const f = lastNow ? Math.min(3, (now - lastNow) / 16.667) : 1; lastNow = now;
-  if (!REDUCED) T += 0.0042 * f;
-  const t0 = performance.now();
-  field.frame(T, f);
-  if (vis.hero) sphere.frame(T, f, now);
-  // drop field resolution if this machine can't hold the frame budget
-  cost += (performance.now() - t0 - cost) * 0.08;
-  if (cost > 12 && field.step < 14) { if (++slow > 50) { field.step += 2; field.resize(); slow = 0; cost = 6; } } else slow = 0;
-  if (!document.hidden && (!REDUCED || now < kickUntil)) raf = requestAnimationFrame(loop);
-}
-function kick() { if (REDUCED) kickUntil = performance.now() + 900; if (!raf && !document.hidden) { lastNow = 0; raf = requestAnimationFrame(loop); } }
-let rz; addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { field.resize(); sphere.resize(); kick(); }, 120); });
-document.addEventListener('visibilitychange', () => { if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else kick(); });
-kick();
-window.bgRefresh = () => { sphere.resize(); field.resize(); kick(); };
-/* the dot field's tint depends on the view */
-function syncChrome() { field.tint(...tintNow()); kick(); }
-syncChrome();
 /* presale pages open in their own tab, so several copies of the app can be running. Each holds the state in memory and saves all of it,
    which would let a stale tab overwrite a buy made in another. So a tab takes on whatever another tab saves. If you are mid-amount,
    the page is patched rather than rebuilt so the field keeps its focus and what you typed. */
