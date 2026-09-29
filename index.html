@@ -60,6 +60,7 @@ a{color:inherit;text-decoration:none}
 .brand .mark{flex:none;width:28px;height:28px}
 /* the brand pattern: the 89-dot field in white, one seed still blue, off the top right corner of the sky */
 .pattern{position:fixed;top:-70px;right:-90px;width:520px;height:520px;color:#fff;--seed:var(--navy);opacity:.6;pointer-events:none;z-index:0}
+body.in-app .pattern{display:none}   /* the board stays on plain sky; the pattern is for the docs */
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-weight:600;font-size:14px;padding:11px 22px;
   transition:transform .15s,background .25s,box-shadow .25s,opacity .2s;white-space:nowrap}
 .btn:active{transform:translateY(1px)}
