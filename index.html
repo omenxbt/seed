@@ -11,6 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/presale.css">
 <style>
 /* ------------------------------------------------------------------ tokens */
 :root{
@@ -130,7 +131,7 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 @keyframes tick{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
 .bump .pct,.bump [data-dpct]{display:inline-block;animation:pctPop .7s var(--out)}
 @keyframes pctPop{30%{transform:scale(1.22);color:var(--navy-deep)}}
-.refunding .bar i{background:repeating-linear-gradient(135deg,var(--navy-soft) 0 4px,transparent 4px 7px)}
+.refunded .bar i{background:repeating-linear-gradient(135deg,var(--navy-soft) 0 4px,transparent 4px 7px)}
 .pct{font-size:12.5px;color:var(--ink-2);width:38px;text-align:right}
 .c-raised,.c-time{text-align:right;font-size:13px}
 .c-raised em{font-style:normal;color:var(--faint)}
@@ -385,7 +386,7 @@ a.ico:hover{color:var(--ink)}
 
 /* a presale's own page. Every list opens it in a new browser tab, so the list stays where it was. Stacked on a phone; on a wide screen
    the raise sits on the left (readout, chart, recent buys) and the buy on the right (amount, terms, facts). */
-#tab-presale{max-width:1120px;margin:0 auto}
+#tab-presale{max-width:1400px;margin:0 auto}
 .back{display:inline-block;margin:4px 0 14px}
 .ppage{padding:30px 32px}
 .ppage .sh-head .nm b{font-size:26px}
@@ -587,8 +588,7 @@ a.ico:hover{color:var(--ink)}
 
   <!-- ------------------------------------------------------- PRESALE -->
   <section id="tab-presale" hidden>
-    <a class="textlink back" href="#">&larr; All presales</a>
-    <div class="panel ppage" id="presalePage"></div>
+    <div id="presalePage"></div>
   </section>
   <section id="tab-launch" hidden>
     <div class="apphead">
@@ -1033,7 +1033,7 @@ a.ico:hover{color:var(--ink)}
 
 <script>
 /* ==========================================================================
-   SEED. Presale state machine: live, then seeded (target hit) or refunding (deadline passed).
+   SEED. Presale state machine: live, then seeded (target hit) or refunded (deadline passed).
    Solana only. Everything that would touch the chain goes through `adapter`, so
    calls into the Seed program can replace the simulated ones without touching the UI.
    Routes: #(terminal)  #/presale/<id>  #/launch  #/portfolio  #/docs[/section]. The old #/app/... addresses are rewritten to these.
@@ -1071,7 +1071,7 @@ const quickFor = p => state.quick[p.q] != null ? state.quick[p.q] : Number((p.ta
 const shortMint = m => m ? m.slice(0, 4) + '…' + m.slice(-4) : '';
 const B58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const SUPPLY = 1e9, A = 0.5, FEE = 0.01;          // supply, backer share, protocol fee
-const H = 3600e3, D = 24 * H, KEY = 'seed.v4';
+const H = 3600e3, D = 24 * H, KEY = 'seed.v5';
 
 function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
 function rng(seed) { let h = hashStr(seed) || 1; return () => { h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d) >>> 0; h = Math.imul(h ^ (h >>> 12), 0x297a2d39) >>> 0; h = (h ^ (h >>> 15)) >>> 0; return h / 4294967296; }; }
@@ -1080,37 +1080,13 @@ function addr(seed) {
   let out = ''; for (let i = 0; i < 8; i++) out += abc[Math.floor(r() * abc.length)];
   return `${out.slice(0, 4)}…${out.slice(4)}`;
 }
-function seedData() {
-  const n = Date.now();
-  const mk = (id, name, ticker, idea, q, target, pct, backers, openedAgo, dur, status = 'live', resolvedAgo = 0) => {
-    const openedAt = n - openedAgo, endsAt = openedAt + dur, resolvedAt = status === 'live' ? null : n - resolvedAgo;
-    const p = { id, name, ticker, idea, q, target, raised: r6(target * pct), backers, openedAt, endsAt, status, resolvedAt, contract: addr(id), mine: false, hist: [], acts: [] };
-    // synthesise a fill history that lands on the current raise
-    const r = rng(id), end = resolvedAt || n, k = 26, w = []; let sum = 0;
-    for (let i = 0; i < k; i++) { const v = 0.25 + r() * r() * 3; w.push(v); sum += v; }
-    let acc = 0; p.hist.push([openedAt, 0]);
-    for (let i = 0; i < k; i++) { acc += w[i] / sum; p.hist.push([Math.round(openedAt + (end - openedAt) * (i + 1) / k), r6(p.raised * acc)]); }
-    for (let i = 0; i < 6; i++) p.acts.push({ w: addr(id + i), a: r6(target * (0.002 + r() * 0.02)), t: end - Math.round((i + 1) * (4 + r() * 22) * 60e3) });
-    return p;
-  };
-  return [
-    mk('osprey', 'Osprey', 'OSPR', 'Text alerts before your perp position gets liquidated.', 'SOL', 85, .96, 212, 1.75 * D, 3 * D),
-    mk('moss', 'Moss', 'MOSS', 'One art drop a day, minted slowly.', 'SOL', 150, .61, 97, D - 200e3, D),
-    mk('tidewater', 'Tidewater', 'TIDE', 'Index vaults built from tokenized stocks.', 'USDC', 60000, .72, 388, 3.9 * D, 7 * D),
-    mk('lattice', 'Lattice', 'LATT', 'Shared DCA vaults for JUP stakers.', 'JUP', 120000, .48, 176, 2.2 * D, 7 * D),
-    mk('overclock', 'Overclock', 'OCLK', 'GPU rental credits you can trade.', 'NVDAx', 400, .57, 203, 2.9 * D, 7 * D),
-    mk('halfmoon', 'Halfmoon', 'HALF', 'Split a wallet\u2019s staking yield with a friend.', 'SOL', 300, .34, 141, 1.6 * D, 7 * D),
-    mk('quill', 'Quill', 'QUILL', 'Pay-per-article tips for newsletter writers.', 'USDC', 25000, 1, 264, 3.6 * D, 3 * D, 'seeded', 2 * D),
-    mk('ember', 'Ember', 'EMBR', 'Group bids on NFT auctions.', 'BONK', 2e9, .41, 58, 4 * D, 3 * D, 'refunding', D)
-  ];
-}
 
 const QUICK0 = () => ({ SOL: 2, USDC: 250, JUP: 500, BONK: 5000000, NVDAx: 1 });
 let state = { wallet: null, presales: [], positions: {}, claimed: {}, quick: QUICK0(), custom: {} };
 const ui = { view: '', tab: 'terminal', sel: null, fAsset: 'all', bq: '', sort: { new: 'new', seeding: 'filled', seeded: 'ending' }, qbAsset: 'SOL' };
 function fresh() { return { wallet: null, presales: seedData(), positions: {}, claimed: {}, quick: QUICK0(), custom: {} }; }
 function load() {
-  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q) { state = Object.assign(fresh(), s); return; } } catch (e) {}
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q && s.presales[0].buys) { state = Object.assign(fresh(), s); return; } } catch (e) {}
   state = fresh();
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
@@ -1188,7 +1164,7 @@ const pctOf = p => Math.min(100, p.raised / p.target * 100);
 const leftOf = p => r6(p.target - p.raised);                                   // room left in the raise (net)
 const NET = 1 - FEE, netOf = g => r6(g * NET), feeOf = g => r6(g * FEE);
 const payLeft = p => Math.ceil(leftOf(p) / NET * 1e6) / 1e6;                     // what a wallet pays to fill the rest, fee included
-const tokensFor = (p, paid) => Math.min(netOf(paid), p.target) / p.target * SUPPLY * A;
+const tokensFor = (p, paid) => Math.min(netOf(paid), p.target) / p.target * SUPPLY * presaleShare(p);
 const pad = n => String(n).padStart(2, '0');
 function fmtLeft(ms) {
   if (ms <= 0) return '00:00:00';
@@ -1273,8 +1249,8 @@ function renderTerminal() {
       : `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${q ? `Nothing here matches "${esc(ui.bq.trim())}".` : ui.fAsset !== 'all' ? 'Nothing here with this pair.' : none[k]}</div>`;
   }
   const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live';
-  hint.hidden = !show; if (show) hint.textContent = 'To see both endings: fill the rest of Osprey and it seeds on the spot. Buy Moss and its deadline passes in about three minutes.';
-  const dead = state.presales.filter(p => p.status === 'refunding'), owed = dead.some(p => state.positions[p.id] && !state.claimed[p.id]), note = $('#refundNote');
+  hint.hidden = !show; if (show) hint.textContent = 'To see both endings: quick-buy Osprey from the board until it fills and it seeds on the spot. Buy Moss and its deadline passes in about three minutes.';
+  const dead = state.presales.filter(p => p.status === 'refunded'), owed = dead.some(p => state.positions[p.id] && !state.claimed[p.id]), note = $('#refundNote');
   note.hidden = !dead.length;
   if (dead.length) note.innerHTML = `${dead.map(p => `<a href="#/presale/${p.id}" target="_blank" rel="noopener">${esc(p.name)}</a>`).join(', ')} missed ${dead.length === 1 ? 'its' : 'their'} target and refunded every backer.${owed ? ' You have a refund to claim in <a href="#/portfolio">your portfolio</a>.' : ''}`;
   renderDetail();
@@ -1298,9 +1274,11 @@ $('.board').addEventListener('click', e => {
 /* ---------------------------------------------------------------- buying */
 let busy = false;
 async function ensureWallet() { if (state.wallet) return true; await connect(); return false; }
-function record(p, who, amt) {
-  p.hist.push([Date.now(), p.raised]); if (p.hist.length > 140) p.hist.splice(1, 1);
-  p.acts.unshift({ w: who, a: amt, t: Date.now(), you: who === 'You' }); p.acts.length = Math.min(p.acts.length, 8);
+/* a buy lands in the presale's buy list (what the project page, its charts and the risk checks read) and extends the fill history */
+function record(p, who, paid, you) {
+  const now = Date.now();
+  p.hist.push([now, p.raised]); if (p.hist.length > 160) p.hist.splice(1, 1);
+  (p.buys = p.buys || []).push({ wallet: who, amount: r6(Math.min(netOf(paid), p.target)), paid, at: now, fundedBy: null, isFresh: false, tags: [], you: !!you });
 }
 async function executeBuy(p, amt) {
   const C = Q(p);
@@ -1315,7 +1293,7 @@ async function executeBuy(p, amt) {
   if (!state.positions[p.id]) p.backers++;
   state.positions[p.id] = r6((state.positions[p.id] || 0) + pay);
   state.wallet.bal[p.q] = r6(balOf(p.q) - pay);
-  p.raised = r6(p.raised + net); record(p, 'You', pay);
+  p.raised = r6(p.raised + net); record(p, walletId(), pay, true);
   if (p.raised >= p.target - 1e-6) { p.raised = p.target; p.status = 'seeded'; p.resolvedAt = Date.now(); toast(`${p.name} seeded. Your tokens are ready to claim.`); }
   else toast(`Bought ${fmtC(pay, p.q)} ${C.sym} of ${p.name}`);
   save(); renderAll();
@@ -1339,125 +1317,6 @@ async function claim(p, btn) {
     else { await adapter.claimRefund(p); state.wallet.bal[p.q] = r6(balOf(p.q) + amt); state.claimed[p.id] = 'refund'; toast(`Refund claimed: ${fmtAmt(amt, p.q)} ${C.sym} is back in your wallet`); }
   } catch (e) { toast(e.message); }
   busy = false; save(); renderAll();
-}
-
-/* ---------------------------------------------------------------- detail */
-const ICON_OK = '<svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.8"/></svg>';
-const ICON_FEE = '<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M5.8 10.2l4.4-4.4"/></svg>';
-const ICON_BACK = '<svg viewBox="0 0 16 16"><path d="M6.5 3.5L3 7l3.5 3.5M3 7h6.5a3.5 3.5 0 010 7H8"/></svg>';
-function chartSVG(p) {
-  const W = 364, Hh = 132, pt = 14, pb = 20, t0 = p.openedAt, t1 = p.endsAt, live = p.status === 'live';
-  const X = t => (Math.min(Math.max(t, t0), t1) - t0) / (t1 - t0) * W, Y = v => pt + (1 - v / p.target) * (Hh - pt - pb);
-  const end = live ? Date.now() : (p.resolvedAt || t1);
-  const pts = p.hist.filter(h => h[0] <= end).map(([t, v]) => [X(t), Y(v)]); pts.push([X(end), Y(p.raised)]);
-  const line = pts.map((q, i) => (i ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join(' ');
-  const ex = X(end), ey = Y(p.raised);
-  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Fill over time: ${Math.floor(pctOf(p) + 1e-7)} percent of target">
-    <path d="${line} L${ex.toFixed(1)} ${Y(0)} L0 ${Y(0)} Z" style="fill:var(--navy);fill-opacity:.13"/>
-    <path d="M0 ${Y(p.target)}H${W}" style="stroke:var(--ink)" stroke-width="1" stroke-dasharray="2 4" opacity=".55"/>
-    <path d="M0 ${Y(0)}H${W}" style="stroke:var(--navy-deep);stroke-opacity:.25" stroke-width="1"/>
-    ${live ? `<path d="M${ex.toFixed(1)} ${ey.toFixed(1)}L${W} ${Y(p.target)}" style="stroke:var(--navy-soft)" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/><path d="M${ex.toFixed(1)} ${pt}V${Y(0)}" style="stroke:var(--navy-deep);stroke-opacity:.22" stroke-width="1"/>` : ''}
-    <path d="${line}" fill="none" style="stroke:var(${p.status === 'refunding' ? '--navy-soft' : '--navy'})" stroke-width="2" stroke-linejoin="round"/>
-    <circle cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="3.5" style="fill:var(--paper);stroke:var(--navy-deep)" stroke-width="2"/>
-    <g font-family="JetBrains Mono, monospace" font-size="10.5" style="fill:var(--faint)"><text x="0" y="${Hh - 4}">Opened ${fmtDay(t0)}</text><text x="${W}" y="${Hh - 4}" text-anchor="end">Deadline ${fmtDay(t1)}</text><text x="${W}" y="${Y(p.target) - 5}" text-anchor="end" style="fill:var(--muted)">Target ${fmtC(p.target, p.q)}</text></g></svg>`;
-}
-function readoutHTML(p) {
-  const C = Q(p), pc = pctOf(p);
-  return `<div class="big"><b><span data-draised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num" data-dpct>${Math.floor(pc + 1e-7)}%</span></div>
-    <div class="bar"><i data-dbar style="width:${pc}%"></i></div>
-    <div class="sub"><span>${p.status === 'live' ? `Ends in <span class="num" data-dtime>${fmtLeft(p.endsAt - Date.now())}</span>` : p.status === 'seeded' ? 'Target met' : 'Deadline passed'}</span><span><span class="num" data-dbackers>${p.backers}</span> backers</span></div>`;
-}
-const actsHTML = p => `<h4>Recent buys</h4>` + (p.acts.length ? p.acts.slice(0, 6).map(a => `<div class="${a.you ? 'you' : ''}"><span>${esc(a.w)}</span><span>${fmtC(a.a, p.q)} ${esc(Q(p).sym)}</span><span>${fmtAgo(Date.now() - a.t)}</span></div>`).join('') : '<div><span>No buys yet. The first one is yours to make.</span><span></span><span></span></div>');
-function detailHTML(p) {
-  const C = Q(p), sym = esc(C.sym), pos = state.positions[p.id] || 0, claimed = state.claimed[p.id], pc = pctOf(p);
-  const statusTxt = { live: 'Live', seeded: 'Seeded', refunding: 'Refunded' }[p.status];
-  let body = '';
-  if (p.status === 'live') {
-    const bal = state.wallet ? balOf(p.q) : null;
-    body = `<div class="pace"><span>Pace needed to seed</span><b data-dpace>${paceTxt(p)}</b></div>
-      <div class="amt"><div class="amt-top"><label for="amtIn">Amount</label><span class="num">${bal === null ? '' : `Balance ${fmtAmt(bal, p.q)} ${sym}`}</span></div>
-        <div class="inp"><input id="amtIn" inputmode="decimal" autocomplete="off" placeholder="0" value="${Math.min(quickFor(p), payLeft(p))}"><span class="suf">${sym}</span></div>
-        <div class="chips">${chipsFor(p).map(c => `<button data-chip="${c}">${fmtC(c, p.q)}</button>`).join('')}<button data-chip="fill">Fill the rest</button></div></div>
-      <div class="promise"><div>${ICON_FEE}<span id="feeLine"></span></div>
-        <div>${ICON_OK}<span>If it seeds, you claim <b class="num" id="getTok"></b> $${esc(p.ticker)}.</span></div>
-        <div>${ICON_BACK}<span>If it hasn't seeded by ${fmtDate(p.endsAt)}, you claim back every ${sym} you paid, fee included.</span></div></div>
-      ${pos ? `<div class="mine"><span>You're in for</span><span class="num">${fmtAmt(pos, p.q)} ${sym}</span></div>` : ''}
-      <div class="err" id="amtErr" role="alert" style="margin-top:12px"></div>
-      <button class="btn btn-navy btn-lg btn-block" id="goBtn"></button>`;
-  } else if (p.status === 'seeded') {
-    body = `<div class="state"><b>Seeded ${fmtDay(p.resolvedAt)}</b>The target was met. $${esc(p.ticker)} opened against ${sym} in a Meteora DAMM v2 pool at the presale price. The liquidity is locked for good.</div>
-      <dl class="split"><div><dt>Locked in the pool</dt><dd>${fmtAmt(p.target, p.q)} ${sym}</dd></div><div><dt>Protocol fee, 1% of buys</dt><dd>${fmtAmt(p.target / NET - p.target, p.q)} ${sym}</dd></div></dl>` +
-      (pos ? (claimed ? `<div class="mine"><span>Claimed</span><span class="num">${fmtTok(tokensFor(p, pos))} $${esc(p.ticker)}</span></div>` : `<button class="btn btn-navy btn-lg btn-block" data-dclaim>Claim ${fmtTok(tokensFor(p, pos))} $${esc(p.ticker)}</button>`) : '');
-  } else {
-    body = `<div class="state"><b>Didn't seed</b>The deadline passed at ${Math.floor(pc + 1e-7)}% of the target. No tokens were released and the supply was burned. All ${p.backers} backers can claim back everything they paid in ${sym}, the 1% fee included.</div>` +
-      (pos ? (claimed ? `<div class="mine"><span>Refund claimed</span><span class="num">${fmtAmt(pos, p.q)} ${sym}</span></div>` : `<button class="btn btn-navy btn-lg btn-block" data-dclaim>Claim refund of ${fmtAmt(pos, p.q)} ${sym}</button>`) : '');
-  }
-  return `<div class="sh-head">${avatar(p, true)}<div class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b>
-      <span class="meta">${pairTag(p)}<span class="tag${p.status === 'live' ? ' in' : ''}">${statusTxt}</span>${p.mine ? '<span class="tag">Yours</span>' : ''}</span></div></div>
-    <p class="idea">${esc(p.idea)}</p>
-    <div class="dcols"><div class="d-raise">
-    <div class="readout ${p.status}" data-dreadout><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>${readoutHTML(p)}</div>
-    <div class="chart"><div class="legend"><span><i></i>Raised</span>${p.status === 'live' ? '<span><i class="dash"></i>Pace needed</span>' : ''}</div><div data-dchart>${chartSVG(p)}</div></div>
-    </div><div class="d-buy">
-    ${body}
-    <dl class="specs"><div><dt>Price</dt><dd class="num">1 ${sym} = ${fmtTok(SUPPLY * A / p.target)} ${esc(p.ticker)}</dd></div>
-      <div><dt>Pair asset</dt><dd>${C.stock ? `${sym}, tokenized ${esc(C.stock)} stock` : `${sym}, ${C.verified ? 'verified mint' : 'unverified mint'} <span class="num">${esc(shortMint(C.mint))}</span>`}</dd></div>
-      <div><dt>Held by</dt><dd>Meteora Presale Vault</dd></div>
-      <div><dt>Seeds to</dt><dd>${DEX}, locked for good</dd></div><div><dt>Protocol fee</dt><dd>1% of each buy, returned if it refunds</dd></div></dl>
-    ${C.verified ? '' : `<div class="state warnbox"><b>Check this mint before you buy</b>The pair asset is not on the verified list. A symbol can be copied, a mint address cannot.<br><span class="num" style="word-break:break-all">${esc(C.mint)}</span></div>`}
-    <div class="dlinks"><button class="ca" data-ca aria-label="Copy presale vault address"><i>Vault</i><span>${p.contract}</span><span aria-hidden="true">⧉</span></button><a class="bar-link" href="#/docs/seeding">Where the raise goes</a></div>
-    </div><div class="acts d-acts" data-dacts>${actsHTML(p)}</div></div>`;
-}
-let detailBox = null, detailShown = null;
-function renderDetail() {
-  const box = $('#presalePage'); detailBox = box;
-  if (ui.tab !== 'presale') { box.innerHTML = ''; detailShown = null; return; }
-  const p = find(ui.sel);
-  if (!p) { box.innerHTML = '<div class="empty">That presale is not in this demo any more. It may have been reset.<br><a href="#">Back to all presales</a></div>'; return; }
-  box.innerHTML = detailHTML(p);
-  const q = s => $(s, box);
-  if (detailShown !== p.id) { detailShown = p.id; const r = q('[data-dreadout]'); r.classList.add('fresh'); setTimeout(() => r.classList.remove('fresh'), 1600); }   // sweep once per visit
-  q('[data-ca]').onclick = () => { try { navigator.clipboard.writeText(p.contract).catch(() => {}); } catch (e) {} toast('Vault address copied'); };
-  const dc = q('[data-dclaim]'); if (dc) dc.onclick = () => claim(p, dc);
-  if (p.status === 'live') {
-    const inp = q('#amtIn');
-    inp.addEventListener('input', () => syncAmount(p));
-    $$('[data-chip]', box).forEach(b => b.onclick = () => { inp.value = b.dataset.chip === 'fill' ? payLeft(p) : b.dataset.chip; syncAmount(p); inp.focus(); });
-    q('#goBtn').onclick = async () => {
-      if (busy) return;
-      if (!(await ensureWallet())) { renderDetail(); return; }
-      const { amt, err } = readAmount(p); if (err || !amt) return;
-      const b = q('#goBtn'); b.disabled = true; b.textContent = 'Confirm in wallet…';
-      if (!(await executeBuy(p, amt))) renderDetail();
-    };
-    syncAmount(p);
-  }
-}
-function patchDetail(p) {
-  if (!detailBox || ui.sel !== p.id) return;
-  const s = (k, fn) => { const e = $(k, detailBox); if (e) fn(e); }, pc = pctOf(p);
-  s('[data-dbar]', e => { if (pc > parseFloat(e.style.width) + 1e-6) bump($('[data-dreadout]', detailBox)); e.style.width = pc + '%'; });
-  s('[data-draised]', e => e.textContent = fmtC(p.raised, p.q, true)); s('[data-dpct]', e => e.textContent = Math.floor(pc + 1e-7) + '%'); s('[data-dbackers]', e => e.textContent = p.backers);
-  s('[data-dchart]', e => e.innerHTML = chartSVG(p)); s('[data-dacts]', e => e.innerHTML = actsHTML(p)); s('[data-dpace]', e => e.textContent = paceTxt(p));
-}
-function readAmount(p) {
-  const raw = ($('#amtIn').value || '').replace(/,/g, '').trim(), n = parseFloat(raw), C = Q(p), left = payLeft(p);
-  if (!raw || isNaN(n) || n <= 0) return { amt: 0, err: '', empty: true };
-  if (!/^\d*\.?\d*$/.test(raw)) return { amt: 0, err: 'Enter the amount as a number, like 2.5.' };
-  let amt = n, note = '';
-  if (amt > left) { amt = left; note = `Only ${fmtAmt(left, p.q)} ${C.sym} fits in this presale, fee included, so that is all you would pay.`; }
-  if (state.wallet && amt > balOf(p.q)) return { amt, err: balOf(p.q) > 0 ? `Your wallet holds ${fmtAmt(balOf(p.q), p.q)} ${C.sym}. Enter that much or less.` : `Your wallet holds no ${C.sym}. This presale only takes ${C.sym}, so swap into it first.` };
-  return { amt: r6(amt), err: '', note };
-}
-function syncAmount(p) {
-  const btn = $('#goBtn'); if (!btn || busy) return;
-  const { amt, err, note, empty } = readAmount(p), C = Q(p);
-  $('#getTok').textContent = amt ? fmtTok(tokensFor(p, amt)) : '0';
-  $('#feeLine').innerHTML = amt ? `<b class="num">${fmtAmt(netOf(amt), p.q)}</b> ${esc(C.sym)} goes to the raise. <b class="num">${fmtAmt(feeOf(amt), p.q) === '0' ? feeOf(amt) : fmtAmt(feeOf(amt), p.q)}</b> ${esc(C.sym)} is the 1% protocol fee.` : '1% of each buy is the protocol fee. The rest goes to the raise.';
-  const e = $('#amtErr'); e.textContent = err || note || (isReal() ? 'Buying is not live yet. The demo wallet runs the full flow.' : ''); e.style.color = err ? '' : 'var(--muted)';
-  if (!state.wallet) { btn.disabled = false; btn.textContent = 'Connect wallet to buy'; return; }
-  btn.disabled = !!err || !!empty || !amt;
-  btn.textContent = amt && !err ? `Buy ${fmtC(amt, p.q)} ${C.sym} of ${p.name}` : `Buy ${p.name}`;
 }
 
 /* ---------------------------------------------------------------- wallet */
@@ -1485,7 +1344,7 @@ async function refreshBalances(force) {
   try { bal = await chainBalances(pk); } catch (e) {}
   if (!isReal() || state.wallet.pk !== pk) return;
   if (bal) state.wallet.bal = bal; state.wallet.stale = !bal;
-  save(); renderWallet(); renderPortfolio(); const s = find(ui.sel); if (s) syncAmount(s);
+  save(); renderWallet(); renderPortfolio(); if (detailBox) renderDetail();
 }
 const watched = new WeakSet();
 function watch(prov) {
@@ -1625,7 +1484,7 @@ $('#openBtn').onclick = async () => {
   const b = $('#openBtn'); busy = true; b.disabled = true; b.textContent = 'Confirm in wallet…';
   const id = d.ticker.toLowerCase() + '-' + Date.now().toString(36), now = Date.now();
   if (da.custom) state.custom[da.key] = da.a;
-  const p = { id, name: d.name, ticker: d.ticker, idea: d.idea, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, contract: addr(id), mine: true, hist: [[now, 0]], acts: [] };
+  const p = { id, name: d.name, ticker: d.ticker, idea: d.idea, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [] };
   try { await adapter.openPresale(p); } catch (e) { busy = false; b.disabled = false; syncOpenBtn(); $('#fErr').textContent = e.message; if (da.custom && !state.presales.some(x => x.q === da.key)) delete state.custom[da.key]; return; }
   busy = false; b.disabled = false;
   state.presales.unshift(p); save();
@@ -1646,12 +1505,12 @@ function renderMine() {
 /* ------------------------------------------------------------- portfolio */
 function renderPortfolio() {
   const ids = Object.keys(state.positions); let nLive = 0, nRef = 0, nTok = 0;
-  ids.forEach(id => { const p = find(id); if (!p) return; if (p.status === 'live') nLive++; else if (!state.claimed[id]) { if (p.status === 'refunding') nRef++; else nTok++; } });
+  ids.forEach(id => { const p = find(id); if (!p) return; if (p.status === 'live') nLive++; else if (!state.claimed[id]) { if (p.status === 'refunded') nRef++; else nTok++; } });
   $('#pstats').innerHTML = `<span class="plus" style="left:25%;top:0"></span><span class="plus" style="left:50%;top:0"></span><span class="plus" style="left:75%;top:0"></span>
     <div class="stat"><dt>Positions</dt><dd>${ids.length}</dd></div><div class="stat"><dt>In live presales</dt><dd>${nLive}</dd></div>
     <div class="stat"><dt>Refunds to claim</dt><dd>${nRef}</dd></div><div class="stat"><dt>Token claims ready</dt><dd>${nTok}</dd></div>`;
   $('#prows').innerHTML = ids.length ? ids.map(id => { const p = find(id); if (!p) return ''; const sym = esc(Q(p).sym), a = state.positions[id], cl = state.claimed[id];
-      const st = { live: 'Live', seeded: 'Seeded', refunding: 'Refunded' }[p.status];
+      const st = { live: 'Live', seeded: 'Seeded', refunded: 'Refunded' }[p.status];
       const yours = p.status === 'live' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)} if it seeds` : p.status === 'seeded' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)}` : `${fmtAmt(a, p.q)} ${sym}`;
       const act = p.status === 'live' ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">View</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
       return `<div class="prow"><span class="c-proj">${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta">${pairTag(p)}</span></span></span>
@@ -1703,7 +1562,7 @@ function route() {
   if (c !== h) { history.replaceState(null, '', location.pathname + location.search + (c === '#' ? '' : c)); h = c; }
   const prevTab = ui.tab; let view = 'app', sec = null;
   if (h.startsWith('#/docs')) { view = 'docs'; sec = h.split('/')[2] || null; }
-  else if (h.startsWith('#/presale/')) { ui.tab = 'presale'; ui.sel = h.split('/')[2]; }
+  else if (h.startsWith('#/presale/')) { const parts = h.split('/'); ui.tab = 'presale'; ui.sel = parts[2]; ui.ptab = parts[3] || 'overview'; }
   else { ui.tab = h === '#/launch' ? 'launch' : h === '#/portfolio' ? 'portfolio' : 'terminal'; ui.sel = null; }
   const changed = view !== ui.view; ui.view = view;
   ['app', 'docs'].forEach(v => { $('#view-' + v).hidden = v !== view; document.body.classList.toggle('in-' + v, v === view); });
@@ -1730,12 +1589,12 @@ function renderAll() { renderWallet(); syncQuickUI(); renderTerminal(); renderMi
 function tick(silent) {
   const now = Date.now(); let changed = false;
   for (const p of state.presales) if (p.status === 'live' && now >= p.endsAt) {
-    p.status = 'refunding'; p.resolvedAt = p.endsAt; changed = true; const pos = state.positions[p.id];
+    p.status = 'refunded'; p.resolvedAt = p.endsAt; changed = true; const pos = state.positions[p.id];
     if (silent !== true) toast(pos ? `${p.name} missed its target. Your ${fmtAmt(pos, p.q)} ${Q(p).sym} refund is ready to claim.` : `${p.name} missed its target. Backers can claim refunds.`);
   }
   if (changed) { save(); renderAll(); }
   $$('.live[data-row]').forEach(row => { const p = find(row.dataset.row); if (!p) return; const t = $('[data-time]', row); if (t) t.textContent = fmtLeft(p.endsAt - now); const pc = $('[data-pace]', row); if (pc) pc.textContent = paceTxt(p); });
-  const sel = find(ui.sel); if (sel && detailBox) { const t = $('[data-dtime]', detailBox); if (t) t.textContent = fmtLeft(sel.endsAt - now); const dp = $('[data-dpace]', detailBox); if (dp) dp.textContent = paceTxt(sel); }
+  tickDetail();
 }
 /* simulated buys arriving; never completes a presale, so the last step is yours */
 function simulate() {
@@ -1745,7 +1604,7 @@ function simulate() {
   const p = pool[Math.floor(Math.random() * pool.length)], amt = r6(Math.min(p.target * .95 - p.raised, p.target * (0.0008 + Math.random() * 0.004)));
   if (!(amt > 0)) return;
   const was = colOf(p);
-  p.raised = r6(p.raised + amt); p.backers++; record(p, addr(String(Math.random())), r6(amt / NET));
+  p.raised = r6(p.raised + amt); p.backers++; record(p, fakeAddr('sim/' + Math.random()), r6(amt / NET));
   if (colOf(p) !== was) renderTerminal(); else patchRows(p);
   patchDetail(p); save();
 }
@@ -1782,12 +1641,25 @@ function boot() {
    the page is patched rather than rebuilt so the field keeps its focus and what you typed. */
 addEventListener('storage', e => {
   if (e.key !== KEY || busy) return;
-  const typing = document.activeElement && document.activeElement.id === 'amtIn';
+  const typing = document.activeElement && (document.activeElement.id === 'ppAmt' || !!document.activeElement.closest('.chat'));
   load();
   if (!typing) return renderAll();
   renderWallet(); state.presales.forEach(patchRows); const p = find(ui.sel); if (p) patchDetail(p);
 });
-boot();
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/15.0.7/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.4/purify.min.js"></script>
+<script src="js/config/risk.js"></script>
+<script src="js/config/supabase.js"></script>
+<script src="js/data/top-tokens.js"></script>
+<script src="js/data/demo.js"></script>
+<script src="js/adapters/common.js"></script>
+<script src="js/adapters/presale.js"></script>
+<script src="js/adapters/backers.js"></script>
+<script src="js/adapters/founder.js"></script>
+<script src="js/adapters/updates.js"></script>
+<script src="js/risk.js"></script>
+<script src="js/presale-page.js"></script>
+<script>boot();</script>
 </body>
 </html>
