@@ -71,7 +71,7 @@ function ppStats(p) {
   if (p.status === 'seeded') {
     const pool = pg.pool && pg.pool.value;
     return st('Raised', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${sym}</em>`) + st('Presale price', `${fmtPrice(priceOf(p))} ${sym}`) +
-      st('Price', pool ? (pool.quote === 'USD' ? fmtUsd(pool.price) : `${fmtPrice(pool.price)} ${esc(pool.quote)}`) : '…', 'wide-ok') + st('Market cap', pool ? (pool.quote === 'USD' ? fmtUsd(pool.mcap) : `${fmtC(pool.mcap, p.q)} ${esc(pool.quote)}`) : '…') +
+      st(`Price${pg.pool && pg.pool.from === 'standin' ? ' <span class="st-mini">stand-in</span>' : ''}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.price) : `${fmtPrice(pool.price)} ${esc(pool.quote)}`) : '…') + st(`Market cap${pg.pool && pg.pool.from === 'standin' ? ' <span class="st-mini">stand-in</span>' : ''}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.mcap) : `${fmtC(pool.mcap, p.q)} ${esc(pool.quote)}`) : '…') +
       st('Backers', p.backers) + st('Seeded', fmtDay(p.resolvedAt));
   }
   if (p.status === 'refunded') {

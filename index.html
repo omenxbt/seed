@@ -1084,7 +1084,7 @@ function addr(seed) {
 const QUICK0 = () => ({ SOL: 2, USDC: 250, JUP: 500, BONK: 5000000, NVDAx: 1 });
 let state = { wallet: null, presales: [], positions: {}, claimed: {}, quick: QUICK0(), custom: {} };
 const ui = { view: '', tab: 'terminal', sel: null, fAsset: 'all', bq: '', sort: { new: 'new', seeding: 'filled', seeded: 'ending' }, qbAsset: 'SOL' };
-function fresh() { return { wallet: null, presales: seedData(), positions: {}, claimed: {}, quick: QUICK0(), custom: {} }; }
+function fresh() { return { wallet: null, presales: seedData(), positions: Object.assign({}, DEMO_WALLET_BUYS), claimed: {}, quick: QUICK0(), custom: {} }; }
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q && s.presales[0].buys) { state = Object.assign(fresh(), s); return; } } catch (e) {}
   state = fresh();

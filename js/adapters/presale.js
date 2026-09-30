@@ -7,11 +7,17 @@ const GECKO = 'https://api.geckoterminal.com/api/v2/networks/solana/pools/';
 const CANDLE_TTL = 60e3;
 const TIMEFRAMES = { '1m': ['minute', 1], '5m': ['minute', 5], '1h': ['hour', 1], '1D': ['day', 1] };
 
+/* fresh for 60s; if GeckoTerminal refuses (its keyless limit is a few calls a minute per visitor), the last copy up to a day old is shown */
 async function geckoGet(path) {
   const hit = cacheGet('gecko/' + path, CANDLE_TTL); if (hit !== undefined) return hit;
-  const r = await fetch(GECKO + path, { headers: { Accept: 'application/json' } });
-  if (!r.ok) throw new Error('GeckoTerminal ' + r.status);
-  const j = await r.json(); cacheSet('gecko/' + path, j); return j;
+  try {
+    const r = await fetch(GECKO + path, { headers: { Accept: 'application/json' } });
+    if (!r.ok) throw new Error('GeckoTerminal ' + r.status);
+    const j = await r.json(); cacheSet('gecko/' + path, j); return j;
+  } catch (e) {
+    const stale = cacheGet('gecko/' + path, D); if (stale !== undefined) return stale;
+    throw new Error('GeckoTerminal is rate limiting this browser');
+  }
 }
 /* the presale price: what one token costs in the pair asset */
 const priceOf = p => p.target / (SUPPLY * presaleShare(p));

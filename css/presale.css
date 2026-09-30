@@ -49,6 +49,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .pp-stats>div+div::before{content:"";position:absolute;left:0;top:12px;bottom:12px;width:1px;background:var(--hair)}
 .pp-stats dt{font-size:12px;color:var(--muted)}
 .pp-stats dd{font-size:17px;letter-spacing:-.04em;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st-mini{font-size:10.5px;font-weight:600;color:var(--warn-ink);background:#FFF4E0;border-radius:999px;padding:1px 6px;margin-left:4px}
 .pp-stats dd em{font-style:normal;font-size:12px;color:var(--faint)}
 
 /* two columns from 1024px, rail 320px; 360px from 1280px. Below 1024px one column with the rail above the tabs. */

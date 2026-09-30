@@ -12,7 +12,7 @@ const backersAdapter = {
     const by = new Map(), raised = p.raised || 1;
     for (const b of p.buys || []) {
       let r = by.get(b.wallet);
-      if (!r) by.set(b.wallet, r = { wallet: b.wallet, amount: 0, first: b.at, last: b.at, fundedBy: b.fundedBy, isFresh: !!b.isFresh, firstTxAt: b.firstTxAt, tags: b.tags || [], you: !!b.you, refundClaimed: b.refundClaimed, from: isRealAddr(b.wallet) ? 'chain' : 'demo' });
+      if (!r) by.set(b.wallet, r = { wallet: b.wallet, amount: 0, first: b.at, last: b.at, fundedBy: b.fundedBy, isFresh: !!b.isFresh, firstTxAt: b.firstTxAt, tags: b.tags || [], you: isMe(b.wallet), refundClaimed: b.refundClaimed, from: isRealAddr(b.wallet) ? 'chain' : 'demo' });
       r.amount = r6(r.amount + b.amount); r.first = Math.min(r.first, b.at); r.last = Math.max(r.last, b.at);
     }
     const rows = [...by.values()].sort((a, b) => b.amount - a.amount);

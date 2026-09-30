@@ -372,6 +372,9 @@ function histFromBuys(p, buys, end) {
   return h;
 }
 
+/* the demo wallet starts with a position in the seeded and the refunded presale, so both claim flows can be tried */
+const DEMO_WALLET_ID = 'demo:7xKp\u20269fQa';
+const DEMO_WALLET_BUYS = { quill: 500, ember: 25000000 };
 function seedData() {
   const n = Date.now();
   const mk = (id, name, ticker, q, target, pct, backers, openedAgo, dur, status = 'live', resolvedAgo = 0) => {
@@ -379,6 +382,12 @@ function seedData() {
     const p = { id, name, ticker, idea: pr.tagline, q, target, raised: r6(target * pct), backers, openedAt, endsAt, status, resolvedAt, mine: false, hist: [], buys: [] };
     const end = resolvedAt || n;
     p.buys = genCrowd(p, pr.crowd, end);
+    const mine = DEMO_WALLET_BUYS[id];
+    if (mine) {   // the demo wallet backed this one: its buy is one of the backers, taken out of the last buy so the raise is unchanged
+      const net = r6(mine * NET), last = p.buys[p.buys.length - 1]; last.amount = r6(last.amount - net);
+      p.buys.push({ wallet: DEMO_WALLET_ID, amount: net, paid: mine, at: p.openedAt + (end - p.openedAt) * 0.4, fundedBy: { kind: 'exchange', label: 'Coinbase' }, isFresh: false, firstTxAt: p.openedAt - 400 * D, tags: [], you: true, refundClaimed: false });
+      p.buys.sort((a, b) => a.at - b.at); p.backers++;
+    }
     p.hist = histFromBuys(p, p.buys, end);
     return p;
   };
