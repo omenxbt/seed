@@ -239,3 +239,42 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
   .deck{grid-template-columns:1fr}.deck-thumbs{flex-direction:row;max-height:none;overflow-x:auto}.thumb{flex:none;width:92px}
   .uof div{grid-template-columns:minmax(0,1fr) 90px 40px}
 }
+
+/* chat */
+.chat{display:flex;flex-direction:column;border:1px solid var(--hair);border-radius:18px;background:rgba(255,255,255,.5);overflow:hidden}
+.chat-pins:empty{display:none}
+.chat-pins{border-bottom:1px solid var(--hair);background:rgba(46,99,231,.05);padding:6px 0}
+.pins-h{font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--navy-deep);padding:6px 16px 2px}
+.chat-list{max-height:460px;min-height:220px;overflow-y:auto;overscroll-behavior:contain;padding:6px 0}
+.chat-empty{padding:40px 16px;text-align:center}
+.msg{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;padding:9px 16px}
+.msg:hover{background:rgba(255,255,255,.55)}
+.msg.r-founder,.msg.r-team{background:rgba(46,99,231,.04)}
+.msg-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(150deg,hsl(var(--h) 80% 86%),hsl(calc(var(--h) + 60) 80% 78%))}
+.msg-main{min-width:0}
+.msg-h{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:12.5px}
+.msg-h b{font-size:12.5px;font-weight:500;color:var(--ink)}
+.msg-t{color:var(--faint);font-size:11.5px;margin-left:auto}
+.role-badge{font-size:10.5px;font-weight:700;border-radius:999px;padding:1px 7px;background:var(--solid);color:#fff}
+.role-badge.r-team{background:var(--navy-soft)}
+.backed-badge{font-family:var(--mono);font-size:10.5px;border-radius:999px;padding:1px 7px;background:#E4F6EC;color:#16774A}
+.backed-badge.none{background:#EEF0F5;color:var(--muted);font-family:var(--sans)}
+.msg p{font-size:14px;line-height:1.5;color:var(--ink-2);margin-top:3px;overflow-wrap:anywhere}
+.msg blockquote{margin-top:5px;padding:5px 9px;border-left:2px solid var(--navy-soft);background:rgba(46,99,231,.05);border-radius:0 8px 8px 0;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.msg blockquote b{font-weight:500}
+.msg-acts{display:flex;gap:10px;margin-top:3px;opacity:0;transition:opacity .15s}
+.msg:hover .msg-acts,.msg:focus-within .msg-acts{opacity:1}
+@media (hover:none){.msg-acts{opacity:1}}
+.msg-acts button{font-size:11.5px;font-weight:600;color:var(--muted)}
+.msg-acts button:hover{color:var(--navy-deep)}
+.chat-compose{border-top:1px solid var(--hair);padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:rgba(255,255,255,.6)}
+.chat-compose form{display:flex;gap:8px;align-items:flex-end}
+.chat-compose textarea{flex:1;font:inherit;font-size:14px;border:1px solid var(--hair-2);border-radius:12px;padding:9px 11px;background:#fff;resize:none;min-height:42px}
+.chat-compose textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 4px var(--ring)}
+.chat-compose>.btn{align-self:flex-start}
+.chat-note{font-size:13px;color:var(--ink-2)}
+.replying{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+.replying button{font-size:16px;line-height:1;color:var(--muted)}
+.chat.frozen .chat-list{opacity:.85}
+.msg.is-me .msg-av{box-shadow:0 0 0 2px var(--navy)}
+.msg-acts{min-height:0}.msg-acts:empty{display:none}

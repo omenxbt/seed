@@ -59,4 +59,6 @@ function funderOf(tx, addr) {
   for (const ix of ixs) { const i = ix.parsed && ix.parsed.info; if (ix.parsed && ix.parsed.type === 'transfer' && i && i.destination === addr && i.source) return { kind: 'wallet', addr: i.source }; }
   return keys[0] && keys[0] !== addr ? { kind: 'wallet', addr: keys[0] } : null;
 }
+/* how a wallet is shown: the demo wallet by its display address, a real one shortened */
+const walletLabel = w => !w ? '' : String(w).startsWith('demo:') ? String(w).slice(5) : shortMint(w);
 const funderLabel = f => !f ? 'Unknown' : f.label ? f.label : shortMint(f.addr);

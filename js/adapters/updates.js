@@ -17,7 +17,5 @@ const updatesAdapter = {
     let local = []; try { local = JSON.parse(localStorage.getItem(UPD_KEY(p.id)) || '[]'); } catch (e) {}
     local.push(u); try { localStorage.setItem(UPD_KEY(p.id), JSON.stringify(local)); } catch (e) {}
   },
-  async load(p) { if (supa.ready()) await supa.loadUpdates(p.id); }
+  async load(p) { if (supa.configured()) await supa.loadUpdates(p.id); }
 };
-/* Supabase is set up in js/adapters/chat.js; until then this stub keeps the updates adapter on its demo path */
-var supa = window.supa || { ready: () => false, updates: {} };

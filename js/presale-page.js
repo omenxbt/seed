@@ -225,6 +225,7 @@ function renderTab(p) {
   const body = detailBox && $('[data-tabbody]', detailBox); if (!body) return;
   $$('[data-ptab]', detailBox).forEach(a => a.setAttribute('aria-selected', String(a.dataset.ptab === pg.tab)));
   const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, tokenomics: tabTokenomics, backers: tabBackers, chat: tabChat, updates: tabUpdates }[pg.tab] || tabOverview;
+  body.onclick = null; if (pg.tab !== 'chat' && typeof chatOff === 'function' && chatOff) { chatOff(); chatOff = null; }
   body.innerHTML = fn(p); afterTab(p, body);
 }
 const tabHead = (title, from, extra = '') => `<div class="tab-h"><h2>${title}</h2>${from ? srcPill(from) : ''}${extra}</div>`;
@@ -297,7 +298,7 @@ function tabBackers(p) {
     `<dl class="sums">${card('Top 10', pctTxt(s.top10), s.top10 > RISK.top10FailPct ? 'fail' : s.top10 > RISK.top10WarnPct ? 'warn' : '', 'of the raise')}${card('Fresh wallets', pctTxt(s.fresh), s.fresh > RISK.freshWarnPct ? 'warn' : '', 'of backers')}
       ${card('Bundled', pctTxt(s.bundled), s.bundled > RISK.bundledWarnPct ? 'warn' : '', s.bundles.length ? `${s.bundles.length} funding wallet${s.bundles.length > 1 ? 's' : ''}` : 'of the raise')}${card('KOL and tracked', s.kol + s.tracked, '', `${s.kol} KOL, ${s.tracked} tracked`)}${card('Repeat Seed backers', s.repeat, '', 'backed an earlier Seed presale')}</dl>
     <div class="tscroll"><table class="dtable backers"><thead><tr><th>Wallet</th><th class="r">Amount</th><th class="r">Of raise</th><th class="r">Time</th><th>Funded by</th><th>Tags</th>${refund ? '<th>Refund</th>' : ''}</tr></thead><tbody>
-      ${shown.map(r => `<tr class="${r.you ? 'you' : ''}"><td class="mono">${r.you ? 'You' : esc(shortMint(r.wallet))}</td><td class="num">${fmtC(r.amount, p.q)} ${esc(C.sym)}</td><td class="num">${r.pct.toFixed(r.pct < 1 ? 2 : 1)}%</td><td class="num">${fmtAgo(Date.now() - r.first)}</td>
+      ${shown.map(r => `<tr class="${r.you ? 'you' : ''}"><td class="mono">${r.you ? 'You' : esc(walletLabel(r.wallet))}</td><td class="num">${fmtC(r.amount, p.q)} ${esc(C.sym)}</td><td class="num">${r.pct.toFixed(r.pct < 1 ? 2 : 1)}%</td><td class="num">${fmtAgo(Date.now() - r.first)}</td>
         <td>${esc(funderLabel(r.fundedBy))}${r.isFresh ? ' <span class="btag fresh">Fresh</span>' : ''}${s.bundles.some(b => r.fundedBy && b.funder === r.fundedBy.addr) ? ' <span class="btag bundle">Bundle</span>' : ''}</td>
         <td>${r.tags.map(tag).join(' ')}</td>${refund ? `<td>${r.refundClaimed ? 'Claimed' : '<b>Claimable</b>'}</td>` : ''}</tr>`).join('')}</tbody></table></div>
     ${rows.length > shown.length ? `<button class="qb more" data-allbackers>Show all ${rows.length}</button>` : ''}`;
@@ -322,6 +323,7 @@ function afterTab(p, body) {
   if (pg.tab === 'deck' && profileOf(p).deck) loadDeck(p, body);
   if (pg.tab === 'backers' && p.status === 'seeded') loadHolders(p);
   if (pg.tab === 'chat' && typeof chatMount === 'function') chatMount(p, body);
+  if (pg.tab === 'updates' && supa.configured() && pg.updLoaded !== p.id) { pg.updLoaded = p.id; updatesAdapter.load(p).then(() => { if (pg.id === p.id && pg.tab === 'updates') { renderTab(p); refreshTabLabels(p); } }); }
   const f = $('[data-updform]', body);
   if (f) f.onsubmit = async e => { e.preventDefault(); const t = f.t.value.trim(), b = f.b.value.trim(); if (!t || !b) return; try { await updatesAdapter.post(p, t, b); toast('Update posted'); renderTab(p); refreshTabLabels(p); } catch (x) { toast(x.message || 'The update was not posted.'); } };
   const ab = $('[data-allbackers]', body); if (ab) ab.onclick = () => { pg.allBackers = true; renderTab(p); };
