@@ -1288,7 +1288,7 @@ function renderTerminal() {
       <span class="br-av"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>
       <div class="br-main"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>
         <div class="br-meta"><span class="tag">${esc(Q(p).sym)} pair</span>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}<span>${p.status === 'live' ? `Ends in <span class="num" data-time>${timeCell(p)}</span>` : timeCell(p)}</span></div>
-        ${progCell(p)}</div>
+        ${progCell(p)}<div class="br-flags">${riskChip(riskSummary(riskChecks(p)))}${p.status === 'live' ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</div></div>
       <div class="br-side"><span class="br-val num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
         ${p.status === 'live' ? `<span class="br-sub num" title="Pace needed to seed" data-pace>${paceTxt(p)}</span>` : `<span class="br-sub">${p.backers} backers</span>`}<span class="t-act">${actCell(p)}</span></div></div>`).join('')
       : `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${q ? `Nothing here matches "${esc(ui.bq.trim())}".` : ui.fAsset !== 'all' ? 'Nothing here with this pair.' : none[k]}</div>`;
@@ -1307,7 +1307,7 @@ function patchRows(p) {
     const s = (k, fn) => { const e = $(k, row); if (e) fn(e); };
     s('[data-bar]', e => { if (pc > parseFloat(e.style.width) + 1e-6) bump(row); e.style.width = pc + '%'; }); s('[data-pct]', e => e.textContent = Math.floor(pc + 1e-7) + '%');
     s('[data-raised]', e => e.textContent = fmtC(p.raised, p.q, true)); s('[data-pace]', e => e.textContent = paceTxt(p));
-    s('[data-qbamt]', e => e.textContent = qbLabel(p));
+    s('[data-qbamt]', e => e.textContent = qbLabel(p)); s('[data-pacechip]', e => e.innerHTML = paceChip(paceInfo(p)));
   });
 }
 $('.board').addEventListener('click', e => {
