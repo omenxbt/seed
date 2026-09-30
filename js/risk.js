@@ -20,7 +20,7 @@ function riskChecks(p, opts = {}) {
 
   // 2. founder wallet funding
   const fu = f.funding;
-  if (!fu) add('funding', 'Founder wallet funding', opts.draft ? 'pending' : 'warn', opts.draft ? 'Read from Solana once you connect the deployer wallet.' : 'The founder wallet’s funding is not known.', f.from);
+  if (!fu) add('funding', 'Founder wallet funding', opts.draft ? 'pending' : 'warn', !opts.draft ? 'The founder wallet’s funding is not known.' : !f.wallet ? 'Read from Solana once you connect the deployer wallet.' : isRealAddr(f.wallet) ? 'Reading this wallet’s first funding from Solana…' : 'The demo wallet has no Solana history to read. A real wallet is checked live.', f.from);
   else {
     const near = fu.hoursBeforeLaunch != null && fu.hoursBeforeLaunch < RISK.fundedNearLaunchHours, odd = fu.kind === 'bridge' || fu.kind === 'mixer';
     const how = fu.kind === 'exchange' ? `from ${fu.label}` : odd ? `through ${fu.label}, a ${fu.kind}` : fu.addr ? `by wallet ${shortMint(fu.addr)}` : 'from an unknown source';

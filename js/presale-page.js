@@ -49,7 +49,7 @@ function roleOf(p, w) {
   if ((pr.team || []).some(m => m.wallet && m.wallet === w)) return 'team';
   return null;
 }
-const artHTML = (p, cls) => { const pr = profileOf(p); return pr.art ? `<img class="${cls}" src="${esc(pr.art)}" alt="">` : `<span class="${cls} glyph-art" style="--h:${hashStr(p.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>`; };
+const artHTML = (p, cls) => { const pr = profileOf(p); return pr.art ? `<img class="${cls}" src="${esc(pr.art)}" alt="" style="object-position:${esc(pr.artPos || '50% 50%')}">` : `<span class="${cls} glyph-art" style="--h:${hashStr(p.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>`; };
 const copyBtn = (val, label, text) => `<button class="copy" data-copy="${esc(val)}" data-copy-label="${esc(label)}" aria-label="Copy ${esc(label)}">${text ? `<span class="num">${esc(text)}</span>` : ''}${ICONS.copy}</button>`;
 const statusPill = p => `<span class="st-pill ${p.status}">${{ live: 'Live', seeded: 'Seeded', refunded: 'Refunded' }[p.status]}</span>`;
 const initials = n => String(n || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase();
@@ -58,7 +58,7 @@ const initials = n => String(n || '?').split(/\s+/).map(x => x[0]).slice(0, 2).j
 function ppHeader(p) {
   const pr = profileOf(p), C = Q(p), risk = riskSummary(riskChecks(p));
   const socials = SOCIALS.filter(s => safeUrl(pr.links && pr.links[s[0]])).map(s => `<a class="soc" href="${esc(safeUrl(pr.links[s[0]]))}" target="_blank" rel="noopener" aria-label="${s[1]}" title="${s[1]}">${ICONS[s[2]]}</a>`).join('');
-  return `<div class="pp-banner">${pr.banner ? `<img class="pp-bg" src="${esc(pr.banner)}" alt="">` : ''}${artHTML(p, 'pp-art')}</div>
+  return `<div class="pp-banner">${pr.banner ? `<img class="pp-bg" src="${esc(pr.banner)}" alt="" style="object-position:${esc(pr.bannerPos || '50% 50%')}">` : ''}${artHTML(p, 'pp-art')}</div>
     <div class="pp-strip">
       <div class="pp-name"><h1>${esc(p.name)}</h1><span class="pp-tk num">$${esc(p.ticker)}</span>${pr.mint ? copyBtn(pr.mint, 'mint address', shortMint(pr.mint)) : ''}<span class="pp-socials">${socials}</span></div>
       <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span>${statusPill(p)}<a href="#/presale/${esc(p.id)}/overview" data-jump-risk>${riskChip(risk)}</a>${p.mine ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}</div>
@@ -119,7 +119,7 @@ function buysSVG(p) {
   for (const b of p.buys || []) { const i = Math.floor((b.at - t0) / H); if (i >= 0 && i < n) c[i]++; }
   const mx = Math.max(1, ...c), bw = W / n;
   return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Buys per hour, at most ${mx} in one hour">${c.map((v, i) => v ? `<rect x="${(i * bw + bw * 0.15).toFixed(1)}" y="${(Hh - 14 - v / mx * (Hh - 20)).toFixed(1)}" width="${Math.max(1, bw * 0.7).toFixed(1)}" height="${(v / mx * (Hh - 20)).toFixed(1)}" rx="1" style="fill:var(--navy-soft)"/>` : '').join('')}
-    <path d="M0 ${Hh - 14}H${W}" style="stroke:var(--navy-deep);stroke-opacity:.2"/><g font-family="JetBrains Mono, monospace" font-size="10" style="fill:var(--muted)"><text x="0" y="${Hh - 2}">Buys per hour</text><text x="${W}" y="${Hh - 2}" text-anchor="end">Peak ${mx}</text></g></svg>`;
+    <path d="M0 ${Hh - 14}H${W}" style="stroke:var(--navy-deep);stroke-opacity:.2"/><g font-family="JetBrains Mono, monospace" font-size="10" style="fill:var(--muted)"><text x="0" y="${Hh - 2}">Buys per hour</text><text x="${W}" y="${Hh - 2}" text-anchor="end">Peak ${Math.max(0, ...c)}</text></g></svg>`;
 }
 function ppChart(p) {
   return `<section class="panel pp-card" data-chartcard><div class="pp-card-h"><h2>${p.status === 'seeded' ? 'How it raised' : 'Raised over time'}</h2><span class="legend"><span><i></i>Raised</span>${p.status === 'live' ? '<span><i class="dash"></i>Straight line to target</span>' : ''}<span><i class="bars"></i>Buys per hour</span></span></div>
