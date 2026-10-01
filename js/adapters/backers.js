@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BACKERS ADAPTER: who backed a presale, and after seeding who holds the token.
+   BACKERS ADAPTER: who backed a raise, and after seeding who holds the token.
    Demo: the generated crowd in state. Real: for backers whose wallets are real addresses, the largest RISK.liveLookupCap of them
    get a live fresh-wallet and funding-source lookup (cached). Holders read getTokenLargestAccounts when the mint is real.
    ========================================================================== */

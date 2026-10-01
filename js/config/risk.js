@@ -12,7 +12,7 @@ const RISK = {
   teamTreasuryMaxPct: 30,        // team + treasury allocation above this with no vesting: fail (the tokenomics tab flags it with or without vesting)
 
   /* live lookups on the keyless public RPC: it answers one account per call and throttles bursts, so lookups are capped and cached */
-  liveLookupCap: 20,             // fresh-wallet and funding-source lookups per presale, largest backers first
+  liveLookupCap: 20,             // fresh-wallet and funding-source lookups per raise, largest backers first
   lookupCacheMs: 6 * 3600e3,     // cached in localStorage for this long
   rpcSpacingMs: 900,             // gap between live lookup calls
 

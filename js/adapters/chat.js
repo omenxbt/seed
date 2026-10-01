@@ -37,7 +37,7 @@ async function chatSession() {
 /* ---------------------------------------------------------------- adapter */
 const chatAdapter = {
   live: () => supa.ready(),
-  /* the seeded conversation for a demo presale, resolved against its crowd so authors carry their real backed amounts */
+  /* the seeded conversation for a demo raise, resolved against its crowd so authors carry their real backed amounts */
   seeds(p) {
     const pr = profileOf(p); if (!pr.chat || !pr.chat.length) return [];
     const rows = backersAdapter.rows(p), end = p.resolvedAt || Date.now(), out = [];
@@ -129,7 +129,7 @@ function chatMount(p, body) {
     if (atBottom || !list.dataset.drawn) list.scrollTop = list.scrollHeight; list.dataset.drawn = 1;
   };
   const compose = () => {
-    if (frozen) { comp.innerHTML = '<p class="chat-note">This presale refunded, so its chat is closed. Earlier messages stay readable.</p>'; return; }
+    if (frozen) { comp.innerHTML = '<p class="chat-note">This raise refunded, so its chat is closed. Earlier messages stay readable.</p>'; return; }
     if (!state.wallet) { comp.innerHTML = '<p class="chat-note">Connect a wallet to post. Reading is open to everyone.</p><button class="btn btn-navy btn-sm" data-cconnect>Connect wallet</button>'; return; }
     if (!currentSession()) { comp.innerHTML = `<p class="chat-note">To post, sign one message with ${esc(state.wallet.name || 'your wallet')}. It proves you hold the wallet and is not a transaction. You sign once per session.</p><button class="btn btn-navy btn-sm" data-csign>Sign to chat</button>`; return; }
     const q = chatReply;

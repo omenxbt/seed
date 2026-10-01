@@ -1,14 +1,14 @@
 /* ==========================================================================
-   ADAPTERS, shared parts. Every read the project page makes goes through one adapter per domain (presale, backers, founder,
+   ADAPTERS, shared parts. Every read the project page makes goes through one adapter per domain (raise, backers, founder,
    chat, updates). Each read returns { value, from } where `from` says where the value came from:
      demo     demo data, shown with the "Demo data" pill
      chain    read live from Solana
-     standin  read live from a real account that stands in for this presale's (labelled as a stand-in)
+     standin  read live from a real account that stands in for this raise's (labelled as a stand-in)
      api      read live from a public API (GeckoTerminal)
    ========================================================================== */
 const withSrc = (value, from, extra) => Object.assign({ value, from }, extra || {});
 const DEMO_PILL = '<span class="tag demo-pill" title="This comes from the demo data set, not from Solana">Demo data</span>';
-const STANDIN_PILL = '<span class="tag standin-pill" title="Read live from a real account that stands in for this presale’s">Stand-in, live</span>';
+const STANDIN_PILL = '<span class="tag standin-pill" title="Read live from a real account that stands in for this raise’s">Stand-in, live</span>';
 const LIVE_PILL = '<span class="tag live-pill" title="Read live">Live</span>';
 const srcPill = from => from === 'demo' ? DEMO_PILL : from === 'standin' ? STANDIN_PILL : from ? LIVE_PILL : '';
 

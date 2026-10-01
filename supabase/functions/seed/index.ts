@@ -4,10 +4,10 @@
 //
 // Actions
 //   post        { presaleId, body, replyTo? }        any signed-in wallet
-//   pin         { messageId, pinned }                 founder or team of that presale
+//   pin         { messageId, pinned }                 founder or team of that raise
 //   report      { messageId }                         any signed-in wallet, once per message; hidden at AUTO_HIDE reports
-//   update      { presaleId, title, body }            founder or team of that presale
-//   register    { presaleId }                         claims founder of a presale id nobody has claimed yet
+//   update      { presaleId, title, body }            founder or team of that raise
+//   register    { presaleId }                         claims founder of a raise id nobody has claimed yet
 //   upload-url  { name, type, size }                  a signed upload URL for the public bucket (PDF or image, 10 MB)
 //
 // Secrets: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase. SEED_ALLOWED_DOMAINS is a comma-separated
@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
       case 'register': {
         const presaleId = str(body.presaleId, 80);
         const { count } = await db.from('presale_roles').select('*', { count: 'exact', head: true }).eq('presale_id', presaleId);
-        if (count) throw new Refusal(409, 'That presale already has a founder.');
+        if (count) throw new Refusal(409, 'That raise already has a founder.');
         await db.from('presale_roles').insert({ presale_id: presaleId, wallet, role: 'founder' });
         return reply(200, { ok: true });
       }

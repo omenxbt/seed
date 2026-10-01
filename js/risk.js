@@ -1,13 +1,13 @@
 /* ==========================================================================
    RISK CHECKS. Computed from adapter data, never set by hand. Thresholds are in js/config/risk.js.
    Each check is { id, label, level: pass | warn | fail | pending, reason, from }. `pending` is only used by the Launch form,
-   for checks that need data a presale does not have until it is live (backers).
+   for checks that need data a raise does not have until it is live (backers).
    ========================================================================== */
 const pctTxt = v => (v >= 10 || v === 0 ? Math.round(v) : v.toFixed(1)) + '%';
 const daysTxt = d => d >= 730 ? `${Math.floor(d / 365)} years` : d >= 60 ? `${Math.round(d / 30)} months` : `${Math.round(d)} days`;
 const normName = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
-/* p: a presale (or a draft shaped like one). opts.draft skips the backer checks. */
+/* p: a raise (or a draft shaped like one). opts.draft skips the backer checks. */
 function riskChecks(p, opts = {}) {
   const pr = profileOf(p), f = founderAdapter.get(p), out = [], add = (id, label, level, reason, from) => out.push({ id, label, level, reason, from });
   const fromPr = pr.demo ? 'demo' : 'self';
@@ -53,7 +53,7 @@ function riskChecks(p, opts = {}) {
   const seedHit = state.presales.find(x => x.id !== p.id && x.status === 'live' && (x.ticker === tk || (nm && normName(x.name) === nm)));
   const topHit = TOP_TOKENS.find(t => t[0] === tk || (nm && normName(t[1]) === nm));
   add('clash', 'Name and ticker', seedHit || topHit ? 'warn' : 'pass',
-    seedHit ? `${seedHit.ticker === tk ? '$' + tk : p.name} is already used by ${seedHit.name}, a live Seed presale.` : topHit ? `${topHit[0] === tk ? '$' + tk : p.name} matches ${topHit[1]} ($${topHit[0]}), one of the 500 largest Solana tokens.` : 'No clash with a live Seed presale or a top-500 Solana token.');
+    seedHit ? `${seedHit.ticker === tk ? '$' + tk : p.name} is already used by ${seedHit.name}, a live Seed raise.` : topHit ? `${topHit[0] === tk ? '$' + tk : p.name} matches ${topHit[1]} ($${topHit[0]}), one of the 500 largest Solana tokens.` : 'No clash with a live Seed raise or a top-500 Solana token.');
 
   // 8 to 10. what a backer can check for themselves
   add('website', 'Website', pr.links && pr.links.website ? 'pass' : 'warn', pr.links && pr.links.website ? 'A website is listed.' : 'No website is listed.', fromPr);

@@ -1,6 +1,6 @@
 /* ==========================================================================
    PRESALE ADAPTER: the vault, and after seeding the pool (price, market cap, liquidity, candles).
-   Demo: the raise from state and a price series generated from the presale price.
+   Demo: the raise from state and a price series generated from the raise price.
    Real: the vault's token balance from Solana RPC, the pool from GeckoTerminal (keyless, cached 60s per request).
    ========================================================================== */
 const GECKO = 'https://api.geckoterminal.com/api/v2/networks/solana/pools/';
@@ -19,7 +19,7 @@ async function geckoGet(path) {
     throw new Error('GeckoTerminal is rate limiting this browser');
   }
 }
-/* the presale price: what one token costs in the pair asset */
+/* the raise price: what one token costs in the pair asset */
 const priceOf = p => p.target / (SUPPLY * presaleShare(p));
 
 const presaleAdapter = {
@@ -44,9 +44,9 @@ const presaleAdapter = {
       return withSrc({ address: pool.address, pair: pool.pair, dex: pool.dex, price, quote: 'USD', mcap: Number(a.market_cap_usd || a.fdv_usd), fdv: Number(a.fdv_usd), liquidity: Number(a.reserve_in_usd),
         change24h: Number((a.price_change_percentage || {}).h24 || 0), volume24h: Number((a.volume_usd || {}).h24 || 0), supply: Number(a.fdv_usd) / price, url: `https://app.meteora.ag/dammv2/${pool.address}` }, 'standin');
     }
-    const s = demoSeries(p, '1h', 48), last = s[s.length - 1][4], supply = SUPPLY;
+    const s = demoSeries(p, '1h', 48), amm = ammOf(p), last = amm.x / amm.y, supply = SUPPLY;   // the price is the in-app pool's, so a trade made here moves it
     return withSrc({ address: fakeAddr('pool/' + p.id), pair: `${p.ticker}/${Q(p).sym}`, dex: DEX, price: last, quote: Q(p).sym, mcap: last * supply, fdv: last * supply,
-      liquidity: p.target * 2, change24h: (last / s[Math.max(0, s.length - 25)][4] - 1) * 100, volume24h: p.target * 0.4, supply, url: 'https://app.meteora.ag' }, 'demo');
+      liquidity: amm.x * 2, change24h: (last / s[Math.max(0, s.length - 25)][4] - 1) * 100, volume24h: p.target * 0.4, supply, url: 'https://app.meteora.ag' }, 'demo');
   },
 
   /* candles: [time, open, high, low, close, volume], oldest first */
@@ -56,10 +56,12 @@ const presaleAdapter = {
       const [unit, agg] = TIMEFRAMES[tf], j = await geckoGet(`${pool.address}/ohlcv/${unit}?aggregate=${agg}&limit=120&currency=usd`);
       return withSrc(j.data.attributes.ohlcv_list.map(c => [c[0] * 1000, +c[1], +c[2], +c[3], +c[4], +c[5]]).reverse(), 'standin');
     }
-    return withSrc(demoSeries(p, tf, 120), 'demo');
+    const ser = demoSeries(p, tf, 120), c = ser[ser.length - 1], px = spotOf(p);   // the newest candle closes where the in-app pool is
+    c[4] = px; c[2] = Math.max(c[2], px); c[3] = Math.min(c[3], px);
+    return withSrc(ser, 'demo');
   }
 };
-/* a seeded demo presale trades around its presale price: a seeded random walk from the moment it seeded */
+/* a seeded demo raise trades around its raise price: a seeded random walk from the moment it seeded */
 function demoSeries(p, tf, n) {
   const step = { '1m': 60e3, '5m': 300e3, '1h': H, '1D': D }[tf], r = rng('px/' + p.id + '/' + tf), out = [];
   let px = priceOf(p), t = Math.max(p.resolvedAt || Date.now(), Date.now() - step * n);

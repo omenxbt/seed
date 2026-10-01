@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="light">
-<meta name="theme-color" content="#B0DEFC">
-<title>Seed: seeded in full, or refunded in full</title>
-<meta name="description" content="Seeded in full, or refunded in full. A presale launchpad on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL, USDC, a tokenized stock or any token. If it misses its target by the deadline, every wallet gets back what it paid.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#16171A">
+<title>Seed</title>
+<meta name="description" content="Seeded in full, or refunded in full. A launchpad for raises on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL, USDC, a tokenized stock or any token. If it misses its target by the deadline, every wallet gets back what it paid.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='41.66' cy='62.80' r='11.48' fill='%232E63E7'%3E%3C/circle%3E%3Ccircle cx='55.38' cy='29.57' r='10.52' fill='%230A1E4F'%3E%3C/circle%3E%3Ccircle cx='70.21' cy='73.94' r='9.57' fill='%230A1E4F'%3E%3C/circle%3E%3Ccircle cx='22.01' cy='46.47' r='8.61' fill='%230A1E4F'%3E%3C/circle%3E%3Ccircle cx='83.49' cy='32.89' r='7.65' fill='%230A1E4F'%3E%3C/circle%3E%3Ccircle cx='43.27' cy='89.74' r='6.70' fill='%230A1E4F'%3E%3C/circle%3E%3Ccircle cx='33.97' cy='14.59' r='5.74' fill='%230A1E4F'%3E%3C/circle%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,25 +15,33 @@
 <style>
 /* ------------------------------------------------------------------ tokens */
 :root{
-  /* sky glass, the one theme: every page sits on one sky gradient, so surfaces are frosted white glass over it and the ink is dark.
-     Fills and accents are pariter.xyz's blue (#2E63E7, hover #2554C7). Surfaces stack whiter as they come forward: panel, well, card.
-     --paper is the well, --ink the text. */
-  color-scheme:light;
-  --paper:rgba(255,255,255,.5); --card:rgba(255,255,255,.8); --raised:#fff; --chip:rgba(255,255,255,.5); --mist:rgba(255,255,255,.5); --hover:rgba(255,255,255,.32);
-  --panel:rgba(255,255,255,.72); --panel-solid:rgba(255,255,255,.6); --bar:rgba(255,255,255,.42);
-  --panel-line:rgba(255,255,255,.72); --panel-shadow:0 18px 50px -24px rgba(30,60,130,.45),inset 0 1px 0 rgba(255,255,255,.55); --frost:blur(18px) saturate(1.6);
-  --scrim:rgba(10,30,79,.3);
-  --ink:#0A1E4F; --ink-2:#23386B; --muted:#3F4F78; --faint:#5A6A94;
-  --navy:#2E63E7; --navy-deep:#2554C7; --navy-soft:#7A9AE6; --navy-wash:rgba(46,99,231,.13);
-  --solid:#2E63E7; --solid-hover:#2554C7; --accent:#2E63E7; --accent-hover:#2554C7;
-  --hair:rgba(10,30,79,.12); --hair-2:rgba(10,30,79,.26); --ring:rgba(46,99,231,.2); --err:#A8324A;
-  --warn:#B9853B; --warn-line:rgba(185,133,59,.5); --warn-bg:rgba(251,244,230,.8); --warn-ink:#8A5A17; --warn-ink-2:#6B4A1A; --warn-strong:#5A3C10;
-  --lift:0 14px 40px -16px rgba(30,60,130,.4);
-  --sh-ind:rgba(30,60,130,.25); --sh-pop:rgba(30,60,130,.4); --sh-sheet:rgba(20,40,100,.5); --sh-toast:rgba(20,40,100,.5);
+  /* charcoal, the one theme: every page sits on a flat charcoal grey, panels are a step lighter, wells (fields, segmented controls)
+     a step darker, and surfaces get lighter as they come forward. The greys are neutral; blue is the only colour that is not
+     data: fills are the brand blue (#2E63E7, hover #4377F5), lines and accent text a lighter tint of it.
+     --paper is the well, --ink the text, --tile a quiet surface inside a panel, --field a text field. */
+  color-scheme:dark;
+  --bg:#16171A;
+  --paper:#121316; --card:#25272C; --raised:#30333A; --chip:rgba(255,255,255,.06); --mist:rgba(255,255,255,.07); --hover:rgba(255,255,255,.04);
+  --panel:rgba(31,33,37,.88); --panel-solid:#1F2125; --bar:rgba(22,23,26,.8);   /* panels at 88% over the dot field; --panel-solid stays opaque for sticky bars, art frames, inputs */
+  --panel-line:rgba(255,255,255,.08); --panel-shadow:none; --frost:blur(14px) saturate(120%);
+  --scrim:rgba(0,0,0,.6);
+  --ink:#F3F4F6; --ink-2:#D3D6DC; --muted:#9DA2AC; --faint:#868B95;
+  --navy:#5B8CFF; --navy-deep:#A4C0FF; --navy-soft:#52668F; --navy-wash:rgba(91,140,255,.15);
+  --solid:#2E63E7; --solid-hover:#4377F5; --accent:#2E63E7; --accent-hover:#4377F5;
+  --hair:rgba(255,255,255,.08); --hair-2:rgba(255,255,255,.17); --ring:rgba(91,140,255,.3); --err:#FF8B9C;
+  --warn:#E8B45C; --warn-line:rgba(232,180,92,.36); --warn-bg:rgba(232,180,92,.1); --warn-ink:#F3CB8A; --warn-ink-2:#EBD2A4; --warn-strong:#FFE1B0;
+  /* check results and the chips that carry them: pass, caution, fail */
+  --ok:#45DB93; --ok-ink:#7BE8B2; --ok-bg:rgba(69,219,147,.14); --ok-line:rgba(69,219,147,.3);
+  --caution:#F3BC58; --caution-ink:#F7D08A; --caution-bg:rgba(243,188,88,.14);
+  --bad:#FF7268; --bad-ink:#FF9B93; --bad-bg:rgba(255,114,104,.15);
+  --tile:rgba(255,255,255,.045); --field:#121316;
+  --lift:0 14px 40px -16px rgba(0,0,0,.6);
+  --sh-ind:rgba(0,0,0,.4); --sh-pop:rgba(0,0,0,.6); --sh-sheet:rgba(0,0,0,.65); --sh-toast:rgba(0,0,0,.6);
+  --col-side:clamp(330px,19vw,390px); --col-rail:clamp(370px,21vw,430px);   /* the side columns of a workspace */
   --sans:'Instrument Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
   --serif:'Instrument Serif','Iowan Old Style',Georgia,'Times New Roman',serif;
   --mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
-  --ease:cubic-bezier(.65,0,.35,1); --out:cubic-bezier(.16,1,.3,1);
+  --ease:cubic-bezier(.65,0,.35,1); --out:cubic-bezier(.16,1,.3,1); --soft:cubic-bezier(.32,.72,0,1);   /* --soft: the unhurried curve for hovers, presses and entrances */
   /* how far along a raise is: red, through yellow, to green at the target */
   --progress:linear-gradient(90deg,#F2554C,#F6C445 50%,#34C17B);
   box-sizing:border-box;
@@ -45,40 +53,41 @@
 *::-webkit-scrollbar{display:none}
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px);-webkit-text-size-adjust:100%}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
-/* one flat sky, fixed to the viewport, so the panels scroll over it. It is on html and body both, so overscroll on iOS and Mac shows sky, not white. */
-html,body{min-height:100vh;background:#B0DEFC linear-gradient(180deg,#B0DEFC 0%,#8FD1FE 38%,#9799C9 68%,#E2C5DD 84%,#FDC8CB 93%,#FDA697 100%) no-repeat;background-attachment:fixed}
+/* flat charcoal on html (so overscroll on iOS and Mac shows charcoal, not white); body is transparent so the dot field
+   (#bg-dither, fixed, z-index -1, drawn by js/bg-dither.js) shows between the charcoal and the UI. */
+html{min-height:100vh;background:var(--bg)}
+body{min-height:100vh;background:transparent}
+#bg-dither{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
 body{color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-button,input{font:inherit;color:inherit;letter-spacing:inherit}
+button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 button{cursor:pointer;background:none;border:0}
 a{color:inherit;text-decoration:none}
 ::selection{background:var(--solid);color:#fff}
 :focus-visible{outline:2px solid var(--navy);outline-offset:3px;border-radius:6px}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.03em}
 
-/* the horizontal lockup: 13-dot mark in ink with the blue seed, box 1.4 × the wordmark size, gap a quarter of the mark, wordmark 600 at -3% */
-.brand{display:flex;align-items:center;gap:7px;font-weight:600;font-size:20px;letter-spacing:-.03em;color:var(--ink)}
+/* the horizontal lockup: the 21-dot mark in muted blue with the bright blue seed (the same mark an empty column shows),
+   box 1.6 × the wordmark size, wordmark 600 at -3% */
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:20px;letter-spacing:-.03em;color:var(--ink)}
 .mark{display:block;color:var(--ink);--seed:var(--navy)}
-.brand .mark{flex:none;width:28px;height:28px}
-/* the brand pattern: the 89-dot field in white, one seed still blue, off the top right corner of the sky */
-.pattern{position:fixed;top:-70px;right:-90px;width:520px;height:520px;color:#fff;--seed:var(--navy);opacity:.6;pointer-events:none;z-index:0}
-body.in-app .pattern{display:none}   /* the board stays on plain sky; the pattern is for the docs */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:999px;font-weight:600;font-size:14px;padding:11px 22px;
-  transition:transform .15s,background .25s,box-shadow .25s,opacity .2s;white-space:nowrap}
-.btn:active{transform:translateY(1px)}
-.btn-ink{background:var(--solid);color:#fff;box-shadow:inset 0 -2px 0 rgba(0,0,0,.35)}
+.brand .mark{flex:none;width:32px;height:32px;color:var(--navy-soft)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;font-weight:600;font-size:14px;padding:11px 22px;
+  transition:transform .5s var(--soft),background .5s var(--soft),box-shadow .5s var(--soft),opacity .2s;white-space:nowrap}
+.btn:active{transform:scale(.98)}
+.btn-ink{background:var(--solid);color:#fff}
 .btn-ink:hover{background:var(--solid-hover)}
-.btn-navy{background:var(--accent);color:#fff;box-shadow:inset 0 -2px 0 rgba(10,18,50,.35)}
+.btn-navy{background:var(--accent);color:#fff}
 .btn-navy:hover{background:var(--accent-hover)}
 .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
 .btn-lg{font-size:15px;padding:14px 26px}
 .btn-block{width:100%}
 .wdot{width:7px;height:7px;border-radius:50%;background:#7FC8A9;box-shadow:0 0 0 3px rgba(127,200,169,.25)}
-.pop{position:absolute;right:0;top:calc(100% + 10px);width:264px;border-radius:18px;padding:16px;background:var(--card);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);border:1px solid var(--hair);box-shadow:0 24px 60px -20px var(--sh-pop);display:none}
+.pop{position:absolute;right:0;top:calc(100% + 10px);width:264px;border-radius:16px;padding:16px;background:var(--card);border:1px solid var(--panel-line);box-shadow:0 24px 60px -20px var(--sh-pop);display:none}
 .pop.open{display:block}
 .pop h4{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px}
 .pop .bal{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-top:1px solid var(--hair);font-size:13.5px}
 .pop .bal span:first-child{color:var(--muted)}
-.pop button{margin-top:12px;width:100%;padding:10px;border-radius:999px;border:1px solid var(--hair-2);font-weight:600;font-size:13.5px}
+.pop button{margin-top:12px;width:100%;padding:10px;border-radius:12px;border:1px solid var(--hair-2);font-weight:600;font-size:13.5px}
 .pop button:hover{background:var(--mist)}
 
 h1{line-height:.96;font-weight:400}
@@ -87,21 +96,21 @@ h1 .l2{display:block;font-weight:600;font-size:clamp(36px,5.7vw,76px);letter-spa
 /* ---------------------------------------------------------------- sections */
 h2{font-weight:600;font-size:clamp(30px,4.3vw,50px);line-height:1.04;letter-spacing:-.045em}
 h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;line-height:1}
-.panel{position:relative;border:1px solid var(--panel-line);border-radius:22px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);box-shadow:var(--panel-shadow)}
+.panel{position:relative;border:1px solid var(--panel-line);border-radius:18px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);box-shadow:var(--panel-shadow)}
 
-/* segmented control (sliding ink indicator) */
-.seg{position:relative;display:inline-flex;padding:4px;border-radius:999px;border:1px solid var(--hair);background:var(--paper)}
-.seg .seg-ind{position:absolute;top:4px;bottom:4px;left:0;border-radius:999px;background:var(--solid);transition:transform .45s var(--ease),width .45s var(--ease);will-change:transform}
-.seg button{position:relative;z-index:1;padding:7px 16px;border-radius:999px;font-size:13px;font-weight:600;color:var(--muted);transition:color .3s;white-space:nowrap}
-.seg button[aria-pressed="true"]{color:#fff}
+/* segmented control: a dark well, a lighter block slides under the chosen segment */
+.seg{position:relative;display:inline-flex;padding:4px;border-radius:12px;background:var(--paper)}
+.seg .seg-ind{position:absolute;top:4px;bottom:4px;left:0;border-radius:9px;background:var(--raised);transition:transform .45s var(--ease),width .45s var(--ease);will-change:transform}
+.seg button{position:relative;z-index:1;padding:8px 16px;border-radius:9px;font-size:14px;font-weight:600;color:var(--muted);transition:color .3s;white-space:nowrap}
+.seg button:hover,.seg button[aria-pressed="true"]{color:var(--ink)}
 .seg button .ct{font-family:var(--mono);font-weight:400;font-size:11.5px;opacity:.7;margin-left:5px}
 
-/* ------------------------------------------------------------ presale list */
-.tag{display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;border-radius:999px;padding:3px 9px;border:1px solid var(--hair-2);color:var(--muted);background:var(--chip)}
+/* ------------------------------------------------------------ raise list */
+.tag{display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;border-radius:999px;padding:4px 11px;border:1px solid var(--hair-2);color:var(--muted);background:var(--chip)}
 .tag.in{border-color:transparent;background:var(--navy-wash);color:var(--navy-deep)}
-.row{display:grid;grid-template-columns:minmax(0,2.3fr) minmax(0,1.7fr) minmax(0,1.15fr) minmax(0,1fr) 92px;gap:18px;align-items:center;padding:0 22px}
-.row{width:100%;text-align:left;padding-top:15px;padding-bottom:15px;border-bottom:1px solid var(--hair);transition:background .2s}
-.row:last-child{border-bottom:0;border-radius:0 0 21px 21px}
+.row{display:grid;gap:18px;align-items:center}   /* a raise in a list; #mineList lays it out */
+.row{width:100%;text-align:left;padding-top:18px;padding-bottom:18px;border-bottom:1px solid var(--hair);transition:background .2s}
+.row:last-child{border-bottom:0;border-radius:0 0 17px 17px}
 .row:hover{background:var(--hover)}
 .row.flash{animation:flash 1.8s ease-out}
 @keyframes flash{0%{background:var(--navy-wash)}100%{background:transparent}}
@@ -110,9 +119,9 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .av svg{width:26px;height:26px;fill:var(--navy-deep)}
 .av.lg{width:52px;height:52px;border-radius:14px}.av.lg svg{width:34px;height:34px}
 .nm{min-width:0;display:flex;flex-direction:column;gap:2px}
-.nm b{font-weight:600;font-size:15px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nm b .tk{font-family:var(--mono);font-weight:400;font-size:12px;color:var(--muted);margin-left:7px;letter-spacing:-.02em}
-.meta{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);white-space:nowrap}
+.nm b{font-weight:600;font-size:16px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm b .tk{font-family:var(--mono);font-weight:400;font-size:13px;color:var(--muted);margin-left:7px;letter-spacing:-.02em}
+.meta{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--muted);white-space:nowrap}
 .chain{display:inline-flex;align-items:center;gap:6px}
 .chain::before{content:"";width:7px;height:7px;background:var(--navy-deep)}
 .chain.sol::before{border-radius:50%;background:var(--navy-soft)}
@@ -125,27 +134,29 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
    A buy landing ticks the row: a quick sheen and the percentage pops. */
 .fresh .bar i{animation:barIn 1.2s var(--out) both;animation-delay:calc(var(--i,0)*70ms)}
 @keyframes barIn{from{width:0}}
-.live .bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);transform:translateX(-100%);animation:sheen 3.2s ease-in-out infinite;animation-delay:calc(var(--i,0)*.4s)}
+.live .bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);transform:translateX(-100%);animation:sheen 3.2s ease-in-out infinite;animation-delay:calc(var(--i,0)*.4s)}
 @keyframes sheen{0%,55%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 .bump .bar i::after{animation:tick .9s ease-out 1}
 @keyframes tick{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
 .bump .pct,.bump [data-dpct]{display:inline-block;animation:pctPop .7s var(--out)}
 @keyframes pctPop{30%{transform:scale(1.22);color:var(--navy-deep)}}
 .refunded .bar i{background:repeating-linear-gradient(135deg,var(--navy-soft) 0 4px,transparent 4px 7px)}
-.pct{font-size:12.5px;color:var(--ink-2);width:38px;text-align:right}
-.c-raised,.c-time{text-align:right;font-size:13px}
+.pct{font-size:13.5px;color:var(--ink-2);width:40px;text-align:right}
+.c-raised,.c-time{text-align:right;font-size:14.5px}
 .c-raised em{font-style:normal;color:var(--faint)}
 .c-time{color:var(--ink-2)}
 .c-act{text-align:right}
-.pill-sm{display:inline-block;border-radius:999px;padding:7px 15px;font-size:12.5px;font-weight:600;border:1px solid var(--hair-2);background:var(--chip);transition:background .2s,color .2s,border-color .2s}
+.pill-sm{display:inline-block;border-radius:10px;padding:8px 16px;font-size:13.5px;font-weight:600;border:1px solid var(--hair-2);background:var(--chip);transition:background .2s,color .2s,border-color .2s}
 .row:hover .pill-sm,.pill-sm.hot{background:var(--accent);border-color:var(--accent);color:#fff}
-.empty{padding:54px 22px;text-align:center;color:var(--muted)}
+.empty{padding:48px 24px;text-align:center;color:var(--muted);font-size:15px}
 .empty a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
 
 /* ------------------------------------------------------------- mechanism */
 .tick{position:absolute;width:9px;height:9px;border:0 solid var(--navy);pointer-events:none}
 .tick.tl{top:-1px;left:-1px;border-top-width:1.5px;border-left-width:1.5px}.tick.tr{top:-1px;right:-1px;border-top-width:1.5px;border-right-width:1.5px}
-.tick.bl{bottom:-1px;left:-1px;border-bottom-width:1.5px;border-left-width:1.5px}.tick.br{bottom:-1px;right:-1px;border-bottom-width:1.5px;border-right-width:1.5px}
+.tick.bl{bottom:-1px;left:-1px;border-bottom-width:1.5px;border-left-width:1.5px}
+/* .br is also the Terminal's card class, so the bottom-right tick undoes what that rule would give it */
+.tick.br{position:absolute;display:block;bottom:-1px;right:-1px;padding:0;border:0 solid var(--navy);border-bottom-width:1.5px;border-right-width:1.5px;border-radius:0;background:none}
 .plus{position:absolute;width:13px;height:13px;transform:translate(-50%,-50%);pointer-events:none;z-index:3}
 .plus::before,.plus::after{content:"";position:absolute;background:var(--navy)}
 .plus::before{left:6px;top:0;width:1.5px;height:13px}.plus::after{top:6px;left:0;height:1.5px;width:13px}
@@ -156,20 +167,21 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .form{padding:30px;display:grid;gap:18px;grid-template-columns:1fr 1fr}
 .f{display:flex;flex-direction:column;gap:7px;min-width:0}
 .f.full{grid-column:1/-1}
-.f label,.f .lab{font-size:13px;font-weight:600;color:var(--ink-2)}
-.f .hint{font-size:12.5px;color:var(--faint);font-weight:400;margin-left:6px}
-.inp{display:flex;align-items:center;border:1px solid var(--hair-2);border-radius:13px;background:var(--paper);transition:border-color .2s,box-shadow .2s}
+.f label,.f .lab{font-size:14px;font-weight:600;color:var(--ink-2)}
+.f .hint{font-size:13px;color:var(--faint);font-weight:400;margin-left:6px}
+.inp{display:flex;align-items:center;border:1px solid var(--hair);border-radius:14px;background:var(--paper);transition:border-color .2s,box-shadow .2s}
 .inp:focus-within{border-color:var(--navy);box-shadow:0 0 0 4px var(--ring)}
-.inp input{flex:1;min-width:0;border:0;outline:0;background:transparent;padding:12px 14px;font-size:15px}
+.inp input{flex:1;min-width:0;border:0;outline:0;background:transparent;padding:13px 16px;font-size:15.5px}
 .inp input::placeholder{color:var(--faint)}
-.inp .suf{padding-right:14px;color:var(--muted);font-size:13px}
-.err{font-size:12.5px;color:var(--err);min-height:0}
+.inp .suf{padding-right:16px;color:var(--muted);font-size:14px}
+.err{font-size:14px;color:var(--err);min-height:0}
 .preview{padding:30px;display:flex;flex-direction:column;gap:18px}
 .preview .lab{font-size:13px;font-weight:600;color:var(--ink-2)}
-.pcard{position:relative;border:1px solid var(--hair);background:var(--paper);padding:18px}
+.pcard{position:relative;border:1px solid var(--hair);background:var(--tile);padding:18px}
 .pcard .c-prog{margin-top:16px}
 .facts{display:grid;gap:0;border-top:1px solid var(--hair)}
-.facts div{display:flex;justify-content:space-between;gap:18px;padding:11px 0;border-bottom:1px solid var(--hair);font-size:13.5px}
+.facts div{display:flex;justify-content:space-between;gap:18px;padding:12px 0;border-bottom:1px solid var(--hair);font-size:14.5px}
+.facts div:last-child{border-bottom:0;padding-bottom:0}
 .facts dt{color:var(--muted)}.facts dd{text-align:right;color:var(--ink)}
 
 /* -------------------------------------------------------------------- faq */
@@ -181,11 +193,12 @@ dialog{border:0;padding:0;overflow:visible;background:transparent;color:inherit;
 dialog::backdrop{background:var(--scrim);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 dialog[open]{animation:sheetIn .5s var(--out)}
 @keyframes sheetIn{0%{opacity:0;transform:translateY(22px) scale(.985)}to{opacity:1;transform:none}}
-.sheet{background:var(--card);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);border-radius:26px;border:1px solid var(--hair);box-shadow:0 40px 100px -30px var(--sh-sheet);padding:26px;max-height:calc(100dvh - 32px);overflow:auto}
+.sheet{background:var(--card);border-radius:22px;border:1px solid var(--panel-line);box-shadow:0 40px 100px -30px var(--sh-sheet);padding:26px;max-height:calc(100dvh - 32px);overflow:auto}
 .sh-head{display:flex;gap:14px;align-items:center}
 .sh-head .nm b{font-size:21px;letter-spacing:-.035em}
-.x{margin-left:auto;flex:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--hair);display:grid;place-items:center;font-size:18px;line-height:1;color:var(--muted)}
-.x:hover{background:var(--mist);color:var(--ink)}
+.x{margin-left:auto;flex:none;width:36px;height:36px;border-radius:12px;border:1px solid var(--hair);display:grid;place-items:center;font-size:18px;line-height:1;color:var(--muted)}
+.x{transition:transform .5s var(--soft),background .3s,color .3s}
+.x:hover{background:var(--mist);color:var(--ink);transform:rotate(90deg)}
 .idea{margin-top:16px;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.25;color:var(--ink-2)}
 .readout{position:relative;border:1px solid var(--hair);margin-top:20px;padding:16px 18px}
 .readout .big{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
@@ -199,15 +212,16 @@ dialog[open]{animation:sheetIn .5s var(--out)}
 .amt .inp input{font-family:var(--mono);font-size:24px;letter-spacing:-.05em;padding:13px 16px}
 .amt .inp .suf{font-family:var(--mono);font-size:14px}
 .chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.chips button{border:1px solid var(--hair-2);border-radius:999px;padding:6px 14px;font-family:var(--mono);font-size:12.5px;color:var(--ink-2);transition:background .2s,border-color .2s}
+.chips button{border:1px solid var(--hair-2);border-radius:10px;padding:8px 14px;font-family:var(--mono);font-size:13.5px;color:var(--ink-2);transition:background .2s,border-color .2s}
 .chips button:hover{background:var(--navy-wash);border-color:var(--navy-soft)}
+.chips button:active{transform:scale(.97)}
 .promise{margin-top:16px;display:grid;gap:6px;font-size:14px;color:var(--ink-2)}
 .promise div{display:flex;gap:10px;align-items:flex-start}
 .promise svg{flex:none;width:16px;height:16px;margin-top:3px;stroke:var(--navy);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sheet .btn-block{margin-top:20px}
 #walletDlg{width:min(400px,calc(100vw - 24px))}
 .wlist{display:grid;gap:8px;margin-top:18px}
-.wlist button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:1px solid var(--hair-2);border-radius:14px;font-weight:600;font-size:15px;transition:background .2s,border-color .2s}
+.wlist button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:1px solid var(--hair-2);border-radius:12px;font-weight:600;font-size:15px;transition:background .2s,border-color .2s}
 .wlist button:hover{background:var(--mist);border-color:var(--navy)}
 .wlist small{font-weight:400;font-size:12.5px;color:var(--muted)}
 .state{margin-top:20px;border-radius:16px;background:var(--mist);padding:16px 18px;font-size:14.5px;color:var(--ink-2)}
@@ -219,14 +233,12 @@ dialog[open]{animation:sheetIn .5s var(--out)}
 .ca:hover{color:var(--navy-deep);border-color:var(--navy)}
 .ca i{font-style:normal;color:var(--faint)}
 .toasts{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:max-content;max-width:calc(100vw - 24px)}
-.toast{background:var(--solid);color:#fff;border-radius:999px;padding:11px 20px;font-size:14px;font-weight:500;box-shadow:0 18px 40px -14px var(--sh-toast);animation:toastIn .5s var(--out);text-align:center}
+.toast{background:var(--raised);color:var(--ink);border:1px solid var(--hair-2);border-radius:12px;padding:11px 20px;font-size:14px;font-weight:500;box-shadow:0 18px 40px -14px var(--sh-toast);animation:toastIn .5s var(--out);text-align:center}
 .toast.out{opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s}
 @keyframes toastIn{0%{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
 /* ------------------------------------------------------------- responsive */
 @media (max-width:900px){
-  .row{grid-template-columns:1fr auto;grid-template-areas:"proj act" "prog prog" "raised time";row-gap:12px;padding:16px 18px}
-  .c-proj{grid-area:proj}.c-act{grid-area:act}.c-prog{grid-area:prog}.c-raised{grid-area:raised;text-align:left}.c-time{grid-area:time}
   .create{grid-template-columns:1fr}
   .create::before{display:none}
   .preview{border-top:1px solid var(--hair)}
@@ -247,21 +259,59 @@ dialog[open]{animation:sheetIn .5s var(--out)}
   .br.fresh,.fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct,.bump [data-dpct]{animation:none}
 }
 
+/* ================================================================= motion */
+/* Entrances. While body.enter is on, a page's cards rise into place out of a slight blur, one after another down each column
+   and one column after the next, and its title sharpens. Docs sections do the same as they are scrolled to (.rv, then .in).
+   None of it runs for someone who has asked for reduced motion. */
+@keyframes rise{from{opacity:0;transform:translateY(18px);filter:blur(6px)}}
+@keyframes sharpen{from{opacity:.1;filter:blur(8px)}}
+@keyframes swapIn{from{opacity:0;transform:translateY(8px)}}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes growX{from{transform:scaleX(0)}}
+@keyframes growY{from{transform:scaleY(0)}}
+@keyframes chipUp{0%{opacity:0;transform:translateY(14px) scale(.9)}15%{opacity:1;transform:none}75%{opacity:1;transform:translateY(-6px)}100%{opacity:0;transform:translateY(-16px)}}
+@media (prefers-reduced-motion:no-preference){
+  .ws-main,.pp-main,.board>.col:nth-child(2){--ec:1}
+  .ws-rail,.pp-rail,.board>.col:nth-child(3){--ec:2}
+  :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>:nth-child(2){--en:1}
+  :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>:nth-child(3){--en:2}
+  :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>:nth-child(n+4){--en:3}
+  body.enter :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>*,body.enter .board>.col,body.enter .toc,body.enter .doc-hero{
+    animation:rise .8s var(--soft) both;animation-delay:calc(var(--ec,0)*90ms + var(--en,0)*70ms)}
+  body.enter :is(.xbar,.filters){animation:swapIn .7s var(--soft) both}
+  body.enter :is(.pagehead h1,.pp-name h1,.doc-hero h1 span){animation:sharpen 1s var(--soft) .1s both}
+  body.enter .doc-hero h1 .l2{animation-delay:.22s}
+  .docs .rv{opacity:0;transform:translateY(26px);filter:blur(6px);transition:opacity .8s var(--soft),transform .8s var(--soft),filter .8s var(--soft)}
+  .docs .rv.in{opacity:1;transform:none;filter:none}
+  .docs .aside.rv{transition-delay:.09s}
+}
+
 /* ================================================================== views */
 .view[hidden]{display:none}
 a.row{color:inherit}
-.bar-link{font-size:13.5px;font-weight:600;color:var(--navy-deep);border-bottom:1px solid var(--hair-2);padding-bottom:1px}
+.bar-link{font-size:14px;font-weight:600;color:var(--navy-deep);border-bottom:1px solid var(--hair-2);padding-bottom:1px}
 .bar-link:hover{border-color:var(--navy-deep)}
 
 /* ================================================================ app bar */
-.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:100;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;
-  padding:12px 22px;background:var(--bar);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-bottom:1px solid var(--hair)}
+/* one row: the brand, the sections as plain text links with a soft pill on the open one, and the wallet button as a blue tint */
+.appbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:100;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:28px;height:64px;
+  padding:0 24px;background:var(--bar);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-bottom:1px solid var(--hair)}
 .appbar .brand{justify-self:start}
+.appbar>span:empty{display:none}   /* the docs bar has no sections */
+.appbar .tabs{justify-self:start;padding:0;gap:4px;border-color:transparent;background:none}
+.appbar .tabs .seg-ind{display:none}
+.appbar .tabs button{padding:8px 14px;border-radius:999px;font-size:15px;font-weight:500;color:var(--muted);transition:color .2s,background .2s}
+.appbar .tabs button:hover{color:var(--ink)}
+.appbar .tabs button[aria-pressed="true"]{color:var(--ink);background:var(--mist)}
 .appbar .brand small{font-family:var(--serif);font-style:italic;font-weight:400;font-size:19px;color:var(--muted);letter-spacing:-.01em;margin-left:2px}
 .appbar .right{justify-self:end;display:flex;align-items:center;gap:16px;position:relative}
-.appbar .btn{padding:9px 18px;font-size:13.5px}
+.appbar .btn{height:40px;padding:0 18px;font-size:14px;background:rgba(46,99,231,.24);color:var(--navy-deep)}
+.appbar .btn:hover{background:rgba(46,99,231,.38)}
 .textlink{font-size:14px;font-weight:500;color:var(--navy-deep)}
 .textlink:hover{color:var(--ink)}
+.appbar .textlink{font-size:15px;color:var(--muted)}
+.appbar .textlink:hover{color:var(--ink)}
 /* X, Discord and docs, left of the Docs link: 16px glyphs in ink at 70% */
 .icons{display:flex;align-items:center;gap:14px}
 .ico{display:grid;place-items:center;width:16px;height:16px;color:color-mix(in srgb,var(--ink) 70%,transparent);transition:color .2s}
@@ -269,88 +319,116 @@ a.row{color:inherit}
 .ico svg.line{fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 a.ico:hover{color:var(--ink)}
 .ico.off{opacity:.38;cursor:not-allowed}
-.appmain{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:24px 22px 40px}
-/* the board splits the whole window into its three columns; the app's other pages keep a readable measure */
-#view-app.wide .appmain{max-width:none;padding-bottom:16px}
+/* every app page is the full width of the window. The board is three columns of raises; the other pages are workspaces (.ws):
+   a side column, the main column and a rail. From 1440px a workspace fills the window and its columns scroll on their own; from
+   1024px the rail is pinned on the right of one scrolling column; below that everything stacks. */
+.appmain{position:relative;z-index:1;padding:20px 24px 16px}
+.appfoot{position:relative;z-index:1;padding:0 26px 16px;font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.appfoot button{color:var(--ink-2);border-bottom:1px solid var(--hair-2)}
 #view-app.wide .appfoot{display:none}   /* the board carries its own foot line */
-.apphead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;margin:10px 0 20px}
-.apphead h1{font-weight:600;font-size:clamp(26px,3vw,36px);letter-spacing:-.045em;line-height:1.05}
-.apphead h1 i{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;margin-right:.18em}
-.apphead p{color:var(--muted);font-size:14.5px;max-width:52ch}
-.appfoot{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 22px 40px;font-size:12.5px;color:var(--ink-2);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
-.appfoot button{color:var(--muted);border-bottom:1px solid var(--hair-2)}
-
-/* stats strip */
-.stats{position:relative;display:grid;grid-template-columns:repeat(4,1fr);margin-bottom:16px}
-.stat{padding:16px 20px;position:relative}
-.stat+.stat::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:1px;background:var(--hair)}
-.stat dt{font-size:12.5px;color:var(--muted)}
-.stat dd{font-family:var(--mono);font-size:20px;letter-spacing:-.05em;margin-top:4px;color:var(--ink);font-variant-numeric:tabular-nums}
-.stat dd small{font-size:12.5px;color:var(--faint);letter-spacing:-.02em;margin-left:4px}
+.ws{display:flex;flex-direction:column;gap:18px;font-size:15px}
+.ws-side,.ws-main,.ws-rail{display:flex;flex-direction:column;gap:18px;min-width:0}
+@media (min-width:1024px) and (max-width:1439px){
+  .ws{display:grid;grid-template-columns:minmax(0,1fr) 380px;align-items:start}
+  .ws-side,.ws-main{grid-column:1}
+  .ws-rail{grid-column:2;grid-row:1 / span 2;position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);max-height:calc(100dvh - 100px);overflow-y:auto;overscroll-behavior:contain;border-radius:18px}
+}
+@media (min-width:1440px){
+  #view-app.fit{display:flex;flex-direction:column;height:100dvh}
+  #view-app.fit .appmain{flex:1;min-height:0;width:100%;display:flex;flex-direction:column}
+  #view-app.fit .appmain>section{flex:1;min-height:0;display:flex;flex-direction:column}
+  .ws{flex:1;min-height:0;display:grid;grid-template-columns:var(--col-side) minmax(0,1fr) var(--col-rail);grid-template-rows:minmax(0,1fr)}
+  .ws-side,.ws-main,.ws-rail{min-height:0;overflow-y:auto;overscroll-behavior:contain;border-radius:18px}
+  .ws-side>*,.ws-main>*,.ws-rail>*{flex:none}
+}
+/* the card that names a page, at the top of its side column; .card-h is the title of a card whose body is a list */
+.pagehead{padding:28px 24px 24px}
+.pagehead h1{font-weight:600;font-size:30px;letter-spacing:-.045em;line-height:1.05}
+.pagehead h1 i{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.12em;margin-right:.18em}
+.pagehead p{margin-top:14px;color:var(--muted);font-size:15px;line-height:1.55}
+.steps{display:flex;flex-direction:column;margin-top:20px}
+.steps button{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid var(--hair);font-size:15px;font-weight:500;color:var(--ink-2);text-align:left;transition:color .5s var(--soft),padding-left .5s var(--soft)}
+.steps button:last-child{padding-bottom:0}
+.steps button:hover{padding-left:4px}
+.steps button:hover{color:var(--navy-deep)}
+.steps .num{font-size:11.5px;font-weight:500;background:var(--navy-wash);color:var(--navy-deep);border-radius:6px;padding:4px 6px}
+.card-h{padding:24px 24px 14px;font-size:18px;font-weight:600;letter-spacing:-.03em;line-height:1.2}
+/* in the side column a raise row stacks: project and action, then the bar, then raised and time */
+#mineList .row{grid-template-columns:1fr auto;grid-template-areas:"proj act" "prog prog" "raised time";row-gap:12px;padding:16px 24px;border-top:1px solid var(--hair);border-bottom:0}
+#mineList .c-proj{grid-area:proj}#mineList .c-act{grid-area:act}#mineList .c-prog{grid-area:prog}#mineList .c-raised{grid-area:raised;text-align:left}#mineList .c-time{grid-area:time}
+#mineList .empty{padding:4px 24px 26px;text-align:left}
 
 /* toolbar */
-.mini{display:flex;align-items:center;border:1px solid var(--hair);border-radius:999px;background:var(--paper);height:37px;padding:0 14px;gap:8px;transition:border-color .2s,box-shadow .2s}
+.mini{display:flex;align-items:center;border:1px solid var(--hair);border-radius:12px;background:var(--paper);height:40px;padding:0 14px;gap:8px;transition:border-color .2s,box-shadow .2s}
 .mini:focus-within{border-color:var(--navy);box-shadow:0 0 0 4px var(--ring)}
-.mini input,.mini select{border:0;outline:0;background:transparent;font-size:13px;min-width:0}
-.mini svg{width:14px;height:14px;stroke:var(--faint);fill:none;stroke-width:1.8;stroke-linecap:round;flex:none}
+.mini input,.mini select{border:0;outline:0;background:transparent;font-size:14px;min-width:0}
+.mini svg{width:15px;height:15px;stroke:var(--faint);fill:none;stroke-width:1.8;stroke-linecap:round;flex:none}
 .mini select{font-weight:600;color:var(--ink-2);cursor:pointer;padding-right:2px}
 .mini.search input{width:150px}
-.quick{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);font-weight:600}
-.quick .mini{padding:0 12px;height:37px}
-.quick .mini input{width:46px;font-family:var(--mono);font-size:13px;text-align:right;letter-spacing:-.03em}
-.quick .mini span{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.quick{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);font-weight:600}
+.quick .mini{padding:0 16px;height:50px;border-radius:14px}
+.quick .mini input{width:46px;font-family:var(--mono);font-size:15px;text-align:right;letter-spacing:-.03em}
+.quick .mini span{font-family:var(--mono);font-size:13px;color:var(--faint)}
 
 /* terminal grid */
-/* the terminal is a board: new ideas (live, under halfway), seeding (live, past halfway), seeded. Three tall glass columns that scroll on
-   their own. A row is a presale and links to its page in a new tab; the quick-buy pill is raised above that link. */
+/* the terminal is a board: new ideas (live, under halfway), seeding (live, past halfway), seeded. Three tall columns that scroll on
+   their own. A row is a raise and links to its page in a new tab; the quick-buy button is raised above that link. */
 .board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
-.col{display:flex;flex-direction:column;height:calc(100dvh - 186px);min-height:460px;padding:20px 14px 0;border-radius:24px}
-.col-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:2px 8px 16px}
-.col-head h2{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:600;letter-spacing:-.035em;line-height:1.1;white-space:nowrap}
+.col{display:flex;flex-direction:column;height:calc(100dvh - 214px);min-height:460px;padding:24px 18px 0}
+.col-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 6px 20px}
+.col-head h2{display:flex;align-items:center;gap:11px;font-size:20px;font-weight:600;letter-spacing:-.035em;line-height:1.1;white-space:nowrap}
 .col-head h2 svg{flex:none;width:22px;height:22px;stroke:var(--navy-deep);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.col-head h2 .tag{font-size:12px;letter-spacing:-.01em}
-.col-side{display:flex;align-items:center;gap:10px;min-width:0}
-.col-note{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.col-head h2 .tag{font-size:13px;letter-spacing:-.01em}
+.col-side{display:flex;align-items:center;gap:12px;min-width:0}
+.col-note{font-size:14px;color:var(--muted);white-space:nowrap}
 /* a narrow column keeps its title and its sort; the note is the first thing to go */
 .col{container-type:inline-size}
-@container (max-width:400px){.col-note{display:none}}
+@container (max-width:460px){.col-note{display:none}}
 /* each column sorts on its own: a small dropdown in its head */
-.col-sort{height:28px;padding:0 6px 0 10px;gap:4px;border-radius:999px}
-.col-sort select{font-size:12px;font-weight:600;color:var(--ink-2)}
-.col-sort svg{width:11px;height:11px}
-.col-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:10px;padding:2px 0 16px}
-.col-empty{padding:30px 12px 34px;text-align:center;color:var(--muted);font-size:14px}
-.col-empty .mark{width:44px;height:44px;margin:0 auto 10px;color:var(--navy-soft)}
+.col-sort{height:36px;padding:0 8px 0 12px;gap:4px;border-radius:10px}
+.col-sort select{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.col-sort svg{width:12px;height:12px}
+.col-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:12px;padding:0 0 18px}
+.col-empty{padding:36px 12px 40px;text-align:center;color:var(--muted);font-size:15px}
+.col-empty .mark{width:48px;height:48px;margin:0 auto 12px;color:var(--navy-soft)}
 .col-empty a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
-.br{position:relative;flex:none;display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border:1px solid var(--hair);border-radius:16px;background:var(--paper);transition:box-shadow .25s,border-color .25s}
-.br:hover{border-color:var(--hair-2);box-shadow:var(--lift)}
+.br{position:relative;flex:none;display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:16px;align-items:center;padding:18px;border:1px solid transparent;border-radius:16px;background:var(--tile);transition:background .25s,border-color .25s}
+.br:hover{border-color:var(--hair-2);background:var(--mist)}
+.br:hover .br-av{transform:scale(1.07)}
 .br .pick::after{border-radius:16px}
-.br-av{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(150deg,hsl(var(--h) 90% 93%/.95),hsl(calc(var(--h) + 55) 90% 87%/.85))}
+.br-av{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;transition:transform .9s var(--soft);background:linear-gradient(150deg,hsl(var(--h) 90% 93%/.95),hsl(calc(var(--h) + 55) 90% 87%/.85))}
 .br-av svg{width:56%;height:56%;fill:hsl(calc(var(--h) + 20) 42% 44%)}
 .br-main{min-width:0}
-.br .pick{display:flex;align-items:baseline;gap:7px;min-width:0;white-space:nowrap}
-.br .pick b{font-size:14.5px;font-weight:600;letter-spacing:-.01em}
-.br .pick span{font-size:12.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
-.br-meta{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden}
-.br-meta .tag{font-size:10.5px;padding:1px 7px}
-.br .c-prog{margin-top:8px;gap:8px}
-.br .bar{height:4px}
-.br .pct{font-size:11.5px;width:32px}
-.br-side{display:flex;flex-direction:column;align-items:flex-end;gap:3px;text-align:right;white-space:nowrap}
-.br-val{font-size:13px;color:var(--ink)}
-.br-val em{font-style:normal;color:var(--faint);font-size:11.5px}
-.br-sub{font-size:11.5px;color:var(--muted)}
-.br .t-act{margin-top:5px}
+.br .pick{display:flex;align-items:baseline;gap:9px;min-width:0;white-space:nowrap}
+.br .pick b{font-size:17px;font-weight:600;letter-spacing:-.02em}
+.br .pick span{font-size:14.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.br-meta{display:flex;align-items:center;gap:8px;margin-top:7px;font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.br-meta .tag{font-size:12px;padding:2px 9px}
+.br .c-prog{margin-top:13px;gap:10px}
+.br .bar{height:6px}
+.br .pct{font-size:13.5px;width:38px}
+.br-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;white-space:nowrap}
+.br-val{font-size:15.5px;color:var(--ink)}
+.br-val em{font-style:normal;color:var(--faint);font-size:13px}
+.br-sub{font-size:13.5px;color:var(--muted)}
+.br .t-act{margin-top:9px}
 .br .t-act:empty{display:none}
-.br .qb{background:var(--accent);border-color:var(--accent);color:#fff;padding:8px 14px}
+.br .qb{background:var(--accent);border-color:var(--accent);color:#fff;padding:10px 16px;font-size:14px}
 .br .qb:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+/* in a narrow column the figures and the buy button drop to a line of their own under the raise */
+@container (max-width:540px){
+  .br{grid-template-columns:48px minmax(0,1fr);gap:14px;padding:16px}
+  .br-av{width:48px;height:48px}
+  .br-side{grid-column:1 / -1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 12px;text-align:left;padding-top:14px;border-top:1px solid var(--hair)}
+  .br .t-act{margin:0 0 0 auto}
+}
 /* one line under the columns: the refunded-presales note on the left, the prototype disclaimer and reset on the right. The columns are
    sized so this line sits at the foot of the window. */
-.board-foot{display:flex;align-items:baseline;gap:4px 24px;flex-wrap:wrap;margin-top:14px;font-size:12.5px;color:var(--ink-2)}
+.board-foot{display:flex;align-items:baseline;gap:4px 24px;flex-wrap:wrap;margin-top:16px;padding:0 2px;font-size:13px;color:var(--muted)}
 .board-foot #tryHint{flex:1 1 100%}   /* the demo hint takes its own line; the refund note and the disclaimer share the next */
-.board-foot .foot-note{margin-left:auto;color:var(--ink-2)}
-.board-foot button{color:var(--ink);border-bottom:1px solid var(--hair-2);margin-left:6px}
-.board-note{font-size:12.5px;color:var(--ink-2)}
+.board-foot .foot-note{margin-left:auto}
+.board-foot button{color:var(--ink-2);border-bottom:1px solid var(--hair-2);margin-left:6px}
+.board-note{font-size:13px}
 .board-note a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
 @media (max-width:1000px){.board{grid-template-columns:1fr}.col{height:auto;min-height:0}.col-list{overflow:visible}}
 /* on a wide window the board fills the window: header, toolbar, columns, then the foot line, with no page scroll. The columns take
@@ -363,14 +441,14 @@ a.ico:hover{color:var(--ink)}
   #view-app.wide .col{height:auto;min-height:0}
   #view-app.wide .board-foot{flex:none}
 }
-/* the board's toolbar: a search row (search, quick buy, start a presale), then the pair filter, which applies to all three columns */
-.xbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0 12px}
-.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+/* the board's toolbar: a search row (search, quick buy, start a raise), then the pair filter, which applies to all three columns */
+.xbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 18px}
 .filters .seg{max-width:100%;overflow-x:auto}
-.filters .seg button{padding:6px 13px;font-size:12.5px}
-.xbar .mini.search{flex:1 1 320px;height:46px;padding:0 18px;border-radius:16px;-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost)}
-.xbar .mini.search input{width:100%;font-size:14.5px}
-.xbar .btn{height:46px;border-radius:16px;padding:0 20px}
+.xbar .mini.search{flex:1 1 320px;height:50px;padding:0 18px;border-radius:14px}
+.xbar .mini.search input{width:100%;font-size:15.5px}
+.xbar .mini.search svg{width:17px;height:17px}
+.xbar .btn{height:50px;border-radius:14px;padding:0 22px;font-size:15px}
 
 .br.flash{animation:flash 1.8s ease-out}
 .br.fresh{animation:cardIn .6s var(--out) backwards;animation-delay:calc(var(--i,0)*50ms)}
@@ -378,15 +456,14 @@ a.ico:hover{color:var(--ink)}
 .pick::after{content:"";position:absolute;inset:0;border-radius:18px}
 .pick:focus-visible{outline:none}.pick:focus-visible::after{outline:2px solid var(--navy);outline-offset:2px}
 .t-act{text-align:right;position:relative;z-index:1}
-.qb{border:1px solid var(--hair-2);background:var(--chip);border-radius:999px;padding:7px 12px;font-size:12px;font-weight:600;white-space:nowrap;transition:background .2s,color .2s,border-color .2s,transform .15s}
+.qb{border:1px solid var(--hair-2);background:var(--chip);border-radius:10px;padding:9px 16px;font-size:13.5px;font-weight:600;white-space:nowrap;transition:background .2s,color .2s,border-color .2s,transform .15s}
 .qb:hover,.qb.hot{background:var(--accent);border-color:var(--accent);color:#fff}
-.qb:active{transform:translateY(1px)}
+.qb:active{transform:scale(.97)}
 .qb[disabled]{opacity:.5;cursor:wait}
 .qb .num{font-weight:500}
 
-/* a presale's own page. Every list opens it in a new browser tab, so the list stays where it was. Stacked on a phone; on a wide screen
+/* a raise's own page. Every list opens it in a new browser tab, so the list stays where it was. Stacked on a phone; on a wide screen
    the raise sits on the left (readout, chart, recent buys) and the buy on the right (amount, terms, facts). */
-#tab-presale{max-width:1400px;margin:0 auto}
 .back{display:inline-block;margin:4px 0 14px}
 .ppage{padding:30px 32px}
 .ppage .sh-head .nm b{font-size:26px}
@@ -418,109 +495,127 @@ a.ico:hover{color:var(--ink)}
 .split div{padding:10px 13px}.split div+div{border-left:1px solid var(--hair)}
 .split dt{font-size:11.5px;color:var(--faint)}.split dd{font-family:var(--mono);font-size:13px;letter-spacing:-.03em;margin-top:1px}
 
-/* portfolio */
-.prow,.pcols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.4fr) 150px;gap:16px;align-items:center;padding:0 22px}
-.pcols{padding-top:11px;padding-bottom:11px;border-bottom:1px solid var(--hair);font-size:12.5px;color:var(--faint);font-weight:500}
-.prow{padding-top:14px;padding-bottom:14px;border-bottom:1px solid var(--hair)}
+/* portfolio: four figures across the top of the main column, the positions under them, the wallet in the rail */
+#pstats{grid-template-columns:repeat(4,minmax(0,1fr));gap:18px;margin:0}
+#pstats .sum{padding:22px 24px;border-color:var(--panel-line);border-radius:18px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost)}
+#pstats .sum dt{font-size:14px}
+#pstats .sum dd{font-size:32px;margin-top:6px}
+.prow,.pcols{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1fr) 92px minmax(0,1.3fr) 132px;gap:16px;align-items:center;padding:0 24px}
+.prow .c-proj,.prow .nm{overflow:hidden}.prow .meta{overflow:hidden;text-overflow:ellipsis}
+/* when the main column is narrow the status column goes: the action button already says where a position stands */
+#tab-portfolio .ws-main{container-type:inline-size}
+@container (max-width:760px){
+  .prow,.pcols{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1.3fr) 132px}
+  .pcols span:nth-child(3),.prow>span:nth-child(3){display:none}
+}
+.pcols{padding-top:4px;padding-bottom:12px;border-bottom:1px solid var(--hair);font-size:13.5px;color:var(--faint);font-weight:500}
+.prow{padding-top:18px;padding-bottom:18px;border-bottom:1px solid var(--hair)}
 .prow:last-child{border-bottom:0}
 .pcols span:nth-child(n+2),.prow>span:nth-child(n+2){text-align:right}
-.prow>span{font-size:13px}
-.two{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}
-.balances{padding:20px 22px}
-.balances h3,.subhead{font-size:15px;font-weight:600;letter-spacing:-.02em}
-.balances .bal{display:flex;justify-content:space-between;padding:11px 0;border-top:1px solid var(--hair);font-size:13.5px;margin-top:0}
-.balances .bal:first-of-type{margin-top:12px}
+.prow>span{font-size:15px}
+.balances .bal{display:flex;justify-content:space-between;padding:12px 0;border-top:1px solid var(--hair);font-size:14.5px}
+.balances .bal:first-of-type{border-top:0;padding-top:0}
+.balances .bal:last-of-type{padding-bottom:0}
 .balances .bal span:first-child{color:var(--muted)}
-.subhead{margin:30px 0 12px}
 
 /* ================================================================== docs */
-.docs{position:relative;z-index:1;max-width:1240px;margin:0 auto;padding:44px 24px 96px;display:grid;grid-template-columns:196px minmax(0,1fr);gap:52px}
-.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 92px);align-self:start;display:flex;flex-direction:column;gap:2px}
-.toc a{padding:7px 12px;border-radius:10px;color:var(--muted);font-size:14px;transition:background .2s,color .2s}
+/* the same cards as the app: the section list in a side card, each section a card with its math in a second card beside it.
+   Docs are for reading, so the page stops growing at 1560px instead of filling a very wide window. */
+.docs{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:20px 24px 72px;display:grid;grid-template-columns:clamp(230px,16vw,280px) minmax(0,1fr);gap:18px;align-items:start}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);display:flex;flex-direction:column;gap:2px;padding:14px;border:1px solid var(--panel-line);border-radius:18px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost)}
+.toc a{padding:10px 14px;border-radius:10px;color:var(--muted);font-size:15px;font-weight:500;transition:background .2s,color .2s}
 .toc a:hover{color:var(--ink)}
 .toc a.on{background:var(--navy-wash);color:var(--navy-deep);font-weight:600}
-.doc-hero{padding-bottom:36px}
-.doc-hero h1{font-size:clamp(34px,4.6vw,56px);line-height:1}
+.docs article{display:flex;flex-direction:column;gap:18px;min-width:0}
+.doc-hero,.prose,.aside{border:1px solid var(--panel-line);border-radius:18px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost)}
+.doc-hero{position:relative;overflow:hidden;padding:40px 34px 36px}
+.doc-hero h1{font-size:clamp(34px,4.2vw,54px);line-height:1}
 .doc-hero h1 .l1{font-size:1.08em}.doc-hero h1 .l2{font-size:1em;margin-top:0}
-.doc-hero p{color:var(--muted);font-size:17px;max-width:56ch;margin-top:18px}
-.doc-sec{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,430px);gap:44px;padding:44px 0;border-top:1px solid var(--hair);scroll-margin-top:90px}
-.doc-sec h2{font-size:27px;letter-spacing:-.04em;margin-bottom:14px}
-.prose{max-width:60ch}
-.prose p{color:var(--ink-2);margin-bottom:13px;font-size:15.5px;line-height:1.62}
-.prose ol,.prose ul{margin:4px 0 14px 1.15em;color:var(--ink-2)}
-.prose li{margin-bottom:8px;padding-left:4px;line-height:1.55}
-.prose li::marker{color:var(--navy);font-family:var(--mono);font-size:13px}
+.doc-hero p{color:var(--muted);font-size:17px;max-width:62ch;margin-top:18px}
+.doc-sec{display:grid;grid-template-columns:minmax(0,1fr) var(--col-rail);gap:18px;align-items:start;scroll-margin-top:84px}
+.doc-sec h2{font-size:26px;letter-spacing:-.04em;margin-bottom:16px}
+.prose{padding:30px 34px 28px;font-size:15px}
+.prose>*{max-width:70ch}
+.prose p{color:var(--ink-2);margin-bottom:14px;font-size:16px;line-height:1.66}
+.prose ol,.prose ul{margin:4px 0 16px 1.15em;color:var(--ink-2);font-size:16px}
+.prose li{margin-bottom:9px;padding-left:4px;line-height:1.6}
+.prose li::marker{color:var(--navy);font-family:var(--mono);font-size:13.5px}
 .prose b{font-weight:600;color:var(--ink)}
-.prose .note{border:1px solid var(--hair);background:var(--mist);border-radius:14px;padding:14px 16px;font-size:14.5px;color:var(--ink-2);margin-top:6px}
-.aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 92px);align-self:start;border:1px solid var(--hair);background:var(--panel-solid);padding:20px 22px}
-.aside h3{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
-.aside h3:not(:first-of-type){margin-top:20px;padding-top:16px;border-top:1px solid var(--hair)}
-.eq{font-family:var(--serif);font-size:20px;line-height:1.5;padding:8px 0;color:var(--ink);word-spacing:.06em}
+.prose .note{border:0;background:var(--tile);border-radius:14px;padding:16px 18px;font-size:15px;color:var(--ink-2);margin-top:6px}
+.aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);padding:26px 26px 24px}
+.aside .tick{display:none}
+.aside h3{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.aside h3:not(:first-of-type){margin-top:22px;padding-top:20px;border-top:1px solid var(--hair)}
+.eq{font-family:var(--serif);font-size:21px;line-height:1.5;padding:8px 0;color:var(--ink);word-spacing:.06em}
 .eq i{font-style:italic}
 .eq sub{font-size:.62em;font-style:normal;font-family:var(--sans);vertical-align:-.35em;line-height:0}
 .eq .n{font-family:var(--mono);font-size:.7em;letter-spacing:-.03em}
 .frac{display:inline-flex;flex-direction:column;align-items:center;line-height:1.12;text-align:center;vertical-align:middle;margin:0 .15em}
 .frac>span:first-child{border-bottom:1px solid currentColor;padding:0 .4em .12em}
 .frac>span:last-child{padding:.12em .4em 0}
-.where{font-size:13px;color:var(--muted);line-height:1.5}
-.kv{display:grid;gap:0;font-size:13px}
-.kv div{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-top:1px solid var(--hair)}
+.where{font-size:14px;color:var(--muted);line-height:1.55}
+.kv{display:grid;gap:0;font-size:14.5px}
+.kv div{display:flex;justify-content:space-between;gap:16px;padding:10px 0;border-top:1px solid var(--hair)}
 .kv div:first-child{border-top:0}
 .kv dt{color:var(--muted)}.kv dd{font-family:var(--mono);letter-spacing:-.03em;text-align:right;color:var(--ink)}
 .kv dd.t{font-family:var(--sans);letter-spacing:-.01em}
-.dtable{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:4px}
-.dtable th{text-align:left;font-weight:500;color:var(--faint);font-size:12.5px;padding:8px 10px 8px 0;border-bottom:1px solid var(--hair)}
-.dtable td{padding:10px 10px 10px 0;border-bottom:1px solid var(--hair);color:var(--ink-2);vertical-align:top}
+.dtable{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:4px}
+.dtable th{text-align:left;font-weight:500;color:var(--faint);font-size:13.5px;padding:9px 12px 9px 0;border-bottom:1px solid var(--hair)}
+.dtable td{padding:12px 12px 12px 0;border-bottom:1px solid var(--hair);color:var(--ink-2);vertical-align:top}
 .dtable td.num,.dtable th.r{text-align:right}
 .dtable tr:last-child td{border-bottom:0}
-.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin:6px 0 12px}
+.calc{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:8px 0 14px}
 .calc>div{min-width:0}.calc .inp input{width:100%}
-.calc label{font-size:12px;color:var(--muted);display:block;margin-bottom:5px}
-.calc .inp{border-radius:11px}.calc .inp input{padding:9px 12px;font-family:var(--mono);font-size:14px;letter-spacing:-.03em}
+.calc label{font-size:13.5px;color:var(--muted);display:block;margin-bottom:6px}
+.calc .inp{border-radius:12px}.calc .inp input{padding:11px 14px;font-family:var(--mono);font-size:15px;letter-spacing:-.03em}
 .calc .seg{grid-column:1/-1;justify-self:start}
-.calc .seg button{padding:6px 13px;font-size:12.5px}
-.st{display:inline-block;font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;border:1px solid var(--hair-2);color:var(--muted)}
+.calc .seg button{padding:7px 14px;font-size:13.5px}
+.st{display:inline-block;font-size:12.5px;font-weight:600;border-radius:999px;padding:2px 10px;border:1px solid var(--hair-2);color:var(--muted)}
 .st.set{background:var(--accent);border-color:var(--accent);color:#fff}
 .st.open{border-style:dashed}
-.life{width:100%;height:auto;display:block;margin:6px 0 16px}
+.life{width:100%;height:auto;display:block;margin:6px 0 18px}
 
 /* ============================================================ responsive */
-@media (max-width:1099px){
-  .two{grid-template-columns:1fr}
+@media (max-width:1279px){
+  .doc-sec{grid-template-columns:minmax(0,1fr)}
+  .aside{position:static}
 }
 @media (max-width:900px){
-  .appbar{grid-template-columns:1fr auto;row-gap:10px;padding:10px 14px}
+  .appbar{grid-template-columns:1fr auto;row-gap:10px;height:auto;padding:10px 14px}
   .appbar .tabs{grid-column:1/-1;grid-row:2;justify-self:start;max-width:100%;overflow-x:auto}
   .appbar .textlink{display:none}
-  .pattern{width:320px;height:320px;top:-50px;right:-70px}
-  .appmain{padding:18px 14px 32px}
-  .stats{grid-template-columns:1fr 1fr}
-  .stat:nth-child(3)::before{display:none}
-  .stat:nth-child(n+3){border-top:1px solid var(--hair)}
+  .appmain{padding:14px 12px 20px}
+  .appfoot{padding:0 16px 20px}
+  .ws,.ws-side,.ws-main,.ws-rail{gap:12px}
+  #pstats{grid-template-columns:1fr 1fr;gap:12px}
+  #pstats .sum{padding:18px}
+  #pstats .sum dd{font-size:26px}
   .pcols{display:none}
-  .prow{grid-template-columns:1fr auto;row-gap:8px;padding:14px 16px}
+  .prow{grid-template-columns:1fr auto;row-gap:8px;padding:16px 18px}
   .prow>span:nth-child(2),.prow>span:nth-child(3){display:none}
   .prow>span:nth-child(4){grid-column:1;text-align:left}
   .prow>span:nth-child(5){grid-column:2;grid-row:1/3;align-self:center}
   .quick{width:100%}
   .mini.search{flex:1 1 100%}.mini.search input{width:100%}
-  .docs{grid-template-columns:minmax(0,1fr);gap:20px;padding:26px 16px 72px}
-  .docs article{min-width:0}
-  .toc{position:static;flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:6px;min-width:0}
+  .docs{grid-template-columns:minmax(0,1fr);gap:12px;padding:14px 12px 56px}
+  .docs article{gap:12px}
+  .toc{position:static;flex-direction:row;overflow-x:auto;gap:4px;padding:8px;min-width:0}
   .toc a{white-space:nowrap}
-  .doc-sec{grid-template-columns:minmax(0,1fr);gap:20px;padding:32px 0}
+  .doc-sec{gap:12px}
+  .doc-hero{padding:30px 22px 26px}
+  .prose{padding:24px 22px 20px}
+  .aside{padding:22px}
   .eq{font-size:18px;overflow-x:auto}
-  .aside{position:static}
 }
 
 /* ============================================= pair assets (Solana, any SPL) */
 .chain::before,.chain.sol::before{border-radius:50%;background:var(--navy)}
 .chain.unv::before{background:transparent;border:1.5px solid var(--warn)}
 .tag.warn{border-color:var(--warn-line);color:var(--warn-ink);background:var(--warn-bg)}
-.state.warnbox{background:var(--warn-bg);color:var(--warn-ink-2);font-size:13.5px;margin-top:14px}
+.state.warnbox{background:var(--warn-bg);color:var(--warn-ink-2);font-size:14.5px;margin-top:14px}
 .state.warnbox b{color:var(--warn-strong);font-size:14.5px}
 .quick .mini input{width:84px}
-.quick .mini select{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted)}
+.quick .mini select{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--muted)}
 .f .lab .hint{display:inline}
 @media (max-width:900px){.quick .mini input{width:100%}.quick .mini:first-of-type{flex:1}}
 .sh-head .meta{flex-wrap:wrap;row-gap:4px;white-space:normal}
@@ -531,17 +626,19 @@ a.ico:hover{color:var(--ink)}
 </style>
 </head>
 <body>
+<!-- the dot field behind every page; its script comes first so the field is there at first paint -->
+<canvas id="bg-dither" aria-hidden="true"></canvas>
+<script src="js/bg-dither.js"></script>
 <!-- the mark, from the brand kit: dot n at r = c√n, angle n × 137.508°, sized from 0.72c at the centre to 0.36c at the rim; the innermost dot is the
-     seed in accent blue. Dots take currentColor, the seed takes --seed. 7 dots at 32px and under, 13 to 56px, 21 to 160px, 89 for the pattern. -->
-<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="seed7" viewBox="0 0 100 100"><circle cx="41.66" cy="62.80" r="11.48" fill="var(--seed,#2E63E7)"></circle><circle cx="55.38" cy="29.57" r="10.52" fill="currentColor"></circle><circle cx="70.21" cy="73.94" r="9.57" fill="currentColor"></circle><circle cx="22.01" cy="46.47" r="8.61" fill="currentColor"></circle><circle cx="83.49" cy="32.89" r="7.65" fill="currentColor"></circle><circle cx="43.27" cy="89.74" r="6.70" fill="currentColor"></circle><circle cx="33.97" cy="14.59" r="5.74" fill="currentColor"></circle></symbol><symbol id="seed13" viewBox="0 0 100 100"><circle cx="39.96" cy="59.05" r="8.68" fill="var(--seed,#2E63E7)"></circle><circle cx="50.34" cy="33.94" r="8.31" fill="currentColor"></circle><circle cx="61.55" cy="67.48" r="7.95" fill="currentColor"></circle><circle cx="25.12" cy="46.72" r="7.59" fill="currentColor"></circle><circle cx="71.58" cy="36.45" r="7.23" fill="currentColor"></circle><circle cx="41.19" cy="79.42" r="6.87" fill="currentColor"></circle><circle cx="34.15" cy="22.62" r="6.51" fill="currentColor"></circle><circle cx="80.86" cy="62.60" r="6.15" fill="currentColor"></circle><circle cx="15.43" cy="64.71" r="5.78" fill="currentColor"></circle><circle cx="65.00" cy="16.40" r="5.42" fill="currentColor"></circle><circle cx="60.81" cy="89.04" r="5.06" fill="currentColor"></circle><circle cx="12.73" cy="29.98" r="4.70" fill="currentColor"></circle><circle cx="91.28" cy="41.59" r="4.34" fill="currentColor"></circle></symbol><symbol id="seed21" viewBox="0 0 100 100"><circle cx="42.00" cy="56.70" r="6.91" fill="var(--seed,#2E63E7)"></circle><circle cx="50.27" cy="36.69" r="6.74" fill="currentColor"></circle><circle cx="59.20" cy="63.42" r="6.57" fill="currentColor"></circle><circle cx="30.17" cy="46.87" r="6.39" fill="currentColor"></circle><circle cx="67.19" cy="38.70" r="6.22" fill="currentColor"></circle><circle cx="42.97" cy="72.93" r="6.05" fill="currentColor"></circle><circle cx="37.37" cy="27.67" r="5.88" fill="currentColor"></circle><circle cx="74.59" cy="59.53" r="5.70" fill="currentColor"></circle><circle cx="22.45" cy="61.21" r="5.53" fill="currentColor"></circle><circle cx="61.95" cy="22.72" r="5.36" fill="currentColor"></circle><circle cx="58.61" cy="80.60" r="5.18" fill="currentColor"></circle><circle cx="20.30" cy="33.54" r="5.01" fill="currentColor"></circle><circle cx="82.89" cy="42.79" r="4.84" fill="currentColor"></circle><circle cx="28.42" cy="79.61" r="4.67" fill="currentColor"></circle><circle cx="44.30" cy="13.34" r="4.49" fill="currentColor"></circle><circle cx="78.45" cy="74.97" r="4.32" fill="currentColor"></circle><circle cx="9.52" cy="51.85" r="4.15" fill="currentColor"></circle><circle cx="77.95" cy="21.48" r="3.98" fill="currentColor"></circle><circle cx="47.15" cy="92.03" r="3.80" fill="currentColor"></circle><circle cx="21.57" cy="17.25" r="3.63" fill="currentColor"></circle><circle cx="92.69" cy="56.09" r="3.46" fill="currentColor"></circle></symbol><symbol id="seed89" viewBox="0 0 100 100"><circle cx="46.22" cy="53.35" r="3.46" fill="var(--seed,#2E63E7)"></circle><circle cx="50.36" cy="43.32" r="3.44" fill="currentColor"></circle><circle cx="54.84" cy="56.72" r="3.43" fill="currentColor"></circle><circle cx="40.29" cy="48.43" r="3.41" fill="currentColor"></circle><circle cx="58.85" cy="44.33" r="3.39" fill="currentColor"></circle><circle cx="46.71" cy="61.48" r="3.37" fill="currentColor"></circle><circle cx="43.90" cy="38.80" r="3.35" fill="currentColor"></circle><circle cx="62.55" cy="54.77" r="3.33" fill="currentColor"></circle><circle cx="36.43" cy="55.61" r="3.31" fill="currentColor"></circle><circle cx="56.22" cy="36.32" r="3.29" fill="currentColor"></circle><circle cx="54.55" cy="65.33" r="3.27" fill="currentColor"></circle><circle cx="35.35" cy="41.74" r="3.25" fill="currentColor"></circle><circle cx="66.71" cy="46.38" r="3.23" fill="currentColor"></circle><circle cx="39.41" cy="64.83" r="3.21" fill="currentColor"></circle><circle cx="47.37" cy="31.62" r="3.19" fill="currentColor"></circle><circle cx="64.49" cy="62.51" r="3.17" fill="currentColor"></circle><circle cx="29.95" cy="50.92" r="3.15" fill="currentColor"></circle><circle cx="64.24" cy="35.70" r="3.13" fill="currentColor"></circle><circle cx="48.80" cy="71.05" r="3.11" fill="currentColor"></circle><circle cx="35.98" cy="33.58" r="3.09" fill="currentColor"></circle><circle cx="71.62" cy="53.04" r="3.07" fill="currentColor"></circle><circle cx="31.24" cy="62.99" r="3.05" fill="currentColor"></circle><circle cx="54.83" cy="27.59" r="3.03" fill="currentColor"></circle><circle cx="61.49" cy="70.56" r="3.01" fill="currentColor"></circle><circle cx="26.85" cy="42.79" r="2.99" fill="currentColor"></circle><circle cx="72.04" cy="39.81" r="2.97" fill="currentColor"></circle><circle cx="40.12" cy="73.17" r="2.95" fill="currentColor"></circle><circle cx="41.15" cy="26.14" r="2.93" fill="currentColor"></circle><circle cx="72.71" cy="62.16" r="2.91" fill="currentColor"></circle><circle cx="24.28" cy="56.82" r="2.89" fill="currentColor"></circle><circle cx="64.26" cy="27.57" r="2.87" fill="currentColor"></circle><circle cx="54.38" cy="76.93" r="2.85" fill="currentColor"></circle><circle cx="27.91" cy="33.18" r="2.83" fill="currentColor"></circle><circle cx="77.73" cy="47.79" r="2.81" fill="currentColor"></circle><circle cx="30.44" cy="71.00" r="2.80" fill="currentColor"></circle><circle cx="49.91" cy="21.23" r="2.78" fill="currentColor"></circle><circle cx="69.44" cy="71.78" r="2.76" fill="currentColor"></circle><circle cx="20.23" cy="47.36" r="2.74" fill="currentColor"></circle><circle cx="73.71" cy="31.93" r="2.72" fill="currentColor"></circle><circle cx="44.32" cy="80.04" r="2.70" fill="currentColor"></circle><circle cx="33.36" cy="24.02" r="2.68" fill="currentColor"></circle><circle cx="79.84" cy="58.34" r="2.66" fill="currentColor"></circle><circle cx="21.70" cy="64.51" r="2.64" fill="currentColor"></circle><circle cx="60.86" cy="20.17" r="2.62" fill="currentColor"></circle><circle cx="61.94" cy="80.00" r="2.60" fill="currentColor"></circle><circle cx="20.28" cy="36.13" r="2.58" fill="currentColor"></circle><circle cx="81.29" cy="40.38" r="2.56" fill="currentColor"></circle><circle cx="32.91" cy="78.86" r="2.54" fill="currentColor"></circle><circle cx="42.70" cy="17.17" r="2.52" fill="currentColor"></circle><circle cx="77.51" cy="69.81" r="2.50" fill="currentColor"></circle><circle cx="15.67" cy="54.35" r="2.48" fill="currentColor"></circle><circle cx="72.26" cy="23.68" r="2.46" fill="currentColor"></circle><circle cx="51.05" cy="85.11" r="2.44" fill="currentColor"></circle><circle cx="24.95" cy="24.92" r="2.42" fill="currentColor"></circle><circle cx="85.41" cy="51.92" r="2.40" fill="currentColor"></circle><circle cx="22.01" cy="73.04" r="2.38" fill="currentColor"></circle><circle cx="54.79" cy="14.12" r="2.36" fill="currentColor"></circle><circle cx="70.55" cy="80.28" r="2.34" fill="currentColor"></circle><circle cx="13.75" cy="41.81" r="2.32" fill="currentColor"></circle><circle cx="82.20" cy="31.73" r="2.30" fill="currentColor"></circle><circle cx="38.17" cy="85.85" r="2.28" fill="currentColor"></circle><circle cx="34.05" cy="15.63" r="2.26" fill="currentColor"></circle><circle cx="84.93" cy="65.02" r="2.24" fill="currentColor"></circle><circle cx="13.48" cy="62.95" r="2.22" fill="currentColor"></circle><circle cx="67.98" cy="15.85" r="2.20" fill="currentColor"></circle><circle cx="59.55" cy="87.95" r="2.19" fill="currentColor"></circle><circle cx="16.74" cy="28.64" r="2.17" fill="currentColor"></circle><circle cx="88.91" cy="43.57" r="2.15" fill="currentColor"></circle><circle cx="25.14" cy="81.58" r="2.13" fill="currentColor"></circle><circle cx="46.64" cy="9.97" r="2.11" fill="currentColor"></circle><circle cx="79.40" cy="77.78" r="2.09" fill="currentColor"></circle><circle cx="8.94" cy="49.70" r="2.07" fill="currentColor"></circle><circle cx="80.35" cy="22.63" r="2.05" fill="currentColor"></circle><circle cx="45.75" cy="91.30" r="2.03" fill="currentColor"></circle><circle cx="24.74" cy="16.79" r="2.01" fill="currentColor"></circle><circle cx="91.00" cy="57.81" r="1.99" fill="currentColor"></circle><circle cx="13.92" cy="72.42" r="1.97" fill="currentColor"></circle><circle cx="61.20" cy="9.17" r="1.95" fill="currentColor"></circle><circle cx="69.11" cy="88.25" r="1.93" fill="currentColor"></circle><circle cx="9.49" cy="34.94" r="1.91" fill="currentColor"></circle><circle cx="89.96" cy="33.97" r="1.89" fill="currentColor"></circle><circle cx="30.92" cy="89.39" r="1.87" fill="currentColor"></circle><circle cx="37.06" cy="8.15" r="1.85" fill="currentColor"></circle><circle cx="87.71" cy="72.59" r="1.83" fill="currentColor"></circle><circle cx="6.35" cy="59.20" r="1.81" fill="currentColor"></circle><circle cx="75.79" cy="13.85" r="1.79" fill="currentColor"></circle><circle cx="55.10" cy="94.67" r="1.77" fill="currentColor"></circle><circle cx="15.54" cy="20.68" r="1.75" fill="currentColor"></circle><circle cx="95.14" cy="48.67" r="1.73" fill="currentColor"></circle></symbol></defs></svg>
-<svg class="pattern" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed89"/></svg>
+     seed in accent blue. Dots take currentColor, the seed takes --seed. 7 dots at 32px and under, 13 to 56px, 21 to 160px. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="seed7" viewBox="0 0 100 100"><circle cx="41.66" cy="62.80" r="11.48" fill="var(--seed,#2E63E7)"></circle><circle cx="55.38" cy="29.57" r="10.52" fill="currentColor"></circle><circle cx="70.21" cy="73.94" r="9.57" fill="currentColor"></circle><circle cx="22.01" cy="46.47" r="8.61" fill="currentColor"></circle><circle cx="83.49" cy="32.89" r="7.65" fill="currentColor"></circle><circle cx="43.27" cy="89.74" r="6.70" fill="currentColor"></circle><circle cx="33.97" cy="14.59" r="5.74" fill="currentColor"></circle></symbol><symbol id="seed13" viewBox="0 0 100 100"><circle cx="39.96" cy="59.05" r="8.68" fill="var(--seed,#2E63E7)"></circle><circle cx="50.34" cy="33.94" r="8.31" fill="currentColor"></circle><circle cx="61.55" cy="67.48" r="7.95" fill="currentColor"></circle><circle cx="25.12" cy="46.72" r="7.59" fill="currentColor"></circle><circle cx="71.58" cy="36.45" r="7.23" fill="currentColor"></circle><circle cx="41.19" cy="79.42" r="6.87" fill="currentColor"></circle><circle cx="34.15" cy="22.62" r="6.51" fill="currentColor"></circle><circle cx="80.86" cy="62.60" r="6.15" fill="currentColor"></circle><circle cx="15.43" cy="64.71" r="5.78" fill="currentColor"></circle><circle cx="65.00" cy="16.40" r="5.42" fill="currentColor"></circle><circle cx="60.81" cy="89.04" r="5.06" fill="currentColor"></circle><circle cx="12.73" cy="29.98" r="4.70" fill="currentColor"></circle><circle cx="91.28" cy="41.59" r="4.34" fill="currentColor"></circle></symbol><symbol id="seed21" viewBox="0 0 100 100"><circle cx="42.00" cy="56.70" r="6.91" fill="var(--seed,#2E63E7)"></circle><circle cx="50.27" cy="36.69" r="6.74" fill="currentColor"></circle><circle cx="59.20" cy="63.42" r="6.57" fill="currentColor"></circle><circle cx="30.17" cy="46.87" r="6.39" fill="currentColor"></circle><circle cx="67.19" cy="38.70" r="6.22" fill="currentColor"></circle><circle cx="42.97" cy="72.93" r="6.05" fill="currentColor"></circle><circle cx="37.37" cy="27.67" r="5.88" fill="currentColor"></circle><circle cx="74.59" cy="59.53" r="5.70" fill="currentColor"></circle><circle cx="22.45" cy="61.21" r="5.53" fill="currentColor"></circle><circle cx="61.95" cy="22.72" r="5.36" fill="currentColor"></circle><circle cx="58.61" cy="80.60" r="5.18" fill="currentColor"></circle><circle cx="20.30" cy="33.54" r="5.01" fill="currentColor"></circle><circle cx="82.89" cy="42.79" r="4.84" fill="currentColor"></circle><circle cx="28.42" cy="79.61" r="4.67" fill="currentColor"></circle><circle cx="44.30" cy="13.34" r="4.49" fill="currentColor"></circle><circle cx="78.45" cy="74.97" r="4.32" fill="currentColor"></circle><circle cx="9.52" cy="51.85" r="4.15" fill="currentColor"></circle><circle cx="77.95" cy="21.48" r="3.98" fill="currentColor"></circle><circle cx="47.15" cy="92.03" r="3.80" fill="currentColor"></circle><circle cx="21.57" cy="17.25" r="3.63" fill="currentColor"></circle><circle cx="92.69" cy="56.09" r="3.46" fill="currentColor"></circle></symbol></defs></svg>
 
 <!-- ######################################################################
      APP
      ###################################################################### -->
 <div class="view" id="view-app">
 <header class="appbar">
-  <a href="#" class="brand" aria-label="Seed home"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed13"/></svg>Seed</a>
+  <a href="#" class="brand" aria-label="Seed home"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>Seed</a>
   <div class="seg tabs" id="tabSeg" role="group" aria-label="App sections">
     <span class="seg-ind" aria-hidden="true"></span>
     <button data-v="terminal" aria-pressed="true">Terminal</button>
@@ -565,11 +662,11 @@ a.ico:hover{color:var(--ink)}
   <section id="tab-terminal">
     <div class="xbar">
       <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="bq" placeholder="Search the board by name or ticker" autocomplete="off" aria-label="Search the board"></label>
-      <div class="quick"><span>Quick buy</span>
-        <label class="mini"><input id="qbAmt" inputmode="decimal" aria-label="Quick buy amount"></label>
-        <label class="mini"><select id="qbAsset" aria-label="Quick buy asset"></select></label>
+      <div class="quick"><span>Quick deposit</span>
+        <label class="mini"><input id="qbAmt" inputmode="decimal" aria-label="Quick deposit amount"></label>
+        <label class="mini"><select id="qbAsset" aria-label="Quick deposit asset"></select></label>
       </div>
-      <a class="btn btn-ink" href="#/launch"><span aria-hidden="true">+</span> Start a presale</a>
+      <a class="btn btn-ink" href="#/launch"><span aria-hidden="true">+</span> Start a raise</a>
     </div>
     <div class="filters">
       <div class="seg" id="assetSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span>
@@ -582,7 +679,7 @@ a.ico:hover{color:var(--ink)}
     </div>
     <div class="board-foot">
       <p class="board-note" id="tryHint" hidden></p><p class="board-note" id="refundNote" hidden></p>
-      <span class="foot-note">Prototype. Presale data is simulated and no transactions are sent. A connected wallet is only read for its address and balances. <button data-reset>Reset demo</button></span>
+      <span class="foot-note">Prototype. Raise data is simulated and no transactions are sent. A connected wallet is only read for its address and balances. <button data-reset>Reset demo</button></span>
     </div>
   </section>
 
@@ -591,11 +688,16 @@ a.ico:hover{color:var(--ink)}
     <div id="presalePage"></div>
   </section>
   <section id="tab-launch" hidden>
-    <div class="apphead">
-      <h1><i>Start</i>a presale</h1>
-      <p>Everything backers see on your project page, and the risk checks they will read, before you open. The supply is fixed at 1B with mint authority revoked. Opening is free.</p>
-    </div>
-    <div class="launch">
+    <div class="ws">
+      <aside class="ws-side" aria-label="About this form">
+        <section class="panel pagehead">
+          <h1><i>Start</i>a raise</h1>
+          <p>Everything backers see on your project page, and the risk checks they will read, before you open. The supply is fixed at 1B with mint authority revoked. Opening is free.</p>
+          <nav class="steps" aria-label="Form sections"><button type="button" data-step="1"><span class="num">01</span>Project</button><button type="button" data-step="2"><span class="num">02</span>Raise</button><button type="button" data-step="3"><span class="num">03</span>Tokenomics</button><button type="button" data-step="4"><span class="num">04</span>Team</button><button type="button" data-step="5"><span class="num">05</span>Roadmap</button><button type="button" data-step="6"><span class="num">06</span>Links</button></nav>
+        </section>
+        <section class="panel"><h3 class="card-h">Your raises</h3><div id="mineList"></div></section>
+      </aside>
+      <div class="ws-main">
       <form class="panel lform" id="form" novalidate autocomplete="off">
         <fieldset><legend><span class="num">01</span>Project</legend><div class="form">
         <div class="f"><label for="fName">Project name</label><div class="inp"><input id="fName" maxlength="24" placeholder="Kiln"></div></div>
@@ -603,12 +705,14 @@ a.ico:hover{color:var(--ink)}
         <div class="f full"><label for="fIdea">Tagline<span class="hint" id="ideaCt">0 / 80</span></label><div class="inp"><input id="fIdea" maxlength="80" placeholder="What are backers funding, in one line?"></div></div>
         <div class="f full"><label for="fDesc">Description<span class="hint">Markdown. Headings, lists, links and bold work.</span><button type="button" class="linkbtn" id="descToggle">Preview</button></label>
           <textarea id="fDesc" class="ta" rows="7" maxlength="6000" placeholder="What it is, who it is for, and what the raise pays for."></textarea><div class="md desc-pv" id="descPv" hidden></div></div>
-        <div class="f full"><span class="lab">Banner<span class="hint">3:1, shown 200px tall. Drag the preview to choose the crop. PNG, JPEG or WebP, 10 MB at most.</span></span>
-          <div class="drop wide" id="upBanner" data-kind="banner" data-accept="image/png,image/jpeg,image/webp"><input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Banner image"><div class="crop" data-crop><span>Drop an image or choose a file</span></div></div></div>
-        <div class="f"><span class="lab">Token art<span class="hint">1:1</span></span>
-          <div class="drop square" id="upArt" data-kind="art" data-accept="image/png,image/jpeg,image/webp"><input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Token art"><div class="crop" data-crop><span>Drop an image</span></div></div></div>
-        <div class="f"><span class="lab">Deck<span class="hint">PDF, 10 MB at most</span></span>
-          <div class="drop doc" id="upDeck" data-kind="deck" data-accept="application/pdf"><input type="file" accept="application/pdf" aria-label="Deck PDF"><div class="crop" data-crop><span>Drop a PDF</span></div></div></div>
+        <div class="f full media">
+          <div class="f m-banner"><span class="lab">Banner<span class="hint">3:1. Drag the preview to choose the crop. PNG, JPEG or WebP, 10 MB at most.</span></span>
+            <div class="drop wide" id="upBanner" data-kind="banner" data-accept="image/png,image/jpeg,image/webp"><input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Banner image"><div class="crop" data-crop><span>Drop an image or choose a file</span></div></div></div>
+          <div class="f m-art"><span class="lab">Token art<span class="hint">1:1</span></span>
+            <div class="drop square" id="upArt" data-kind="art" data-accept="image/png,image/jpeg,image/webp"><input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Token art"><div class="crop" data-crop><span>Drop an image</span></div></div></div>
+          <div class="f m-deck"><span class="lab">Deck<span class="hint">PDF, 10 MB at most</span></span>
+            <div class="drop doc" id="upDeck" data-kind="deck" data-accept="application/pdf"><input type="file" accept="application/pdf" aria-label="Deck PDF"><div class="crop" data-crop><span>Drop a PDF</span></div></div></div>
+        </div>
         </div></fieldset>
 
         <fieldset><legend><span class="num">02</span>Raise</legend><div class="form">
@@ -629,8 +733,8 @@ a.ico:hover{color:var(--ink)}
         </div></fieldset>
 
         <fieldset><legend><span class="num">03</span>Tokenomics</legend>
-          <p class="fs-note">The presale share and the pool share are always equal, which is what opens the pool at the presale price. Everything must add up to 100%.</p>
-          <div class="alloc-fixed"><div class="f"><label for="fShare">Presale backers</label><div class="inp"><input id="fShare" inputmode="decimal" class="num" value="40"><span class="suf">%</span></div></div>
+          <p class="fs-note">The raise share and the pool share are always equal, which is what opens the pool at the raise price. Everything must add up to 100%.</p>
+          <div class="alloc-fixed"><div class="f"><label for="fShare">Raise backers</label><div class="inp"><input id="fShare" inputmode="decimal" class="num" value="40"><span class="suf">%</span></div></div>
             <div class="f"><span class="lab">Locked Meteora pool</span><div class="inp ro"><input id="fLp" class="num" readonly tabindex="-1" value="40"><span class="suf">%</span></div></div></div>
           <div class="rows" id="allocRows"></div>
           <div class="rows-foot"><button type="button" class="qb" data-add="alloc">Add allocation</button><span class="sum-meter" id="allocSum"></span></div>
@@ -658,31 +762,42 @@ a.ico:hover{color:var(--ink)}
           <div class="f full"><label for="lGithub">GitHub</label><div class="inp"><input id="lGithub" placeholder="https://github.com/"></div></div>
         </div></fieldset>
 
-        <div class="lsubmit"><div class="err" id="fErr" role="alert"></div><button class="btn btn-navy btn-lg btn-block" id="openBtn" type="button">Open presale</button><p class="rail-cap" id="upNote"></p></div>
+        <div class="lsubmit"><div class="err" id="fErr" role="alert"></div><button class="btn btn-navy btn-lg btn-block" id="openBtn" type="button">Open raise</button><p class="rail-cap" id="upNote"></p></div>
       </form>
-      <aside class="lside">
+      </div>
+      <aside class="ws-rail" aria-label="Preview and risk checks">
         <section class="panel rail-card"><h3>How backers will see it</h3><div class="pcard"><div id="pvCard"></div></div><dl class="facts" id="pvFacts"></dl></section>
         <section class="panel rail-card" id="pvRisk"></section>
       </aside>
     </div>
-    <h3 class="subhead">Your presales</h3>
-    <div class="panel" id="mineList"></div>
   </section>
 
   <!-- ----------------------------------------------------- PORTFOLIO -->
   <section id="tab-portfolio" hidden>
-    <div class="apphead">
-      <h1><i>Your</i>positions</h1>
-      <p>What you have in open presales, and what is ready to claim.</p>
-    </div>
-    <dl class="panel stats" id="pstats"></dl>
-    <div class="two">
-      <div class="panel"><div class="pcols" aria-hidden="true"><span>Presale</span><span>You paid</span><span>Status</span><span>Yours to claim</span><span></span></div><div id="prows"></div></div>
-      <div class="panel balances"><h3>Wallet</h3><div id="pbal"></div></div>
+    <div class="ws">
+      <aside class="ws-side">
+        <section class="panel pagehead">
+          <h1><i>Your</i>positions</h1>
+          <p>What you have in open raises, and what is ready to claim.</p>
+        </section>
+      </aside>
+      <div class="ws-main">
+        <dl class="sums" id="pstats"></dl>
+        <section class="panel perf" id="perf" aria-labelledby="perfH">
+          <div class="perf-head"><h3 class="card-h" id="perfH">Performance</h3>
+            <div class="perf-ctl"><span class="tag demo-pill" id="perfDemo">Demo data</span>
+              <div class="seg mini-seg" id="perfSeg" role="group" aria-label="Performance view"><span class="seg-ind" aria-hidden="true"></span><button data-v="graph" aria-pressed="true">Graph</button><button data-v="cal" aria-pressed="false">Calendar</button></div></div></div>
+          <div id="perfBody"></div>
+        </section>
+        <section class="panel"><h3 class="card-h">Positions</h3><div class="pcols" aria-hidden="true"><span>Raise</span><span>You paid</span><span>Status</span><span>Yours</span><span></span></div><div id="prows"></div></section>
+      </div>
+      <aside class="ws-rail" aria-label="Wallet">
+        <section class="panel rail-card balances"><h3>Wallet</h3><div id="pbal"></div></section>
+      </aside>
     </div>
   </section>
 </main>
-<div class="appfoot"><span>Prototype. Presale data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.</span><button data-reset>Reset demo</button></div>
+<div class="appfoot"><span>Prototype. Raise data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.</span><button data-reset>Reset demo</button></div>
 </div>
 
 <!-- ######################################################################
@@ -690,7 +805,7 @@ a.ico:hover{color:var(--ink)}
      ###################################################################### -->
 <div class="view" id="view-docs" hidden>
 <header class="appbar">
-  <a href="#" class="brand" aria-label="Seed home"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed13"/></svg>Seed <small>docs</small></a>
+  <a href="#" class="brand" aria-label="Seed home"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>Seed <small>docs</small></a>
   <span></span>
   <div class="right"><span class="icons"><a class="ico" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><span class="ico off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span></span><a class="textlink" href="#">Terminal</a></div>
 </header>
@@ -699,14 +814,14 @@ a.ico:hover{color:var(--ink)}
   <article>
     <div class="doc-hero">
       <h1><span class="l1">How Seed works,</span><span class="l2">with the math</span></h1>
-      <p>A presale launchpad on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL, USDC, a tokenized stock or any token. If it misses its target by the deadline, every wallet gets back what it paid.</p>
-      <p>The rules of a presale, the Meteora programs underneath it, how pairing with any asset works, and the 1% protocol fee. Each section has the explanation on the left and the math beside it.</p>
+      <p>A launchpad for raises on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL, USDC, a tokenized stock or any token. If it misses its target by the deadline, every wallet gets back what it paid.</p>
+      <p>The rules of a raise, the Meteora programs underneath it, how pairing with any asset works, and the 1% protocol fee. Each section has the explanation on the left and the math beside it.</p>
     </div>
 
     <section class="doc-sec" id="d-overview" data-t="Overview">
       <div class="prose">
         <h2>Overview</h2>
-        <p>Seed is a presale launchpad on Solana, built on Meteora. A creator sets a target, a deadline and the asset the presale is paired with. Backers buy in with that asset at one fixed price.</p>
+        <p>Seed is a launchpad for raises on Solana, built on Meteora. A creator sets a target, a deadline and the asset the raise is paired with. Backers buy in with that asset at one fixed price.</p>
         <p>If the target is met, the raise opens a locked Meteora pool against the pair asset and backers claim their tokens. If the deadline passes first, no tokens are released and every backer takes back exactly what they paid.</p>
         <p>Most Meteora launchpads run a bonding curve that graduates into a DAMM v2 pool. Seed keeps the same destination and replaces the curve with Meteora's Presale Vault. Arriving early does not get you a better price, so there is no reason to race and nothing for a sniper to front-run.</p>
       </div>
@@ -714,7 +829,7 @@ a.ico:hover{color:var(--ink)}
         <h3>At a glance</h3>
         <dl class="kv">
           <div><dt>Network</dt><dd class="t">Solana</dd></div>
-          <div><dt>Presale</dt><dd class="t">Meteora Presale Vault, fixed price</dd></div>
+          <div><dt>Raise</dt><dd class="t">Meteora Presale Vault, fixed price</dd></div>
           <div><dt>Pool</dt><dd class="t">Meteora DAMM v2, locked for good</dd></div>
           <div><dt>Pairs with</dt><dd class="t">SOL, USDC, tokenized stocks, any SPL token</dd></div>
           <div><dt>Token supply</dt><dd>1,000,000,000</dd></div>
@@ -729,7 +844,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-lifecycle" data-t="Lifecycle">
       <div class="prose">
         <h2>Lifecycle</h2>
-        <svg class="life" viewBox="0 0 560 150" aria-label="A presale is live, then either seeded or refunded">
+        <svg class="life" viewBox="0 0 560 150" aria-label="A raise is live, then either seeded or refunded">
           <g fill="none" style="stroke:var(--navy)" stroke-width="1.5"><path d="M150 75h70"/><path d="M220 75c40 0 40-42 80-42h38"/><path d="M220 75c40 0 40 42 80 42h38" stroke-dasharray="3 5" style="stroke:var(--navy-soft)"/></g>
           <g font-family="Instrument Sans, sans-serif" font-size="14" font-weight="600">
             <rect x="20" y="52" width="130" height="46" rx="23" style="fill:var(--navy-wash)"/><text x="85" y="80" text-anchor="middle" style="fill:var(--navy-deep)">Live</text>
@@ -738,12 +853,12 @@ a.ico:hover{color:var(--ink)}
           </g>
           <g font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--muted)"><text x="232" y="26">R = T</text><text x="214" y="134">t = D, R &lt; T</text></g>
         </svg>
-        <p>A presale is <b>live</b> from the moment it opens. It leaves that state exactly once.</p>
+        <p>A raise is <b>live</b> from the moment it opens. It leaves that state exactly once.</p>
         <ul>
           <li><b>Seeded.</b> The raise reaches the target. The vault ends the sale on the spot, even if the deadline is days away, and the pool opens.</li>
           <li><b>Refunded.</b> The deadline arrives and the raise is still short. No tokens are released.</li>
         </ul>
-        <p>While a presale is live, withdrawals are switched off in the vault. If backers could leave early, a large wallet could fake momentum and pull out at the last minute.</p>
+        <p>While a raise is live, withdrawals are switched off in the vault. If backers could leave early, a large wallet could fake momentum and pull out at the last minute.</p>
         <p>The buy that completes the target is trimmed to what fits. If 3.4 SOL of room is left and you send 10 SOL, the vault takes what fills it and the rest never leaves your wallet.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
@@ -768,13 +883,13 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-pricing" data-t="Price and allocation">
       <div class="prose">
         <h2>Price and allocation</h2>
-        <p>Half of the supply is reserved for backers. The price is the target divided by that half, quoted in the pair asset, and it does not move while the presale is live.</p>
+        <p>Half of the supply is reserved for backers. The price is the target divided by that half, quoted in the pair asset, and it does not move while the raise is live.</p>
         <p>Your tokens are your share of the raise applied to the backer allocation. Fund 1% of the target and you receive 1% of the backer half, which is 0.5% of the whole supply.</p>
         <p>On a bonding curve the first buyer and the thousandth pay different prices for the same token. Here they pay the same, so the only question a backer has to answer is whether the idea is worth funding.</p>
         <div class="note">The calculator on the right uses the same formulas as the app. Switch the pair asset, then change the target or the amount to see every derived number.</div>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
-        <h3>Presale price, in Q per token</h3>
+        <h3>Raise price, in Q per token</h3>
         <div class="eq"><i>P</i> = <span class="frac"><span><i>T</i></span><span><i>a</i> · <i>S</i></span></span></div>
         <h3>Tokens for a contribution</h3>
         <div class="eq"><i>q<sub>i</sub></i> = <span class="frac"><span><i>c<sub>i</sub></i></span><span><i>P</i></span></span> = <i>a</i> · <i>S</i> · <span class="frac"><span><i>c<sub>i</sub></i></span><span><i>T</i></span></span></div>
@@ -792,11 +907,11 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-assets" data-t="Pair assets">
       <div class="prose">
         <h2>Pair assets</h2>
-        <p>Every presale is priced and raised in one asset, chosen by the creator when it opens. SOL and USDC are the defaults. Any other SPL token works as well: the creator pastes its mint address.</p>
-        <p>Tokenized stocks work the same way. A presale paired with NVDAx is raised in NVDAx and opens an NVDAx pool. That gives the new token price exposure to the stock. It does not give holders any shareholder rights.</p>
-        <p>Backers buy in with that asset. The 1% fee is held in it, the Meteora pool is paired against it, and a refund returns it. Nothing is swapped along the way, so there is no slippage inside a presale.</p>
-        <p>Two things change when the pair asset is volatile. The target is fixed in units of the asset, so its dollar size moves while the presale is live. After the open, the new token's dollar price moves with the pair asset even when nobody trades it.</p>
-        <p><b>Check the mint.</b> A symbol can be copied. A mint address cannot. The app marks SOL, USDC and a short list of known mints as verified. Anything else shows an Unverified tag and its full mint address in the presale panel.</p>
+        <p>Every raise is priced and paid for in one asset, chosen by the creator when it opens. SOL and USDC are the defaults. Any other SPL token works as well: the creator pastes its mint address.</p>
+        <p>Tokenized stocks work the same way. A raise paired with NVDAx is collected in NVDAx and opens an NVDAx pool. That gives the new token price exposure to the stock. It does not give holders any shareholder rights.</p>
+        <p>Backers buy in with that asset. The 1% fee is held in it, the Meteora pool is paired against it, and a refund returns it. Nothing is swapped along the way, so there is no slippage inside a raise.</p>
+        <p>Two things change when the pair asset is volatile. The target is fixed in units of the asset, so its dollar size moves while the raise is live. After the open, the new token's dollar price moves with the pair asset even when nobody trades it.</p>
+        <p><b>Check the mint.</b> A symbol can be copied. A mint address cannot. The app marks SOL, USDC and a short list of known mints as verified. Anything else shows an Unverified tag and its full mint address in the raise panel.</p>
         <div class="note">Seed rejects mints that charge a transfer fee or run a transfer hook. Either one would break the rule that a refund equals what was paid.</div>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
@@ -804,7 +919,7 @@ a.ico:hover{color:var(--ink)}
         <p class="where">Price, fee, pool depth and refunds are all measured in the pair asset. Dollar values follow from the pair asset's own price <i>p</i><sub>Q</sub>.</p>
         <div class="eq">target in USD = <i>T</i> · <i>p</i><sub>Q</sub></div>
         <div class="eq">token price in USD = <i>P</i> · <i>p</i><sub>Q</sub></div>
-        <h3>Same presale, four pairings</h3>
+        <h3>Same raise, four pairings</h3>
         <table class="dtable">
           <thead><tr><th>Target</th><th class="r">Price per token</th><th class="r">Fees if it seeds</th></tr></thead>
           <tbody>
@@ -828,7 +943,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-seeding" data-t="Seeding">
       <div class="prose">
         <h2>What happens when it seeds</h2>
-        <p>The token exists from the moment a presale opens: 1,000,000,000 supply with mint authority revoked. Half sits in the vault for backers and half waits for the pool. None of it can move until the presale resolves.</p>
+        <p>The token exists from the moment a raise opens: 1,000,000,000 supply with mint authority revoked. Half sits in the vault for backers and half waits for the pool. None of it can move until the raise resolves.</p>
         <p>When the raise reaches the target, the vault ends the sale and Seed's launcher runs the seeding step. Anyone can trigger it, and it usually lands within seconds.</p>
         <ol>
           <li>The vault stops taking buys.</li>
@@ -838,7 +953,7 @@ a.ico:hover{color:var(--ink)}
           <li>The 1% fees held in the vault go to the Seed treasury.</li>
           <li>Backers claim their tokens from the vault.</li>
         </ol>
-        <p>The fee rides on top of each buy, so the full target reaches the pool and the opening price equals the presale price exactly.</p>
+        <p>The fee rides on top of each buy, so the full target reaches the pool and the opening price equals the raise price exactly.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
         <h3>Where the money goes</h3>
@@ -859,7 +974,7 @@ a.ico:hover{color:var(--ink)}
           <div><dt>Opening price</dt><dd>0.0000002 SOL</dd></div>
           <div><dt>Fully diluted value at open</dt><dd>200 SOL</dd></div>
         </dl>
-        <p class="where" style="margin-top:8px">Rule of thumb: a presale opens at a fully diluted value of twice its target.</p>
+        <p class="where" style="margin-top:8px">Rule of thumb: a raise opens at a fully diluted value of twice its target.</p>
       </div>
     </section>
 
@@ -867,9 +982,9 @@ a.ico:hover{color:var(--ink)}
       <div class="prose">
         <h2>Protocol fee</h2>
         <p>Seed charges <b>1% of each buy</b>. It is the Presale Vault's deposit fee, set to 100 basis points. Pay 2 SOL and 1.98 SOL counts toward the raise while 0.02 SOL is held as the fee.</p>
-        <p>The fee sits in the vault next to the raise. If the presale misses, the vault returns both, so a failed presale costs backers nothing beyond network fees. Seed can only collect after a presale seeds.</p>
-        <p>Because the fee rides on top of the buy, the whole target reaches the pool. A 100 SOL presale opens with 100 SOL of liquidity.</p>
-        <p>Opening a presale, claiming tokens and withdrawing a refund carry no protocol fee.</p>
+        <p>The fee sits in the vault next to the funds raised. If the raise misses, the vault returns both, so a failed raise costs backers nothing beyond network fees. Seed can only collect after a raise seeds.</p>
+        <p>Because the fee rides on top of the buy, the whole target reaches the pool. A 100 SOL raise opens with 100 SOL of liquidity.</p>
+        <p>Opening a raise, claiming tokens and withdrawing a refund carry no protocol fee.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
         <h3>On each buy</h3>
@@ -882,9 +997,9 @@ a.ico:hover{color:var(--ink)}
           <thead><tr><th>Event</th><th class="r">What happens to the fee</th></tr></thead>
           <tbody>
             <tr><td>Buy in</td><td class="num">1% held in the vault</td></tr>
-            <tr><td>Presale seeds</td><td class="num">Held fees go to Seed</td></tr>
-            <tr><td>Presale misses</td><td class="num">Held fees go back to backers</td></tr>
-            <tr><td>Open a presale</td><td class="num">No fee</td></tr>
+            <tr><td>Raise seeds</td><td class="num">Held fees go to Seed</td></tr>
+            <tr><td>Raise misses</td><td class="num">Held fees go back to backers</td></tr>
+            <tr><td>Open a raise</td><td class="num">No fee</td></tr>
           </tbody>
         </table>
         <h3>Examples</h3>
@@ -900,9 +1015,9 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-refunds" data-t="Refunds">
       <div class="prose">
         <h2>Refunds</h2>
-        <p>If the deadline passes with the raise short of the target, the vault marks the presale failed. Each backer withdraws once and receives exactly what they paid: the amount that counted toward the raise plus the fee held on it.</p>
+        <p>If the deadline passes with the raise short of the target, the vault marks it failed. Each backer withdraws once and receives exactly what they paid: the amount that counted toward the raise plus the fee held on it.</p>
         <p>Refunds are pulled by backers instead of pushed by the program. A push loop over hundreds of wallets does not fit in a Solana transaction, and one bad account could stall it. With pull withdrawals, every refund is independent of every other.</p>
-        <p>Withdrawals do not expire. The supply is pulled out of the vault and burned, so a failed token never reaches a wallet. Each buy creates a small escrow account, and the rent paid for it comes back with the withdrawal. The full cost of a missed presale to a backer is two network fees.</p>
+        <p>Withdrawals do not expire. The supply is pulled out of the vault and burned, so a failed token never reaches a wallet. Each buy creates a small escrow account, and the rent paid for it comes back with the withdrawal. The full cost of a missed raise to a backer is two network fees.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
         <h3>Refund per wallet</h3>
@@ -925,8 +1040,8 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-market" data-t="After it opens">
       <div class="prose">
         <h2>After it opens</h2>
-        <p>Once seeded, the token trades in a full-range Meteora DAMM v2 pool, which is a constant-product market. The pool's depth is set by the raise: a 100 SOL presale opens with 100 SOL on the pair side.</p>
-        <p>Backers together hold as many tokens as the pool does. The pool cannot buy all of them back at the presale price. Selling moves the price down along the curve, and the first seller gets a better price than the last.</p>
+        <p>Once seeded, the token trades in a full-range Meteora DAMM v2 pool, which is a constant-product market. The pool's depth is set by the raise: a 100 SOL raise opens with 100 SOL on the pair side.</p>
+        <p>Backers together hold as many tokens as the pool does. The pool cannot buy all of them back at the raise price. Selling moves the price down along the curve, and the first seller gets a better price than the last.</p>
         <p>The table on the right shows what a backer recovers, as a share of what they paid, by selling their whole allocation at the open. It assumes nobody else has traded and leaves out the pool's own swap fee.</p>
         <div class="note">A refund covers a raise that fails. It does not cover a token that falls after it opens.</div>
       </div>
@@ -954,13 +1069,13 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-terminal" data-t="Reading the terminal">
       <div class="prose">
         <h2>Reading the terminal</h2>
-        <p>The terminal lists every presale, whatever it is paired with, along with the numbers needed to judge whether it will make its deadline.</p>
+        <p>The terminal lists every raise, whatever it is paired with, along with the numbers needed to judge whether it will make its deadline.</p>
         <ul>
           <li><b>Filled</b> is raised over target, counting buys net of the fee.</li>
-          <li><b>Pace needed</b> is how much has to arrive per hour, from now until the deadline, for the presale to seed. Compare it with the slope of the fill chart. When the dashed line is steeper than the solid one, the presale is behind.</li>
-          <li><b>Quick buy</b> sends your preset amount in one click. Presets are kept per asset, so a SOL presale uses your SOL preset and a USDC presale uses your USDC preset. The preset is what you pay, fee included. Like any buy, it is trimmed to what fits.</li>
+          <li><b>Pace needed</b> is how much has to arrive per hour, from now until the deadline, for the raise to seed. Compare it with the slope of the fill chart. When the dashed line is steeper than the solid one, the raise is behind.</li>
+          <li><b>Quick deposit</b> sends your preset amount in one click. Presets are kept per asset, so a SOL raise uses your SOL preset and a USDC raise uses your USDC preset. The preset is what you pay, fee included. Like any buy, it is trimmed to what fits.</li>
         </ul>
-        <p>Clicking a presale opens its own page in a new tab, with the fill chart, a custom amount field and the most recent buys. The terminal stays open where you left it, and the two tabs keep each other up to date.</p>
+        <p>Clicking a raise opens its own page in a new tab, with the fill chart, a custom amount field and the most recent buys. The terminal stays open where you left it, and the two tabs keep each other up to date.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
         <h3>Filled</h3>
@@ -980,14 +1095,14 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-solana" data-t="Built on Meteora">
       <div class="prose">
         <h2>Built on Meteora</h2>
-        <p>Seed does not run its own presale contract. It is assembled from two Meteora programs, the same way curve launchpads are assembled from Meteora's bonding curve and DAMM v2.</p>
+        <p>Seed does not run its own raise contract. It is assembled from two Meteora programs, the same way curve launchpads are assembled from Meteora's bonding curve and DAMM v2.</p>
         <p><b>Presale Vault</b> holds the raise and the backer half of the supply. Seed configures it as a fixed-price sale with withdrawals off and an early end at the cap. The refund rule lives in that program, not in ours.</p>
         <p><b>DAMM v2</b> is the pool. The raise and the other half of the supply go in across the full price range, and the position is permanently locked. Aggregators such as Jupiter can route to it as soon as it opens.</p>
         <p><b>Seed's launcher</b> is the glue. It creates the token and the vault in the one transaction a creator signs. After a fill it moves the raise into the pool and locks it. It is the only account the vault lets withdraw a successful raise, and it cannot touch a live or failed one.</p>
         <p>Any Solana wallet works, including Phantom, Solflare and Backpack.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
-        <h3>Presale</h3>
+        <h3>Raise</h3>
         <dl class="kv">
           <div><dt>Program</dt><dd class="t">Meteora Presale Vault</dd></div>
           <div><dt>Program ID</dt><dd>presS…KjTdbj</dd></div>
@@ -1012,13 +1127,13 @@ a.ico:hover{color:var(--ink)}
       <div class="prose">
         <h2>Risks</h2>
         <ul>
-          <li><b>Price after the open.</b> The refund guarantee ends when a presale seeds. From then on the token is a market asset and can lose value.</li>
-          <li><b>Locked funds.</b> A buy cannot be reversed while the presale is live. Your funds are tied up until it resolves, which can take the full deadline.</li>
-          <li><b>Pair asset.</b> A refund returns the asset you paid with, not its dollar value on the day you bought. If the pair asset falls while the presale is live, so does the value of your refund.</li>
+          <li><b>Price after the open.</b> The refund guarantee ends when a raise seeds. From then on the token is a market asset and can lose value.</li>
+          <li><b>Locked funds.</b> A buy cannot be reversed while the raise is live. Your funds are tied up until it resolves, which can take the full deadline.</li>
+          <li><b>Pair asset.</b> A refund returns the asset you paid with, not its dollar value on the day you bought. If the pair asset falls while the raise is live, so does the value of your refund.</li>
           <li><b>Look-alike mints.</b> Anyone can create a token called USDC. Buy only when the pair asset is verified or you have checked the mint yourself.</li>
-          <li><b>Tokenized stocks.</b> Their issuer can pause or freeze them. A presale or pool paired with one inherits that.</li>
-          <li><b>The seeding step.</b> Between a presale filling and its pool opening, the raise passes through Seed's launcher. It takes seconds, and it is the one point where backers rely on Seed instead of on Meteora's programs.</li>
-          <li><b>Creators.</b> The vault enforces the presale rules. It does not enforce that a creator builds what they described.</li>
+          <li><b>Tokenized stocks.</b> Their issuer can pause or freeze them. A raise or pool paired with one inherits that.</li>
+          <li><b>The seeding step.</b> Between a raise filling and its pool opening, the funds pass through Seed's launcher. It takes seconds, and it is the one point where backers rely on Seed instead of on Meteora's programs.</li>
+          <li><b>Creators.</b> The vault enforces the raise rules. It does not enforce that a creator builds what they described.</li>
           <li><b>Programs.</b> Smart contract risk applies here as it does to any onchain protocol. Meteora's Presale Vault is still in beta.</li>
         </ul>
       </div>
@@ -1029,7 +1144,7 @@ a.ico:hover{color:var(--ink)}
           <tbody>
             <tr><td>Raise misses its target</td><td class="num">Yes, 100%</td></tr>
             <tr><td>Raise ends one buy short of the target</td><td class="num">Yes, 100%</td></tr>
-            <tr><td>Pair asset falls while the presale is live</td><td class="num">No</td></tr>
+            <tr><td>Pair asset falls while the raise is live</td><td class="num">No</td></tr>
             <tr><td>Token falls after it opens</td><td class="num">No</td></tr>
             <tr><td>Network fees on buy and claim</td><td class="num">No</td></tr>
           </tbody>
@@ -1045,11 +1160,11 @@ a.ico:hover{color:var(--ink)}
           <thead><tr><th>Parameter</th><th>Value</th><th class="r">Status</th></tr></thead>
           <tbody>
             <tr><td>Network</td><td>Solana</td><td class="num"><span class="st set">Set</span></td></tr>
-            <tr><td>Infrastructure</td><td>Meteora, with a presale in place of the bonding curve</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Infrastructure</td><td>Meteora, with a raise in place of the bonding curve</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Pair asset</td><td>SOL, USDC, tokenized stocks or any SPL token, chosen by the creator</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Protocol fee, f</td><td>1%</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Refund on a miss</td><td>100% of what each backer paid</td><td class="num"><span class="st set">Set</span></td></tr>
-            <tr><td>Presale engine</td><td>Meteora Presale Vault: fixed price, withdrawals off, early end at the cap</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Raise engine</td><td>Meteora Presale Vault: fixed price, withdrawals off, early end at the cap</td><td class="num"><span class="st">Proposed</span></td></tr>
             <tr><td>Fee mechanism</td><td>The vault's deposit fee at 100 bps, on top of each buy, returned on a miss</td><td class="num"><span class="st">Proposed</span></td></tr>
             <tr><td>Caps</td><td>Maximum cap is the target. Minimum cap sits one token unit under it, because the vault requires the two to differ</td><td class="num"><span class="st">Proposed</span></td></tr>
             <tr><td>Pool</td><td>DAMM v2, full range, position permanently locked</td><td class="num"><span class="st">Proposed</span></td></tr>
@@ -1061,7 +1176,7 @@ a.ico:hover{color:var(--ink)}
             <tr><td>Supply on a miss</td><td>Burned</td><td class="num"><span class="st">Proposed</span></td></tr>
             <tr><td>Deadlines</td><td>24 hours, 3 days, 7 days</td><td class="num"><span class="st">Proposed</span></td></tr>
             <tr><td>Target bounds</td><td>10 to 5,000 SOL, 1,000 to 1,000,000 USDC, any amount above zero for other assets</td><td class="num"><span class="st">Proposed</span></td></tr>
-            <tr><td>Creator allocation</td><td>None. Creators buy in at the presale price</td><td class="num"><span class="st">Proposed</span></td></tr>
+            <tr><td>Creator allocation</td><td>None. Creators buy in at the raise price</td><td class="num"><span class="st">Proposed</span></td></tr>
             <tr><td>Launcher</td><td>A keeper key run by Seed at launch. A program-owned account would mean no key ever holds a raise</td><td class="num"><span class="st open">Open</span></td></tr>
             <tr><td>Fee schedule at the open</td><td>DAMM v2 can start swap fees high and decay them to deter snipers. Not decided</td><td class="num"><span class="st open">Open</span></td></tr>
             <tr><td>Swap fees earned by the locked position</td><td>Meteora's fee-sharing vault can split them between 2 to 5 wallets. Not decided</td><td class="num"><span class="st open">Open</span></td></tr>
@@ -1078,7 +1193,7 @@ a.ico:hover{color:var(--ink)}
 
 <script>
 /* ==========================================================================
-   SEED. Presale state machine: live, then seeded (target hit) or refunded (deadline passed).
+   SEED. Raise state machine: live, then seeded (target hit) or refunded (deadline passed).
    Solana only. Everything that would touch the chain goes through `adapter`, so
    calls into the Seed program can replace the simulated ones without touching the UI.
    Routes: #(terminal)  #/presale/<id>  #/launch  #/portfolio  #/docs[/section]. The old #/app/... addresses are rewritten to these.
@@ -1091,7 +1206,7 @@ const r6 = n => Math.round(n * 1e6) / 1e6;
 
 /* Solana only, built on Meteora the way Ember is, with the bonding curve swapped for a presale:
    Presale Vault (fixed price, withdrawals off, early end at the cap) holds the raise, then a DAMM v2 pool opens against the pair asset.
-   The 1% protocol fee is the vault's deposit fee: charged on top of each buy, returned in full if the presale misses. */
+   The 1% protocol fee is the vault's deposit fee: charged on top of each buy, returned in full if the raise misses. */
 const DEX = 'Meteora DAMM v2';
 const ASSETS = {
   SOL:  { sym: 'SOL',  mint: 'So11111111111111111111111111111111111111112',  dp: 2, chips: [0.5, 2, 10],      min: 10,   max: 5000,    verified: true },
@@ -1127,9 +1242,9 @@ function addr(seed) {
 }
 
 const QUICK0 = () => ({ SOL: 2, USDC: 250, JUP: 500, BONK: 5000000, NVDAx: 1 });
-let state = { wallet: null, presales: [], positions: {}, claimed: {}, quick: QUICK0(), custom: {} };
+let state = { wallet: null, presales: [], positions: {}, claimed: {}, tokens: {}, quick: QUICK0(), custom: {} };
 const ui = { view: '', tab: 'terminal', sel: null, fAsset: 'all', bq: '', sort: { new: 'new', seeding: 'filled', seeded: 'ending' }, qbAsset: 'SOL' };
-function fresh() { return { wallet: null, presales: seedData(), positions: Object.assign({}, DEMO_WALLET_BUYS), claimed: {}, quick: QUICK0(), custom: {} }; }
+function fresh() { return { wallet: null, presales: seedData(), positions: Object.assign({}, DEMO_WALLET_BUYS), claimed: {}, tokens: {}, quick: QUICK0(), custom: {} }; }
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q && s.presales[0].buys) { state = Object.assign(fresh(), s); return; } } catch (e) {}
   state = fresh();
@@ -1177,7 +1292,7 @@ const WALLETS = [
 const providerOf = id => { const w = WALLETS.find(x => x.id === id); return w ? w.get() : null; };
 const isReal = () => !!(state.wallet && state.wallet.pk);
 
-/* ---- adapter. connect() is live. The presale calls are still simulated and only run for the demo wallet: with a real
+/* ---- adapter. connect() is live. The raise calls are still simulated and only run for the demo wallet: with a real
    wallet they refuse rather than pretend, until there is a Seed program to call. */
 const NOT_LIVE = 'The Seed program is not deployed yet, so nothing was sent. Switch to the demo wallet to try this.';
 const sim = ms => async () => { if (isReal()) throw new Error(NOT_LIVE); await wait(ms); };
@@ -1192,7 +1307,7 @@ const adapter = {
     try { wallet.bal = await chainBalances(pk); } catch (e) { wallet.stale = true; }
     return wallet;
   },
-  contribute: sim(900), claimRefund: sim(800), claimTokens: sim(800), openPresale: sim(1000)
+  contribute: sim(900), claimRefund: sim(800), claimTokens: sim(800), openPresale: sim(1000), swap: sim(900)
 };
 
 /* ------------------------------------------------------------ formatting */
@@ -1260,7 +1375,7 @@ const shown = { term: new Set() };
 function freshIn(k, list) { const prev = shown[k]; shown[k] = new Set(list.map(p => p.id)); return p => prev.has(p.id) ? '' : ' fresh'; }
 /* the pair filter applies to all three columns */
 const pairOk = p => ui.fAsset === 'all' || (ui.fAsset === 'stock' ? !!Q(p).stock : ui.fAsset === 'other' ? p.q !== 'SOL' && p.q !== 'USDC' && !Q(p).stock : p.q === ui.fAsset);
-/* each column sorts on its own. Ending soon: live presales by deadline; in the seeded column it is the most recently seeded first.
+/* each column sorts on its own. Ending soon: live raises by deadline; in the seeded column it is the most recently seeded first.
    Most filled: by percentage, then newest. Newest: by when it opened. */
 function sorter(k) {
   const s = ui.sort[k];
@@ -1271,11 +1386,12 @@ function sorter(k) {
 const qbLabel = p => fmtC(Math.min(quickFor(p), payLeft(p)), p.q);
 function actCell(p) {
   const C = Q(p), pos = state.positions[p.id];
-  if (p.status === 'live') return `<button class="qb" data-qb="${p.id}">Buy <span class="num" data-qbamt>${qbLabel(p)}</span> ${esc(C.sym)}</button>`;
+  if (p.status === 'live') return `<button class="qb" data-qb="${p.id}">Deposit <span class="num" data-qbamt>${qbLabel(p)}</span> ${esc(C.sym)}</button>`;
   if (pos && !state.claimed[p.id]) return `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
-  return '';   // the card's status chip already says seeded or refunded
+  if (p.status === 'seeded') return `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Trade</a>`;   // a seeded token is bought and sold on its page
+  return '';   // the card's status chip already says refunded
 }
-/* which column a presale sits in. Refunded ones are not on the board: they are named under it, and claims live in the portfolio. */
+/* which column a raise sits in. Refunded ones are not on the board: they are named under it, and claims live in the portfolio. */
 const colOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : 'seeding') : null;
 function renderTerminal() {
   const q = ui.bq.trim().toLowerCase(), hit = state.presales.filter(p => pairOk(p) && (!q || (p.name + ' ' + p.ticker).toLowerCase().includes(q)));
@@ -1294,7 +1410,7 @@ function renderTerminal() {
       : `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${q ? `Nothing here matches "${esc(ui.bq.trim())}".` : ui.fAsset !== 'all' ? 'Nothing here with this pair.' : none[k]}</div>`;
   }
   const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live';
-  hint.hidden = !show; if (show) hint.textContent = 'To see both endings: quick-buy Osprey from the board until it fills and it seeds on the spot. Buy Moss and its deadline passes in about three minutes.';
+  hint.hidden = !show; if (show) hint.textContent = 'To see both endings: quick-deposit into Osprey from the board until it fills and it seeds on the spot. Deposit into Moss and its deadline passes in about three minutes.';
   const dead = state.presales.filter(p => p.status === 'refunded'), owed = dead.some(p => state.positions[p.id] && !state.claimed[p.id]), note = $('#refundNote');
   note.hidden = !dead.length;
   if (dead.length) note.innerHTML = `${dead.map(p => `<a href="#/presale/${p.id}" target="_blank" rel="noopener">${esc(p.name)}</a>`).join(', ')} missed ${dead.length === 1 ? 'its' : 'their'} target and refunded every backer.${owed ? ' You have a refund to claim in <a href="#/portfolio">your portfolio</a>.' : ''}`;
@@ -1319,7 +1435,7 @@ $('.board').addEventListener('click', e => {
 /* ---------------------------------------------------------------- buying */
 let busy = false;
 async function ensureWallet() { if (state.wallet) return true; await connect(); return false; }
-/* a buy lands in the presale's buy list (what the project page, its charts and the risk checks read) and extends the fill history */
+/* a buy lands in the raise's buy list (what the project page, its charts and the risk checks read) and extends the fill history */
 function record(p, who, paid, you) {
   const now = Date.now();
   p.hist.push([now, p.raised]); if (p.hist.length > 160) p.hist.splice(1, 1);
@@ -1327,10 +1443,10 @@ function record(p, who, paid, you) {
 }
 async function executeBuy(p, amt) {
   const C = Q(p);
-  if (p.status !== 'live') { toast(`${p.name} is closed to new buys.`); return false; }
+  if (p.status !== 'live') { toast(`${p.name} is closed to new deposits.`); return false; }
   let pay = Math.min(amt, payLeft(p));
-  if (!(pay > 0)) { toast(`Set an amount above zero to buy ${p.name}.`); return false; }
-  if (pay > balOf(p.q)) { toast(balOf(p.q) > 0 ? `Your wallet holds ${fmtAmt(balOf(p.q), p.q)} ${C.sym}. Lower the amount to buy.` : `Your wallet holds no ${C.sym}. This presale only takes ${C.sym}.`); return false; }
+  if (!(pay > 0)) { toast(`Set an amount above zero to deposit into ${p.name}.`); return false; }
+  if (pay > balOf(p.q)) { toast(balOf(p.q) > 0 ? `Your wallet holds ${fmtAmt(balOf(p.q), p.q)} ${C.sym}. Lower the amount to deposit.` : `Your wallet holds no ${C.sym}. This raise only takes ${C.sym}.`); return false; }
   busy = true; try { await adapter.contribute(p, pay); } catch (e) { busy = false; toast(e.message); return false; } busy = false;
   if (p.status !== 'live') { toast(`${p.name} closed before your transaction landed. Nothing was taken.`); return false; }
   pay = Math.min(pay, payLeft(p));
@@ -1340,14 +1456,54 @@ async function executeBuy(p, amt) {
   state.wallet.bal[p.q] = r6(balOf(p.q) - pay);
   p.raised = r6(p.raised + net); record(p, walletId(), pay, true);
   if (p.raised >= p.target - 1e-6) { p.raised = p.target; p.status = 'seeded'; p.resolvedAt = Date.now(); toast(`${p.name} seeded. Your tokens are ready to claim.`); }
-  else toast(`Bought ${fmtC(pay, p.q)} ${C.sym} of ${p.name}`);
+  else toast(`Deposited ${fmtC(pay, p.q)} ${C.sym} into ${p.name}`);
   save(); renderAll();
   $$(`[data-row="${p.id}"]`).forEach(r => r.classList.add('flash'));
   return true;
 }
+/* ---------------------------------------------------------------- trading a seeded token
+   A seeded token is bought and sold in the app against its pool. The demo keeps one constant-product pool per token: it opened
+   with the whole raise on one side and the pool's share of the supply on the other, which is the raise price. The pool's swap fee
+   is still open (docs, Parameters), so the demo pool charges none. Like deposits, swaps are simulated and only run for the demo
+   wallet; a real wallet is refused until the Seed program exists. */
+function ammOf(p) {
+  if (!p.amm) {
+    const x0 = p.target, y0 = SUPPLY * presaleShare(p), pool = profileOf(p).pool; let P = x0 / y0;
+    if (!(pool && isRealAddr(pool.address))) { const s = demoSeries(p, '1h', 48); P = s[s.length - 1][4]; }   // a demo token has already traded: start where its chart ends
+    const k = x0 * y0; p.amm = { x: Math.sqrt(k * P), y: Math.sqrt(k / P) };
+  }
+  return p.amm;
+}
+const spotOf = p => { const a = ammOf(p); return a.x / a.y; };
+/* tokens the wallet holds: what it claimed plus what it bought, less what it sold */
+function heldOf(p) {
+  const t = state.tokens || (state.tokens = {});
+  if (t[p.id] == null && state.claimed[p.id] === 'tokens') t[p.id] = Math.round(tokensFor(p, state.positions[p.id] || 0));   // claimed before balances were kept
+  return t[p.id] || 0;
+}
+/* side 'buy': amt of the pair asset in, tokens out. side 'sell': amt of tokens in, pair asset out. price is the pair asset per token. */
+function quoteSwap(p, side, amt) {
+  const a = ammOf(p), spot = a.x / a.y;
+  if (!(amt > 0)) return { out: 0, price: spot, impact: 0 };
+  if (side === 'buy') { const out = a.y * amt / (a.x + amt); return { out, price: amt / out, impact: 1 - spot / (amt / out) }; }
+  const out = a.x * amt / (a.y + amt); return { out, price: out / amt, impact: 1 - (out / amt) / spot };
+}
+async function executeSwap(p, side, amt) {
+  const C = Q(p), sell = side === 'sell';
+  if (p.status !== 'seeded') { toast(`${p.name} is not trading.`); return false; }
+  if (!(amt > 0)) { toast('Set an amount above zero.'); return false; }
+  if (sell ? amt > heldOf(p) + 1e-9 : amt > balOf(p.q)) { toast(sell ? `You hold ${fmtTok(heldOf(p))} $${p.ticker}.` : balOf(p.q) > 0 ? `Your wallet holds ${fmtAmt(balOf(p.q), p.q)} ${C.sym}.` : `Your wallet holds no ${C.sym}. $${p.ticker} trades against ${C.sym}.`); return false; }
+  busy = true; try { await adapter.swap(p, side, amt); } catch (e) { busy = false; toast(e.message); return false; } busy = false;
+  if (p.status !== 'seeded') return false;
+  const a = ammOf(p), q = quoteSwap(p, side, amt);
+  if (sell) { a.y += amt; a.x -= q.out; state.tokens[p.id] = Math.max(0, heldOf(p) - amt); state.wallet.bal[p.q] = r6(balOf(p.q) + q.out); toast(`Sold ${fmtTok(amt)} $${p.ticker} for ${fmtAmt(q.out, p.q)} ${C.sym}`); }
+  else { a.x += amt; a.y -= q.out; state.wallet.bal[p.q] = r6(balOf(p.q) - amt); state.tokens[p.id] = heldOf(p) + q.out; toast(`Bought ${fmtTok(q.out)} $${p.ticker}`); }
+  save(); renderAll(); if (detailBox && pg.id === p.id) loadTrading(p);
+  return true;
+}
 async function quickBuy(p, btn) {
   if (!p || busy) return;
-  if (!(await ensureWallet())) { if (state.wallet) toast('Wallet connected. Press quick buy again to send it.'); return; }
+  if (!(await ensureWallet())) { if (state.wallet) toast('Wallet connected. Press deposit again to send it.'); return; }
   btn.disabled = true; btn.textContent = 'Confirm…';
   const ok = await executeBuy(p, quickFor(p));
   if (!ok) renderTerminal();
@@ -1358,7 +1514,7 @@ async function claim(p, btn) {
   const C = Q(p), amt = state.positions[p.id];
   busy = true; btn.disabled = true; btn.textContent = 'Confirm in wallet…';
   try {
-    if (p.status === 'seeded') { await adapter.claimTokens(p); state.claimed[p.id] = 'tokens'; toast(`Claimed ${fmtTok(tokensFor(p, amt))} $${p.ticker}`); }
+    if (p.status === 'seeded') { await adapter.claimTokens(p); const had = (state.tokens = state.tokens || {})[p.id] || 0; state.tokens[p.id] = had + Math.round(tokensFor(p, amt)); state.claimed[p.id] = 'tokens'; toast(`Claimed ${fmtTok(tokensFor(p, amt))} $${p.ticker}`); }
     else { await adapter.claimRefund(p); state.wallet.bal[p.q] = r6(balOf(p.q) + amt); state.claimed[p.id] = 'refund'; toast(`Refund claimed: ${fmtAmt(amt, p.q)} ${C.sym} is back in your wallet`); }
   } catch (e) { toast(e.message); }
   busy = false; save(); renderAll();
@@ -1379,8 +1535,8 @@ function renderWallet() {
   syncOpenBtn(); seg.tabs && seg.tabs.place();
 }
 /* positions are simulated, so they belong to the demo wallet: a real wallet starts with none and hands them back when it leaves */
-function enterReal() { if (!state.demoBook) { state.demoBook = { positions: state.positions, claimed: state.claimed }; state.positions = {}; state.claimed = {}; } }
-function leaveReal() { if (state.demoBook) { state.positions = state.demoBook.positions; state.claimed = state.demoBook.claimed; delete state.demoBook; } }
+function enterReal() { if (!state.demoBook) { state.demoBook = { positions: state.positions, claimed: state.claimed, tokens: state.tokens || {} }; state.positions = {}; state.claimed = {}; state.tokens = {}; } }
+function leaveReal() { if (state.demoBook) { state.positions = state.demoBook.positions; state.claimed = state.demoBook.claimed; state.tokens = state.demoBook.tokens || {}; delete state.demoBook; } }
 function dropWallet(msg) { leaveReal(); state.wallet = null; save(); $('#walletPop').classList.remove('open'); renderAll(); if (detailBox) renderDetail(); if (msg) toast(msg); }
 let balAt = 0;
 async function refreshBalances(force) {
@@ -1489,7 +1645,7 @@ const readDraft = () => ({ name: $('#fName').value.trim(), ticker: $('#fTicker')
 function validateDraft(d, da) {
   if (d.name.length < 2) return 'Give the project a name of at least two characters.';
   if (!/^[A-Z0-9]{2,6}$/.test(d.ticker)) return 'The ticker needs 2 to 6 letters or digits.';
-  if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) return `$${d.ticker} is already in use by a live presale. Pick another ticker.`;
+  if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) return `$${d.ticker} is already in use by a live raise. Pick another ticker.`;
   if (d.idea.length < 10) return 'Describe the idea in at least ten characters so backers know what they are funding.';
   if (da.err) return da.err;
   if (isNaN(d.target) || d.target <= 0) return `Set a target in ${da.a.sym}.`;
@@ -1500,21 +1656,117 @@ $('#stockRow').addEventListener('click', e => { const b = e.target.closest('[dat
 $('#mintRow').addEventListener('click', e => { const b = e.target.closest('[data-mint]'); if (!b) return; $('#fMint').value = ASSETS[b.dataset.mint].mint; $('#fErr').textContent = ''; renderPreview(); });
 /* ------------------------------------------------------------- portfolio */
 function renderPortfolio() {
-  const ids = Object.keys(state.positions); let nLive = 0, nRef = 0, nTok = 0;
-  ids.forEach(id => { const p = find(id); if (!p) return; if (p.status === 'live') nLive++; else if (!state.claimed[id]) { if (p.status === 'refunded') nRef++; else nTok++; } });
-  $('#pstats').innerHTML = `<span class="plus" style="left:25%;top:0"></span><span class="plus" style="left:50%;top:0"></span><span class="plus" style="left:75%;top:0"></span>
-    <div class="stat"><dt>Positions</dt><dd>${ids.length}</dd></div><div class="stat"><dt>In live presales</dt><dd>${nLive}</dd></div>
-    <div class="stat"><dt>Refunds to claim</dt><dd>${nRef}</dd></div><div class="stat"><dt>Token claims ready</dt><dd>${nTok}</dd></div>`;
+  const ids = [...new Set([...Object.keys(state.positions), ...Object.keys(state.tokens || {}).filter(id => state.tokens[id] > 0)])]; let nLive = 0, nRef = 0, nTok = 0;
+  ids.forEach(id => { const p = find(id); if (!p || !state.positions[id]) return; if (p.status === 'live') nLive++; else if (!state.claimed[id]) { if (p.status === 'refunded') nRef++; else nTok++; } });
+  $('#pstats').innerHTML = `<div class="sum"><dt>Positions</dt><dd class="num">${ids.length}</dd></div><div class="sum"><dt>In live raises</dt><dd class="num">${nLive}</dd></div>
+    <div class="sum"><dt>Refunds to claim</dt><dd class="num">${nRef}</dd></div><div class="sum"><dt>Token claims ready</dt><dd class="num">${nTok}</dd></div>`;
   $('#prows').innerHTML = ids.length ? ids.map(id => { const p = find(id); if (!p) return ''; const sym = esc(Q(p).sym), a = state.positions[id], cl = state.claimed[id];
       const st = { live: 'Live', seeded: 'Seeded', refunded: 'Refunded' }[p.status];
-      const yours = p.status === 'live' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)} if it seeds` : p.status === 'seeded' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)}` : `${fmtAmt(a, p.q)} ${sym}`;
-      const act = p.status === 'live' ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">View</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
+      const holds = p.status === 'seeded' && (cl || !a);   // claimed, or bought in the pool without backing the raise
+      const yours = p.status === 'live' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)} if it seeds` : holds ? `${fmtTok(heldOf(p))} $${esc(p.ticker)} held` : p.status === 'seeded' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)}` : `${fmtAmt(a, p.q)} ${sym}`;
+      const act = p.status === 'live' ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">View</a>` : holds ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Trade</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
       return `<div class="prow"><span class="c-proj">${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta">${pairTag(p)}</span></span></span>
-        <span class="num">${fmtAmt(a, p.q)} ${sym}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
-    : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#">Buy into a presale from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
-  $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` : '<p style="color:var(--muted);font-size:14px;margin-top:10px">No wallet connected.</p>';
+        <span class="num">${a ? `${fmtAmt(a, p.q)} ${sym}` : '–'}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
+    : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#">Buy into a raise from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
+  $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` : '<p class="rail-meta">No wallet connected.</p>';
+  renderPerf();
 }
 $('#prows').addEventListener('click', e => { const cl = e.target.closest('[data-claim]'); if (cl) claim(find(cl.dataset.claim), cl); });
+
+/* ------------------------------------------------- portfolio: performance (PnL graph and calendar) */
+ui.perf = { mode: 'graph', m: 0 };   // m: months back from the current month, for the calendar
+const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S'], MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function pnlDays() { return isReal() ? [] : demoPnlDays(Date.now()); }
+/* +$5.3K, -$34.08, $0 */
+function fmtPnl(v, signed = true) { const a = Math.abs(v); if (a < 0.005) return '$0'; const sgn = v < 0 ? '-' : signed ? '+' : '';
+  const k = a >= 1e6 ? trimK(a / 1e6) + 'M' : a >= 1000 ? trimK(a / 1000) + 'K' : a.toFixed(2); return sgn + '$' + k; }
+function trimK(k) { return (k >= 100 ? k.toFixed(0) : k >= 10 ? k.toFixed(1) : k.toFixed(2)).replace(/\.?0+$/, ''); }
+function dayKey(t) { const d = new Date(t); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
+const dayLbl = t => { const d = new Date(t); return `${MON[d.getMonth()]} ${d.getDate()}`; };
+function renderPerf() {
+  const days = pnlDays(), body = $('#perfBody'); $('#perfDemo').hidden = isReal(); perfPlot = null;
+  if (!days.length) { body.innerHTML = `<div class="empty">${state.wallet ? 'No activity yet. Realised results from raises and pool trades will show up here, by day.' : 'Connect a wallet to see your performance.'}</div>`; return; }
+  body.innerHTML = ui.perf.mode === 'cal' ? perfCalendar(days) : perfGraph(days);
+}
+/* The graph is one line: the running total of realised PnL over the last 90 days. It is green while the total is above $0
+   and red while it is below, against dollar gridlines labelled on the right and dates along the foot; the total is tagged on
+   that axis where the line ends, and hovering reads any day (the total by then, and that day's own result). Drawn at the panel's width, one
+   unit to the pixel, so the labels keep their size. */
+let perfPlot = null;
+function niceStep(span, n) { const raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag; }
+const fmtAxis = v => { const a = Math.abs(v); return a < 0.5 ? '$0' : (v < 0 ? '-' : '') + '$' + (a >= 1e6 ? trimK(a / 1e6) + 'M' : a >= 1000 ? trimK(a / 1000) + 'K' : a.toFixed(0)); };
+function perfGraph(days) {
+  const d = days.slice(-90), n = d.length, W = Math.max(300, Math.floor(($('#perfBody').clientWidth || 720) - 78)), H = W < 520 ? 230 : 290, mR = 68, mT = 18, mB = 30, pw = W - mR, ph = H - mT - mB;
+  let cum = 0; const cums = d.map(x => (cum = Math.round((cum + x.v) * 100) / 100)), total = cums[n - 1];
+  const step = niceStep((Math.max(0, ...cums) - Math.min(0, ...cums)) || 1, 4), lo = Math.floor(Math.min(0, ...cums) / step) * step, hi = Math.ceil(Math.max(0, ...cums) / step) * step || step;
+  const X = i => i * pw / (n - 1), Y = v => mT + (hi - v) / (hi - lo) * ph, y0 = Y(0), zf = ((y0 - mT) / ph).toFixed(4);
+  const line = cums.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
+  const ticks = []; for (let v = lo; v <= hi + step / 2; v += step) ticks.push(Math.round(v * 100) / 100);
+  const wins = d.filter(x => x.v > 0), losses = d.filter(x => x.v < 0), act = wins.length + losses.length;
+  const best = d.reduce((m, x) => x.v > m.v ? x : m, d[0]), worst = d.reduce((m, x) => x.v < m.v ? x : m, d[0]), sign = total > 0 ? 'pos' : total < 0 ? 'neg' : '';
+  perfPlot = { d, cums, X, Y, W, pw, mT, ph, n };
+  const sums = `<dl class="perf-sums">
+      <div><dt>Last 90 days</dt><dd class="num ${sign}">${fmtPnl(total)}</dd></div>
+      <div><dt>Win rate</dt><dd class="num">${act ? Math.round(wins.length / act * 100) : 0}%<small>${wins.length} up, ${losses.length} down</small></dd></div>
+      <div><dt>Best day</dt><dd class="num pos">${fmtPnl(best.v)}<small>${dayLbl(best.t)}</small></dd></div>
+      <div><dt>Worst day</dt><dd class="num neg">${fmtPnl(worst.v)}<small>${dayLbl(worst.t)}</small></dd></div></dl>`;
+  const xt = [0, Math.round((n - 1) / 3), Math.round((n - 1) * 2 / 3), n - 1];
+  return sums + `<div class="pnl-chart"><div class="pnl-plot" data-pplot><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Running total of realised PnL over the last 90 days: ${fmtPnl(total)}">
+      <defs><linearGradient id="pnlStroke" gradientUnits="userSpaceOnUse" x1="0" y1="${mT}" x2="0" y2="${mT + ph}"><stop offset="${zf}" style="stop-color:var(--ok)"/><stop offset="${zf}" style="stop-color:var(--bad)"/></linearGradient>
+        <linearGradient id="pnlArea" gradientUnits="userSpaceOnUse" x1="0" y1="${mT}" x2="0" y2="${mT + ph}"><stop offset="0" style="stop-color:var(--ok)" stop-opacity=".2"/><stop offset="${zf}" style="stop-color:var(--ok)" stop-opacity=".03"/><stop offset="${zf}" style="stop-color:var(--bad)" stop-opacity=".03"/><stop offset="1" style="stop-color:var(--bad)" stop-opacity=".2"/></linearGradient></defs>
+      ${ticks.map(v => `<path d="M0 ${Y(v).toFixed(1)}H${pw}" class="${v === 0 ? 'zero' : 'grid'}"/>${Math.abs(Y(v) - Y(total)) < 16 ? '' : `<text x="${pw + 12}" y="${(Y(v) + 4).toFixed(1)}"${v === 0 ? ' class="z"' : ''}>${fmtAxis(v)}</text>`}`).join('')}
+      <path d="${line} L${X(n - 1).toFixed(1)} ${y0.toFixed(1)} L0 ${y0.toFixed(1)} Z" fill="url(#pnlArea)"/>
+      <path d="${line}" class="ln" fill="none" stroke="url(#pnlStroke)"/>
+      <circle cx="${X(n - 1).toFixed(1)}" cy="${Y(total).toFixed(1)}" r="4.5" class="end ${sign}"/>
+      <g class="now ${sign}"><rect x="${pw + 7}" y="${(Y(total) - 11).toFixed(1)}" width="${mR - 7}" height="22" rx="7"/><text x="${pw + 12}" y="${(Y(total) + 4).toFixed(1)}">${fmtPnl(total)}</text></g>
+      ${xt.map((i, k) => `<text x="${X(i).toFixed(1)}" y="${H - 8}" text-anchor="${k === 0 ? 'start' : k === xt.length - 1 ? 'end' : 'middle'}">${dayLbl(d[i].t)}</text>`).join('')}
+    </svg><div class="cx" data-pcross aria-hidden="true"><i class="cx-line"></i><i class="cx-dot"></i><span class="cx-tip num"></span></div></div>
+    <p class="pnl-cap">Running total of realised results, day by day. Green while you are up overall, red while you are down. Hover the line to read a day.</p></div>`;
+}
+/* hovering the graph reads a day: a hairline, a dot on the line, the total by then and that day's own result */
+function perfHover(e) {
+  const plot = e && e.target.closest ? e.target.closest('[data-pplot]') : null, cx = $('[data-pcross]'), g = perfPlot; if (!cx) return;
+  if (!plot || !g) return cx.classList.remove('on');
+  const r = plot.getBoundingClientRect(), k = r.width / g.W, i = Math.min(g.n - 1, Math.max(0, Math.round((e.clientX - r.left) / k / g.pw * (g.n - 1)))), px = g.X(i) * k, py = g.Y(g.cums[i]) * k, tip = $('.cx-tip', cx);
+  $('.cx-line', cx).style.cssText = `left:${px.toFixed(1)}px;top:${(g.mT * k).toFixed(1)}px;height:${(g.ph * k).toFixed(1)}px`;
+  $('.cx-dot', cx).style.cssText = `left:${px.toFixed(1)}px;top:${py.toFixed(1)}px`;
+  tip.textContent = `${dayLbl(g.d[i].t)} · ${fmtPnl(g.cums[i])} total · ${g.d[i].v ? fmtPnl(g.d[i].v) + ' that day' : 'no trades that day'}`;
+  tip.style.cssText = `left:${Math.min(Math.max(px, tip.offsetWidth / 2 + 2), r.width - tip.offsetWidth / 2 - 2).toFixed(1)}px;top:${Math.max(py - 14, 24).toFixed(1)}px`;
+  cx.classList.add('on');
+}
+/* the calendar: one month, a cell per day coloured by the day's result, the month's tally on top, streaks under it */
+function perfCalendar(days) {
+  const now = new Date(); now.setHours(0, 0, 0, 0); const today = dayKey(now.getTime());
+  const first = new Date(now.getFullYear(), now.getMonth() - ui.perf.m, 1), y = first.getFullYear(), mo = first.getMonth(), nd = new Date(y, mo + 1, 0).getDate();
+  const byKey = {}; days.forEach(x => { byKey[dayKey(x.t)] = x.v; });
+  const earliest = dayKey(days[0].t), canBack = dayKey(new Date(y, mo, 1).getTime()) > earliest, canFwd = ui.perf.m > 0;
+  let up = 0, upSum = 0, dn = 0, dnSum = 0, total = 0, active = 0;
+  for (let d = 1; d <= nd; d++) { const v = byKey[y * 10000 + (mo + 1) * 100 + d]; if (v == null) continue; if (v) active++; total += v; if (v > 0) { up++; upSum += v; } else if (v < 0) { dn++; dnSum += v; } }
+  const share = upSum + Math.abs(dnSum) ? upSum / (upSum + Math.abs(dnSum)) * 100 : 50;
+  const start = (first.getDay() + 6) % 7;   // Monday first
+  let cells = ''; for (let i = 0; i < start; i++) cells += '<span class="cd out"></span>';
+  for (let d = 1; d <= nd; d++) { const k = y * 10000 + (mo + 1) * 100 + d, v = byKey[k];
+    const cls = v == null ? 'none' : v > 0 ? 'pos' : v < 0 ? 'neg' : 'zero';
+    cells += `<span class="cd ${cls}${k === today ? ' today' : ''}"><i>${d}</i>${v == null ? '' : `<b class="num">${fmtPnl(v)}</b>`}</span>`; }
+  /* streaks over the whole series */
+  let cur = 0, bestAll = 0, bestMonth = 0, run = 0, bestActive = 0, actRun = 0, monthOf = x => { const t = new Date(x.t); return t.getFullYear() === y && t.getMonth() === mo; };
+  days.forEach(x => { if (x.v > 0) { run++; bestAll = Math.max(bestAll, run); if (monthOf(x)) bestMonth = Math.max(bestMonth, run); } else if (x.v < 0) run = 0;
+    if (x.v) { actRun++; bestActive = Math.max(bestActive, actRun); } else actRun = 0; });
+  for (let i = days.length - 1; i >= 0 && days[i].v >= 0; i--) if (days[i].v > 0) cur++;
+  return `<div class="cal-top"><div class="cal-nav"><button type="button" data-pm="1" aria-label="Previous month"${canBack ? '' : ' disabled'}>&#8249;</button><b>${MON[mo]} ${y}</b><button type="button" data-pm="-1" aria-label="Next month"${canFwd ? '' : ' disabled'}>&#8250;</button></div>
+      <div class="cal-total num ${total > 0 ? 'pos' : total < 0 ? 'neg' : ''}">${fmtPnl(total)}</div></div>
+    <div class="cal-bar" aria-hidden="true"><i style="width:${share.toFixed(1)}%"></i></div>
+    <div class="cal-counts num"><span class="pos">${up} / ${fmtPnl(upSum, false)}</span><span class="neg">${dn} / ${fmtPnl(Math.abs(dnSum), false)}</span></div>
+    <div class="cal-dow">${DOW.map(d => `<span>${d}</span>`).join('')}</div>
+    <div class="cal-grid">${cells}</div>
+    <div class="streaks"><span>Current positive streak <b>${cur} day${cur === 1 ? '' : 's'}</b></span><span>Best positive streak in ${MON[mo]} <b>${bestMonth} day${bestMonth === 1 ? '' : 's'}</b></span>
+      <span>Best green streak, all time <b>${bestAll} day${bestAll === 1 ? '' : 's'}</b></span><span>Active days <b>${active} this month, ${bestActive} best run</b></span></div>`;
+}
+$('#perf').addEventListener('click', e => { const b = e.target.closest('[data-pm]'); if (!b || b.disabled) return; ui.perf.m = Math.max(0, ui.perf.m + (+b.dataset.pm)); renderPerf(); });
+$('#perf').addEventListener('mousemove', perfHover); $('#perf').addEventListener('mouseleave', () => perfHover(null));
+/* the graph is drawn at the panel's width, so it is drawn again when that width changes */
+if ('ResizeObserver' in window) { let w = 0; new ResizeObserver(() => { const b = $('#perfBody'); if (!b.clientWidth || Math.abs(b.clientWidth - w) < 2) return; w = b.clientWidth; if (ui.perf.mode === 'graph') renderPerf(); }).observe($('#perfBody')); }
+
 
 /* ------------------------------------------------------------------ docs */
 const calc = { q: 'SOL' };
@@ -1535,11 +1787,22 @@ function renderCalc() {
 function initDocs() {
   const secs = $$('.doc-sec');
   $('#toc').innerHTML = secs.map(s => `<a href="#/docs/${s.id.slice(2)}" data-sec="${s.id}">${s.dataset.t}</a>`).join('');
-  const spy = () => { if (ui.view !== 'docs') return; let cur = secs[0]; for (const s of secs) if (s.getBoundingClientRect().top <= innerHeight * .35) cur = s; $$('#toc a').forEach(a => a.classList.toggle('on', a.dataset.sec === cur.id)); };
+  const spy = () => { if (ui.view !== 'docs') return; let cur = secs[0]; for (const s of secs) if (s.getBoundingClientRect().top <= innerHeight * .35) cur = s; $$('#toc a').forEach(a => a.classList.toggle('on', a.dataset.sec === cur.id));
+    $$('.docs .rv:not(.in)').forEach(el => { if (el.getBoundingClientRect().top < innerHeight * .9) el.classList.add('in'); }); };
   addEventListener('scroll', spy, { passive: true }); initDocs.spy = spy;
+  /* each section's cards rise in as they are scrolled to (the spy marks them) */
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) $$('.doc-sec>.prose,.doc-sec>.aside').forEach(el => el.classList.add('rv'));
   $('#cT').addEventListener('input', renderCalc); $('#cC').addEventListener('input', renderCalc);
   seg.calc = initSeg($('#calcSeg'), v => { calc.q = v; const d = { SOL: [100, 4], USDC: [60000, 500], JUP: [120000, 2000] }[v]; $('#cT').value = d[0]; $('#cC').value = d[1]; renderCalc(); });
   renderCalc();
+}
+
+/* a page's cards rise into place when it opens. body.enter is on for a little over two seconds, so a card that is redrawn
+   later (a buy landing, a wallet connecting) does not replay it. */
+let enterT = 0;
+function playEnter() {
+  const b = document.body; b.classList.remove('enter'); void b.offsetWidth; b.classList.add('enter');
+  clearTimeout(enterT); enterT = setTimeout(() => b.classList.remove('enter'), 2400);
 }
 
 /* ---------------------------------------------------------------- router */
@@ -1562,13 +1825,15 @@ function route() {
   else { ui.tab = h === '#/launch' ? 'launch' : h === '#/portfolio' ? 'portfolio' : 'terminal'; ui.sel = null; }
   const changed = view !== ui.view; ui.view = view;
   ['app', 'docs'].forEach(v => { $('#view-' + v).hidden = v !== view; document.body.classList.toggle('in-' + v, v === view); });
-  if (changed || prevTab !== ui.tab) shown.term = new Set();
+  if (changed || prevTab !== ui.tab) { shown.term = new Set(); playEnter(); }
   const pg = view === 'app' && ui.tab === 'presale' && find(ui.sel);
-  document.title = pg ? `${pg.name} ($${pg.ticker}) presale on Seed` : view === 'docs' ? 'Seed docs: how it works, with the math'
-    : ui.tab === 'launch' ? 'Start a presale on Seed' : ui.tab === 'portfolio' ? 'Your positions on Seed' : 'Seed: seeded in full, or refunded in full';
+  document.title = pg ? `${pg.name} ($${pg.ticker}) raise on Seed` : view === 'docs' ? 'Seed docs: how it works, with the math'
+    : ui.tab === 'launch' ? 'Start a raise on Seed' : ui.tab === 'portfolio' ? 'Your positions on Seed' : 'Seed';
   if (view === 'app') {
     ['terminal', 'launch', 'portfolio', 'presale'].forEach(t => $('#tab-' + t).hidden = t !== ui.tab); seg.tabs.set(ui.tab === 'presale' ? 'terminal' : ui.tab);
     $('#view-app').classList.toggle('wide', ui.tab === 'terminal');
+    $('#view-app').classList.toggle('on-presale', ui.tab === 'presale');
+    $('#view-app').classList.toggle('fit', ui.tab !== 'terminal');   // these pages are workspaces: columns that fill the window on a wide screen
     renderAll(); if (changed || prevTab !== ui.tab) scrollTo(0, 0);
   } else {
     if (sec && $('#d-' + sec)) $('#d-' + sec).scrollIntoView(); else if (changed) scrollTo(0, 0);
@@ -1592,7 +1857,7 @@ function tick(silent) {
   $$('.live[data-row]').forEach(row => { const p = find(row.dataset.row); if (!p) return; const t = $('[data-time]', row); if (t) t.textContent = fmtLeft(p.endsAt - now); const pc = $('[data-pace]', row); if (pc) pc.textContent = paceTxt(p); });
   tickDetail();
 }
-/* simulated buys arriving; never completes a presale, so the last step is yours */
+/* simulated buys arriving; never completes a raise, so the last step is yours */
 function simulate() {
   if (document.hidden || busy) return;
   const pool = state.presales.filter(p => p.status === 'live' && pctOf(p) < 95 && p.endsAt - Date.now() > 20e3 && !(p.mine && p.raised === 0 && Date.now() - p.openedAt < 15e3));
@@ -1619,6 +1884,7 @@ function syncQuickUI() {
 function boot() {
   load();
   seg.tabs = initSeg($('#tabSeg'), v => { location.hash = v === 'terminal' ? '#' : '#/' + v; });
+  seg.perf = initSeg($('#perfSeg'), v => { ui.perf.mode = v; renderPerf(); });
   seg.assetF = initSeg($('#assetSeg'), v => { ui.fAsset = v; renderTerminal(); });
   $$('[data-sort]').forEach(el => el.addEventListener('change', () => { ui.sort[el.dataset.sort] = el.value; renderTerminal(); }));
   seg.pair = initSeg($('#pairSeg'), v => { draft.pair = v; $('#fErr').textContent = ''; renderPreview(); if (v === 'any') $('#fMint').focus(); });
@@ -1632,7 +1898,7 @@ function boot() {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeSegs);
 }
 
-/* presale pages open in their own tab, so several copies of the app can be running. Each holds the state in memory and saves all of it,
+/* raise pages open in their own tab, so several copies of the app can be running. Each holds the state in memory and saves all of it,
    which would let a stale tab overwrite a buy made in another. So a tab takes on whatever another tab saves. If you are mid-amount,
    the page is patched rather than rebuilt so the field keeps its focus and what you typed. */
 addEventListener('storage', e => {

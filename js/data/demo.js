@@ -1,8 +1,8 @@
 /* ==========================================================================
-   DEMO DATA. Eight presales with full project profiles.
-   A presale in `state` holds what changes (the raise, its buys, its history). Its profile (story, team, tokenomics, founder,
+   DEMO DATA. Eight raises with full project profiles.
+   A raise in `state` holds what changes (the raise, its buys, its history). Its profile (story, team, tokenomics, founder,
    roadmap, updates, the shape of its crowd) lives here and is merged in by profileOf(p), so profile edits reach every
-   browser without resetting anyone's saved demo. A presale opened from the Launch form carries its own profile.
+   browser without resetting anyone's saved demo. A raise opened from the Launch form carries its own profile.
    Everything here is demo data except the two STANDINS, which are real mainnet accounts read live.
    ========================================================================== */
 
@@ -10,7 +10,7 @@
 const STANDINS = {
   vault: {
     address: 'GLA4YsAG5eFDWnCy8rfq47PAQi3XHfxkNXULQ81xUinR', presale: 'FVADnfbrBkoB16zhx16Gi8STM5HvqvDSK3fAaeLvxk7c', asset: 'USDC',
-    note: 'Stand-in vault: the USDC vault of a real Meteora presale on mainnet, not Quill’s. Its balance is read live from Solana.'
+    note: 'Stand-in vault: the USDC vault of a real Meteora Presale Vault on mainnet, not Quill’s. Its balance is read live from Solana.'
   },
   pool: {
     address: '8Pm2kZpnxD3hoMmt4bjStX2Pw2Z9abpbHzZxMPqxPmie', pair: 'SOL/USDC', dex: 'Meteora DAMM v2',
@@ -24,8 +24,8 @@ const demoAddrs = new Set();
 function fakeAddr(seed, len = 44) { const r = rng('addr/' + seed); let s = ''; for (let i = 0; i < len; i++) s += B58ABC[Math.floor(r() * 58)]; demoAddrs.add(s); return s; }
 const EXCHANGES = ['Binance', 'Coinbase', 'OKX', 'Kraken', 'Bybit', 'Backpack Exchange'];
 
-/* allocation kinds: presale (backers), lp (paired into the locked pool), team, treasury, other.
-   Seed keeps the presale share and the LP share equal, which is what makes the pool open at the presale price. */
+/* allocation kinds: raise (backers), lp (paired into the locked pool), team, treasury, other.
+   Seed keeps the raise share and the LP share equal, which is what makes the pool open at the raise price. */
 const alloc = (label, kind, pct, vesting, wallet) => ({ label, kind, pct, vesting: vesting || null, wallet: wallet || null });
 const vest = (cliffDays, durationDays) => ({ cliffDays, durationDays });
 
@@ -47,7 +47,7 @@ Perp volume on Solana passed spot this year, and most liquidations happen while 
 The app is free while the raise is open. After seeding, alerts cost 20 $OSPR a month, and holders of 5,000 $OSPR or more get them free.`,
     links: { website: 'https://osprey.example', x: 'https://x.com/osprey_seeddemo', telegram: 'https://t.me/osprey_seeddemo', discord: null, github: 'https://github.com/osprey-seeddemo' },
     minBuy: 0.1, maxBuy: 10,
-    tokenomics: { allocations: [alloc('Presale backers', 'presale', 45), alloc('Locked Meteora pool', 'lp', 45), alloc('Team', 'team', 10, vest(90, 365))],
+    tokenomics: { allocations: [alloc('Raise backers', 'presale', 45), alloc('Locked Meteora pool', 'lp', 45), alloc('Team', 'team', 10, vest(90, 365))],
       useOfFunds: [{ label: 'Carrier costs, 12 months', pct: 40 }, { label: 'Engineering', pct: 45 }, { label: 'Maths review', pct: 15 }] },
     team: [
       { name: 'Ines Carvalho', role: 'Founder, engineering', x: 'https://x.com/ines_seeddemo', github: 'https://github.com/ines-seeddemo', linkedin: null, verified: { x: true, github: true, domain: false } },
@@ -78,7 +78,7 @@ The app is free while the raise is open. After seeding, alerts cost 20 $OSPR a m
     tagline: 'One art drop a day, minted slowly.',
     description: `**Moss mints one piece of generative art a day, for a year.**
 
-Each piece grows from the one before it: the same seed, one more day of growth. Backers of the presale get a share of every sale for the full year.
+Each piece grows from the one before it: the same seed, one more day of growth. Backers of the raise get a share of every sale for the full year.
 
 ### How a drop works
 The piece for the day is revealed at noon UTC and minted over 24 hours, one edition an hour. That slow pace is the point: nobody can sweep a drop in one block.
@@ -87,7 +87,7 @@ The piece for the day is revealed at noon UTC and minted over 24 hours, one edit
 Rendering and storage for 365 pieces, and the minting program.`,
     links: { website: 'https://moss.example', x: 'https://x.com/moss_seeddemo', telegram: null, discord: 'https://discord.gg/moss-seeddemo', github: null },
     minBuy: 0.1, maxBuy: 15,
-    tokenomics: { allocations: [alloc('Presale backers', 'presale', 50), alloc('Locked Meteora pool', 'lp', 50)],
+    tokenomics: { allocations: [alloc('Raise backers', 'presale', 50), alloc('Locked Meteora pool', 'lp', 50)],
       useOfFunds: [{ label: 'Rendering and storage', pct: 55 }, { label: 'Minting program', pct: 45 }] },
     team: [{ name: 'Moss', role: 'Artist', x: 'https://x.com/moss_seeddemo', github: null, linkedin: null, verified: { x: true, github: false, domain: false } }],
     founder: { name: 'Moss', x: 'https://x.com/moss_seeddemo', xAgeDays: 70, funding: { kind: 'wallet', label: 'Older personal wallet', hoursBeforeLaunch: 24 * 40 }, pastLaunches: [] },
@@ -114,7 +114,7 @@ Anyone can check what a vault holds at any block. There is no manager discretion
 - Legal review of the basket definitions`,
     links: { website: 'https://tidewater.example', x: 'https://x.com/tidewater_seeddemo', telegram: 'https://t.me/tidewater_seeddemo', discord: 'https://discord.gg/tidewater-seeddemo', github: 'https://github.com/tidewater-seeddemo' },
     minBuy: 50, maxBuy: 5000,
-    tokenomics: { allocations: [alloc('Presale backers', 'presale', 40), alloc('Locked Meteora pool', 'lp', 40), alloc('Team', 'team', 12, vest(180, 720)), alloc('Treasury', 'treasury', 8, vest(90, 540))],
+    tokenomics: { allocations: [alloc('Raise backers', 'presale', 40), alloc('Locked Meteora pool', 'lp', 40), alloc('Team', 'team', 12, vest(180, 720)), alloc('Treasury', 'treasury', 8, vest(90, 540))],
       useOfFunds: [{ label: 'Audits', pct: 45 }, { label: 'Keeper costs', pct: 20 }, { label: 'Legal review', pct: 15 }, { label: 'Engineering', pct: 20 }] },
     team: [
       { name: 'Aiko Tanaka', role: 'Founder, product', x: 'https://x.com/aiko_seeddemo', github: 'https://github.com/aiko-seeddemo', linkedin: 'https://www.linkedin.com/in/aiko-seeddemo', verified: { x: true, github: true, domain: true } },
@@ -157,7 +157,7 @@ Small DCA orders pay the same fixed costs as large ones. Netting them first cuts
 - A grants fund for integrations`,
     links: { website: 'https://lattice.example', x: 'https://x.com/lattice_seeddemo', telegram: 'https://t.me/lattice_seeddemo', discord: 'https://discord.gg/lattice-seeddemo', github: 'https://github.com/lattice-seeddemo' },
     minBuy: 100, maxBuy: 12000,
-    tokenomics: { allocations: [alloc('Presale backers', 'presale', 40), alloc('Locked Meteora pool', 'lp', 40), alloc('Team', 'team', 12, vest(180, 720)), alloc('Treasury', 'treasury', 8, vest(90, 540))],
+    tokenomics: { allocations: [alloc('Raise backers', 'presale', 40), alloc('Locked Meteora pool', 'lp', 40), alloc('Team', 'team', 12, vest(180, 720)), alloc('Treasury', 'treasury', 8, vest(90, 540))],
       useOfFunds: [{ label: 'Audit', pct: 40 }, { label: 'Keeper costs', pct: 25 }, { label: 'Integration grants', pct: 35 }] },
     team: [
       { name: 'Priya Raman', role: 'Founder, engineering', x: 'https://x.com/priya_seeddemo', github: 'https://github.com/priya-seeddemo', linkedin: 'https://www.linkedin.com/in/priya-seeddemo', verified: { x: true, github: true, domain: true } },
@@ -195,7 +195,7 @@ Buy credits now, burn them for GPU time later, or sell them to someone who needs
 Huge partnerships coming. Stay tuned.`,
     links: { website: null, x: 'https://x.com/overclock_seeddemo', telegram: 'https://t.me/overclock_seeddemo', discord: null, github: null },
     minBuy: 0.05, maxBuy: 200,
-    tokenomics: { allocations: [alloc('Presale backers', 'presale', 30), alloc('Locked Meteora pool', 'lp', 30), alloc('Team', 'team', 25), alloc('Treasury', 'treasury', 15)],
+    tokenomics: { allocations: [alloc('Raise backers', 'presale', 30), alloc('Locked Meteora pool', 'lp', 30), alloc('Team', 'team', 25), alloc('Treasury', 'treasury', 15)],
       useOfFunds: [{ label: 'Marketing', pct: 70 }, { label: 'Development', pct: 30 }] },
     team: [],
     founder: { name: 'overclock_dev', x: 'https://x.com/overclock_seeddemo', xAgeDays: 12, funding: { kind: 'bridge', label: 'deBridge', addr: 'src5qyZHqTqecJV4aY6Cb6zDZLMDzrDKKezs22MPHr4', hoursBeforeLaunch: 5 },
@@ -224,7 +224,7 @@ People who want to support someone every month without sending the same transfer
 A review of the stake-routing program and a year of hosting.`,
     links: { website: 'https://halfmoon.example', x: 'https://x.com/halfmoon_seeddemo', telegram: null, discord: null, github: 'https://github.com/halfmoon-seeddemo' },
     minBuy: 0.2, maxBuy: 20,
-    tokenomics: { allocations: [alloc('Presale backers', 'presale', 45), alloc('Locked Meteora pool', 'lp', 45), alloc('Team', 'team', 6, vest(90, 365)), alloc('Treasury', 'treasury', 4, vest(0, 365))],
+    tokenomics: { allocations: [alloc('Raise backers', 'presale', 45), alloc('Locked Meteora pool', 'lp', 45), alloc('Team', 'team', 6, vest(90, 365)), alloc('Treasury', 'treasury', 4, vest(0, 365))],
       useOfFunds: [{ label: 'Program review', pct: 60 }, { label: 'Hosting', pct: 20 }, { label: 'Design', pct: 20 }] },
     team: [
       { name: 'Sam Okafor', role: 'Founder', x: 'https://x.com/samok_seeddemo', github: 'https://github.com/samok-seeddemo', linkedin: null, verified: { x: true, github: true, domain: false } },
@@ -246,14 +246,14 @@ A review of the stake-routing program and a year of hosting.`,
 Writers add one line to their newsletter template. Readers tap the tip link at the end of an issue and pay from any Solana wallet. No account, no card, no minimum.
 
 ### What happened since seeding
-The pool opened at the presale price on the day the raise filled. Tipping is live for 140 writers, and the roadmap below links each shipped milestone.
+The pool opened at the raise price on the day the raise filled. Tipping is live for 140 writers, and the roadmap below links each shipped milestone.
 
 ### Token use
 Writers who hold $QUILL pay no tipping fee. The fee on everyone else buys $QUILL from the pool each week.`,
     links: { website: 'https://quill.example', x: 'https://x.com/quill_seeddemo', telegram: 'https://t.me/quill_seeddemo', discord: 'https://discord.gg/quill-seeddemo', github: 'https://github.com/quill-seeddemo' },
     minBuy: 25, maxBuy: 2500,
     vault: STANDINS.vault, pool: STANDINS.pool,
-    tokenomics: { allocations: [alloc('Presale backers', 'presale', 42), alloc('Locked Meteora pool', 'lp', 42), alloc('Team', 'team', 10, vest(180, 720)), alloc('Treasury', 'treasury', 6, vest(30, 365))],
+    tokenomics: { allocations: [alloc('Raise backers', 'presale', 42), alloc('Locked Meteora pool', 'lp', 42), alloc('Team', 'team', 10, vest(180, 720)), alloc('Treasury', 'treasury', 6, vest(30, 365))],
       useOfFunds: [{ label: 'Engineering', pct: 50 }, { label: 'Writer onboarding', pct: 30 }, { label: 'Security review', pct: 20 }] },
     team: [
       { name: 'Hana Kim', role: 'Founder', x: 'https://x.com/hanakim_seeddemo', github: 'https://github.com/hanakim-seeddemo', linkedin: 'https://www.linkedin.com/in/hanakim-seeddemo', verified: { x: true, github: true, domain: true } },
@@ -264,14 +264,14 @@ Writers who hold $QUILL pay no tipping fee. The fee on everyone else buys $QUILL
     deck: 'assets/demo/decks/quill.pdf',
     roadmap: [
       { title: 'Tip links for Substack and Beehiiv', due: -20, status: 'shipped', proof: 'https://quill.example/changelog#links' },
-      { title: 'Pool opens at the presale price', due: -2, status: 'shipped', proof: 'https://app.meteora.ag' },
+      { title: 'Pool opens at the raise price', due: -2, status: 'shipped', proof: 'https://app.meteora.ag' },
       { title: '100 writers tipping', due: -1, status: 'shipped', proof: 'https://quill.example/writers' },
       { title: 'Weekly buy-back from fees', due: 10, status: 'planned' },
       { title: 'Ghost integration', due: 30, status: 'planned' }
     ],
     updates: [
       { title: '140 writers live', body: 'We passed 100 writers a day early. Tips so far average 2.40 USDC.', daysAgo: 0.5, author: 'Hana Kim' },
-      { title: 'Seeded, pool open', body: 'The raise filled and the pool opened at the presale price. The LP position is locked. Claim your $QUILL from this page.', daysAgo: 2, author: 'Hana Kim' },
+      { title: 'Seeded, pool open', body: 'The raise filled and the pool opened at the raise price. The LP position is locked. Claim your $QUILL from this page.', daysAgo: 2, author: 'Hana Kim' },
       { title: 'Two days left', body: 'We are at 80%. Thank you to every backer so far.', daysAgo: 3, author: 'Olu Adeyemi' }
     ],
     crowd: { top10: 0.36, fresh: 0.14, bundle: null, kols: 3, tracked: 5, repeat: 0.26 },
@@ -294,7 +294,7 @@ Friends join a bid room, each puts in what they want, and Ember bids as one wall
 The shared vault program and a review of its withdrawal rules.`,
     links: { website: 'https://ember.example', x: 'https://x.com/ember_seeddemo', telegram: null, discord: 'https://discord.gg/ember-seeddemo', github: null },
     minBuy: 1e6, maxBuy: 1.5e8,
-    tokenomics: { allocations: [alloc('Presale backers', 'presale', 45), alloc('Locked Meteora pool', 'lp', 45), alloc('Team', 'team', 10, vest(90, 365))],
+    tokenomics: { allocations: [alloc('Raise backers', 'presale', 45), alloc('Locked Meteora pool', 'lp', 45), alloc('Team', 'team', 10, vest(90, 365))],
       useOfFunds: [{ label: 'Vault program', pct: 70 }, { label: 'Review', pct: 30 }] },
     team: [
       { name: 'Kai Mercer', role: 'Founder', x: 'https://x.com/kaimercer_seeddemo', github: null, linkedin: null, verified: { x: true, github: false, domain: false } },
@@ -328,7 +328,7 @@ const profileOf = p => (p && (p.profile || DEMO_PROFILES[p.id])) || { links: {},
 const presaleShare = p => { const a = profileOf(p).tokenomics.allocations.find(x => x.kind === 'presale'); return a ? a.pct / 100 : A; };
 
 /* ------------------------------------------------------------ the crowd
-   Builds the backer set for a demo presale so that the numbers the risk checks read (top 10 share, bundles, fresh wallets)
+   Builds the backer set for a demo raise so that the numbers the risk checks read (top 10 share, bundles, fresh wallets)
    come out of real sums over real rows, the same way they would from chain data. */
 function genCrowd(p, c, end) {
   const r = rng('crowd/' + p.id), N = Math.max(1, p.backers), R = p.raised, top = Math.min(10, N);
@@ -372,8 +372,21 @@ function histFromBuys(p, buys, end) {
   return h;
 }
 
-/* the demo wallet starts with a position in the seeded and the refunded presale, so both claim flows can be tried */
+/* the demo wallet starts with a position in the seeded and the refunded raise, so both claim flows can be tried */
 const DEMO_WALLET_ID = 'demo:7xKp\u20269fQa';
+/* Daily realised PnL of the demo wallet in USD for the last 120 days: pool trades on about half the days, the Quill seed
+   landing above cost two days ago, the Ember refund (money back, nothing gained) yesterday. Seeded, so it is the same in
+   every browser. A real wallet has no history here yet. */
+function demoPnlDays(now) {
+  const r = rng('pnl/v1'), out = [], day = 864e5, t0 = new Date(now); t0.setHours(0, 0, 0, 0);
+  for (let i = 119; i >= 0; i--) {
+    let v = 0;
+    if (r() < 0.52) { const win = r() < 0.5, mag = Math.pow(r(), 2.2) * (win ? 5600 : 4100) + 8; v = win ? mag : -mag; }
+    if (i === 2) v += 4230;   /* Quill seeded: the claim is worth more than the 500 USDC paid */
+    out.push({ t: t0.getTime() - i * day, v: Math.round(v * 100) / 100 });
+  }
+  return out;
+}
 const DEMO_WALLET_BUYS = { quill: 500, ember: 25000000 };
 function seedData() {
   const n = Date.now();

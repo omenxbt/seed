@@ -1,7 +1,7 @@
 /* ==========================================================================
    UPDATES ADAPTER: founder-posted updates, newest first.
    Demo: the profile's updates plus any a founder posts in this browser. Real (Supabase configured): the `updates` table, written
-   only by the `seed` Edge Function after it checks that the signer is the presale's founder or team.
+   only by the `seed` Edge Function after it checks that the signer is the raise's founder or team.
    ========================================================================== */
 const UPD_KEY = id => 'seed.updates.' + id;
 const updatesAdapter = {

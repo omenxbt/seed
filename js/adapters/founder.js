@@ -1,7 +1,7 @@
 /* ==========================================================================
    FOUNDER ADAPTER: the founder's X account, deployer wallet funding and past launches.
    Demo: the profile. Real: when the deployer wallet is a real address, its first funding is read live from Solana (who funded it,
-   through which program, how long before launch) and its past launches are the other Seed presales it opened.
+   through which program, how long before launch) and its past launches are the other Seed raises it opened.
    X account age stays self-reported: reading it needs the paid X API.
    ========================================================================== */
 const founderAdapter = {
@@ -12,7 +12,7 @@ const founderAdapter = {
     if (isRealAddr(w)) {
       const o = cacheGet('origin/' + w, RISK.lookupCacheMs);
       if (o) { out.funding = o.fundedBy ? Object.assign({}, o.fundedBy, { hoursBeforeLaunch: o.firstTxAt ? (p.openedAt - o.firstTxAt) / H : null }) : { kind: 'unknown', hoursBeforeLaunch: o.firstTxAt ? (p.openedAt - o.firstTxAt) / H : null }; out.from = 'chain'; }
-      // the Seed presales this wallet opened before this one
+      // the Seed raises this wallet opened before this one
       const mine = state.presales.filter(x => x.id !== p.id && x.profile && x.profile.founder && x.profile.founder.wallet === w && x.openedAt < p.openedAt);
       mine.forEach(x => out.pastLaunches.push({ name: x.name, platform: 'Seed', outcome: x.status === 'live' ? 'active' : x.status, daysAgo: (Date.now() - x.openedAt) / D }));
     }

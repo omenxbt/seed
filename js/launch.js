@@ -84,11 +84,11 @@ function bindDrop(el) {
   el.addEventListener('pointerup', () => { if (drag) { drag = null; renderPreview(); } });
 }
 
-/* ---------------------------------------------------------------- the draft as a presale */
+/* ---------------------------------------------------------------- the draft as a raise */
 const posTxt = k => `${lf.pos[k][0].toFixed(1)}% ${lf.pos[k][1].toFixed(1)}%`;
 function draftProfile(d) {
   const share = numv($('#fShare').value) || 0, since = $('#fXSince').value;
-  const allocations = [alloc('Presale backers', 'presale', share), alloc('Locked Meteora pool', 'lp', share)]
+  const allocations = [alloc('Raise backers', 'presale', share), alloc('Locked Meteora pool', 'lp', share)]
     .concat(lf.alloc.filter(r => r.label || r.pct).map(r => alloc(r.label || 'Unnamed', r.kind, numv(r.pct) || 0, numv(r.dur) > 0 ? vest(Math.max(0, numv(r.cliff) || 0), numv(r.dur)) : null, B58.test(r.wallet) ? r.wallet : null)));
   const founderWallet = state.wallet ? (state.wallet.pk || walletId()) : null;
   const team = lf.team.filter(m => m.name.trim()).map(m => ({ name: m.name.trim(), role: m.role.trim(), x: m.x.trim() || null, github: m.github.trim() || null, linkedin: m.linkedin.trim() || null, wallet: B58.test(m.wallet.trim()) ? m.wallet.trim() : null, verified: { x: false, github: false, domain: false } }));
@@ -121,7 +121,7 @@ function validateFull() {
   if (mn > 0 && mx > 0 && mn > mx) return 'The minimum buy is larger than the maximum per wallet.';
   const bad = $('#fWl').value.split(/\s+/).filter(Boolean).find(x => !B58.test(x)); if (bad) return `${bad.slice(0, 12)}… in the whitelist is not a Solana address.`;
   const share = numv($('#fShare').value);
-  if (!(share >= 5 && share <= 50)) return 'The presale share must be between 5% and 50%. The pool gets the same share.';
+  if (!(share >= 5 && share <= 50)) return 'The raise share must be between 5% and 50%. The pool gets the same share.';
   for (const r of lf.alloc) {
     if (!r.label && !r.pct) continue;
     if (!r.label.trim()) return 'Name every allocation.';
@@ -168,13 +168,13 @@ function renderPreview() {
     ['If it misses', `Buys and fees go back to backers after ${label}. The supply is burned`]
   ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
   const checks = riskChecks(dp, { draft: true }), s = riskSummary(checks);
-  $('#pvRisk').innerHTML = `<div class="rail-h"><h3>Risk checks</h3>${riskChip(s)}</div><p class="rail-meta">What backers will see on your page. Checks marked with a clock run once the presale is live.</p>
+  $('#pvRisk').innerHTML = `<div class="rail-h"><h3>Risk checks</h3>${riskChip(s)}</div><p class="rail-meta">What backers will see on your page. Checks marked with a clock run once the raise is live.</p>
     <ul class="risk-list">${checks.map(c => `<li class="${c.level}">${RISK_ICON[c.level]}<div><b>${esc(c.label)}</b><span>${esc(c.reason)}</span></div></li>`).join('')}</ul>`;
   const fw = pr.founder.wallet;
   if (fw && isRealAddr(fw) && founderLooked !== fw) { founderLooked = fw; founderAdapter.refresh(dp).then(learned => { if (learned) renderPreview(); }); }
-  $('#upNote').textContent = supa.configured() ? 'Uploads go to Seed’s storage when you open the presale.' : 'Uploads are previewed in this browser only until Supabase storage is configured.';
+  $('#upNote').textContent = supa.configured() ? 'Uploads go to Seed’s storage when you open the raise.' : 'Uploads are previewed in this browser only until Supabase storage is configured.';
 }
-function syncOpenBtn() { const b = $('#openBtn'); if (b && !b.disabled) b.textContent = state.wallet ? 'Open presale' : 'Connect wallet to open'; }
+function syncOpenBtn() { const b = $('#openBtn'); if (b && !b.disabled) b.textContent = state.wallet ? 'Open raise' : 'Connect wallet to open'; }
 
 /* ---------------------------------------------------------------- open */
 async function openPresale() {
@@ -207,7 +207,7 @@ function renderMine() {
   const l = state.presales.filter(p => p.mine);
   $('#mineList').innerHTML = l.length ? l.map(p => `<a class="row ${p.status}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}"><span class="c-proj">${projCell(p)}</span>${progCell(p)}
       <span class="c-raised num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span><span class="c-time num" data-time>${timeCell(p)}</span><span class="c-act"><span class="pill-sm">View</span></span></a>`).join('')
-    : '<div class="empty">You have not opened a presale yet. Fill in the form above to open your first.</div>';
+    : '<div class="empty">You have not opened a raise yet. Fill in the form to open your first.</div>';
 }
 
 /* ---------------------------------------------------------------- wiring */
@@ -227,4 +227,6 @@ function renderMine() {
   $('#descToggle').onclick = () => { lf.descPv = !lf.descPv; $('#descPv').hidden = !lf.descPv; $('#fDesc').hidden = lf.descPv; $('#descToggle').textContent = lf.descPv ? 'Edit' : 'Preview'; if (lf.descPv) $('#descPv').innerHTML = md($('#fDesc').value) || '<p class="quiet">Nothing to preview yet.</p>'; };
   $$('.drop').forEach(bindDrop);
   $('#openBtn').onclick = openPresale;
+  /* the section list beside the form jumps to a section */
+  $$('.steps [data-step]').forEach(b => b.onclick = () => { const fs = $$('fieldset', form)[+b.dataset.step - 1]; if (fs) fs.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); });
 })();
