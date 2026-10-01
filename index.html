@@ -401,35 +401,60 @@ a.ico:hover{color:var(--ink)}
 .col-empty{padding:36px 12px 40px;text-align:center;color:var(--muted);font-size:15px}
 .col-empty .mark{width:48px;height:48px;margin:0 auto 12px;color:var(--navy-soft)}
 .col-empty a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
-.br{position:relative;flex:none;display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:16px;align-items:center;padding:18px;border:1px solid transparent;border-radius:16px;background:var(--tile);transition:background .25s,border-color .25s}
+/* A raise on the board, three short lines: its name; its countdown, links and backers; its checks. The fill sits under the
+   avatar, the raised amount and the deposit button on the right. */
+.br{position:relative;flex:none;display:grid;grid-template-columns:48px minmax(0,1fr) auto;grid-template-areas:"av name val" "av soc act" "av flags act";gap:5px 14px;align-items:center;padding:12px 14px;border:1px solid transparent;border-radius:14px;background:var(--tile);transition:background .25s,border-color .25s}
 .br:hover{border-color:var(--hair-2);background:var(--mist)}
 .br:hover .br-av{transform:scale(1.07)}
-.br .pick::after{border-radius:16px}
-.br-av{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;transition:transform .9s var(--soft);background:linear-gradient(150deg,hsl(var(--h) 90% 93%/.95),hsl(calc(var(--h) + 55) 90% 87%/.85))}
+.br .pick::after{border-radius:14px}
+.br-main,.br-side{display:contents}
+.br-avc{grid-area:av;align-self:center;display:flex;flex-direction:column;gap:6px;min-width:0}
+.br-av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;transition:transform .9s var(--soft);background:linear-gradient(150deg,hsl(var(--h) 90% 93%/.95),hsl(calc(var(--h) + 55) 90% 87%/.85))}
 .br-av svg{width:56%;height:56%;fill:hsl(calc(var(--h) + 20) 42% 44%)}
-.br-main{min-width:0}
-.br .pick{display:flex;align-items:baseline;gap:9px;min-width:0;white-space:nowrap}
-.br .pick b{font-size:17px;font-weight:600;letter-spacing:-.02em}
-.br .pick span{font-size:14.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
-.br-meta{display:flex;align-items:center;gap:8px;margin-top:7px;font-size:13.5px;color:var(--muted);white-space:nowrap;overflow:hidden}
-.br-meta .tag{font-size:12px;padding:2px 9px}
-.br .c-prog{margin-top:13px;gap:10px}
-.br .bar{height:6px}
-.br .pct{font-size:13.5px;width:38px}
-.br-side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;white-space:nowrap}
-.br-val{font-size:15.5px;color:var(--ink)}
-.br-val em{font-style:normal;color:var(--faint);font-size:13px}
-.br-sub{font-size:13.5px;color:var(--muted)}
-.br .t-act{margin-top:9px}
+.br .c-prog{flex-direction:column;align-items:stretch;gap:3px}
+.br .bar{flex:none;height:4px}
+.br .pct{width:auto;font-size:11.5px;line-height:1.2;text-align:center;color:var(--ink-2)}
+.br-name{grid-area:name;display:flex;align-items:center;gap:8px;min-width:0}
+.br .pick{display:flex;align-items:baseline;gap:8px;min-width:0;white-space:nowrap}
+.br .pick b{font-size:16px;font-weight:600;letter-spacing:-.02em}
+.br .pick span{font-size:14px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.br-name .tag,.br-flags .tag{flex:none;font-size:11.5px;padding:1px 8px}
+.br-meta{grid-area:soc;display:flex;align-items:center;gap:10px;min-width:0;min-height:24px;font-size:13px;color:var(--muted);white-space:nowrap}
+.br-stat{display:inline-flex;align-items:center;gap:5px;flex:none}
+.br-stat svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.br-stat.time{color:var(--ok-ink)}
+.br-stat.time.soon{color:var(--caution-ink)}
+/* the links sit above the card's own link, so each one opens its site and not the raise */
+.br-links{display:flex;align-items:center;gap:1px;position:relative;z-index:1;min-width:0;overflow:hidden}
+.br-ico{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:7px;color:var(--ink-2);transition:background .2s,color .2s}
+.br-ico:hover,.br-handle:hover{background:var(--navy-wash);color:var(--ink)}
+.br-ico svg{width:14px;height:14px;fill:currentColor}
+.br-ico svg.line{fill:none;stroke:currentColor;stroke-width:1.7}
+.br-ico.is-x{display:none}
+.br-handle{display:inline-flex;align-items:center;gap:5px;min-width:0;margin-left:5px;padding:2px 9px 2px 7px;border-radius:999px;background:var(--chip);color:var(--ink-2);font-size:12.5px;font-weight:500;transition:background .2s,color .2s}
+.br-handle svg{flex:none;width:11px;height:11px;fill:currentColor}
+.br-handle span{overflow:hidden;text-overflow:ellipsis}
+.br-val{grid-area:val;justify-self:end;font-size:15px;color:var(--ink);white-space:nowrap}
+.br-val em{font-style:normal;color:var(--faint);font-size:12.5px}
+.br-sub{font-size:12.5px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.br .t-act{grid-area:act;justify-self:end;align-self:center}
 .br .t-act:empty{display:none}
-.br .qb{background:var(--accent);border-color:var(--accent);color:#fff;padding:10px 16px;font-size:14px}
+.br .qb{display:inline-flex;align-items:center;gap:6px;background:var(--accent);border-color:var(--accent);color:#fff;padding:9px 14px;font-size:13.5px;border-radius:999px}
 .br .qb:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
-/* in a narrow column the figures and the buy button drop to a line of their own under the raise */
+.qb-bolt{display:none}
+.br .qb-bolt{display:block;width:13px;height:13px;fill:currentColor}
+/* in a narrow column the X account shows as an icon, and the button keeps only its amount */
 @container (max-width:540px){
-  .br{grid-template-columns:48px minmax(0,1fr);gap:14px;padding:16px}
-  .br-av{width:48px;height:48px}
-  .br-side{grid-column:1 / -1;flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 12px;text-align:left;padding-top:14px;border-top:1px solid var(--hair)}
-  .br .t-act{margin:0 0 0 auto}
+  .br{grid-template-areas:"av name val" "av soc soc" "av flags act";column-gap:11px;padding:11px 12px}
+  .br-flags{flex-wrap:wrap}
+  .br-handle,.br-flags .tag,.br-flags .br-sub{display:none}
+  .br-ico.is-x{display:grid}
+  .br-meta{gap:8px}
+  .br .qb{padding:8px 12px}
+  .br .qb-w{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+}
+@container (max-width:400px){
+  .br-meta{flex-wrap:wrap}
 }
 /* one line under the columns: the refunded-presales note on the left, the prototype disclaimer and reset on the right. The columns are
    sized so this line sits at the foot of the window. */
@@ -1415,9 +1440,22 @@ function sorter(k) {
   return k === 'seeded' ? (a, b) => (b.resolvedAt || 0) - (a.resolvedAt || 0) : (a, b) => a.endsAt - b.endsAt;
 }
 const qbLabel = p => fmtC(Math.min(quickFor(p), payLeft(p)), p.q);
+const BOLT = '<svg class="qb-bolt" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.2 1 3 9h4l-.8 6L13 6.8H8.6z"/></svg>';
+/* a board row's second line: time, the project's links as small icons with its X account by handle, and its backers */
+const ROW_ICON = {
+  clock: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6V8l2.2 1.5"/></svg>',
+  done: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M5.4 8.2l1.8 1.8 3.4-3.7"/></svg>',
+  people: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6" cy="5.4" r="2.4"/><path d="M1.6 13.4c.3-2.4 2-3.8 4.4-3.8s4.1 1.4 4.4 3.8M10.6 3.2a2.4 2.4 0 0 1 0 4.4M12 9.9c1.4.5 2.2 1.7 2.4 3.5"/></svg>'
+};
+const xHandle = u => { const m = /^https?:\/\/(?:www\.)?(?:x|twitter)\.com\/@?([A-Za-z0-9_]{1,15})\/?(?:[?#].*)?$/i.exec(u || ''); return m ? '@' + m[1] : ''; };
+function rowLinks(p) {
+  const l = profileOf(p).links || {}, h = safeUrl(l.x) && xHandle(l.x), ext = 'target="_blank" rel="noopener"';
+  const icons = SOCIALS.filter(x => safeUrl(l[x[0]])).map(x => `<a class="br-ico${x[0] === 'x' && h ? ' is-x' : ''}" href="${esc(safeUrl(l[x[0]]))}" ${ext} title="${x[1]}" aria-label="${esc(p.name)}: ${x[1]}">${ICONS[x[2]]}</a>`).join('');
+  return icons || h ? `<span class="br-links">${icons}${h ? `<a class="br-handle" href="${esc(safeUrl(l.x))}" ${ext} title="X account">${ICONS.x}<span>${esc(h)}</span></a>` : ''}</span>` : '';
+}
 function actCell(p) {
   const C = Q(p), pos = state.positions[p.id];
-  if (p.status === 'live') return `<button class="qb" data-qb="${p.id}">Deposit <span class="num" data-qbamt>${qbLabel(p)}</span> ${esc(C.sym)}</button>`;
+  if (p.status === 'live') return `<button class="qb" data-qb="${p.id}">${BOLT}<span class="qb-w">Deposit </span><span><span class="num" data-qbamt>${qbLabel(p)}</span> ${esc(C.sym)}</span></button>`;
   if (pos && !state.claimed[p.id]) return `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
   if (p.status === 'seeded') return `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Trade</a>`;   // a seeded token is bought and sold on its page
   return '';   // the card's status chip already says refunded
@@ -1432,12 +1470,11 @@ function renderTerminal() {
   for (const k of ['new', 'seeding', 'seeded']) {
     $('#n-' + k).textContent = cols[k].length;
     $('#col-' + k).innerHTML = cols[k].length ? cols[k].map((p, i) => `<div class="br ${p.status}${fresh(p)}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
-      <span class="br-av"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>
-      <div class="br-main"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>
-        <div class="br-meta"><span class="tag">${esc(Q(p).sym)} pair</span>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}<span>${p.status === 'live' ? `Ends in <span class="num" data-time>${timeCell(p)}</span>` : timeCell(p)}</span></div>
-        ${progCell(p)}<div class="br-flags">${riskChip(riskSummary(riskChecks(p)))}${p.status === 'live' ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</div></div>
-      <div class="br-side"><span class="br-val num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span>
-        ${p.status === 'live' ? `<span class="br-sub num" title="Pace needed to seed" data-pace>${paceTxt(p)}</span>` : `<span class="br-sub">${p.backers} backers</span>`}<span class="t-act">${actCell(p)}</span></div></div>`).join('')
+      <span class="br-avc"><span class="br-av"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>${progCell(p)}</span>
+      <div class="br-main"><div class="br-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}</div>
+        <div class="br-meta">${p.status === 'live' ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}${rowLinks(p)}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span></div>
+        <div class="br-flags"><span class="tag">${esc(Q(p).sym)} pair</span>${riskChip(riskSummary(riskChecks(p)))}${p.status === 'live' ? `<span data-pacechip>${paceChip(paceInfo(p))}</span><span class="br-sub num" title="Pace needed to seed" data-pace>${paceTxt(p)}</span>` : ''}</div></div>
+      <div class="br-side"><span class="br-val num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span><span class="t-act">${actCell(p)}</span></div></div>`).join('')
       : `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${q ? `Nothing here matches "${esc(ui.bq.trim())}".` : ui.fAsset !== 'all' ? 'Nothing here with this pair.' : none[k]}</div>`;
   }
   const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live';
@@ -1453,7 +1490,7 @@ function patchRows(p) {
   $$(`[data-row="${p.id}"]`).forEach(row => {
     const s = (k, fn) => { const e = $(k, row); if (e) fn(e); };
     s('[data-bar]', e => { if (pc > parseFloat(e.style.width) + 1e-6) bump(row); e.style.width = pc + '%'; }); s('[data-pct]', e => e.textContent = Math.floor(pc + 1e-7) + '%');
-    s('[data-raised]', e => e.textContent = fmtC(p.raised, p.q, true)); s('[data-pace]', e => e.textContent = paceTxt(p));
+    s('[data-raised]', e => e.textContent = fmtC(p.raised, p.q, true)); s('[data-pace]', e => e.textContent = paceTxt(p)); s('[data-rbackers]', e => e.textContent = p.backers);
     s('[data-qbamt]', e => e.textContent = qbLabel(p)); s('[data-pacechip]', e => e.innerHTML = paceChip(paceInfo(p)));
   });
 }
