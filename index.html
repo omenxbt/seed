@@ -89,6 +89,24 @@ a{color:inherit;text-decoration:none}
 .pop .bal span:first-child{color:var(--muted)}
 .pop button{margin-top:12px;width:100%;padding:10px;border-radius:12px;border:1px solid var(--hair-2);font-weight:600;font-size:13.5px}
 .pop button:hover{background:var(--mist)}
+/* an X account linked to the wallet: optional, shown as a small chip wherever the wallet is named */
+.x-chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap}
+.x-chip svg{flex:none;width:11px;height:11px;fill:currentColor}
+a.x-chip:hover{color:var(--navy-deep)}
+.x-chip em{font-style:normal;font-size:11px;font-weight:500;color:var(--muted);border:1px dashed var(--hair-2);border-radius:999px;padding:0 6px;margin-left:2px}
+.xrow{align-items:center}
+.x-set{display:inline-flex;align-items:center;gap:10px;min-width:0}
+.xrow .linkbtn{margin:0;font-size:13.5px;font-weight:600;color:var(--navy-deep)}
+.pop .xrow .linkbtn,.pop .x-set .linkbtn{width:auto;padding:0;border:0;margin:0}
+.pop .x-link{display:flex;align-items:center;justify-content:center;gap:8px}
+.x-link svg{width:12px;height:12px;fill:currentColor}
+.x-note{font-size:12.5px;line-height:1.45;color:var(--muted);margin-top:8px}
+.x-why{margin:14px 0 18px}
+.x-steps{margin:0 0 6px 20px;display:grid;gap:10px;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
+.x-steps b{color:var(--ink);font-weight:600}
+#xDlg .err{margin-top:10px}
+#walletBtn .wx{display:inline-flex;align-items:center;gap:6px;font-weight:500}
+#walletBtn .wx svg{width:11px;height:11px;fill:currentColor}
 
 h1{line-height:.96;font-weight:400}
 h1 .l1{display:block;font-family:var(--serif);font-style:italic;font-size:clamp(42px,6.6vw,88px);letter-spacing:-.025em}
@@ -220,6 +238,7 @@ dialog[open]{animation:sheetIn .5s var(--out)}
 .promise svg{flex:none;width:16px;height:16px;margin-top:3px;stroke:var(--navy);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .sheet .btn-block{margin-top:20px}
 #walletDlg{width:min(400px,calc(100vw - 24px))}
+#xDlg{width:min(440px,calc(100vw - 24px))}
 .wlist{display:grid;gap:8px;margin-top:18px}
 .wlist button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:1px solid var(--hair-2);border-radius:12px;font-weight:600;font-size:15px;transition:background .2s,border-color .2s}
 .wlist button:hover{background:var(--mist);border-color:var(--navy)}
@@ -250,7 +269,7 @@ dialog[open]{animation:sheetIn .5s var(--out)}
   .btn-lg{padding:13px 20px;font-size:14.5px}
   .form,.preview,.ppage{padding:22px 18px}
   .seg button{padding:7px 12px}
-  dialog,#walletDlg{margin:auto auto 0;width:100vw}
+  dialog,#walletDlg,#xDlg{margin:auto auto 0;width:100vw}
   .sheet{border-radius:26px 26px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0px))}
   .specs{grid-template-columns:1fr 1fr}
 }
@@ -686,6 +705,7 @@ a.ico:hover{color:var(--ink)}
     <div class="pop" id="walletPop" role="menu">
       <h4 id="walletName">Demo wallet</h4>
       <div id="walletBals"></div>
+      <div id="walletX"></div>
       <button id="disconnectBtn">Disconnect</button>
     </div>
   </div>
@@ -1245,6 +1265,7 @@ a.ico:hover{color:var(--ink)}
 </div>
 
 <dialog id="walletDlg" aria-label="Connect a wallet"><div class="sheet" id="walletDlgBody"></div></dialog>
+<dialog id="xDlg" aria-label="Link an X account"><div class="sheet" id="xDlgBody"></div></dialog>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script>
@@ -1655,11 +1676,13 @@ $('#move').addEventListener('click', async e => {
 function renderWallet() {
   const b = $('#walletBtn');
   if (state.wallet) {
-    b.innerHTML = `<span class="wdot"></span><span class="num" style="font-weight:500">${esc(state.wallet.addr)}</span>`;
-    $('#walletName').textContent = state.wallet.name || 'Demo wallet';
+    const xl = xAdapter.of();   // a linked X account names the wallet; without one the address does
+    b.innerHTML = `<span class="wdot"></span>${xl ? `<span class="wx">${X_GLYPH}@${esc(xl.handle)}</span>` : `<span class="num" style="font-weight:500">${esc(state.wallet.addr)}</span>`}`;
+    $('#walletName').textContent = (state.wallet.name || 'Demo wallet') + (xl ? ' · ' + state.wallet.addr : '');
     $('#walletBals').innerHTML = balRows() + (state.wallet.stale ? '<p class="where" style="margin-top:8px">Balances could not be loaded from Solana. Open this menu again to retry.</p>' : '');
   }
   else b.textContent = 'Connect wallet';
+  $('#walletX').innerHTML = xMenu(); xRefresh();
   const n = Object.keys(state.positions).filter(id => !state.claimed[id]).length; $('#ctPos').textContent = n || '';
   syncOpenBtn(); seg.tabs && seg.tabs.place();
 }
@@ -1707,7 +1730,8 @@ function connect() {
     const finish = id => { d.onclick = d.oncancel = null; choosing = null; if (d.open) d.close(); (id ? connectWith(id) : Promise.resolve()).then(done); };
     $('#walletDlgBody').innerHTML = `<div class="sh-head"><span class="nm"><b>Connect a wallet</b></span><button class="x" data-wx aria-label="Close">&times;</button></div>
       <div class="wlist">${found.map(w => `<button data-w="${w.id}"><span>${w.name}</span><small>Detected</small></button>`).join('')}<button data-w="demo"><span>Demo wallet</span><small>Simulated funds</small></button></div>
-      <p class="where" style="margin-top:14px">A real wallet is only read for its address and balances. Buying, claiming and opening are not live yet and run on the demo wallet.</p>`;
+      <p class="where" style="margin-top:14px">A real wallet is only read for its address and balances. Buying, claiming and opening are not live yet and run on the demo wallet.</p>
+      <p class="where" style="margin-top:8px">A wallet is all you need. Linking an X account to it is optional, from the wallet menu once you are connected.</p>`;
     d.onclick = e => { const b = e.target.closest('[data-w]'); if (b) finish(b.dataset.w); else if (e.target === d || e.target.closest('[data-wx]')) finish(); };
     d.oncancel = () => finish();
     d.showModal();
@@ -1797,7 +1821,7 @@ function renderPortfolio() {
       return `<div class="prow"><span class="c-proj">${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta">${pairTag(p)}</span></span></span>
         <span class="num">${a ? `${fmtAmt(a, p.q)} ${sym}` : '–'}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
     : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#">Buy into a raise from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
-  $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` : '<p class="rail-meta">No wallet connected.</p>';
+  $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` + xRow() : '<p class="rail-meta">No wallet connected.</p>';
   renderPerf(); syncMove();
 }
 $('#prows').addEventListener('click', e => { const cl = e.target.closest('[data-claim]'); if (cl) claim(find(cl.dataset.claim), cl); });
@@ -2022,7 +2046,7 @@ function boot() {
   $('#qbAsset').addEventListener('change', e => { ui.qbAsset = e.target.value; syncQuickUI(); });
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();
-  initDocs(); renderPreview(); tick(true); renderAll(); route(); resume();
+  initDocs(); renderPreview(); tick(true); renderAll(); route(); resume().then(() => xAdapter.finish());   // back from an X sign-in, the link is made once the wallet is back
   setInterval(() => tick(), 1000); setInterval(simulate, 3600);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeSegs);
 }
@@ -2051,6 +2075,7 @@ addEventListener('storage', e => {
 <script src="js/adapters/founder.js"></script>
 <script src="js/adapters/updates.js"></script>
 <script src="js/adapters/chat.js"></script>
+<script src="js/adapters/x.js"></script>
 <script src="js/risk.js"></script>
 <script src="js/presale-page.js"></script>
 <script src="js/launch.js"></script>

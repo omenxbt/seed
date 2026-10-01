@@ -1,5 +1,5 @@
 /* ==========================================================================
-   SUPABASE, the backend for chat, founder updates and uploads. Configured in js/config/supabase.js; until then `supa.ready()`
+   SUPABASE, the backend for chat, founder updates, uploads and X account links. Configured in js/config/supabase.js; until then `supa.ready()`
    is false and every adapter stays on its demo path. Reads use the public anon key. Every write goes through the `seed`
    Edge Function with a signed session (see chatSession in js/adapters/chat.js): the function checks the ed25519 signature
    and row-level security blocks every direct write.
@@ -15,7 +15,7 @@ var supa = {
     if (this.client) return Promise.resolve(true);
     return this.loading || (this.loading = new Promise(ok => {
       const s = document.createElement('script'); s.src = SUPA_JS;
-      s.onload = () => { this.client = window.supabase.createClient(SUPABASE.url, SUPABASE.anonKey, { auth: { persistSession: false } }); ok(true); };
+      s.onload = () => { this.client = window.supabase.createClient(SUPABASE.url, SUPABASE.anonKey, { auth: { persistSession: false, detectSessionInUrl: false } }); ok(true); };
       s.onerror = () => { this.loading = null; ok(false); };
       document.head.appendChild(s);
     }));

@@ -112,12 +112,13 @@ function chatMount(p, body) {
   const draw = async () => {
     if (!body.isConnected) { if (chatOff) { chatOff(); chatOff = null; } return; }
     let msgs; try { msgs = await chatAdapter.list(p); } catch (e) { list.innerHTML = `<p class="quiet">Chat could not be loaded: ${esc(e.message)}</p>`; return; }
+    if (await xAdapter.load(msgs.map(m => m.wallet)) && !body.isConnected) return;   // linked X accounts of the people talking
     const hidden = hiddenSet(), byId = new Map(msgs.map(m => [m.id, m])), shown = msgs.filter(m => !hidden.has(m.id));
     const row = (m, pinnedView) => {
       const role = m.role || roleOf(p, m.wallet), amt = backedBy(p, m.wallet), q = m.replyTo && byId.get(m.replyTo), mine = m.wallet === me;
       return `<article class="msg${role ? ' r-' + role : ''}${mine ? ' is-me' : ''}" data-mid="${esc(m.id)}">
         <span class="msg-av" style="--h:${hashStr(m.wallet || '') % 360}"></span>
-        <div class="msg-main"><div class="msg-h"><b class="num">${mine ? 'You' : esc(walletLabel(m.wallet))}</b>${role ? `<span class="role-badge r-${role}">${role === 'founder' ? 'Founder' : 'Team'}</span>` : ''}
+        <div class="msg-main"><div class="msg-h"><b class="num">${mine ? 'You' : esc(walletLabel(m.wallet))}</b>${xChip(xAdapter.of(m.wallet))}${role ? `<span class="role-badge r-${role}">${role === 'founder' ? 'Founder' : 'Team'}</span>` : ''}
           <span class="backed-badge${amt ? '' : ' none'}">${amt ? `backed ${fmtC(amt, p.q)} ${esc(Q(p).sym)}` : 'not a backer'}</span><span class="msg-t">${fmtAgo(Date.now() - m.at)}</span></div>
           ${q ? `<blockquote><b class="num">${esc(walletLabel(q.wallet))}</b> ${esc(q.body)}</blockquote>` : ''}<p>${esc(m.body)}</p>
           <div class="msg-acts">${!frozen && state.wallet ? `<button data-reply="${esc(m.id)}">Reply</button>` : ''}${(myRole === 'founder' || myRole === 'team') && !frozen ? `<button data-pin="${esc(m.id)}" data-on="${m.pinned ? 0 : 1}">${m.pinned ? 'Unpin' : 'Pin'}</button>` : ''}

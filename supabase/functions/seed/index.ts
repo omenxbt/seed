@@ -1,4 +1,4 @@
-// The `seed` Edge Function: the only writer for chat, founder updates, roles and uploads.
+// The `seed` Edge Function: the only writer for chat, founder updates, roles, uploads and X account links.
 // Every request carries the wallet's signed session. Nothing is written until verifySession() has checked the ed25519
 // signature against the wallet's public key. Writes use the service role; row-level security blocks every other writer.
 //
@@ -9,6 +9,8 @@
 //   update      { presaleId, title, body }            founder or team of that raise
 //   register    { presaleId }                         claims founder of a raise id nobody has claimed yet
 //   upload-url  { name, type, size }                  a signed upload URL for the public bucket (PDF, image or slide file, 10 MB)
+//   link-x      { token }                             ties the wallet to the X account behind a Supabase Auth sign-in
+//   unlink-x    {}                                    removes the wallet's X link
 //
 // Secrets: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase. SEED_ALLOWED_DOMAINS is a comma-separated
 // list of hosts a session may be signed for, for example "seed-nu-ten.vercel.app,127.0.0.1:8765".
@@ -23,6 +25,7 @@ const TYPES: Record<string, string> = { 'application/pdf': 'pdf', 'image/png': '
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx', 'application/vnd.ms-powerpoint': 'ppt',
   'application/vnd.apple.keynote': 'key', 'application/vnd.oasis.opendocument.presentation': 'odp' };
 const MAX_BYTES = 10 * 1024 * 1024;
+const X_PROVIDERS = ['twitter', 'x'];   // Supabase Auth's names for X sign-in
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
@@ -99,6 +102,26 @@ Deno.serve(async (req) => {
         if (error) throw new Refusal(400, error.message);
         const { data: pub } = db.storage.from(BUCKET).getPublicUrl(path);
         return reply(200, { path, token: data.token, signedUrl: data.signedUrl, publicUrl: pub.publicUrl });
+      }
+      // The caller proved the wallet with its signed session (above) and proves the X account with the access token of an
+      // X sign-in made through Supabase Auth. Both checked in one request is what makes the pair a link.
+      case 'link-x': {
+        const { data: u, error } = await db.auth.getUser(str(body.token, 6000));
+        if (error || !u?.user) throw new Refusal(401, 'The X sign-in could not be checked. Try linking again.');
+        const idn = (u.user.identities ?? []).find((i) => X_PROVIDERS.includes(i.provider));
+        if (!idn) throw new Refusal(400, 'That sign-in was not an X account.');
+        const d = (idn.identity_data ?? {}) as Record<string, unknown>;
+        const xId = str(d.provider_id ?? d.sub ?? idn.id, 40), handle = str(d.user_name ?? d.preferred_username, 15);
+        if (!xId || !/^[A-Za-z0-9_]{1,15}$/.test(handle)) throw new Refusal(400, 'X did not return a handle for that account.');
+        const name = str(d.full_name ?? d.name, 60), avatar = str(d.avatar_url ?? d.picture, 300);
+        const { error: e2 } = await db.from('x_links').upsert({ wallet, x_id: xId, handle, name, avatar, linked_at: new Date().toISOString() });
+        if (e2) throw new Refusal(400, e2.message);
+        return reply(200, { handle, name, avatar });
+      }
+      case 'unlink-x': {
+        const { error } = await db.from('x_links').delete().eq('wallet', wallet);
+        if (error) throw new Refusal(400, error.message);
+        return reply(200, { ok: true });
       }
       default: throw new Refusal(400, 'Unknown action.');
     }
