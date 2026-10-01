@@ -351,6 +351,15 @@ a.ico:hover{color:var(--ink)}
 .steps button:last-child{padding-bottom:0}
 .steps button:hover{padding-left:4px}
 .steps button:hover{color:var(--navy-deep)}
+.steps-h{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);padding:18px 0 10px;border-top:1px solid var(--hair)}
+.step-opt{display:flex;align-items:center;gap:12px;border-top:1px solid var(--hair)}
+.step-opt>button[data-step]{flex:1;border-top:0;padding-bottom:13px}
+/* an on/off switch: the optional sections of the Launch form */
+.switch,.steps .switch,.steps .switch:hover{flex:none;display:block;position:relative;width:40px;height:24px;padding:0;border:0;border-radius:999px;background:var(--raised);transition:background .3s var(--soft)}
+.switch::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:transform .3s var(--soft),background .3s}
+.switch[aria-checked="true"],.steps .switch[aria-checked="true"]{background:var(--solid)}
+.switch[aria-checked="true"]::after{transform:translateX(16px);background:#fff}
+.switch:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
 .steps .num{font-size:11.5px;font-weight:500;background:var(--navy-wash);color:var(--navy-deep);border-radius:6px;padding:4px 6px}
 .card-h{padding:24px 24px 14px;font-size:18px;font-weight:600;letter-spacing:-.03em;line-height:1.2}
 /* in the side column a raise row stacks: project and action, then the bar, then raised and time */
@@ -693,7 +702,7 @@ a.ico:hover{color:var(--ink)}
         <section class="panel pagehead">
           <h1><i>Start</i>a raise</h1>
           <p>Everything backers see on your project page, and the risk checks they will read, before you open. The supply is fixed at 1B with mint authority revoked. Opening is free.</p>
-          <nav class="steps" aria-label="Form sections"><button type="button" data-step="1"><span class="num">01</span>Project</button><button type="button" data-step="2"><span class="num">02</span>Raise</button><button type="button" data-step="3"><span class="num">03</span>Tokenomics</button><button type="button" data-step="4"><span class="num">04</span>Team</button><button type="button" data-step="5"><span class="num">05</span>Roadmap</button><button type="button" data-step="6"><span class="num">06</span>Links</button></nav>
+          <nav class="steps" aria-label="Form sections"><button type="button" data-step="1"><span class="num">01</span>Project</button><button type="button" data-step="2"><span class="num">02</span>Raise</button><button type="button" data-step="3"><span class="num">03</span>Links</button><span class="steps-h">Optional, add what you want to show</span><div class="step-opt"><button type="button" data-step="4"><span class="num">04</span>Tokenomics</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="tokenomics" aria-label="Add tokenomics"></button></div><div class="step-opt"><button type="button" data-step="5"><span class="num">05</span>Team</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></div><div class="step-opt"><button type="button" data-step="6"><span class="num">06</span>Roadmap</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="road" aria-label="Add roadmap"></button></div></nav>
         </section>
         <section class="panel"><h3 class="card-h">Your raises</h3><div id="mineList"></div></section>
       </aside>
@@ -706,12 +715,12 @@ a.ico:hover{color:var(--ink)}
         <div class="f full"><label for="fDesc">Description<span class="hint">Markdown. Headings, lists, links and bold work.</span><button type="button" class="linkbtn" id="descToggle">Preview</button></label>
           <textarea id="fDesc" class="ta" rows="7" maxlength="6000" placeholder="What it is, who it is for, and what the raise pays for."></textarea><div class="md desc-pv" id="descPv" hidden></div></div>
         <div class="f full media">
-          <div class="f m-banner"><span class="lab">Banner<span class="hint">3:1. Drag the preview to choose the crop. PNG, JPEG or WebP, 10 MB at most.</span></span>
+          <div class="f m-banner"><span class="lab">Banner<span class="hint">1500 × 500 px. Drag the preview to choose the crop. PNG, JPEG or WebP, 10 MB at most.</span></span>
             <div class="drop wide" id="upBanner" data-kind="banner" data-accept="image/png,image/jpeg,image/webp"><input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Banner image"><div class="crop" data-crop><span>Drop an image or choose a file</span></div></div></div>
-          <div class="f m-art"><span class="lab">Token art<span class="hint">1:1</span></span>
+          <div class="f m-art"><span class="lab">Token art<span class="hint">1:1, square</span></span>
             <div class="drop square" id="upArt" data-kind="art" data-accept="image/png,image/jpeg,image/webp"><input type="file" accept="image/png,image/jpeg,image/webp" aria-label="Token art"><div class="crop" data-crop><span>Drop an image</span></div></div></div>
-          <div class="f m-deck"><span class="lab">Deck<span class="hint">PDF, 10 MB at most</span></span>
-            <div class="drop doc" id="upDeck" data-kind="deck" data-accept="application/pdf"><input type="file" accept="application/pdf" aria-label="Deck PDF"><div class="crop" data-crop><span>Drop a PDF</span></div></div></div>
+          <div class="f m-deck"><span class="lab">Deck<span class="hint">PDF, PowerPoint, Keynote or an image (PNG, JPEG). 10 MB at most.</span></span>
+            <div class="drop doc" id="upDeck" data-kind="deck"><input type="file" accept=".pdf,.pptx,.ppt,.key,.odp,.png,.jpg,.jpeg,.webp,application/pdf,image/png,image/jpeg,image/webp" aria-label="Pitch deck"><div class="crop" data-crop><span>Drop your deck or choose a file</span></div></div></div>
         </div>
         </div></fieldset>
 
@@ -732,7 +741,19 @@ a.ico:hover{color:var(--ink)}
         <div class="f full"><label for="fWl">Whitelist<span class="hint">optional. One wallet address per line; leave empty to let anyone back it.</span></label><textarea id="fWl" class="ta num" rows="2" spellcheck="false"></textarea></div>
         </div></fieldset>
 
-        <fieldset><legend><span class="num">03</span>Tokenomics</legend>
+        <fieldset><legend><span class="num">03</span>Links</legend><div class="form">
+          <div class="f"><label for="lWebsite">Website</label><div class="inp"><input id="lWebsite" placeholder="https://"></div></div>
+          <div class="f"><label for="lX">X</label><div class="inp"><input id="lX" placeholder="https://x.com/project"></div></div>
+          <div class="f"><label for="lTelegram">Telegram</label><div class="inp"><input id="lTelegram" placeholder="https://t.me/project"></div></div>
+          <div class="f"><label for="lDiscord">Discord</label><div class="inp"><input id="lDiscord" placeholder="https://discord.gg/"></div></div>
+          <div class="f full"><label for="lGithub">GitHub</label><div class="inp"><input id="lGithub" placeholder="https://github.com/"></div></div>
+          <div class="f"><label for="fFounderX">Founder X account</label><div class="inp"><input id="fFounderX" placeholder="https://x.com/you"></div></div>
+          <div class="f"><label for="fXSince">X account created<span class="hint">self-reported for now</span></label><div class="inp"><input id="fXSince" type="month"></div></div>
+        </div></fieldset>
+
+        <fieldset class="opt" data-opt="tokenomics"><legend><span class="num">04</span>Tokenomics<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="tokenomics" aria-label="Add tokenomics"></button></legend>
+          <p class="fs-note" data-off>Left off, the supply splits evenly: 50% to raise backers and 50% to the locked Meteora pool, with nothing set aside for a team or treasury. Turn it on to set your own allocations, vesting and use of funds.</p>
+          <div data-body hidden>
           <p class="fs-note">The raise share and the pool share are always equal, which is what opens the pool at the raise price. Everything must add up to 100%.</p>
           <div class="alloc-fixed"><div class="f"><label for="fShare">Raise backers</label><div class="inp"><input id="fShare" inputmode="decimal" class="num" value="40"><span class="suf">%</span></div></div>
             <div class="f"><span class="lab">Locked Meteora pool</span><div class="inp ro"><input id="fLp" class="num" readonly tabindex="-1" value="40"><span class="suf">%</span></div></div></div>
@@ -741,26 +762,23 @@ a.ico:hover{color:var(--ink)}
           <h4 class="fs-sub">Use of funds</h4>
           <div class="rows" id="uofRows"></div>
           <div class="rows-foot"><button type="button" class="qb" data-add="uof">Add a line</button><span class="sum-meter" id="uofSum"></span></div>
+          </div>
         </fieldset>
 
-        <fieldset><legend><span class="num">04</span>Team</legend>
-          <div class="form"><div class="f"><label for="fFounderX">Founder X account</label><div class="inp"><input id="fFounderX" placeholder="https://x.com/you"></div></div>
-            <div class="f"><label for="fXSince">X account created<span class="hint">self-reported for now</span></label><div class="inp"><input id="fXSince" type="month"></div></div></div>
+        <fieldset class="opt" data-opt="team"><legend><span class="num">05</span>Team<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></legend>
+          <p class="fs-note" data-off>Left off, your page lists no team, and the risk checks tell backers so. Turn it on to list the people behind the project.</p>
+          <div data-body hidden>
           <p class="fs-note">The connected wallet is the deployer and founder wallet. Its funding is read from Solana for the risk checks.</p>
           <div class="rows" id="teamRows"></div><div class="rows-foot"><button type="button" class="qb" data-add="team">Add a team member</button></div>
+          </div>
         </fieldset>
 
-        <fieldset><legend><span class="num">05</span>Roadmap</legend>
+        <fieldset class="opt" data-opt="road"><legend><span class="num">06</span>Roadmap<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="road" aria-label="Add roadmap"></button></legend>
+          <p class="fs-note" data-off>Left off, your page shows no roadmap. Turn it on to list milestones with due dates.</p>
+          <div data-body hidden>
           <div class="rows" id="roadRows"></div><div class="rows-foot"><button type="button" class="qb" data-add="road">Add a milestone</button></div>
+          </div>
         </fieldset>
-
-        <fieldset><legend><span class="num">06</span>Links</legend><div class="form">
-          <div class="f"><label for="lWebsite">Website</label><div class="inp"><input id="lWebsite" placeholder="https://"></div></div>
-          <div class="f"><label for="lX">X</label><div class="inp"><input id="lX" placeholder="https://x.com/project"></div></div>
-          <div class="f"><label for="lTelegram">Telegram</label><div class="inp"><input id="lTelegram" placeholder="https://t.me/project"></div></div>
-          <div class="f"><label for="lDiscord">Discord</label><div class="inp"><input id="lDiscord" placeholder="https://discord.gg/"></div></div>
-          <div class="f full"><label for="lGithub">GitHub</label><div class="inp"><input id="lGithub" placeholder="https://github.com/"></div></div>
-        </div></fieldset>
 
         <div class="lsubmit"><div class="err" id="fErr" role="alert"></div><button class="btn btn-navy btn-lg btn-block" id="openBtn" type="button">Open raise</button><p class="rail-cap" id="upNote"></p></div>
       </form>

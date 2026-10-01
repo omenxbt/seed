@@ -1,13 +1,13 @@
 /* ==========================================================================
    PROJECT PAGE (#/presale/<id>[/<tab>]). A raise's full page, dark and the full width of the window, in three columns:
-   the project on the left (identity, stats, risk checks), the raise in the middle (fill and pace, raise chart, tabs) and
+   the project on the left (identity, stats, chat), the raise in the middle (fill and pace, raise chart, tabs) and
    the rail on the right (buy, your position, vault). After seeding it becomes a trading view; after a miss it
    shows the refund. Reads go through the adapters in js/adapters; values from demo data carry the "Demo data" pill.
    renderDetail() draws it, patchDetail(p) updates live numbers in place, tickDetail() runs the countdowns.
    ========================================================================== */
 /* charts draw at the width of their column, one unit to the pixel, so their labels keep their size however wide the window is */
 const chartW = () => { const b = detailBox && $('[data-dchart],[data-candles]', detailBox), w = b ? Math.floor(b.clientWidth) : 0; return w > 0 ? Math.max(320, w) : innerWidth < 720 ? 400 : 720; };
-const PTABS = ['overview', 'deck', 'team', 'tokenomics', 'backers', 'chat', 'updates'];
+const PTABS = ['overview', 'deck', 'team', 'tokenomics', 'backers', 'risk', 'updates'];
 const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'price', side: 'buy', allBackers: false, deck: null, deckPage: 1, walletKey: '' };
 
 const ICONS = {
@@ -64,7 +64,7 @@ function ppHeader(p) {
       <div class="pp-idrow">${artHTML(p, 'pp-art')}${statusPill(p)}</div>
       <div class="pp-name"><h1>${esc(p.name)}</h1><span class="pp-tk num">$${esc(p.ticker)}</span></div>
       <p class="pp-tagline">${esc(pr.tagline || p.idea)}</p>
-      <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/overview" data-jump-risk>${riskChip(risk)}</a>${p.mine ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}</div>
+      <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/risk" data-jump-risk>${riskChip(risk)}</a>${p.mine ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}</div>
       ${pr.mint || socials ? `<div class="pp-meta">${pr.mint ? copyBtn(pr.mint, 'mint address', shortMint(pr.mint)) : ''}<span class="pp-socials">${socials}</span></div>` : ''}
       <dl class="pp-stats" data-pstats>${ppStats(p)}</dl>
     </section>`;
@@ -252,17 +252,22 @@ function vaultPanel(p) {
     <div class="recv"><span>Balance</span><b class="num" data-vbal>…</b></div><div class="vault-src" data-vsrc></div>
     <p class="rail-meta">${when}.</p>${st ? `<p class="standin-note">${esc(STANDINS.vault.note)}</p>` : ''}</section>`;
 }
-function riskPanel(p) {
+/* the risk checks are a tab under the charts; two columns of checks where the tab is wide enough */
+function tabRisk(p) {
   const checks = riskChecks(p), s = riskSummary(checks), demo = checks.some(c => c.from === 'demo');
-  return `<section class="panel rail-card" data-risk id="risk"><div class="rail-h"><h3>Risk checks</h3>${riskChip(s)}</div>
-    <ul class="risk-list">${checks.map(c => `<li class="${c.level}">${RISK_ICON[c.level]}<div><b>${esc(c.label)}</b><span>${esc(c.reason)}</span></div></li>`).join('')}</ul>
-    ${demo ? `<p class="rail-cap">${DEMO_PILL} Checks run on demo data where no live account exists. Thresholds are in js/config/risk.js.</p>` : ''}</section>`;
+  return tabHead('Risk checks', '', riskChip(s)) +
+    `<ul class="risk-list risk-grid" data-risk>${checks.map(c => `<li class="${c.level}">${RISK_ICON[c.level]}<div><b>${esc(c.label)}</b><span>${esc(c.reason)}</span></div></li>`).join('')}</ul>
+    ${demo ? `<p class="quiet risk-note">${DEMO_PILL} Checks run on demo data where no live account exists. Thresholds are in js/config/risk.js.</p>` : ''}`;
 }
+/* the chat sits under the project card, open beside every tab */
+function chatPanel(p) { return typeof chatCard === 'function' ? chatCard(p) : ''; }
+function mountChat(p) { const c = detailBox && $('[data-chat]', detailBox); if (c && typeof chatMount === 'function') { pg.chatW = walletId(); chatMount(p, c); } }
 function ppRail(p) { return tradePanel(p) + `<div class="pp-pos" data-poswrap>${positionPanel(p)}</div>` + vaultPanel(p); }
 
 /* ---------------------------------------------------------------- tabs */
 function tabLabel(p, t) {
   if (t === 'backers') return p.status === 'seeded' ? 'Holders' : 'Backers';
+  if (t === 'risk') return 'Risk checks';
   if (t === 'updates') { const n = updatesAdapter.list(p).length; return `Updates${n ? ` <span class="ct num">${n}</span>` : ''}`; }
   return t[0].toUpperCase() + t.slice(1);
 }
@@ -273,8 +278,7 @@ function ppTabs(p) {
 function renderTab(p) {
   const body = detailBox && $('[data-tabbody]', detailBox); if (!body) return;
   $$('[data-ptab]', detailBox).forEach(a => a.setAttribute('aria-selected', String(a.dataset.ptab === pg.tab)));
-  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, tokenomics: tabTokenomics, backers: tabBackers, chat: tabChat, updates: tabUpdates }[pg.tab] || tabOverview;
-  body.onclick = null; if (pg.tab !== 'chat' && typeof chatOff === 'function' && chatOff) { chatOff(); chatOff = null; }
+  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, tokenomics: tabTokenomics, backers: tabBackers, risk: tabRisk, updates: tabUpdates }[pg.tab] || tabOverview;
   body.innerHTML = fn(p); afterTab(p, body);
   const key = p.id + '/' + pg.tab;   // the tab's content eases in when the tab changes, not when it is redrawn in place
   if (pg.shown !== key) { pg.shown = key; body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap'); }
@@ -291,10 +295,20 @@ function tabOverview(p) {
     <div class="ov-b"><div class="tab-h sub"><h2>Roadmap</h2></div>${road ? `<ol class="roadmap">${road}</ol>` : '<p class="quiet">No roadmap listed.</p>'}
     <div class="tab-h sub"><h2>Links</h2></div>${links ? `<div class="links">${links}</div>` : '<p class="quiet">No website or socials listed.</p>'}</div></div>`;
 }
+/* a deck is a PDF (paged through here), an image (shown) or a slide file such as PowerPoint or Keynote (downloaded) */
+function deckKindOf(pr) {
+  if (pr.deckKind) return pr.deckKind;
+  const e = (/\.([a-z0-9]+)(?:[?#]|$)/i.exec(pr.deck || '') || [, ''])[1].toLowerCase();
+  return ['png', 'jpg', 'jpeg', 'webp'].includes(e) ? 'image' : ['pptx', 'ppt', 'key', 'odp'].includes(e) ? 'slides' : 'pdf';
+}
 function tabDeck(p) {
   const pr = profileOf(p);
   if (!pr.deck) return tabHead('Deck', '') + quietEmpty('No deck is attached to this raise.');
-  return tabHead('Deck', prFrom(p), `<span class="deck-tools"><span class="num" data-deckcount>Loading…</span><a class="btn btn-ink btn-sm" href="${esc(pr.deck)}" download>Download PDF</a></span>`) +
+  const kind = deckKindOf(pr), dl = label => `<a class="btn btn-ink btn-sm" href="${esc(pr.deck)}" download${pr.deckName ? `="${esc(pr.deckName)}"` : ''}>${label}</a>`;
+  if (kind === 'image') return tabHead('Deck', prFrom(p), `<span class="deck-tools">${dl('Download')}</span>`) + `<div class="deck-img"><img src="${esc(pr.deck)}" alt="${esc(p.name)} deck"></div>`;
+  if (kind === 'slides') return tabHead('Deck', prFrom(p), `<span class="deck-tools">${dl('Download deck')}</span>`) +
+    `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${pr.deckName ? `<b class="num">${esc(pr.deckName)}</b><br>` : ''}This deck is a slide file, which cannot be shown in the page. Download it to open it.</div>`;
+  return tabHead('Deck', prFrom(p), `<span class="deck-tools"><span class="num" data-deckcount>Loading…</span>${dl('Download PDF')}</span>`) +
     `<div class="deck"><div class="deck-thumbs" data-thumbs></div><div class="deck-main"><canvas data-deckcanvas></canvas><div class="deck-nav"><button class="qb" data-deckprev>Previous</button><span class="num" data-deckpg></span><button class="qb" data-decknext>Next</button></div></div></div>`;
 }
 const quietEmpty = t => `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${esc(t)}</div>`;
@@ -363,7 +377,6 @@ async function loadHolders(p) {
       ${h.value.map(x => `<tr><td class="mono">${esc(shortMint(x.wallet))}</td><td class="num">${fmtTok(x.amount)}</td><td class="num">${x.pct.toFixed(2)}%</td><td>${esc(x.label || '')}</td></tr>`).join('')}</tbody></table></div>`;
   } catch (e) { box.innerHTML = `<p class="quiet">Holders could not be loaded: ${esc(e.message)}</p>`; }
 }
-function tabChat(p) { return typeof chatTab === 'function' ? chatTab(p) : tabHead('Chat', '') + '<p class="quiet">Chat is not available.</p>'; }
 function tabUpdates(p) {
   const list = updatesAdapter.list(p), w = walletId(), canPost = roleOf(p, w) || roleOf(p, state.wallet && state.wallet.pk);
   const form = canPost && p.status !== 'refunded' ? `<form class="upd-form" data-updform><input name="t" maxlength="80" placeholder="Title" required><textarea name="b" rows="3" maxlength="2000" placeholder="What changed?" required></textarea><button class="btn btn-navy btn-sm">Post update</button></form>` : '';
@@ -371,9 +384,8 @@ function tabUpdates(p) {
     (list.length ? `<ol class="updates">${list.map(u => `<li><div class="u-h"><b>${esc(u.title)}</b><span class="num">${fmtDate(u.postedAt)}</span></div><div class="md">${md(u.body)}</div><span class="u-by">${esc(u.author || 'Founder')}</span></li>`).join('')}</ol>` : quietEmpty('No updates posted yet.'));
 }
 function afterTab(p, body) {
-  if (pg.tab === 'deck' && profileOf(p).deck) loadDeck(p, body);
+  if (pg.tab === 'deck' && profileOf(p).deck && deckKindOf(profileOf(p)) === 'pdf') loadDeck(p, body);
   if (pg.tab === 'backers' && p.status === 'seeded') loadHolders(p);
-  if (pg.tab === 'chat' && typeof chatMount === 'function') chatMount(p, body);
   if (pg.tab === 'updates' && supa.configured() && pg.updLoaded !== p.id) { pg.updLoaded = p.id; updatesAdapter.load(p).then(() => { if (pg.id === p.id && pg.tab === 'updates') { renderTab(p); refreshTabLabels(p); } }); }
   const f = $('[data-updform]', body);
   if (f) f.onsubmit = async e => { e.preventDefault(); const t = f.t.value.trim(), b = f.b.value.trim(); if (!t || !b) return; try { await updatesAdapter.post(p, t, b); toast('Update posted'); renderTab(p); refreshTabLabels(p); } catch (x) { toast(x.message || 'The update was not posted.'); } };
@@ -418,20 +430,20 @@ async function drawDeckPage(body) {
 let detailBox = null;
 function renderDetail(force) {
   const box = $('#presalePage'); detailBox = box;
-  if (ui.tab !== 'presale') { if (pg.id) { box.innerHTML = ''; pg.id = null; } return; }
+  if (ui.tab !== 'presale') { if (pg.id) { box.innerHTML = ''; pg.id = null; if (typeof chatOff !== 'undefined' && chatOff) { chatOff(); chatOff = null; } } return; }
   const p = find(ui.sel);
   if (!p) { box.innerHTML = '<div class="panel empty">That raise is not in this demo any more. It may have been reset.<br><a href="#">Back to all raises</a></div>'; pg.id = null; return; }
   const tab = PTABS.includes(ui.ptab) ? ui.ptab : 'overview', wkey = (state.wallet ? walletId() : '') + '/' + (state.positions[p.id] || 0) + '/' + !!state.claimed[p.id] + '/' + (p.status === 'seeded' ? heldOf(p) : 0) + '/' + balOf(p.q);
   if (!force && pg.id === p.id && pg.status === p.status) {
     if (pg.tab !== tab) { pg.tab = tab; renderTab(p); }
-    if (pg.walletKey !== wkey) { pg.walletKey = wkey; const pw = $('[data-poswrap]', box); if (pw) { pw.innerHTML = positionPanel(p); bindRail(p); } if (pg.tab === 'updates' || pg.tab === 'chat') renderTab(p); }
+    if (pg.walletKey !== wkey) { pg.walletKey = wkey; const pw = $('[data-poswrap]', box); if (pw) { pw.innerHTML = positionPanel(p); bindRail(p); } if (pg.tab === 'updates') renderTab(p); if (pg.chatW !== walletId()) mountChat(p); }
     patchDetail(p); return;
   }
   const fresh = pg.id !== p.id;
   Object.assign(pg, { id: p.id, status: p.status, tab, walletKey: wkey, seen: p.raised, shown: null }); if (fresh) Object.assign(pg, { allBackers: false, deck: null, pool: null, series: null });
-  box.innerHTML = `<div class="pp ${p.status}"><aside class="pp-side" aria-label="Project and risk checks">${ppHeader(p)}${riskPanel(p)}</aside>
+  box.innerHTML = `<div class="pp ${p.status}"><aside class="pp-side" aria-label="Project and chat">${ppHeader(p)}${chatPanel(p)}</aside>
     <div class="pp-main">${ppFill(p)}${ppChart(p)}${ppTabs(p)}</div><aside class="pp-rail" aria-label="Buy and vault">${ppRail(p)}</aside></div>`;
-  bindPage(p); renderTab(p); drawCharts(p); watchCharts(p); loadAsync(p);
+  bindPage(p); renderTab(p); mountChat(p); drawCharts(p); watchCharts(p); loadAsync(p);
   if (fresh && typeof playEnter === 'function') playEnter();   // the page's cards rise into place and the raise line draws itself
 }
 /* the charts are drawn again once the page is in the document, and whenever their column changes width */
@@ -453,7 +465,7 @@ function bindPage(p) {
   box.onclick = e => {
     const c = e.target.closest('[data-copy]');
     if (c) { e.preventDefault(); try { navigator.clipboard.writeText(c.dataset.copy).catch(() => {}); } catch (x) {} toast(`${c.dataset.copyLabel[0].toUpperCase() + c.dataset.copyLabel.slice(1)} copied`); return; }
-    if (e.target.closest('[data-jump-risk]')) { e.preventDefault(); const r = $('#risk', box); if (r) r.scrollIntoView({ block: 'start' }); return; }
+    if (e.target.closest('[data-jump-risk]')) { setTimeout(() => { const r = $('.pp-tabs', box); if (r) r.scrollIntoView({ block: 'start' }); }, 0); return; }   // the link opens the Risk checks tab; this brings it into view
     const tf = e.target.closest('[data-tf] button'); if (tf) { pg.tf = tf.dataset.v; $$('[data-tf] button', box).forEach(b => b.setAttribute('aria-pressed', String(b === tf))); loadTrading(p); return; }
     const mo = e.target.closest('[data-mode] button'); if (mo) { pg.mode = mo.dataset.v; $$('[data-mode] button', box).forEach(b => b.setAttribute('aria-pressed', String(b === mo))); $('[data-trading] h2', box).textContent = pg.mode === 'mcap' ? 'Market cap' : 'Price'; loadTrading(p); }
   };
@@ -540,7 +552,7 @@ async function loadAsync(p) {
   presaleAdapter.vaultBalance(p).then(v => { if (ui.sel !== id) return; const b = $('[data-vbal]', box), s = $('[data-vsrc]', box); if (b) b.textContent = `${fmtAmt(v.value, v.asset && ASSETS[v.asset] ? v.asset : p.q)} ${v.asset || Q(p).sym}`; if (s) s.innerHTML = srcPill(v.from); })
     .catch(e => { const b = $('[data-vbal]', box); if (b) b.textContent = 'Unavailable'; const s = $('[data-vsrc]', box); if (s) s.innerHTML = `<span class="quiet">Solana did not answer: ${esc(e.message)}</span>`; });
   if (p.status === 'seeded') loadTrading(p);
-  const again = () => { if (ui.sel !== id || !detailBox) return; const r = $('[data-risk]', detailBox); if (r) r.outerHTML = riskPanel(p); const ch = $('.pp-pills .risk-chip', detailBox); if (ch) ch.outerHTML = riskChip(riskSummary(riskChecks(p))); if (pg.tab === 'backers') renderTab(p); };
+  const again = () => { if (ui.sel !== id || !detailBox) return; const ch = $('.pp-pills .risk-chip', detailBox); if (ch) ch.outerHTML = riskChip(riskSummary(riskChecks(p))); if (pg.tab === 'backers' || pg.tab === 'risk') renderTab(p); };
   if (await founderAdapter.refresh(p)) again();
   if (await backersAdapter.enrich(p)) again();
 }

@@ -8,7 +8,7 @@
 //   report      { messageId }                         any signed-in wallet, once per message; hidden at AUTO_HIDE reports
 //   update      { presaleId, title, body }            founder or team of that raise
 //   register    { presaleId }                         claims founder of a raise id nobody has claimed yet
-//   upload-url  { name, type, size }                  a signed upload URL for the public bucket (PDF or image, 10 MB)
+//   upload-url  { name, type, size }                  a signed upload URL for the public bucket (PDF, image or slide file, 10 MB)
 //
 // Secrets: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase. SEED_ALLOWED_DOMAINS is a comma-separated
 // list of hosts a session may be signed for, for example "seed-nu-ten.vercel.app,127.0.0.1:8765".
@@ -18,7 +18,10 @@ import { verifySession } from './verify.ts';
 const ALLOWED = (Deno.env.get('SEED_ALLOWED_DOMAINS') ?? 'seed-nu-ten.vercel.app').split(',').map((s) => s.trim()).filter(Boolean);
 const AUTO_HIDE = 3;                 // matches RISK.chatAutoHideReports in js/config/risk.js
 const BUCKET = 'presale-media';
-const TYPES: Record<string, string> = { 'application/pdf': 'pdf', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
+const TYPES: Record<string, string> = { 'application/pdf': 'pdf', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp',
+  // slide files, for a pitch deck
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx', 'application/vnd.ms-powerpoint': 'ppt',
+  'application/vnd.apple.keynote': 'key', 'application/vnd.oasis.opendocument.presentation': 'odp' };
 const MAX_BYTES = 10 * 1024 * 1024;
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
@@ -89,7 +92,7 @@ Deno.serve(async (req) => {
       }
       case 'upload-url': {
         const type = str(body.type, 60), size = Number(body.size);
-        if (!TYPES[type]) throw new Refusal(400, 'Only PDF, PNG, JPEG and WebP files can be uploaded.');
+        if (!TYPES[type]) throw new Refusal(400, 'Only PDF, PNG, JPEG, WebP and slide files (PowerPoint, Keynote, OpenDocument) can be uploaded.');
         if (!(size > 0 && size <= MAX_BYTES)) throw new Refusal(400, 'Files can be at most 10 MB.');
         const path = `uploads/${wallet}/${crypto.randomUUID()}.${TYPES[type]}`;
         const { data, error } = await db.storage.from(BUCKET).createSignedUploadUrl(path);

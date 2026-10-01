@@ -31,7 +31,10 @@ body:has(#view-app.fit:not([hidden])) .toasts{bottom:calc(52px + env(safe-area-i
   .pp{flex:1;min-height:0;display:grid;grid-template-columns:var(--col-side) minmax(0,1fr) var(--col-rail);grid-template-rows:minmax(0,1fr)}
   .pp-side,.pp-main,.pp-rail{display:flex;flex-direction:column;gap:18px;min-width:0;min-height:0;overflow-y:auto;overscroll-behavior:contain;border-radius:18px}
   .pp-side>*,.pp-main>*,.pp-rail>*{order:0;flex:none}
-  .pp-main>.pp-tabs,.pp-side>.rail-card{flex:1 0 auto}
+  .pp-main>.pp-tabs{flex:1 0 auto}
+  /* the chat takes what is left of the side column and scrolls inside itself, so the message box stays in reach */
+  .pp-side>.chat-card{flex:1 1 0;min-height:560px}
+  .pp-side>.chat-card .chat-list{max-height:none}
   /* the tabs stay in reach while the middle column scrolls */
   .tabbar{position:sticky;top:0;z-index:2;background:var(--panel-solid)}
 }
@@ -219,6 +222,11 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 :is(.pp,.ws) .risk-list svg{width:19px;height:19px}
 :is(.pp,.ws) .risk-list b{font-size:15px;margin-bottom:2px}
 :is(.pp,.ws) .risk-list span{color:var(--muted);line-height:1.45}
+/* the Risk checks tab: the checks in two columns where the tab is wide enough */
+.risk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,340px),1fr));gap:12px}
+.pp .risk-grid li,.pp .risk-grid li:first-child,.pp .risk-grid li:last-child{border:1px solid var(--hair);border-radius:14px;background:var(--tile);padding:15px 16px}
+.risk-note{margin-top:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tab-h .risk-chip{margin-left:auto}
 
 /* tabs: text tabs, the open one underlined in blue */
 .pp-tabs{padding:0;display:flex;flex-direction:column}
@@ -283,6 +291,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .deck-main{min-width:0;display:flex;flex-direction:column;align-items:center;gap:14px}
 .deck-main canvas{max-width:100%;border-radius:12px;box-shadow:0 14px 40px -18px rgba(0,0,0,.6);background:#fff}
 .deck-nav{display:flex;align-items:center;gap:14px;font-size:14px;color:var(--muted)}
+.deck-img img{display:block;max-width:100%;margin:0 auto;border-radius:12px;box-shadow:0 14px 40px -18px rgba(0,0,0,.6)}
 
 .team{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
 .member{display:grid;grid-template-columns:56px minmax(0,1fr);gap:16px;padding:20px;border-radius:16px;background:var(--tile)}
@@ -395,6 +404,22 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .replying{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)}
 .replying button{font-size:16px;line-height:1;color:var(--muted)}
 .chat.frozen .chat-list{opacity:.85}
+/* in the project page's side column the chat is the card itself: no inner frame, and a tighter message row for the narrow column */
+.chat-card{padding:0 !important;gap:0 !important;overflow:hidden}
+.chat-card>.rail-h{padding:20px 22px 16px;margin:0 !important}
+.chat-card>.rail-cap{padding:10px 18px 14px;border-top:1px solid var(--hair);font-size:12.5px !important}
+.chat-card .chat{flex:1;min-height:0;max-width:none;border:0;border-top:1px solid var(--hair);border-radius:0;background:transparent}
+.chat-card .chat-list{flex:1;min-height:200px;max-height:460px}
+.chat-card .msg{grid-template-columns:30px minmax(0,1fr);gap:11px;padding:11px 18px}
+.chat-card .msg-av{width:30px;height:30px}
+.chat-card .msg-h{gap:6px;font-size:13px}
+.chat-card .msg p{font-size:14.5px;line-height:1.5}
+.chat-card .pins-h{padding:6px 18px 2px}
+.chat-card .chat-pins{flex:none;max-height:190px;overflow-y:auto;overscroll-behavior:contain}
+.chat-card .chat-compose{flex:none}
+.chat-card .chat-compose{padding:14px 18px}
+.chat-card .chat-compose textarea{font-size:14.5px;min-width:0}
+.chat-card .chat-note{font-size:14px}
 .msg.is-me .msg-av{box-shadow:0 0 0 2px var(--navy)}
 .msg-acts{min-height:0}.msg-acts:empty{display:none}
 
@@ -405,6 +430,11 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .lform legend{float:left;width:100%;display:flex;align-items:center;gap:10px;font-size:19px;font-weight:600;letter-spacing:-.03em;margin-bottom:18px}
 .lform legend .num{font-size:11px;font-weight:500;background:var(--navy-wash);color:var(--navy-deep);border-radius:6px;padding:4px 6px}
 .lform legend+*{clear:both}
+/* an optional section: a switch in its heading, and a line on what backers see while it is off */
+.lform legend .switch{margin-left:auto}
+.opt-tag{font-size:12px;font-weight:500;letter-spacing:0;color:var(--muted);border:1px dashed var(--hair-2);border-radius:999px;padding:2px 9px}
+.lform fieldset.opt.off legend{color:var(--ink-2)}
+.lform fieldset.opt [data-off]{margin-bottom:0}
 .lform .form{padding:0}
 .ta{width:100%;font:inherit;font-size:15.5px;line-height:1.55;border:1px solid var(--hair);border-radius:14px;padding:13px 16px;background:var(--paper);resize:vertical;min-width:0}
 .ta:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 4px var(--ring)}
@@ -429,7 +459,8 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .crop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;pointer-events:none}
 .crop-hint{position:absolute;left:10px;bottom:8px;font-size:12.5px;font-weight:600;color:#fff;background:rgba(0,0,0,.6);border-radius:999px;padding:3px 9px}
 .crop .linkbtn{position:absolute;right:10px;top:8px;background:rgba(18,19,22,.85);border-radius:999px;padding:3px 10px}
-.drop.doc .crop{position:relative;display:flex;flex-direction:column;gap:6px}
+.drop.doc{display:flex}
+.drop.doc .crop{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
 .doc-name{display:flex;align-items:center;gap:6px;color:var(--ink-2)}.doc-name svg{width:14px;height:14px}
 .drop.doc .linkbtn{position:static}
 .fs-note{font-size:14.5px;color:var(--muted);margin:0 0 14px}

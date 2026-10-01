@@ -9,6 +9,8 @@ and uploads show a local preview only.
 - `migrations/20260929000000_seed_chat.sql` creates `messages`, `reports`, `updates` and `presale_roles`, turns on row-level
   security (public read, no direct writes), adds `messages` to Realtime, and creates the public `presale-media` bucket
   (10 MB per file, PDF, PNG, JPEG and WebP only).
+- `migrations/20260930000000_deck_slide_files.sql` lets the bucket also take slide files (PowerPoint, Keynote, OpenDocument)
+  for pitch decks.
 - `functions/seed/` is the only writer. Every request carries a message the wallet signed once per session; `verify.ts`
   checks the ed25519 signature with WebCrypto before anything is written. It also checks the wallet named in the message,
   the site it was signed for, and that it is less than 24 hours old.

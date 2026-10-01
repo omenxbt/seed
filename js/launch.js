@@ -1,9 +1,10 @@
 /* ==========================================================================
-   LAUNCH FORM. Every field the project page shows: identity, media, raise terms, tokenomics with vesting, use of funds, team,
-   roadmap and links. The side panel shows the card backers will see and the risk checks, computed live from the draft by the
+   LAUNCH FORM. Every field the project page shows: identity, media, raise terms and links, then three sections a team can
+   switch on if it wants them: tokenomics with vesting and use of funds, team, and roadmap. The side panel shows the card backers will see and the risk checks, computed live from the draft by the
    same code the project page uses, so a founder sees each warning before opening.
    Uploads go to Supabase Storage (signed upload URL from the Edge Function) when it is configured; until then they are a
-   preview in this browser only.
+   preview in this browser only. The banner is saved at 1500 x 500 and the token art as a square, cropped where the founder
+   dragged the preview. A deck can be a PDF, a slide file (PowerPoint, Keynote, OpenDocument) or an image.
    The pair asset, stock and mint handling (draft, draftAsset, lookupMint, readDraft, validateDraft) stays in index.html.
    ========================================================================== */
 const lf = {
@@ -11,8 +12,19 @@ const lf = {
   uof: [{ label: '', pct: '' }],
   team: [{ name: '', role: 'Founder', x: '', github: '', linkedin: '', wallet: '' }],
   road: [{ title: '', due: '', status: 'planned', proof: '' }],
-  files: { banner: null, art: null, deck: null }, urls: { banner: '', art: '', deck: '' }, pos: { banner: [50, 50], art: [50, 50] }, descPv: false
+  files: { banner: null, art: null, deck: null }, urls: { banner: '', art: '', deck: '' }, pos: { banner: [50, 50], art: [50, 50] }, descPv: false,
+  on: { tokenomics: false, team: false, road: false }   // the optional sections; off until the team switches one on
 };
+/* with Tokenomics off the supply splits evenly between the backers and the pool */
+const EVEN_SHARE = 50;
+const shareNow = () => lf.on.tokenomics ? numv($('#fShare').value) : EVEN_SHARE;
+/* what each image is saved as, and what a deck may be: [kind, mime type] by file extension */
+const IMG_OUT = { banner: { w: 1500, h: 500 }, art: { w: 1024, h: 1024, square: true } };
+const SLIDES = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
+const DECK_EXT = { pdf: ['pdf', 'application/pdf'], png: ['image', 'image/png'], jpg: ['image', 'image/jpeg'], jpeg: ['image', 'image/jpeg'], webp: ['image', 'image/webp'],
+  pptx: ['slides', SLIDES], ppt: ['slides', 'application/vnd.ms-powerpoint'], key: ['slides', 'application/vnd.apple.keynote'], odp: ['slides', 'application/vnd.oasis.opendocument.presentation'] };
+const extOf = name => (/\.([a-z0-9]+)$/i.exec(name || '') || [, ''])[1].toLowerCase();
+const deckInfo = file => DECK_EXT[extOf(file.name)] || Object.values(DECK_EXT).find(d => d[1] === file.type) || null;
 const MAX_UPLOAD = 10 * 1024 * 1024;
 const numv = v => { const n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : NaN; };
 const isUrl = v => !v || /^https?:\/\/[^\s]+\.[^\s]+/i.test(v);
@@ -43,9 +55,10 @@ const ROWS = {
       <button type="button" class="x" data-del aria-label="Remove">&times;</button></div>` }
 };
 function drawRows(kind) { const R = ROWS[kind]; $(R.box).innerHTML = lf[kind].map(R.html).join(''); }
-function allocSum() { const share = numv($('#fShare').value) || 0; return 2 * share + lf.alloc.reduce((a, r) => a + (numv(r.pct) || 0), 0); }
+function allocSum() { const share = shareNow() || 0; return 2 * share + lf.alloc.reduce((a, r) => a + (numv(r.pct) || 0), 0); }
 function drawSums() {
   const share = numv($('#fShare').value); $('#fLp').value = isFinite(share) ? share : '';
+  if (!lf.on.tokenomics) return;
   const a = allocSum(), u = lf.uof.reduce((s, r) => s + (numv(r.pct) || 0), 0), ok = x => Math.abs(x - 100) < 1e-6;
   $('#allocSum').className = 'sum-meter ' + (ok(a) ? 'ok' : 'bad'); $('#allocSum').textContent = `${+a.toFixed(2)}% of 100%${ok(a) ? '' : a > 100 ? `, over by ${+(a - 100).toFixed(2)}` : `, ${+(100 - a).toFixed(2)} left to assign`}`;
   $('#uofSum').className = 'sum-meter ' + (ok(u) ? 'ok' : 'bad'); $('#uofSum').textContent = `${+u.toFixed(2)}% of 100%`;
@@ -53,20 +66,46 @@ function drawSums() {
 
 /* ---------------------------------------------------------------- uploads with crop previews */
 function setFile(kind, file) {
-  const box = { banner: '#upBanner', art: '#upArt', deck: '#upDeck' }[kind], el = $(box), crop = $('[data-crop]', el), accept = el.dataset.accept.split(',');
-  if (!accept.includes(file.type)) return toast(kind === 'deck' ? 'The deck must be a PDF.' : 'Use a PNG, JPEG or WebP image.');
+  const box = { banner: '#upBanner', art: '#upArt', deck: '#upDeck' }[kind], el = $(box), crop = $('[data-crop]', el);
+  const info = kind === 'deck' ? deckInfo(file) : null;
+  if (kind === 'deck' ? !info : !el.dataset.accept.split(',').includes(file.type)) return toast(kind === 'deck' ? 'Use a PDF, a PowerPoint, Keynote or OpenDocument file, or a PNG, JPEG or WebP image.' : 'Use a PNG, JPEG or WebP image.');
   if (file.size > MAX_UPLOAD) return toast('Files can be at most 10 MB.');
+  if (info && file.type !== info[1]) file = new File([file], file.name, { type: info[1] });   // some browsers leave the type of a slide file empty
   if (lf.urls[kind] && lf.urls[kind].startsWith('blob:')) URL.revokeObjectURL(lf.urls[kind]);
   lf.files[kind] = file; lf.urls[kind] = URL.createObjectURL(file);
   if (kind === 'deck') crop.innerHTML = `<span class="doc-name">${ICONS.out}<b>${esc(file.name)}</b> ${(file.size / 1048576).toFixed(1)} MB</span><button type="button" class="linkbtn" data-clear>Remove</button>`;
-  else { lf.pos[kind] = [50, 50]; crop.innerHTML = `<img src="${lf.urls[kind]}" alt="" draggable="false" style="object-position:50% 50%"><span class="crop-hint">Drag to adjust</span><button type="button" class="linkbtn" data-clear>Remove</button>`; }
+  else {
+    const o = IMG_OUT[kind], url = lf.urls[kind];
+    lf.pos[kind] = [50, 50]; crop.innerHTML = `<img src="${url}" alt="" draggable="false" style="object-position:50% 50%"><span class="crop-hint">Drag to adjust</span><button type="button" class="linkbtn" data-clear>Remove</button>`;
+    /* say so when the picture is too small to fill its size without being stretched */
+    $('img', crop).onload = e => { const im = e.target; if (lf.urls[kind] !== url) return;
+      if (kind === 'banner' && (im.naturalWidth < o.w || im.naturalHeight < o.h)) toast(`That image is ${im.naturalWidth} × ${im.naturalHeight} px. The banner is ${o.w} × ${o.h} px, so it will be scaled up and may look soft.`);
+      else if (kind === 'art' && Math.min(im.naturalWidth, im.naturalHeight) < 256) toast('That image is small for token art. Use one at least 256 px on each side.'); };
+  }
   el.classList.add('has'); renderPreview();
+}
+/* The picture as it is saved: cut to its shape where the preview shows it (the banner at 1500 x 500, the art as a square). */
+function croppedImage(kind) {
+  const file = lf.files[kind], o = IMG_OUT[kind], pos = lf.pos[kind];
+  return new Promise((ok, no) => {
+    const im = new Image();
+    im.onload = () => {
+      const side = o.square ? Math.min(o.w, im.naturalWidth, im.naturalHeight) : 0, W = side || o.w, Hh = side || o.h;
+      const k = Math.max(W / im.naturalWidth, Hh / im.naturalHeight), sw = W / k, sh = Hh / k, sx = (im.naturalWidth - sw) * pos[0] / 100, sy = (im.naturalHeight - sh) * pos[1] / 100;
+      const c = document.createElement('canvas'); c.width = W; c.height = Hh;
+      const g = c.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(im, sx, sy, sw, sh, 0, 0, W, Hh);
+      const type = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+      c.toBlob(b => b ? ok(new File([b], `${kind}.${type === 'image/png' ? 'png' : 'jpg'}`, { type })) : no(new Error('The image could not be prepared.')), type, 0.92);
+    };
+    im.onerror = () => no(new Error('The image could not be read.'));
+    im.src = lf.urls[kind];
+  });
 }
 function clearFile(kind) {
   const el = $({ banner: '#upBanner', art: '#upArt', deck: '#upDeck' }[kind]);
   if (lf.urls[kind] && lf.urls[kind].startsWith('blob:')) URL.revokeObjectURL(lf.urls[kind]);
   lf.files[kind] = null; lf.urls[kind] = ''; $('input[type=file]', el).value = '';
-  $('[data-crop]', el).innerHTML = `<span>${kind === 'banner' ? 'Drop an image or choose a file' : kind === 'art' ? 'Drop an image' : 'Drop a PDF'}</span>`; el.classList.remove('has'); renderPreview();
+  $('[data-crop]', el).innerHTML = `<span>${kind === 'banner' ? 'Drop an image or choose a file' : kind === 'art' ? 'Drop an image' : 'Drop your deck or choose a file'}</span>`; el.classList.remove('has'); renderPreview();
 }
 function bindDrop(el) {
   const kind = el.dataset.kind, input = $('input[type=file]', el);
@@ -87,21 +126,21 @@ function bindDrop(el) {
 /* ---------------------------------------------------------------- the draft as a raise */
 const posTxt = k => `${lf.pos[k][0].toFixed(1)}% ${lf.pos[k][1].toFixed(1)}%`;
 function draftProfile(d) {
-  const share = numv($('#fShare').value) || 0, since = $('#fXSince').value;
+  const share = shareNow() || 0, since = $('#fXSince').value, on = lf.on;
   const allocations = [alloc('Raise backers', 'presale', share), alloc('Locked Meteora pool', 'lp', share)]
-    .concat(lf.alloc.filter(r => r.label || r.pct).map(r => alloc(r.label || 'Unnamed', r.kind, numv(r.pct) || 0, numv(r.dur) > 0 ? vest(Math.max(0, numv(r.cliff) || 0), numv(r.dur)) : null, B58.test(r.wallet) ? r.wallet : null)));
+    .concat((on.tokenomics ? lf.alloc : []).filter(r => r.label || r.pct).map(r => alloc(r.label || 'Unnamed', r.kind, numv(r.pct) || 0, numv(r.dur) > 0 ? vest(Math.max(0, numv(r.cliff) || 0), numv(r.dur)) : null, B58.test(r.wallet) ? r.wallet : null)));
   const founderWallet = state.wallet ? (state.wallet.pk || walletId()) : null;
-  const team = lf.team.filter(m => m.name.trim()).map(m => ({ name: m.name.trim(), role: m.role.trim(), x: m.x.trim() || null, github: m.github.trim() || null, linkedin: m.linkedin.trim() || null, wallet: B58.test(m.wallet.trim()) ? m.wallet.trim() : null, verified: { x: false, github: false, domain: false } }));
+  const team = (on.team ? lf.team : []).filter(m => m.name.trim()).map(m => ({ name: m.name.trim(), role: m.role.trim(), x: m.x.trim() || null, github: m.github.trim() || null, linkedin: m.linkedin.trim() || null, wallet: B58.test(m.wallet.trim()) ? m.wallet.trim() : null, verified: { x: false, github: false, domain: false } }));
   if (team[0] && !team[0].wallet && founderWallet) team[0].wallet = founderWallet;
   return {
     tagline: d.idea, description: $('#fDesc').value.trim(),
     links: { website: $('#lWebsite').value.trim() || null, x: $('#lX').value.trim() || null, telegram: $('#lTelegram').value.trim() || null, discord: $('#lDiscord').value.trim() || null, github: $('#lGithub').value.trim() || null },
     minBuy: numv($('#fMin').value) || 0, maxBuy: numv($('#fMax').value) || 0,
     whitelist: $('#fWl').value.split(/\s+/).map(x => x.trim()).filter(Boolean),
-    tokenomics: { allocations, useOfFunds: lf.uof.filter(r => r.label || r.pct).map(r => ({ label: r.label.trim() || 'Unnamed', pct: numv(r.pct) || 0 })) },
+    tokenomics: { allocations, useOfFunds: (on.tokenomics ? lf.uof : []).filter(r => r.label || r.pct).map(r => ({ label: r.label.trim() || 'Unnamed', pct: numv(r.pct) || 0 })) },
     team, founder: { name: team[0] ? team[0].name : 'Founder', x: $('#fFounderX').value.trim() || null, xAgeDays: since ? Math.max(0, (Date.now() - Date.parse(since + '-01')) / D) : null, wallet: founderWallet, pastLaunches: [] },
-    deck: lf.urls.deck || null, banner: lf.urls.banner || null, art: lf.urls.art || null, bannerPos: posTxt('banner'), artPos: posTxt('art'),
-    roadmap: lf.road.filter(r => r.title.trim()).map(r => ({ title: r.title.trim(), dueAt: r.due ? Date.parse(r.due) : Date.now(), status: r.status, proof: r.proof.trim() || null })),
+    deck: lf.urls.deck || null, deckKind: lf.files.deck ? deckInfo(lf.files.deck)[0] : null, deckName: lf.files.deck ? lf.files.deck.name : null, banner: lf.urls.banner || null, art: lf.urls.art || null, bannerPos: posTxt('banner'), artPos: posTxt('art'),
+    roadmap: (on.road ? lf.road : []).filter(r => r.title.trim()).map(r => ({ title: r.title.trim(), dueAt: r.due ? Date.parse(r.due) : Date.now(), status: r.status, proof: r.proof.trim() || null })),
     updates: [], chat: [], watchers: 0
   };
 }
@@ -120,7 +159,9 @@ function validateFull() {
   if ($('#fMax').value && !(mx > 0)) return 'The maximum per wallet must be a number above zero.';
   if (mn > 0 && mx > 0 && mn > mx) return 'The minimum buy is larger than the maximum per wallet.';
   const bad = $('#fWl').value.split(/\s+/).filter(Boolean).find(x => !B58.test(x)); if (bad) return `${bad.slice(0, 12)}… in the whitelist is not a Solana address.`;
-  const share = numv($('#fShare').value);
+  /* a section that is switched off is not on the page, so nothing in it is checked */
+  const share = shareNow();
+  if (lf.on.tokenomics) {
   if (!(share >= 5 && share <= 50)) return 'The raise share must be between 5% and 50%. The pool gets the same share.';
   for (const r of lf.alloc) {
     if (!r.label && !r.pct) continue;
@@ -134,13 +175,14 @@ function validateFull() {
   if (!u.length) return 'Add at least one line to the use of funds.';
   if (u.some(r => !r.label.trim() || !(numv(r.pct) > 0))) return 'Every use-of-funds line needs a name and a share.';
   if (Math.abs(u.reduce((s, r) => s + numv(r.pct), 0) - 100) > 1e-6) return 'The use of funds must add up to exactly 100%.';
-  for (const m of lf.team) {
+  }
+  for (const m of lf.on.team ? lf.team : []) {
     if (!Object.values(m).some(v => String(v).trim())) continue;
     if (!m.name.trim()) return 'Every team member needs a name.';
     if (![m.x, m.github, m.linkedin].every(isUrl)) return `${m.name}: links must start with https://.`;
     if (m.wallet.trim() && !B58.test(m.wallet.trim())) return `${m.name}: the wallet is not a Solana address.`;
   }
-  for (const r of lf.road) { if (!r.title.trim() && !r.due) continue; if (!r.title.trim()) return 'Every milestone needs a title.'; if (!r.due) return `${r.title}: add a due date.`; if (r.proof && !isUrl(r.proof)) return `${r.title}: the proof link must start with https://.`; }
+  for (const r of lf.on.road ? lf.road : []) { if (!r.title.trim() && !r.due) continue; if (!r.title.trim()) return 'Every milestone needs a title.'; if (!r.due) return `${r.title}: add a due date.`; if (r.proof && !isUrl(r.proof)) return `${r.title}: the proof link must start with https://.`; }
   if (!['#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub', '#fFounderX'].every(s => isUrl($(s).value.trim()))) return 'Links must start with https://.';
   return '';
 }
@@ -184,9 +226,10 @@ async function openPresale() {
   const d = readDraft(), da = draftAsset(), b = $('#openBtn'); busy = true; b.disabled = true;
   const id = d.ticker.toLowerCase() + '-' + Date.now().toString(36), now = Date.now(), profile = draftProfile(d);
   try {
-    if (supa.configured()) {
-      for (const k of ['banner', 'art', 'deck']) if (lf.files[k]) { b.textContent = `Uploading ${k}…`; profile[k] = await supa.upload(lf.files[k]); }
-    }
+    /* the banner and the art are saved already cut to shape, so every page shows the same picture */
+    for (const k of ['banner', 'art']) if (lf.files[k]) { const f = await croppedImage(k); profile[k + 'Pos'] = '50% 50%';
+      if (supa.configured()) { b.textContent = `Uploading ${k}…`; profile[k] = await supa.upload(f); } else profile[k] = URL.createObjectURL(f); }
+    if (supa.configured() && lf.files.deck) { b.textContent = 'Uploading deck…'; profile.deck = await supa.upload(lf.files.deck); }
     b.textContent = 'Confirm in wallet…';
     if (da.custom) state.custom[da.key] = da.a;
     profile.mint = fakeAddr('mint/' + id); profile.vault = { address: fakeAddr('vault/' + id) };
@@ -195,7 +238,8 @@ async function openPresale() {
     if (supa.configured()) supa.call('register', { presaleId: id }).catch(() => {});
     state.presales.unshift(p); save();
     ['#fName', '#fTicker', '#fIdea', '#fTarget', '#fMint', '#fDesc', '#fMin', '#fMax', '#fWl', '#fFounderX', '#fXSince', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
-    ['banner', 'art', 'deck'].forEach(k => { lf.files[k] = null; lf.urls[k] = ''; });
+    if (!supa.configured()) lf.urls.deck = '';   // the page keeps showing the local deck, so its preview URL is not released
+    ['banner', 'art', 'deck'].forEach(k => { if (lf.files[k]) clearFile(k); });
     ui.fAsset = 'all'; seg.assetF.set('all'); ui.sel = id;
     toast(`Opened ${p.name}. It is live until ${fmtDate(p.endsAt)}`);
     location.hash = '#/presale/' + id;
@@ -226,6 +270,14 @@ function renderMine() {
   });
   $('#descToggle').onclick = () => { lf.descPv = !lf.descPv; $('#descPv').hidden = !lf.descPv; $('#fDesc').hidden = lf.descPv; $('#descToggle').textContent = lf.descPv ? 'Edit' : 'Preview'; if (lf.descPv) $('#descPv').innerHTML = md($('#fDesc').value) || '<p class="quiet">Nothing to preview yet.</p>'; };
   $$('.drop').forEach(bindDrop);
+  /* the switches for the optional sections: one in the section's heading and one in the list beside the form */
+  const syncOpt = () => Object.keys(lf.on).forEach(k => { const on = lf.on[k], fs = $(`fieldset[data-opt="${k}"]`, form);
+    $$(`[data-toggle="${k}"]`).forEach(t => t.setAttribute('aria-checked', String(on)));
+    fs.classList.toggle('off', !on); $('[data-off]', fs).hidden = on; $('[data-body]', fs).hidden = !on; $('.opt-tag', fs).hidden = on; });
+  $('#tab-launch').addEventListener('click', e => { const t = e.target.closest('[data-toggle]'); if (!t) return;
+    const k = t.dataset.toggle; lf.on[k] = !lf.on[k]; $('#fErr').textContent = ''; syncOpt(); renderPreview();
+    if (lf.on[k] && !t.closest('fieldset')) $(`fieldset[data-opt="${k}"]`, form).scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); });
+  syncOpt();
   $('#openBtn').onclick = openPresale;
   /* the section list beside the form jumps to a section */
   $$('.steps [data-step]').forEach(b => b.onclick = () => { const fs = $$('fieldset', form)[+b.dataset.step - 1]; if (fs) fs.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); });
