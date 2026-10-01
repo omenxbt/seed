@@ -792,7 +792,20 @@ a.ico:hover{color:var(--ink)}
         <section class="panel"><h3 class="card-h">Positions</h3><div class="pcols" aria-hidden="true"><span>Raise</span><span>You paid</span><span>Status</span><span>Yours</span><span></span></div><div id="prows"></div></section>
       </div>
       <aside class="ws-rail" aria-label="Wallet">
-        <section class="panel rail-card balances"><h3>Wallet</h3><div id="pbal"></div></section>
+        <section class="panel rail-card balances"><h3>Wallet</h3><div id="pbal"></div>
+          <div class="move" id="move">
+            <div class="seg mini-seg side-seg" id="moveSeg" role="group" aria-label="Deposit or withdraw"><button type="button" data-v="deposit" aria-pressed="true">Deposit</button><button type="button" data-v="withdraw" aria-pressed="false">Withdraw</button></div>
+            <div class="trade-top"><label class="rail-lab" for="mvAmt">Amount</label><span class="rail-bal num" id="mvBal"></span></div>
+            <div class="inp"><input id="mvAmt" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Amount"><span class="suf" id="mvSuf">SOL</span><label class="mv-asset" id="mvPick" hidden><select id="mvAsset" aria-label="Asset to withdraw"></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></label></div>
+            <div class="chips" id="mvChips"></div>
+            <div class="mv-to" id="mvToRow" hidden><label class="rail-lab" for="mvTo">To address</label><div class="inp"><input id="mvTo" class="num" placeholder="Solana address" autocomplete="off" spellcheck="false" aria-label="Address to withdraw to"></div></div>
+            <dl class="kv" id="mvFacts"></dl>
+            <p class="rail-err" id="mvErr" role="alert"></p>
+            <button type="button" class="btn btn-navy btn-block" id="mvGo">Deposit</button>
+            <p class="rail-cap" id="mvCap"></p>
+            <div class="mv-log" id="mvLog"></div>
+          </div>
+        </section>
       </aside>
     </div>
   </section>
@@ -1307,7 +1320,7 @@ const adapter = {
     try { wallet.bal = await chainBalances(pk); } catch (e) { wallet.stale = true; }
     return wallet;
   },
-  contribute: sim(900), claimRefund: sim(800), claimTokens: sim(800), openPresale: sim(1000), swap: sim(900)
+  contribute: sim(900), claimRefund: sim(800), claimTokens: sim(800), openPresale: sim(1000), swap: sim(900), deposit: sim(800), withdraw: sim(800)
 };
 
 /* ------------------------------------------------------------ formatting */
@@ -1523,6 +1536,67 @@ async function claim(p, btn) {
 /* ---------------------------------------------------------------- wallet */
 const walletAssets = () => state.wallet ? Object.keys(state.wallet.bal).filter(k => state.wallet.bal[k] > 0 || k === 'SOL' || k === 'USDC') : [];
 const balRows = () => walletAssets().map(k => `<div class="bal"><span>${esc(asset(k).sym)}</span><span class="num">${fmtAmt(balOf(k), k)}</span></div>`).join('');
+
+/* ---------------------------------------------------------------- moving funds: deposit and withdraw
+   The wallet card on the Portfolio page moves funds in and out of the wallet: a deposit adds SOL (deposits are SOL only), a
+   withdrawal sends an amount of anything the wallet holds to a Solana address. Like buys and claims, both are simulated and only run for the demo wallet; a real wallet is refused
+   (adapter.deposit and adapter.withdraw are the stubs to replace). The form is static markup, so what is typed survives a
+   re-render; syncMove() keeps its labels, balance, checks and button in step with the wallet. */
+ui.move = { side: 'deposit', asset: 'SOL' };   // asset: what the Withdraw tab sends; a deposit is always SOL
+const moveAsset = () => ui.move.side === 'withdraw' ? ui.move.asset : 'SOL';
+const moveAssets = () => [...new Set(['SOL', 'USDC', ...walletAssets()])];
+const moveNum = () => parseFloat(($('#mvAmt').value || '').replace(/,/g, ''));
+function syncMove() {
+  const mv = ui.move, wd = mv.side === 'withdraw', keys = moveAssets(); if (!keys.includes(mv.asset)) mv.asset = 'SOL';
+  const sel = $('#mvAsset'), want = keys.join('|'); if (sel.dataset.keys !== want) { sel.dataset.keys = want; sel.innerHTML = keys.map(k => `<option value="${esc(k)}">${esc(asset(k).sym)}</option>`).join(''); } sel.value = mv.asset;
+  $('#mvPick').hidden = !wd; $('#mvSuf').hidden = wd;   // a deposit is SOL, so there is nothing to pick
+  const m = { side: mv.side, asset: moveAsset() }, sym = asset(m.asset).sym, bal = balOf(m.asset), raw = ($('#mvAmt').value || '').replace(/,/g, ''), n = parseFloat(raw), to = $('#mvTo').value.trim(), go = $('#mvGo');
+  $$('#moveSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === m.side)));
+  $('#mvBal').textContent = state.wallet ? `Balance ${fmtAmt(bal, m.asset)} ${sym}` : '';
+  $('#mvToRow').hidden = !wd;
+  const chips = $('#mvChips'), ck = m.side + '/' + m.asset; if (chips.dataset.k !== ck) { chips.dataset.k = ck;
+    chips.innerHTML = wd ? [25, 50, 100].map(c => `<button type="button" data-pct="${c}">${c === 100 ? 'Max' : c + '%'}</button>`).join('') : (asset(m.asset).chips || [1, 10, 100]).map(c => `<button type="button" data-chip="${c}">${fmtC(c, m.asset)}</button>`).join(''); }
+  const amt = n > 0 ? n : 0, after = r6(wd ? bal - amt : bal + amt), me = state.wallet ? `${esc(state.wallet.addr)} <span class="mv-note">(your wallet)</span>` : 'Your wallet';
+  $('#mvFacts').innerHTML = (wd ? [['To', to ? esc(B58.test(to) ? shortMint(to) : to.slice(0, 14)) : 'Enter an address'], ['They receive', `${fmtAmt(amt, m.asset)} ${esc(sym)}`]]
+      : [['To', me], ['You receive', `${fmtAmt(amt, m.asset)} ${esc(sym)}`]])
+    .concat(state.wallet ? [['Balance after', `${fmtAmt(Math.max(0, after), m.asset)} ${esc(sym)}`]] : []).map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  let msg = !raw ? '' : !(n > 0) ? 'Enter an amount above zero.' : '';
+  if (!msg && n > 0 && state.wallet && wd && n > bal) msg = `Your wallet holds ${fmtAmt(bal, m.asset)} ${sym}.`;
+  if (!msg && wd && to && !B58.test(to)) msg = 'That is not a Solana address.';
+  $('#mvErr').textContent = msg;
+  go.textContent = !state.wallet ? 'Connect wallet' : `${wd ? 'Withdraw' : 'Deposit'}${n > 0 && !msg ? ' ' + fmtAmt(n, m.asset) : ''} ${sym}`;
+  go.disabled = !!state.wallet && (!!msg || !(n > 0) || (wd && !B58.test(to)));
+  $('#mvCap').textContent = isReal() ? 'Moving funds is not live for a real wallet yet. To add funds, send them to your wallet address from an exchange or another wallet.' : 'Simulated on the demo wallet. No transaction is sent.';
+  const log = isReal() ? [] : (state.transfers || []).slice(0, 4);
+  $('#mvLog').innerHTML = log.length ? `<h4>Recent</h4>${log.map(x => `<div><span>${x.side === 'withdraw' ? 'Withdrew' : 'Deposited'}${x.to ? ' to <span class="num">' + esc(shortMint(x.to)) + '</span>' : ''}</span><span class="num ${x.side === 'withdraw' ? '' : 'pos'}">${x.side === 'withdraw' ? '-' : '+'}${fmtAmt(x.amt, x.q)} ${esc(asset(x.q).sym)}</span><span class="mv-t">${fmtAgo(Date.now() - x.at)}</span></div>`).join('')}` : '';
+}
+async function executeMove(side, k, amt, to) {
+  const wd = side === 'withdraw', sym = asset(k).sym;
+  if (!wd && k !== 'SOL') { toast('Deposits are in SOL only.'); return false; }
+  if (!(amt > 0)) { toast('Set an amount above zero.'); return false; }
+  if (wd && amt > balOf(k)) { toast(`Your wallet holds ${fmtAmt(balOf(k), k)} ${sym}.`); return false; }
+  if (wd && !B58.test(to)) { toast('Enter the Solana address to withdraw to.'); return false; }
+  busy = true; try { await (wd ? adapter.withdraw(k, amt, to) : adapter.deposit(k, amt)); } catch (e) { busy = false; toast(e.message); return false; } busy = false;
+  if (!state.wallet || (wd && amt > balOf(k))) return false;
+  state.wallet.bal[k] = r6(balOf(k) + (wd ? -amt : amt));
+  (state.transfers = state.transfers || []).unshift({ at: Date.now(), side, q: k, amt: r6(amt), to: wd ? to : '' }); state.transfers.length = Math.min(state.transfers.length, 20);
+  toast(wd ? `Withdrew ${fmtAmt(amt, k)} ${sym} to ${shortMint(to)}` : `Deposited ${fmtAmt(amt, k)} ${sym}`);
+  save(); renderAll(); if (detailBox) renderDetail();
+  return true;
+}
+$('#move').addEventListener('input', syncMove);
+$('#mvAsset').addEventListener('change', e => { ui.move.asset = e.target.value; $('#mvAmt').value = ''; syncMove(); });
+$('#move').addEventListener('click', async e => {
+  const side = e.target.closest('#moveSeg button'), chip = e.target.closest('[data-chip],[data-pct]'), m = { side: ui.move.side, asset: moveAsset() };
+  if (side) { ui.move.side = side.dataset.v; $('#mvAmt').value = ''; syncMove(); $('#mvAmt').focus(); return; }
+  if (chip) { $('#mvAmt').value = chip.dataset.pct ? r6(balOf(m.asset) * chip.dataset.pct / 100) : chip.dataset.chip; syncMove(); return; }
+  if (!e.target.closest('#mvGo') || busy) return;
+  if (!state.wallet) { await connect(); return; }   // connecting is its own step; the amount stays for the next press
+  const go = $('#mvGo'), n = moveNum(); if (go.disabled || !(n > 0)) return;
+  go.disabled = true; go.textContent = 'Confirming…';
+  if (await executeMove(m.side, m.asset, n, $('#mvTo').value.trim())) { $('#mvAmt').value = ''; if (m.side === 'withdraw') $('#mvTo').value = ''; }
+  syncMove();
+});
 function renderWallet() {
   const b = $('#walletBtn');
   if (state.wallet) {
@@ -1669,7 +1743,7 @@ function renderPortfolio() {
         <span class="num">${a ? `${fmtAmt(a, p.q)} ${sym}` : '–'}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
     : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#">Buy into a raise from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
   $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` : '<p class="rail-meta">No wallet connected.</p>';
-  renderPerf();
+  renderPerf(); syncMove();
 }
 $('#prows').addEventListener('click', e => { const cl = e.target.closest('[data-claim]'); if (cl) claim(find(cl.dataset.claim), cl); });
 
@@ -1763,7 +1837,7 @@ function perfCalendar(days) {
       <span>Best green streak, all time <b>${bestAll} day${bestAll === 1 ? '' : 's'}</b></span><span>Active days <b>${active} this month, ${bestActive} best run</b></span></div>`;
 }
 $('#perf').addEventListener('click', e => { const b = e.target.closest('[data-pm]'); if (!b || b.disabled) return; ui.perf.m = Math.max(0, ui.perf.m + (+b.dataset.pm)); renderPerf(); });
-$('#perf').addEventListener('mousemove', perfHover); $('#perf').addEventListener('mouseleave', () => perfHover(null));
+['pointermove', 'pointerdown'].forEach(t => $('#perf').addEventListener(t, perfHover)); ['pointerleave', 'pointercancel'].forEach(t => $('#perf').addEventListener(t, () => perfHover(null)));
 /* the graph is drawn at the panel's width, so it is drawn again when that width changes */
 if ('ResizeObserver' in window) { let w = 0; new ResizeObserver(() => { const b = $('#perfBody'); if (!b.clientWidth || Math.abs(b.clientWidth - w) < 2) return; w = b.clientWidth; if (ui.perf.mode === 'graph') renderPerf(); }).observe($('#perfBody')); }
 

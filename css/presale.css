@@ -112,10 +112,16 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .pp-svg svg{display:block;width:100%;height:auto;overflow:visible}
 .pp-svg.bars{margin-top:14px}
 /* the hover readout over the raise chart: a hairline, a dot on the line and a label */
-.pp-plot{position:relative;cursor:crosshair}
+.pp-plot{position:relative;cursor:crosshair;touch-action:pan-y}   /* pan-y: a sideways drag reads the chart, an up or down drag still scrolls the page */
 .cx{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s var(--soft)}
 .cx.on{opacity:1}
 .cx-line{position:absolute;width:1px;background:var(--hair-2)}
+/* the candle readout: a level line with its price tagged on the axis, and the candle's figures along the top */
+.cx-hline{position:absolute;left:0;height:1px;background:var(--hair-2)}
+.cx-tag{position:absolute;transform:translateY(-50%);font-size:12px;line-height:20px;padding:0 6px;border-radius:6px;background:var(--raised);color:var(--ink);white-space:nowrap}
+.cx-read{position:absolute;left:0;top:0;max-width:calc(100% - 84px);font-size:12.5px;line-height:1.5;padding:3px 8px;border-radius:8px;background:color-mix(in srgb,var(--panel-solid) 88%,transparent);color:var(--muted)}
+.cx-read b{font-weight:500;color:var(--ink-2);margin-right:4px}.cx-read i{font-style:normal;color:var(--ink);margin-right:5px}
+.cx-read i.up,.cx-read .up{color:var(--ok-ink)}.cx-read i.down,.cx-read .down{color:var(--bad-ink)}
 .cx-dot{position:absolute;width:11px;height:11px;margin:-5.5px 0 0 -5.5px;border-radius:50%;background:var(--navy);box-shadow:0 0 0 3px var(--panel-solid),0 0 0 7px var(--navy-wash)}
 .cx-tip{position:absolute;transform:translate(-50%,-100%);margin-top:-6px;white-space:nowrap;font-size:12.5px;padding:5px 10px;border-radius:8px;background:var(--raised);border:1px solid var(--hair-2);color:var(--ink)}
 /* a buy landing: its amount floats up beside the raise figure and fades */
@@ -162,17 +168,23 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 :is(.pp,.ws) .rail-card>h3,:is(.pp,.ws) .rail-card>.rail-h{margin-bottom:4px}
 .rail-lab{font-size:14px;color:var(--muted);margin-bottom:-6px}
 /* the trade panel: the side switch (buy or sell), and the label over the amount with the wallet's balance beside it */
-.pp .side-seg{display:flex}
-.pp .side-seg button{flex:1;padding:10px 12px;font-size:15px;text-align:center}
+:is(.pp,.ws) .side-seg{display:flex}
+:is(.pp,.ws) .side-seg button{flex:1;padding:10px 12px;font-size:15px;text-align:center}
+/* buying is green and selling is red: the chosen side of the switch, and the button under it */
+.side-seg button[data-v="buy"][aria-pressed="true"]{background:var(--ok-bg);color:var(--ok-ink)}
+.side-seg button[data-v="sell"][aria-pressed="true"]{background:var(--bad-bg);color:var(--bad-ink)}
+[data-trade="swap"][data-now="buy"] [data-go],[data-trade="swap"][data-now="buy"] [data-go]:hover{background:var(--ok);color:#0C1711}
+[data-trade="swap"][data-now="sell"] [data-go],[data-trade="swap"][data-now="sell"] [data-go]:hover{background:var(--bad);color:#1D0D0B}
+[data-trade="swap"] [data-go]:hover{filter:brightness(1.08)}
 .trade-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:-6px}
 .trade-top .rail-lab{margin-bottom:0}
 .rail-bal{font-size:13.5px;color:var(--muted)}
 .rail-card .inp input{font-family:var(--mono);font-size:20px;letter-spacing:-.04em}
 .pp .rail-card .inp input{font-size:28px;padding:16px 18px}
-.pp .rail-card .inp .suf{margin-right:12px;padding:6px 13px;border-radius:999px;background:var(--mist);color:var(--ink);font-size:14px;font-weight:600}
+:is(.pp,.ws) .rail-card .inp .suf{margin-right:12px;padding:6px 13px;border-radius:999px;background:var(--mist);color:var(--ink);font-size:14px;font-weight:600}
 .rail-card .chips{margin-top:0}
-.pp .rail-card .chips button{flex:1;padding:10px 8px;font-size:14px;border-radius:12px;background:var(--tile);border-color:transparent}
-.pp .rail-card .chips button:hover{background:var(--navy-wash);border-color:transparent}
+:is(.pp,.ws) .rail-card .chips button{flex:1;padding:10px 8px;font-size:14px;border-radius:12px;background:var(--tile);border-color:transparent}
+:is(.pp,.ws) .rail-card .chips button:hover{background:var(--navy-wash);border-color:transparent}
 .recv{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13.5px;color:var(--muted)}
 .recv b{font-size:15px;color:var(--ink);font-weight:500}
 :is(.pp,.ws) .recv{font-size:15px}:is(.pp,.ws) .recv b{font-size:17px}
@@ -475,7 +487,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .perf-sums dd small{display:block;font-size:13px;font-weight:400;color:var(--muted);margin-top:3px;letter-spacing:0}
 /* the graph: one line, green above $0 and red below, on gridlines labelled in dollars */
 .pnl-chart{border:1px solid var(--hair);border-radius:14px;background:var(--paper);padding:14px 14px 12px}
-.pnl-plot{position:relative;cursor:crosshair}
+.pnl-plot{position:relative;cursor:crosshair;touch-action:pan-y}
 .pnl-chart svg{display:block;width:100%;height:auto;overflow:visible}
 .pnl-chart .ln{stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
 .pnl-chart .grid{stroke:var(--hair)}
@@ -509,3 +521,19 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .streaks span{font-size:12.5px;color:var(--muted);background:var(--tile);border-radius:999px;padding:6px 12px}
 .streaks b{color:var(--ink);font-weight:600;margin-left:4px}
 @media (max-width:760px){.perf-sums{grid-template-columns:1fr 1fr}#perfBody{padding:4px 16px 18px}.cd{min-height:54px;font-size:12px}.cd i{left:6px;top:4px}}
+
+/* ------------------------------------------------------------ portfolio: deposit and withdraw, inside the wallet card */
+.move{display:flex;flex-direction:column;gap:14px;margin-top:8px;padding-top:20px;border-top:1px solid var(--hair)}
+.move .inp input{font-size:24px;padding:14px 16px}
+.mv-asset{flex:none;display:flex;align-items:center;gap:2px;margin-right:10px;padding:0 8px 0 12px;height:36px;border-radius:999px;background:var(--mist);cursor:pointer}
+.mv-asset select{border:0;outline:0;background:transparent;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;appearance:none;-webkit-appearance:none;padding-right:2px}
+.mv-asset svg{width:13px;height:13px;stroke:var(--muted);fill:none;stroke-width:1.8;stroke-linecap:round;pointer-events:none}
+.mv-to{display:flex;flex-direction:column;gap:8px}
+.mv-to .rail-lab{margin-bottom:0}
+.move .mv-to .inp input{font-size:14px;padding:13px 14px}
+.mv-note{font-family:var(--sans);color:var(--muted);letter-spacing:0}
+.mv-log:empty{display:none}
+.mv-log h4{font-size:13.5px;font-weight:600;color:var(--muted);margin-bottom:2px}
+.mv-log div{display:grid;grid-template-columns:minmax(0,1fr) auto 62px;gap:10px;align-items:baseline;padding:9px 0;border-top:1px solid var(--hair);font-size:13.5px;color:var(--ink-2)}
+.mv-log div:first-of-type{border-top:0}
+.mv-log .mv-t{text-align:right;font-size:12.5px;color:var(--faint)}

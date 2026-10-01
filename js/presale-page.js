@@ -142,22 +142,45 @@ function ppTrading(p) {
   return `<section class="panel pp-card pp-fill" data-trading><div class="pp-card-h"><h2>${pg.mode === 'mcap' ? 'Market cap' : 'Price'}</h2>
       <div class="pp-tools"><div class="seg mini-seg" data-mode>${['price', 'mcap'].map(m => `<button data-v="${m}" aria-pressed="${pg.mode === m}">${m === 'price' ? 'Price' : 'MCap'}</button>`).join('')}</div>
       <div class="seg mini-seg" data-tf>${Object.keys(TIMEFRAMES).map(t => `<button data-v="${t}" aria-pressed="${pg.tf === t}">${t}</button>`).join('')}</div></div></div>
-    <div class="pp-svg candles" data-candles><div class="pp-loading">Loading the pool…</div></div>
+    <div class="pp-plot" data-cplot><div class="pp-svg candles" data-candles><div class="pp-loading">Loading the pool…</div></div>
+      <div class="cx" data-ccross aria-hidden="true"><i class="cx-line"></i><i class="cx-hline"></i><span class="cx-tag num"></span><span class="cx-read num"></span></div></div>
     <div class="pool-card" data-poolcard></div></section>`;
 }
+/* Candles, drawn at the column's width: price gridlines labelled on the right, the last price tagged on that axis, times along
+   the foot, volume under the candles. pg.cg keeps the geometry so candleHover() can read any candle back. */
+const CANDLE_UP = '#2FBF7A', CANDLE_DN = '#F0554B';
 function candleSVG(series, mode, supply, quote) {
+  pg.cg = null;
   if (!series.length) return '<div class="pp-loading">No trades in this window.</div>';
-  const W = chartW(), Hh = W < 720 ? 300 : 400, pr = 76, pt = 12, pb = 28, vH = 48, k = mode === 'mcap' ? supply : 1;
-  const hi = Math.max(...series.map(c => c[2] * k)), lo = Math.min(...series.map(c => c[3] * k)), span = (hi - lo) || hi * 0.01 || 1;
-  const Y = v => pt + (1 - (v - lo) / span) * (Hh - pt - pb - vH), vmax = Math.max(...series.map(c => c[5])) || 1, cw = (W - pr) / series.length;
+  const W = chartW(), Hh = W < 720 ? 300 : 400, pr = 76, pt = 12, pb = 28, vH = 48, k = mode === 'mcap' ? supply : 1, n = series.length;
+  const hi = Math.max(...series.map(c => c[2] * k)), lo = Math.min(...series.map(c => c[3] * k)), span = (hi - lo) || hi * 0.01 || 1, priceH = Hh - pt - pb - vH;
+  const Y = v => pt + (1 - (v - lo) / span) * priceH, vmax = Math.max(...series.map(c => c[5])) || 1, cw = (W - pr) / n;
   const f = v => quote === 'USD' ? fmtUsd(v) : fmtPrice(v);
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map(q => lo + span * q);
-  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${mode === 'mcap' ? 'Market cap' : 'Price'} candles, last ${f(series[series.length - 1][4] * k)}">
-    ${ticks.map(v => `<path d="M0 ${Y(v).toFixed(1)}H${W - pr}" style="stroke:var(--navy-deep);stroke-opacity:.08"/><text x="${W - pr + 6}" y="${(Y(v) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)">${f(v)}</text>`).join('')}
-    ${series.map((c, i) => { const x = i * cw + cw / 2, up = c[4] >= c[1], col = up ? '#1F9D63' : '#E0483F', yo = Y(c[1] * k), yc = Y(c[4] * k), vh = c[5] / vmax * (vH - 6);
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map(q => lo + span * q), last = series[n - 1], lastV = last[4] * k, lastUp = last[4] >= last[1];
+  const xt = W < 520 ? [0, n - 1] : [0, Math.round((n - 1) / 3), Math.round((n - 1) * 2 / 3), n - 1];
+  pg.cg = { W, Hh, pr, pt, pb, vH, priceH, lo, span, k, cw, n, series, f };
+  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${mode === 'mcap' ? 'Market cap' : 'Price'} candles, last ${f(lastV)}">
+    ${ticks.map(v => `<path d="M0 ${Y(v).toFixed(1)}H${W - pr}" style="stroke:var(--hair)"/>${Math.abs(Y(v) - Y(lastV)) < 15 ? '' : `<text x="${W - pr + 8}" y="${(Y(v) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)">${f(v)}</text>`}`).join('')}
+    ${series.map((c, i) => { const x = i * cw + cw / 2, up = c[4] >= c[1], col = up ? CANDLE_UP : CANDLE_DN, yo = Y(c[1] * k), yc = Y(c[4] * k), vh = c[5] / vmax * (vH - 6);
       return `<path d="M${x.toFixed(1)} ${Y(c[2] * k).toFixed(1)}V${Y(c[3] * k).toFixed(1)}" stroke="${col}" stroke-width="1"/><rect x="${(x - cw * 0.35).toFixed(1)}" y="${Math.min(yo, yc).toFixed(1)}" width="${Math.max(1, cw * 0.7).toFixed(1)}" height="${Math.max(1, Math.abs(yc - yo)).toFixed(1)}" fill="${col}" rx=".5"/>
-        <rect x="${(x - cw * 0.35).toFixed(1)}" y="${(Hh - pb - vh).toFixed(1)}" width="${Math.max(1, cw * 0.7).toFixed(1)}" height="${vh.toFixed(1)}" fill="${col}" opacity=".25"/>`; }).join('')}
-    <g font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)"><text x="0" y="${Hh - 6}">${fmtDate(series[0][0])}</text><text x="${W - pr}" y="${Hh - 6}" text-anchor="end">${fmtDate(series[series.length - 1][0])}</text></g></svg>`;
+        <rect x="${(x - cw * 0.35).toFixed(1)}" y="${(Hh - pb - vh).toFixed(1)}" width="${Math.max(1, cw * 0.7).toFixed(1)}" height="${vh.toFixed(1)}" fill="${col}" opacity=".28"/>`; }).join('')}
+    <path d="M0 ${Y(lastV).toFixed(1)}H${W - pr}" stroke="${lastUp ? CANDLE_UP : CANDLE_DN}" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>
+    <rect x="${W - pr + 3}" y="${(Y(lastV) - 11).toFixed(1)}" width="${pr - 3}" height="22" rx="7" fill="${lastUp ? CANDLE_UP : CANDLE_DN}"/>
+    <text x="${W - pr + 8}" y="${(Y(lastV) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" font-weight="500" fill="#10151A">${f(lastV)}</text>
+    <g font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)">${xt.map((i, j) => `<text x="${(i * cw + cw / 2).toFixed(1)}" y="${Hh - 6}" text-anchor="${j === 0 ? 'start' : j === xt.length - 1 ? 'end' : 'middle'}">${fmtDate(series[i][0])}</text>`).join('')}</g></svg>`;
+}
+/* hovering (or pressing, on a touch screen) the candles reads one back: a crosshair, the price at the pointer tagged on the axis,
+   and the candle's open, high, low, close and volume along the top */
+function candleHover(plot, e) {
+  const cx = detailBox && $('[data-ccross]', detailBox), g = pg.cg; if (!cx) return;
+  if (!plot || !g) return cx.classList.remove('on');
+  const r = plot.getBoundingClientRect(), k = r.width / g.W, x = (e.clientX - r.left) / k, y = Math.min(Math.max((e.clientY - r.top) / k, g.pt), g.pt + g.priceH);
+  const i = Math.min(g.n - 1, Math.max(0, Math.floor(x / g.cw))), c = g.series[i], px = (i * g.cw + g.cw / 2) * k, up = c[4] >= c[1], tag = $('.cx-tag', cx), read = $('.cx-read', cx);
+  $('.cx-line', cx).style.cssText = `left:${px.toFixed(1)}px;top:${(g.pt * k).toFixed(1)}px;height:${((g.Hh - g.pt - g.pb) * k).toFixed(1)}px`;
+  $('.cx-hline', cx).style.cssText = `top:${(y * k).toFixed(1)}px;width:${((g.W - g.pr) * k).toFixed(1)}px`;
+  tag.textContent = g.f(g.lo + g.span * (1 - (y - g.pt) / g.priceH)); tag.style.cssText = `top:${(y * k).toFixed(1)}px;left:${((g.W - g.pr + 3) * k).toFixed(1)}px`;
+  read.innerHTML = `<b>${esc(fmtDate(c[0]))}</b> O <i>${g.f(c[1] * g.k)}</i> H <i>${g.f(c[2] * g.k)}</i> L <i>${g.f(c[3] * g.k)}</i> C <i class="${up ? 'up' : 'down'}">${g.f(c[4] * g.k)}</i> <span class="${up ? 'up' : 'down'}">${c[1] ? ((c[4] / c[1] - 1) * 100 >= 0 ? '+' : '') + ((c[4] / c[1] - 1) * 100).toFixed(2) + '%' : ''}</span>`;
+  cx.classList.add('on');
 }
 async function loadTrading(p) {
   const box = detailBox && $('[data-candles]', detailBox), card = detailBox && $('[data-poolcard]', detailBox); if (!box) return;
@@ -434,8 +457,11 @@ function bindPage(p) {
     const tf = e.target.closest('[data-tf] button'); if (tf) { pg.tf = tf.dataset.v; $$('[data-tf] button', box).forEach(b => b.setAttribute('aria-pressed', String(b === tf))); loadTrading(p); return; }
     const mo = e.target.closest('[data-mode] button'); if (mo) { pg.mode = mo.dataset.v; $$('[data-mode] button', box).forEach(b => b.setAttribute('aria-pressed', String(b === mo))); $('[data-trading] h2', box).textContent = pg.mode === 'mcap' ? 'Market cap' : 'Price'; loadTrading(p); }
   };
-  box.onmousemove = e => { const plot = e.target.closest ? e.target.closest('[data-plot]') : null; if (plot) chartHover(find(p.id) || p, plot, e); else chartHover(null); };
-  box.onmouseleave = () => chartHover(null);
+  /* pointer events, so the chart readouts work with a mouse, a pen or a finger */
+  box.onpointermove = box.onpointerdown = e => { const t = e.target.closest ? e.target : null, plot = t && t.closest('[data-plot]'), cplot = t && t.closest('[data-cplot]');
+    if (plot) chartHover(find(p.id) || p, plot, e); else chartHover(null);
+    candleHover(cplot, e); };
+  box.onpointerleave = box.onpointercancel = () => { chartHover(null); candleHover(null); };
   bindRail(p);
 }
 /* hovering the raise chart reads it: a hairline, a dot on the line, and what had been raised by then */
@@ -473,6 +499,7 @@ function bindRail(p) {
     $('[data-bal]', panel).textContent = state.wallet ? `Balance ${sell ? fmtTok(bal) + ' $' + cur.ticker : fmtAmt(bal, cur.q) + ' ' + C.sym}` : '';
     let msg = !raw ? '' : !(n > 0) ? 'Enter an amount above zero.' : '';
     if (swap) {
+      panel.dataset.now = sell ? 'sell' : 'buy';   // buying is green, selling is red
       const q = quoteSwap(cur, pg.side, n > 0 ? n : 0), imp = q.impact * 100;
       $('[data-paysym]', panel).textContent = sell ? '$' + cur.ticker : C.sym;
       $('[data-recv]', panel).textContent = sell ? `${fmtAmt(q.out, cur.q)} ${C.sym}` : `${fmtTok(q.out)} $${cur.ticker}`;
