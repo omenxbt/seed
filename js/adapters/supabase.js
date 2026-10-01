@@ -32,7 +32,7 @@ var supa = {
   async loadUpdates(id) {
     if (!(await this.init())) return;
     const { data, error } = await this.client.from('updates').select('title,body,wallet,posted_at').eq('presale_id', id).order('posted_at', { ascending: false }).limit(100);
-    if (!error) this.updates[id] = (data || []).map(u => ({ title: u.title, body: u.body, postedAt: Date.parse(u.posted_at), author: shortMint(u.wallet), from: 'api' }));
+    if (!error) this.updates[id] = (data || []).map(u => ({ title: u.title, body: u.body, postedAt: Date.parse(u.posted_at), author: shortMint(u.wallet), wallet: u.wallet, from: 'api' }));
   },
   /* a signed upload URL from the Edge Function, then the file goes straight to Storage. Returns the public URL. */
   async upload(file) {

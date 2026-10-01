@@ -239,7 +239,7 @@ async function openPresale() {
     state.presales.unshift(p); save();
     ['#fName', '#fTicker', '#fIdea', '#fTarget', '#fMint', '#fDesc', '#fMin', '#fMax', '#fWl', '#fFounderX', '#fXSince', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
     if (!supa.configured()) lf.urls.deck = '';   // the page keeps showing the local deck, so its preview URL is not released
-    ['banner', 'art', 'deck'].forEach(k => { if (lf.files[k]) clearFile(k); });
+    ['banner', 'art', 'deck'].forEach(k => { if (lf.files[k]) clearFile(k); }); renderPreview();   // the cleared form, in the preview too
     ui.fAsset = 'all'; seg.assetF.set('all'); ui.sel = id;
     toast(`Opened ${p.name}. It is live until ${fmtDate(p.endsAt)}`);
     location.hash = '#/presale/' + id;

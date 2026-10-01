@@ -7,7 +7,8 @@
    ========================================================================== */
 /* charts draw at the width of their column, one unit to the pixel, so their labels keep their size however wide the window is */
 const chartW = () => { const b = detailBox && $('[data-dchart],[data-candles]', detailBox), w = b ? Math.floor(b.clientWidth) : 0; return w > 0 ? Math.max(320, w) : innerWidth < 720 ? 400 : 720; };
-const PTABS = ['overview', 'deck', 'team', 'tokenomics', 'backers', 'risk', 'updates'];
+const PTABS = ['overview', 'deck', 'team', 'tokenomics', 'backers', 'risk', 'announcements'];
+const PTAB_ALIAS = { updates: 'announcements' };   // the tab's earlier name, so old links still open it
 const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'price', side: 'buy', allBackers: false, deck: null, deckPage: 1, walletKey: '' };
 
 const ICONS = {
@@ -268,7 +269,7 @@ function ppRail(p) { return tradePanel(p) + `<div class="pp-pos" data-poswrap>${
 function tabLabel(p, t) {
   if (t === 'backers') return p.status === 'seeded' ? 'Holders' : 'Backers';
   if (t === 'risk') return 'Risk checks';
-  if (t === 'updates') { const n = updatesAdapter.list(p).length; return `Updates${n ? ` <span class="ct num">${n}</span>` : ''}`; }
+  if (t === 'announcements') { const n = updatesAdapter.list(p).length; return `Announcements${n ? ` <span class="ct num">${n}</span>` : ''}`; }
   return t[0].toUpperCase() + t.slice(1);
 }
 function ppTabs(p) {
@@ -278,7 +279,7 @@ function ppTabs(p) {
 function renderTab(p) {
   const body = detailBox && $('[data-tabbody]', detailBox); if (!body) return;
   $$('[data-ptab]', detailBox).forEach(a => a.setAttribute('aria-selected', String(a.dataset.ptab === pg.tab)));
-  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, tokenomics: tabTokenomics, backers: tabBackers, risk: tabRisk, updates: tabUpdates }[pg.tab] || tabOverview;
+  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, tokenomics: tabTokenomics, backers: tabBackers, risk: tabRisk, announcements: tabAnnouncements }[pg.tab] || tabOverview;
   body.innerHTML = fn(p); afterTab(p, body);
   const key = p.id + '/' + pg.tab;   // the tab's content eases in when the tab changes, not when it is redrawn in place
   if (pg.shown !== key) { pg.shown = key; body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap'); }
@@ -377,18 +378,49 @@ async function loadHolders(p) {
       ${h.value.map(x => `<tr><td class="mono">${esc(shortMint(x.wallet))}</td><td class="num">${fmtTok(x.amount)}</td><td class="num">${x.pct.toFixed(2)}%</td><td>${esc(x.label || '')}</td></tr>`).join('')}</tbody></table></div>`;
   } catch (e) { box.innerHTML = `<p class="quiet">Holders could not be loaded: ${esc(e.message)}</p>`; }
 }
-function tabUpdates(p) {
-  const list = updatesAdapter.list(p), w = walletId(), canPost = roleOf(p, w) || roleOf(p, state.wallet && state.wallet.pk);
-  const form = canPost && p.status !== 'refunded' ? `<form class="upd-form" data-updform><input name="t" maxlength="80" placeholder="Title" required><textarea name="b" rows="3" maxlength="2000" placeholder="What changed?" required></textarea><button class="btn btn-navy btn-sm">Post update</button></form>` : '';
-  return tabHead('Updates', prFrom(p), ` <span class="quiet">${list.length} from the team</span>`) + form +
-    (list.length ? `<ol class="updates">${list.map(u => `<li><div class="u-h"><b>${esc(u.title)}</b><span class="num">${fmtDate(u.postedAt)}</span></div><div class="md">${md(u.body)}</div><span class="u-by">${esc(u.author || 'Founder')}</span></li>`).join('')}</ol>` : quietEmpty('No updates posted yet.'));
+/* Announcements: what the founder and team post for backers, newest first. Anyone can read them; only a founder or team
+   wallet of this raise gets the form. */
+const ANN_NEW = 2 * D, ANN_STRIP = 7 * D;   // how long a post is marked New, and how long the latest one is shown at the top of the page
+const ANN_ICON = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 6.4v3.2h2.2l5.3 3V3.4l-5.3 3zM12.2 6.2a2.6 2.6 0 0 1 0 3.6M4.9 9.8l.8 3.2h1.9l-.7-2.6"/></svg>';
+const canAnnounce = p => !!(roleOf(p, walletId()) || roleOf(p, state.wallet && state.wallet.pk));
+function annBy(p, u) {
+  const pr = profileOf(p), role = u.wallet ? roleOf(p, u.wallet) : (pr.founder && u.author === pr.founder.name) ? 'founder' : 'team';
+  const mine = u.wallet && u.wallet === walletId();
+  return `<span class="u-by">${role ? `<span class="role-badge r-${role}">${role === 'founder' ? 'Founder' : 'Team'}</span>` : ''}<span>${mine ? 'You' : esc(u.author || 'Founder')}</span>${u.wallet && typeof xChip === 'function' ? xChip(xAdapter.of(u.wallet)) : ''}</span>`;
 }
+function tabAnnouncements(p) {
+  const list = updatesAdapter.list(p), now = Date.now(), can = canAnnounce(p), open = p.status !== 'refunded';
+  const form = can && open ? `<form class="upd-form" data-updform novalidate><label class="upd-lab" for="annT">New announcement</label>
+      <input id="annT" name="t" maxlength="80" placeholder="Title" autocomplete="off" required><textarea name="b" rows="4" maxlength="2000" placeholder="What should backers know?" aria-label="Announcement" required></textarea>
+      <div class="upd-foot"><span class="quiet">Markdown works: headings, lists, links and bold. <span class="num" data-annct>0 / 2000</span></span><button class="btn btn-navy btn-sm">Post announcement</button></div><div class="err" data-annerr role="alert"></div></form>` : '';
+  const who = can ? (open ? '' : 'This raise refunded, so new announcements are closed.') : `Posted by the founder and team of ${esc(p.name)}.`;
+  return tabHead('Announcements', prFrom(p), ` <span class="quiet">${list.length ? `${list.length} from the team` : ''}</span>`) + form + (who ? `<p class="quiet ann-who">${who}</p>` : '') +
+    (list.length ? `<ol class="updates">${list.map(u => `<li${now - u.postedAt < ANN_NEW ? ' class="new"' : ''}><div class="u-h"><b>${esc(u.title)}</b>${now - u.postedAt < ANN_NEW ? '<span class="ann-new">New</span>' : ''}<span class="num">${fmtAgo(now - u.postedAt)} · ${fmtDate(u.postedAt)}</span></div><div class="md">${md(u.body)}</div>${annBy(p, u)}</li>`).join('')}</ol>`
+      : quietEmpty(can && open ? 'Nothing posted yet. Your first announcement shows here and at the top of the page.' : 'The team has not posted an announcement yet.'));
+}
+/* the latest announcement, at the top of the page for a week after it is posted */
+function ppAnnounce(p) {
+  const u = updatesAdapter.list(p)[0], now = Date.now();
+  if (!u || now - u.postedAt > ANN_STRIP) return '';
+  return `<a class="panel pp-ann" href="#/presale/${esc(p.id)}/announcements" data-jump-ann><span class="ann-ico">${ANN_ICON}</span><span class="ann-k">Announcement</span><b>${esc(u.title)}</b><span class="ann-t num">${fmtAgo(now - u.postedAt)}</span><span class="ann-go">Read</span></a>`;
+}
+function refreshAnnounce(p) { const w = detailBox && $('[data-annwrap]', detailBox); if (w) w.innerHTML = ppAnnounce(p); }
 function afterTab(p, body) {
   if (pg.tab === 'deck' && profileOf(p).deck && deckKindOf(profileOf(p)) === 'pdf') loadDeck(p, body);
   if (pg.tab === 'backers' && p.status === 'seeded') loadHolders(p);
-  if (pg.tab === 'updates' && supa.configured() && pg.updLoaded !== p.id) { pg.updLoaded = p.id; updatesAdapter.load(p).then(() => { if (pg.id === p.id && pg.tab === 'updates') { renderTab(p); refreshTabLabels(p); } }); }
   const f = $('[data-updform]', body);
-  if (f) f.onsubmit = async e => { e.preventDefault(); const t = f.t.value.trim(), b = f.b.value.trim(); if (!t || !b) return; try { await updatesAdapter.post(p, t, b); toast('Update posted'); renderTab(p); refreshTabLabels(p); } catch (x) { toast(x.message || 'The update was not posted.'); } };
+  if (f) {
+    const err = $('[data-annerr]', f), ct = $('[data-annct]', f);
+    f.oninput = () => { err.textContent = ''; ct.textContent = `${f.b.value.length} / 2000`; };
+    f.onsubmit = async e => {
+      e.preventDefault(); const t = f.t.value.trim(), b = f.b.value.trim(), btn = $('button', f);
+      if (!t) { err.textContent = 'Give the announcement a title.'; f.t.focus(); return; }
+      if (!b) { err.textContent = 'Write the announcement.'; f.b.focus(); return; }
+      btn.disabled = true;
+      try { await updatesAdapter.post(p, t, b); toast('Announcement posted'); renderTab(p); refreshTabLabels(p); refreshAnnounce(p); if (typeof renderTerminal === 'function') renderTerminal(); }
+      catch (x) { err.textContent = x.message || 'The announcement was not posted.'; btn.disabled = false; }
+    };
+  }
   const ab = $('[data-allbackers]', body); if (ab) ab.onclick = () => { pg.allBackers = true; renderTab(p); };
 }
 function refreshTabLabels(p) { $$('[data-ptab]', detailBox).forEach(a => a.innerHTML = tabLabel(p, a.dataset.ptab)); }
@@ -433,16 +465,16 @@ function renderDetail(force) {
   if (ui.tab !== 'presale') { if (pg.id) { box.innerHTML = ''; pg.id = null; if (typeof chatOff !== 'undefined' && chatOff) { chatOff(); chatOff = null; } } return; }
   const p = find(ui.sel);
   if (!p) { box.innerHTML = '<div class="panel empty">That raise is not in this demo any more. It may have been reset.<br><a href="#">Back to all raises</a></div>'; pg.id = null; return; }
-  const tab = PTABS.includes(ui.ptab) ? ui.ptab : 'overview', wkey = (state.wallet ? walletId() : '') + '/' + (state.positions[p.id] || 0) + '/' + !!state.claimed[p.id] + '/' + (p.status === 'seeded' ? heldOf(p) : 0) + '/' + balOf(p.q);
+  const want = PTAB_ALIAS[ui.ptab] || ui.ptab, tab = PTABS.includes(want) ? want : 'overview', wkey = (state.wallet ? walletId() : '') + '/' + (state.positions[p.id] || 0) + '/' + !!state.claimed[p.id] + '/' + (p.status === 'seeded' ? heldOf(p) : 0) + '/' + balOf(p.q);
   if (!force && pg.id === p.id && pg.status === p.status) {
     if (pg.tab !== tab) { pg.tab = tab; renderTab(p); }
-    if (pg.walletKey !== wkey) { pg.walletKey = wkey; const pw = $('[data-poswrap]', box); if (pw) { pw.innerHTML = positionPanel(p); bindRail(p); } if (pg.tab === 'updates') renderTab(p); if (pg.chatW !== walletId()) mountChat(p); }
+    if (pg.walletKey !== wkey) { pg.walletKey = wkey; const pw = $('[data-poswrap]', box); if (pw) { pw.innerHTML = positionPanel(p); bindRail(p); } if (pg.tab === 'announcements') renderTab(p); if (pg.chatW !== walletId()) mountChat(p); }
     patchDetail(p); return;
   }
   const fresh = pg.id !== p.id;
   Object.assign(pg, { id: p.id, status: p.status, tab, walletKey: wkey, seen: p.raised, shown: null }); if (fresh) Object.assign(pg, { allBackers: false, deck: null, pool: null, series: null });
   box.innerHTML = `<div class="pp ${p.status}"><aside class="pp-side" aria-label="Project and chat">${ppHeader(p)}${chatPanel(p)}</aside>
-    <div class="pp-main">${ppFill(p)}${ppChart(p)}${ppTabs(p)}</div><aside class="pp-rail" aria-label="Buy and vault">${ppRail(p)}</aside></div>`;
+    <div class="pp-main"><div class="pp-annw" data-annwrap>${ppAnnounce(p)}</div>${ppFill(p)}${ppChart(p)}${ppTabs(p)}</div><aside class="pp-rail" aria-label="Buy and vault">${ppRail(p)}</aside></div>`;
   bindPage(p); renderTab(p); mountChat(p); drawCharts(p); watchCharts(p); loadAsync(p);
   if (fresh && typeof playEnter === 'function') playEnter();   // the page's cards rise into place and the raise line draws itself
 }
@@ -465,7 +497,7 @@ function bindPage(p) {
   box.onclick = e => {
     const c = e.target.closest('[data-copy]');
     if (c) { e.preventDefault(); try { navigator.clipboard.writeText(c.dataset.copy).catch(() => {}); } catch (x) {} toast(`${c.dataset.copyLabel[0].toUpperCase() + c.dataset.copyLabel.slice(1)} copied`); return; }
-    if (e.target.closest('[data-jump-risk]')) { setTimeout(() => { const r = $('.pp-tabs', box); if (r) r.scrollIntoView({ block: 'start' }); }, 0); return; }   // the link opens the Risk checks tab; this brings it into view
+    if (e.target.closest('[data-jump-risk],[data-jump-ann]')) { setTimeout(() => { const r = $('.pp-tabs', box); if (r) r.scrollIntoView({ block: 'start' }); }, 0); return; }   // the link opens its tab; this brings the tab into view
     const tf = e.target.closest('[data-tf] button'); if (tf) { pg.tf = tf.dataset.v; $$('[data-tf] button', box).forEach(b => b.setAttribute('aria-pressed', String(b === tf))); loadTrading(p); return; }
     const mo = e.target.closest('[data-mode] button'); if (mo) { pg.mode = mo.dataset.v; $$('[data-mode] button', box).forEach(b => b.setAttribute('aria-pressed', String(b === mo))); $('[data-trading] h2', box).textContent = pg.mode === 'mcap' ? 'Market cap' : 'Price'; loadTrading(p); }
   };
@@ -549,6 +581,8 @@ function bindRail(p) {
 }
 async function loadAsync(p) {
   const box = detailBox, id = p.id;
+  /* announcements kept on the backend arrive after the page is up: the tab's count, the strip and the tab itself follow */
+  if (supa.configured() && pg.updLoaded !== id) { pg.updLoaded = id; updatesAdapter.load(p).then(() => { if (pg.id !== id) return; refreshTabLabels(p); refreshAnnounce(p); if (pg.tab === 'announcements') renderTab(p); }); }
   presaleAdapter.vaultBalance(p).then(v => { if (ui.sel !== id) return; const b = $('[data-vbal]', box), s = $('[data-vsrc]', box); if (b) b.textContent = `${fmtAmt(v.value, v.asset && ASSETS[v.asset] ? v.asset : p.q)} ${v.asset || Q(p).sym}`; if (s) s.innerHTML = srcPill(v.from); })
     .catch(e => { const b = $('[data-vbal]', box); if (b) b.textContent = 'Unavailable'; const s = $('[data-vsrc]', box); if (s) s.innerHTML = `<span class="quiet">Solana did not answer: ${esc(e.message)}</span>`; });
   if (p.status === 'seeded') loadTrading(p);
