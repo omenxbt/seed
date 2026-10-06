@@ -55,9 +55,9 @@ body:has(#view-app.fit:not([hidden])) .toasts{bottom:calc(52px + env(safe-area-i
 /* the project: banner across the top of the card, the token art over its lower edge, then name, tagline, pills, mint and links, numbers */
 .pp-id{padding:0 0 10px;overflow:hidden;display:flex;flex-direction:column}
 .pp-banner{position:relative;height:148px;overflow:hidden;background:linear-gradient(120deg,#2E63E7,#5B8CFF 55%,#A4C0FF)}
-.pp-banner>.pp-bg{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.6s var(--soft)}
+.pp-banner>.pp-bg{display:block;width:100%;height:100%;object-fit:cover;transition:transform .7s var(--ease-out)}
 .pp-id:hover .pp-bg{transform:scale(1.04)}
-.pp-banner .back{position:absolute;left:14px;top:14px;margin:0;display:inline-flex;align-items:center;padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;color:#fff;background:rgba(18,19,22,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:background .2s}
+.pp-banner .back{position:absolute;left:14px;top:14px;margin:0;display:inline-flex;align-items:center;padding:6px 13px;border-radius:999px;font-size:13px;font-weight:600;color:#fff;background:rgba(18,19,22,.62);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:background var(--fast) var(--ease-out)}
 .pp-banner .back:hover{background:rgba(18,19,22,.88)}
 .pp-idrow{position:relative;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:-40px;padding:0 22px}
 .pp-art{flex:none;display:block;width:80px;height:80px;border-radius:22px;border:4px solid var(--panel-solid);background:var(--panel-solid);object-fit:cover}
@@ -72,12 +72,12 @@ body:has(#view-app.fit:not([hidden])) .toasts{bottom:calc(52px + env(safe-area-i
 .pp-pills{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:16px;padding:0 22px}
 .pp-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:16px;padding:0 22px}
 .pp-socials{display:flex;gap:2px;margin-left:auto;margin-right:-8px}
-.soc{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;color:color-mix(in srgb,var(--ink) 72%,transparent);transition:background .2s,color .2s}
+.soc{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;color:color-mix(in srgb,var(--ink) 72%,transparent);transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
 .soc:hover{background:var(--mist);color:var(--ink)}
 .soc svg{width:17px;height:17px;fill:currentColor}
 .link-card svg,.m-links svg{width:15px;height:15px;fill:currentColor}
 svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-.copy{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--hair-2);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--muted);background:var(--tile);transition:transform .5s var(--soft),color .2s,border-color .2s}
+.copy{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--hair-2);border-radius:999px;padding:6px 12px;font-size:13px;color:var(--muted);background:var(--tile);transition:transform var(--dur) var(--ease-out),color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
 .copy:hover{color:var(--navy-deep);border-color:var(--navy)}
 .copy:active{transform:scale(.96)}
 .copy svg{width:14px;height:14px}
@@ -117,7 +117,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .pp-svg.bars{margin-top:14px}
 /* the hover readout over the raise chart: a hairline, a dot on the line and a label */
 .pp-plot{position:relative;cursor:crosshair;touch-action:pan-y}   /* pan-y: a sideways drag reads the chart, an up or down drag still scrolls the page */
-.cx{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .3s var(--soft)}
+.cx{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity var(--fast) var(--ease-out)}
 .cx.on{opacity:1}
 .cx-line{position:absolute;width:1px;background:var(--hair-2)}
 /* the candle readout: a level line with its price tagged on the axis, and the candle's figures along the top */
@@ -140,10 +140,10 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
   body.enter [data-dbars] rect{transform-box:fill-box;transform-origin:50% 100%;animation:growY .7s var(--soft) both;animation-delay:calc(.35s + var(--i,0)*6ms)}
   .pp-svg.candles svg{animation:swapIn .6s var(--soft)}
   /* a tab's content eases in when the tab changes; its bars grow from the left */
-  .tabbody.swap>*{animation:swapIn .6s var(--soft) both}
-  .tabbody.swap>:nth-child(2){animation-delay:.05s}.tabbody.swap>:nth-child(3){animation-delay:.1s}.tabbody.swap>:nth-child(n+4){animation-delay:.15s}
-  .tabbody.swap .uof-bar i{transform-origin:left;animation:growX .9s var(--soft) .25s both}
-  .tabbody.swap .donut circle{animation:fadeIn .7s ease both}
+  .tabbody.swap>*{animation:swapIn .32s var(--ease-out) both}
+  .tabbody.swap>:nth-child(2){animation-delay:.04s}.tabbody.swap>:nth-child(3){animation-delay:.08s}.tabbody.swap>:nth-child(n+4){animation-delay:.12s}
+  .tabbody.swap .uof-bar i{transform-origin:left;animation:growX .6s var(--ease-out) .15s both}
+  .tabbody.swap .donut circle{animation:fadeIn .5s var(--ease-out) both}
   .tabbody.swap .donut circle:nth-child(2){animation-delay:.12s}.tabbody.swap .donut circle:nth-child(3){animation-delay:.24s}.tabbody.swap .donut circle:nth-child(n+4){animation-delay:.36s}
 }
 .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:13.5px;color:var(--muted)}
@@ -231,12 +231,12 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 
 /* tabs: text tabs, the open one underlined in blue */
 .pp-tabs{padding:0;display:flex;flex-direction:column}
-.tabbar{flex:none;display:flex;gap:6px;padding:6px 16px 0;border-bottom:1px solid var(--hair);border-radius:17px 17px 0 0;overflow-x:auto}
-.tabbar a{position:relative;padding:16px 11px 17px;font-size:15.5px;font-weight:600;color:var(--muted);white-space:nowrap;transition:color .2s}
+.tabbar{position:relative;flex:none;display:flex;gap:6px;padding:6px 16px 0;border-bottom:1px solid var(--hair);border-radius:17px 17px 0 0;overflow-x:auto}
+.tabbar a{position:relative;padding:16px 11px 17px;font-size:15.5px;font-weight:600;color:var(--muted);white-space:nowrap;transition:color var(--fast) var(--ease-out)}
 .tabbar a:hover{color:var(--ink)}
 .tabbar a[aria-selected="true"]{color:var(--ink)}
-.tabbar a::after{content:"";position:absolute;left:11px;right:11px;bottom:0;height:3px;border-radius:3px 3px 0 0;background:var(--navy);transform:scaleX(0);transform-origin:left;transition:transform .5s var(--soft)}
-.tabbar a[aria-selected="true"]::after{transform:none}
+.tab-ind{position:absolute;left:0;bottom:0;height:3px;width:0;border-radius:3px 3px 0 0;background:var(--navy);transition:transform var(--dur) var(--ease-out),width var(--dur) var(--ease-out);will-change:transform}
+.tab-ind.first{transition:none}
 .tabbar .ct{font-size:12.5px;font-weight:500;background:var(--navy-wash);color:var(--navy-deep);border-radius:999px;padding:1px 8px;margin-left:5px}
 .tabbody{padding:28px 26px 32px;min-height:340px;container-type:inline-size}
 /* the overview: the story on the left, roadmap and links beside it once the tab is wide enough */
@@ -276,16 +276,16 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .roadmap a{font-size:13.5px;font-weight:600;color:var(--navy-deep);margin-left:8px}
 .roadmap a svg{width:12px;height:12px;vertical-align:-1px}
 .links{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-.link-card{display:flex;align-items:center;gap:13px;padding:14px 16px;border:1px solid transparent;border-radius:14px;background:var(--tile);transition:border-color .5s var(--soft),background .5s var(--soft);min-width:0}
+.link-card{display:flex;align-items:center;gap:13px;padding:14px 16px;border:1px solid transparent;border-radius:14px;background:var(--tile);transition:border-color var(--dur) var(--ease-out),background var(--dur) var(--ease-out);min-width:0}
 .link-card:hover{border-color:var(--hair-2);background:var(--mist)}
-.link-card svg{width:20px;height:20px;flex:none;color:var(--ink);transition:transform .7s var(--soft)}
+.link-card svg{width:20px;height:20px;flex:none;color:var(--ink);transition:transform .4s var(--ease-out)}
 .link-card:hover svg{transform:scale(1.14)}
 .link-card>span{display:flex;flex-direction:column;min-width:0}.link-card b{font-size:15px}
 .link-card span span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 .deck{display:grid;grid-template-columns:150px minmax(0,1fr);gap:20px}
 .deck-thumbs{display:flex;flex-direction:column;gap:10px;max-height:600px;overflow-y:auto}
-.thumb{border:2px solid transparent;border-radius:10px;overflow:hidden;background:#fff;padding:0;line-height:0;opacity:.65;transition:opacity .2s,border-color .2s}
+.thumb{border:2px solid transparent;border-radius:10px;overflow:hidden;background:#fff;padding:0;line-height:0;opacity:.65;transition:opacity var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
 .thumb:hover{opacity:1}
 .thumb.on{border-color:var(--navy);opacity:1}
 .thumb canvas{width:100%;height:auto}
@@ -359,7 +359,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .u-by{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;font-size:13.5px;color:var(--muted)}
 /* the latest announcement, one line at the top of the page */
 .pp-annw:empty{display:none}
-.pp-ann{display:flex;align-items:center;gap:12px;min-width:0;padding:13px 18px;border-radius:16px;border-color:var(--navy-soft);font-size:15px;transition:border-color .2s,background .2s}
+.pp-ann{display:flex;align-items:center;gap:12px;min-width:0;padding:13px 18px;border-radius:16px;border-color:var(--navy-soft);font-size:15px;transition:border-color var(--fast) var(--ease-out),background var(--fast) var(--ease-out)}
 .pp-ann:hover{border-color:var(--navy)}
 .ann-ico{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--navy-wash);color:var(--navy-deep)}
 .ann-ico svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
@@ -407,7 +407,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .msg p{font-size:15.5px;line-height:1.55;color:var(--ink-2);margin-top:4px;overflow-wrap:anywhere}
 .msg blockquote{margin-top:7px;padding:7px 12px;border-left:2px solid var(--navy-soft);background:rgba(91,140,255,.08);border-radius:0 10px 10px 0;font-size:13.5px;color:var(--muted);overflow-wrap:anywhere}
 .msg blockquote b{font-weight:500}
-.msg-acts{display:flex;gap:12px;margin-top:5px;opacity:0;transition:opacity .15s}
+.msg-acts{display:flex;gap:12px;margin-top:5px;opacity:0;transition:opacity var(--fast) var(--ease-out)}
 .msg:hover .msg-acts,.msg:focus-within .msg-acts{opacity:1}
 @media (hover:none){.msg-acts{opacity:1}}
 .msg-acts button{font-size:12.5px;font-weight:600;color:var(--muted)}
@@ -460,7 +460,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .linkbtn{margin-left:auto;font-size:13.5px;font-weight:600;color:var(--navy-deep)}
 .f label .linkbtn{float:right}
 /* the upload boxes are outlined and washed in blue, a little stronger under the pointer or a dragged file */
-.drop{position:relative;border:1.5px dashed var(--navy);border-radius:16px;background:var(--navy-wash);cursor:pointer;overflow:hidden;transition:border-color .2s,background .2s,box-shadow .2s}
+.drop{position:relative;border:1.5px dashed var(--navy);border-radius:16px;background:var(--navy-wash);cursor:pointer;overflow:hidden;transition:border-color var(--fast) var(--ease-out),background var(--fast) var(--ease-out),box-shadow var(--fast) var(--ease-out)}
 .drop:hover,.drop.over{border-color:var(--navy-deep);background:color-mix(in srgb,var(--navy) 20%,transparent);box-shadow:0 0 0 3px var(--ring)}
 .drop input[type=file]{display:none}
 .drop.wide{aspect-ratio:3/1;max-width:720px}.drop.square{aspect-ratio:1/1;max-width:220px}.drop.doc{min-height:92px}
@@ -504,7 +504,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .lsubmit{padding:24px 28px 28px;border-top:1px solid var(--hair);display:flex;flex-direction:column;gap:12px}
 .lsubmit .btn{min-height:54px;font-size:16px;border-radius:14px}
 .ws-rail .pcard{padding:0;overflow:hidden;border-radius:14px}
-.pv-banner{aspect-ratio:3/1;overflow:hidden}.pv-banner img{width:100%;height:100%;object-fit:cover;display:block;transition:transform 1.6s var(--soft)}
+.pv-banner{aspect-ratio:3/1;overflow:hidden}.pv-banner img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .7s var(--ease-out)}
 .pcard:hover .pv-banner img{transform:scale(1.04)}
 .pv-id{display:flex;align-items:center;gap:14px;padding:16px 16px 0}
 .pv-art{width:52px;height:52px;border-radius:14px;object-fit:cover;flex:none;display:grid;place-items:center}
@@ -553,7 +553,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .cal-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
 .cal-nav{display:flex;align-items:center;gap:6px;font-size:15px}
 .cal-nav b{min-width:92px;text-align:center;font-weight:600}
-.cal-nav button{width:30px;height:30px;border-radius:9px;font-size:18px;line-height:1;color:var(--muted);transition:background .2s,color .2s}
+.cal-nav button{width:30px;height:30px;border-radius:9px;font-size:18px;line-height:1;color:var(--muted);transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
 .cal-nav button:hover{background:var(--mist);color:var(--ink)}.cal-nav button[disabled]{opacity:.3;cursor:default}
 .cal-total{font-size:22px;font-weight:500}
 .cal-bar{height:3px;border-radius:3px;background:var(--bad);overflow:hidden}.cal-bar i{display:block;height:100%;background:var(--ok)}

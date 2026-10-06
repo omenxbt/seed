@@ -41,6 +41,7 @@ function paceInfo(p) {
   if (left <= 0) return { state: 'on', rate, text: 'Filled.' };
   if (rate <= 0) return { state: 'behind', rate: 0, text: `No buys in the last ${win === 6 ? '6h' : fmtHours(win)}. Deadline in ${fmtHours(hLeft)}.` };
   const fillH = left / rate;
+  if (fillH > 24 * 365) return { state: 'behind', rate, fillH, text: `Buys in the last ${win === 6 ? '6h' : fmtHours(win)} are too small to fill this. Deadline in ${fmtHours(hLeft)}.` };   // a trickle: the time to fill is not a useful number
   return { state: fillH <= hLeft ? 'on' : 'behind', rate, fillH, text: `At the last ${win === 6 ? '6h' : fmtHours(win)} pace this fills in ${fmtHours(fillH)}. Deadline in ${fmtHours(hLeft)}.` };
 }
 const paceChip = pi => pi.state === 'on' ? '<span class="pace-chip on">On pace</span>' : pi.state === 'behind' ? '<span class="pace-chip behind">Behind pace</span>' : '';
@@ -278,7 +279,7 @@ function ppTabs(p) {
 }
 function renderTab(p) {
   const body = detailBox && $('[data-tabbody]', detailBox); if (!body) return;
-  $$('[data-ptab]', detailBox).forEach(a => a.setAttribute('aria-selected', String(a.dataset.ptab === pg.tab)));
+  $$('[data-ptab]', detailBox).forEach(a => a.setAttribute('aria-selected', String(a.dataset.ptab === pg.tab))); placeTabInd();
   const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, tokenomics: tabTokenomics, backers: tabBackers, risk: tabRisk, announcements: tabAnnouncements }[pg.tab] || tabOverview;
   body.innerHTML = fn(p); afterTab(p, body);
   const key = p.id + '/' + pg.tab;   // the tab's content eases in when the tab changes, not when it is redrawn in place
@@ -423,7 +424,15 @@ function afterTab(p, body) {
   }
   const ab = $('[data-allbackers]', body); if (ab) ab.onclick = () => { pg.allBackers = true; renderTab(p); };
 }
-function refreshTabLabels(p) { $$('[data-ptab]', detailBox).forEach(a => a.innerHTML = tabLabel(p, a.dataset.ptab)); }
+function refreshTabLabels(p) { $$('[data-ptab]', detailBox).forEach(a => a.innerHTML = tabLabel(p, a.dataset.ptab)); placeTabInd(); }
+/* the underline under the open tab is one element that slides over; it appears in place the first time */
+function placeTabInd() {
+  const bar = detailBox && $('.tabbar', detailBox), a = bar && $('[data-ptab][aria-selected="true"]', bar); if (!a) return;
+  let ind = $('.tab-ind', bar); const first = !ind;
+  if (first) { ind = document.createElement('span'); ind.className = 'tab-ind first'; ind.setAttribute('aria-hidden', 'true'); bar.appendChild(ind); }
+  ind.style.transform = `translateX(${a.offsetLeft + 11}px)`; ind.style.width = Math.max(0, a.offsetWidth - 22) + 'px';
+  if (first) setTimeout(() => ind.classList.remove('first'), 60);   // a timer, not a frame: frames do not run in a background tab
+}
 
 /* ---------------------------------------------------------------- deck (pdf.js, loaded on first use) */
 const PDFJS = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
@@ -600,13 +609,13 @@ function patchDetail(p) {
   if (!isRealAddr(presaleAdapter.vaultAddress(p))) s('[data-vbal]', e => e.textContent = `${fmtAmt(p.raised, p.q)} ${Q(p).sym}`);   // a demo vault holds exactly the raise
   pg.seen = p.raised;
   s('[data-dbar]', e => { if (pc > parseFloat(e.style.width) + 1e-6) bump($('[data-dreadout]', detailBox)); e.style.width = pc + '%'; });
-  s('[data-draised]', e => e.textContent = fmtC(p.raised, p.q, true)); s('[data-dpct]', e => e.textContent = Math.floor(pc + 1e-7) + '%'); s('[data-dbackers]', e => e.textContent = p.backers);
-  s('[data-sraised]', e => e.textContent = fmtC(p.raised, p.q, true)); s('[data-spct]', e => e.textContent = Math.floor(pc + 1e-7) + '%'); s('[data-sbackers]', e => e.textContent = p.backers);
+  s('[data-draised]', e => roll(e, fmtC(p.raised, p.q, true))); s('[data-dpct]', e => roll(e, Math.floor(pc + 1e-7) + '%')); s('[data-dbackers]', e => roll(e, p.backers));
+  s('[data-sraised]', e => roll(e, fmtC(p.raised, p.q, true))); s('[data-spct]', e => roll(e, Math.floor(pc + 1e-7) + '%')); s('[data-sbackers]', e => roll(e, p.backers));
   s('[data-dchart]', e => e.innerHTML = raiseSVG(p)); s('[data-dbars]', e => e.innerHTML = buysSVG(p)); s('[data-pace]', e => e.textContent = pi.text);
   s('[data-fill] .pace-chip', e => e.outerHTML = paceChip(pi));
 }
 function tickDetail() {
   const p = find(ui.sel); if (!detailBox || !p || pg.id !== p.id || p.status !== 'live') return;
   const left = fmtLeft(p.endsAt - Date.now());
-  ['[data-dtime]', '[data-stime]', '[data-vtime]'].forEach(k => { const e = $(k, detailBox); if (e) e.textContent = left; });
+  ['[data-dtime]', '[data-stime]', '[data-vtime]'].forEach(k => { const e = $(k, detailBox); if (e) roll(e, left); });
 }
