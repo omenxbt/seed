@@ -73,7 +73,7 @@ a{color:inherit;text-decoration:none}
 .brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:20px;letter-spacing:-.03em;color:var(--ink)}
 .mark{display:block;color:var(--ink);--seed:var(--navy)}
 .brand .mark{flex:none;width:32px;height:32px;color:var(--navy-soft)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;font-weight:600;font-size:14px;padding:11px 22px;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;font-weight:600;font-size:13px;padding:9px 18px;
   transition:transform var(--dur) var(--ease-out),background var(--dur) var(--ease-out),box-shadow var(--dur) var(--ease-out),opacity var(--fast) var(--ease-out);white-space:nowrap}
 .btn:active{transform:scale(.98)}
 .btn-ink{background:var(--solid);color:#fff}
@@ -81,7 +81,7 @@ a{color:inherit;text-decoration:none}
 .btn-navy{background:var(--accent);color:#fff}
 .btn-navy:hover{background:var(--accent-hover)}
 .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
-.btn-lg{font-size:15px;padding:14px 26px}
+.btn-lg{font-size:14px;padding:11px 21px}
 .btn-block{width:100%}
 .wdot{width:7px;height:7px;border-radius:50%;background:#7FC8A9;box-shadow:0 0 0 3px rgba(127,200,169,.25)}
 .pop{position:absolute;right:0;top:calc(100% + 10px);width:264px;border-radius:16px;padding:16px;background:var(--card);border:1px solid var(--panel-line);box-shadow:0 24px 60px -20px var(--sh-pop);display:none}
@@ -89,7 +89,7 @@ a{color:inherit;text-decoration:none}
 .pop h4{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px}
 .pop .bal{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-top:1px solid var(--hair);font-size:13.5px}
 .pop .bal span:first-child{color:var(--muted)}
-.pop button{margin-top:12px;width:100%;padding:10px;border-radius:12px;border:1px solid var(--hair-2);font-weight:600;font-size:13.5px}
+.pop button{margin-top:12px;width:100%;padding:8px;border-radius:10px;border:1px solid var(--hair-2);font-weight:600;font-size:13px}
 .pop button:hover{background:var(--mist)}
 /* an X account linked to the wallet: optional, shown as a small chip wherever the wallet is named */
 .x-chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap}
@@ -133,13 +133,13 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 /* segmented control: a dark well, a lighter block slides under the chosen segment */
 .seg{position:relative;display:inline-flex;padding:4px;border-radius:12px;background:var(--paper)}
 .seg .seg-ind{position:absolute;top:4px;bottom:4px;left:0;border-radius:9px;background:var(--pill);transition:transform var(--dur) var(--ease-out),width var(--dur) var(--ease-out);will-change:transform}
-.seg button{position:relative;z-index:1;padding:8px 16px;border-radius:9px;font-size:14px;font-weight:600;color:var(--muted);transition:color var(--fast) var(--ease-out);white-space:nowrap}
+.seg button{position:relative;z-index:1;padding:6px 13px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted);transition:color var(--fast) var(--ease-out);white-space:nowrap}
 .seg button:hover{color:var(--ink)}
 .seg button[aria-pressed="true"]{color:var(--navy-deep)}
 .seg button .ct{font-family:var(--mono);font-weight:400;font-size:11.5px;opacity:.7;margin-left:5px}
 
 /* ------------------------------------------------------------ raise list */
-.tag{display:inline-flex;align-items:center;font-size:12.5px;font-weight:600;border-radius:999px;padding:4px 11px;border:1px solid var(--hair-2);color:var(--muted);background:var(--chip)}
+.tag{display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;border-radius:999px;padding:3px 9px;border:1px solid var(--hair-2);color:var(--muted);background:var(--chip)}
 .tag.in{border-color:transparent;background:var(--navy-wash);color:var(--navy-deep)}
 .row{display:grid;gap:18px;align-items:center}   /* a raise in a list; #mineList lays it out */
 .row{width:100%;text-align:left;padding-top:18px;padding-bottom:18px;border-bottom:1px solid var(--hair);transition:background var(--fast) var(--ease-out)}
@@ -179,7 +179,7 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .c-raised em{font-style:normal;color:var(--faint)}
 .c-time{color:var(--ink-2)}
 .c-act{text-align:right}
-.pill-sm{display:inline-block;border-radius:10px;padding:8px 16px;font-size:13.5px;font-weight:600;border:1px solid var(--hair-2);background:var(--chip);transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
+.pill-sm{display:inline-block;border-radius:9px;padding:6px 13px;font-size:12.5px;font-weight:600;border:1px solid var(--hair-2);background:var(--chip);transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
 .row:hover .pill-sm,.pill-sm.hot{background:var(--accent);border-color:var(--accent);color:#fff}
 .empty{padding:48px 24px;text-align:center;color:var(--muted);font-size:15px}
 .empty a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
@@ -204,7 +204,7 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .f .hint{font-size:13px;color:var(--faint);font-weight:400;margin-left:6px}
 .inp{display:flex;align-items:center;border:1px solid var(--hair);border-radius:14px;background:var(--paper);transition:border-color var(--fast) var(--ease-out),box-shadow var(--fast) var(--ease-out)}
 .inp:focus-within{border-color:var(--navy);box-shadow:0 0 0 4px var(--ring)}
-.inp input{flex:1;min-width:0;border:0;outline:0;background:transparent;padding:13px 16px;font-size:15.5px}
+.inp input{flex:1;min-width:0;border:0;outline:0;background:transparent;padding:10px 14px;font-size:14.5px}
 .inp input::placeholder{color:var(--faint)}
 .inp .suf{padding-right:16px;color:var(--muted);font-size:14px}
 .err{font-size:14px;color:var(--err);min-height:0}
@@ -230,7 +230,7 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 .sheet{background:var(--card);border-radius:22px;border:1px solid var(--panel-line);box-shadow:0 40px 100px -30px var(--sh-sheet);padding:26px;max-height:calc(100dvh - 32px);overflow:auto}
 .sh-head{display:flex;gap:14px;align-items:center}
 .sh-head .nm b{font-size:21px;letter-spacing:-.035em}
-.x{margin-left:auto;flex:none;width:36px;height:36px;border-radius:12px;border:1px solid var(--hair);display:grid;place-items:center;font-size:18px;line-height:1;color:var(--muted)}
+.x{margin-left:auto;flex:none;width:30px;height:30px;border-radius:10px;border:1px solid var(--hair);display:grid;place-items:center;font-size:18px;line-height:1;color:var(--muted)}
 .x{transition:transform var(--dur) var(--ease-out),background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
 .x:hover{background:var(--mist);color:var(--ink);transform:rotate(90deg)}
 .idea{margin-top:16px;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.25;color:var(--ink-2)}
@@ -246,7 +246,7 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 .amt .inp input{font-family:var(--mono);font-size:24px;letter-spacing:-.05em;padding:13px 16px}
 .amt .inp .suf{font-family:var(--mono);font-size:14px}
 .chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.chips button{border:1px solid var(--hair-2);border-radius:10px;padding:8px 14px;font-family:var(--mono);font-size:13.5px;color:var(--ink-2);transition:background var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
+.chips button{border:1px solid var(--hair-2);border-radius:9px;padding:6px 11px;font-family:var(--mono);font-size:12.5px;color:var(--ink-2);transition:background var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
 .chips button:hover{background:var(--navy-wash);border-color:var(--navy-soft)}
 .chips button:active{transform:scale(.97)}
 .promise{margin-top:16px;display:grid;gap:6px;font-size:14px;color:var(--ink-2)}
@@ -255,8 +255,9 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 .sheet .btn-block{margin-top:20px}
 #walletDlg{width:min(400px,calc(100vw - 24px))}
 #xDlg{width:min(440px,calc(100vw - 24px))}
+#filterDlg{width:min(600px,calc(100vw - 24px))}
 .wlist{display:grid;gap:8px;margin-top:18px}
-.wlist button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:13px 16px;border:1px solid var(--hair-2);border-radius:12px;font-weight:600;font-size:15px;transition:background var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
+.wlist button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:11px 14px;border:1px solid var(--hair-2);border-radius:11px;font-weight:600;font-size:14px;transition:background var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
 .wlist button:hover{background:var(--mist);border-color:var(--navy)}
 .wlist small{font-weight:400;font-size:12.5px;color:var(--muted)}
 .state{margin-top:20px;border-radius:16px;background:var(--mist);padding:16px 18px;font-size:14.5px;color:var(--ink-2)}
@@ -285,7 +286,7 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
   .btn-lg{padding:13px 20px;font-size:14.5px}
   .form,.preview,.ppage{padding:22px 18px}
   .seg button{padding:7px 12px}
-  dialog,#walletDlg,#xDlg{margin:auto auto 0;width:100vw}
+  dialog,#walletDlg,#xDlg,#filterDlg{margin:auto auto 0;width:100vw}
   .sheet{border-radius:26px 26px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom,0px))}
   .specs{grid-template-columns:1fr 1fr}
 }
@@ -337,12 +338,12 @@ a.row{color:inherit}
 .appbar>span:empty{display:none}   /* the docs bar has no sections */
 .appbar .tabs{justify-self:start;padding:0;gap:4px;border-color:transparent;background:none}
 .appbar .tabs .seg-ind{display:block;top:0;bottom:0;border-radius:999px;background:var(--pill)}
-.appbar .tabs button{padding:8px 14px;border-radius:999px;font-size:15px;font-weight:500;color:var(--muted);transition:color var(--fast) var(--ease-out),background var(--fast) var(--ease-out)}
+.appbar .tabs button{padding:6px 12px;border-radius:999px;font-size:14px;font-weight:500;color:var(--muted);transition:color var(--fast) var(--ease-out),background var(--fast) var(--ease-out)}
 .appbar .tabs button:hover{color:var(--ink)}
 .appbar .tabs button[aria-pressed="true"]{color:var(--navy-deep)}
 .appbar .brand small{font-family:var(--serif);font-style:italic;font-weight:400;font-size:19px;color:var(--muted);letter-spacing:-.01em;margin-left:2px}
 .appbar .right{justify-self:end;display:flex;align-items:center;gap:16px;position:relative}
-.appbar .btn{height:40px;padding:0 18px;font-size:14px;background:var(--pill);color:var(--navy-deep)}
+.appbar .btn{height:34px;padding:0 15px;font-size:13px;background:var(--pill);color:var(--navy-deep)}
 .appbar .btn:hover{background:var(--pill-hover)}
 .textlink{font-size:14px;font-weight:500;color:var(--navy-deep)}
 .textlink:hover{color:var(--ink)}
@@ -383,7 +384,7 @@ a.ico:hover{color:var(--ink)}
 .pagehead h1 i{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.12em;margin-right:.18em}
 .pagehead p{margin-top:14px;color:var(--muted);font-size:15px;line-height:1.55}
 .steps{display:flex;flex-direction:column;margin-top:20px}
-.steps button{display:flex;align-items:center;gap:12px;padding:13px 0;border-top:1px solid var(--hair);font-size:15px;font-weight:500;color:var(--ink-2);text-align:left;transition:color var(--dur) var(--ease-out),padding-left var(--dur) var(--ease-out)}
+.steps button{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--hair);font-size:14px;font-weight:500;color:var(--ink-2);text-align:left;transition:color var(--dur) var(--ease-out),padding-left var(--dur) var(--ease-out)}
 .steps button:last-child{padding-bottom:0}
 .steps button:hover{padding-left:4px}
 .steps button:hover{color:var(--navy-deep)}
@@ -391,10 +392,10 @@ a.ico:hover{color:var(--ink)}
 .step-opt{display:flex;align-items:center;gap:12px;border-top:1px solid var(--hair)}
 .step-opt>button[data-step]{flex:1;border-top:0;padding-bottom:13px}
 /* an on/off switch: the optional sections of the Launch form */
-.switch,.steps .switch,.steps .switch:hover{flex:none;display:block;position:relative;width:40px;height:24px;padding:0;border:0;border-radius:999px;background:var(--raised);transition:background var(--fast) var(--ease-out)}
-.switch::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:transform var(--fast) var(--ease-out),background var(--fast) var(--ease-out)}
+.switch,.steps .switch,.steps .switch:hover{flex:none;display:block;position:relative;width:34px;height:20px;padding:0;border:0;border-radius:999px;background:var(--raised);transition:background var(--fast) var(--ease-out)}
+.switch::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--muted);transition:transform var(--fast) var(--ease-out),background var(--fast) var(--ease-out)}
 .switch[aria-checked="true"],.steps .switch[aria-checked="true"]{background:var(--solid)}
-.switch[aria-checked="true"]::after{transform:translateX(16px);background:#fff}
+.switch[aria-checked="true"]::after{transform:translateX(14px);background:#fff}
 .switch:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
 .steps .num{font-size:11.5px;font-weight:500;background:var(--navy-wash);color:var(--navy-deep);border-radius:6px;padding:4px 6px}
 .card-h{padding:24px 24px 14px;font-size:18px;font-weight:600;letter-spacing:-.03em;line-height:1.2}
@@ -404,14 +405,14 @@ a.ico:hover{color:var(--ink)}
 #mineList .empty{padding:4px 24px 26px;text-align:left}
 
 /* toolbar */
-.mini{display:flex;align-items:center;border:1px solid var(--hair);border-radius:12px;background:var(--paper);height:40px;padding:0 14px;gap:8px;transition:border-color var(--fast) var(--ease-out),box-shadow var(--fast) var(--ease-out)}
+.mini{display:flex;align-items:center;border:1px solid var(--hair);border-radius:12px;background:var(--paper);height:34px;padding:0 12px;gap:8px;transition:border-color var(--fast) var(--ease-out),box-shadow var(--fast) var(--ease-out)}
 .mini:focus-within{border-color:var(--navy);box-shadow:0 0 0 4px var(--ring)}
 .mini input,.mini select{border:0;outline:0;background:transparent;font-size:14px;min-width:0}
 .mini svg{width:15px;height:15px;stroke:var(--faint);fill:none;stroke-width:1.8;stroke-linecap:round;flex:none}
 .mini select{font-weight:600;color:var(--ink-2);cursor:pointer;padding-right:2px}
 .mini.search input{width:150px}
 .quick{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);font-weight:600}
-.quick .mini{padding:0 16px;height:50px;border-radius:14px}
+.quick .mini{padding:0 14px;height:42px;border-radius:12px}
 .quick .mini input{width:46px;font-family:var(--mono);font-size:15px;text-align:right;letter-spacing:-.03em}
 .quick .mini span{font-family:var(--mono);font-size:13px;color:var(--faint)}
 
@@ -430,7 +431,7 @@ a.ico:hover{color:var(--ink)}
 .col{container-type:inline-size}
 @container (max-width:460px){.col-note{display:none}}
 /* each column sorts on its own: a small dropdown in its head */
-.col-sort{height:36px;padding:0 8px 0 12px;gap:4px;border-radius:10px}
+.col-sort{height:30px;padding:0 7px 0 10px;gap:4px;border-radius:9px}
 .col-sort select{font-size:13.5px;font-weight:600;color:var(--ink-2)}
 .col-sort svg{width:12px;height:12px}
 .col-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:12px;padding:0 0 18px}
@@ -476,7 +477,7 @@ a.ico:hover{color:var(--ink)}
 .br-sub{font-size:12.5px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .br .t-act{grid-area:act;justify-self:end;align-self:center}
 .br .t-act:empty{display:none}
-.br .qb{display:inline-flex;align-items:center;gap:6px;background:var(--accent);border-color:var(--accent);color:#fff;padding:9px 14px;font-size:13.5px;border-radius:999px}
+.br .qb{display:inline-flex;align-items:center;gap:6px;background:var(--accent);border-color:var(--accent);color:#fff;padding:7px 12px;font-size:12.5px;border-radius:999px}
 .br .qb:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
 .qb-bolt{display:none}
 .br .qb-bolt{display:block;width:13px;height:13px;fill:currentColor}
@@ -487,7 +488,7 @@ a.ico:hover{color:var(--ink)}
   .br-handle,.br-flags .tag,.br-flags .br-sub{display:none}
   .br-ico.is-x{display:grid}
   .br-meta{gap:8px;flex-wrap:wrap}
-  .br .qb{padding:8px 12px}
+  .br .qb{padding:6px 10px}
   .br .qb-w{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 }
 /* one line under the columns: the refunded-presales note on the left, the prototype disclaimer and reset on the right. The columns are
@@ -513,10 +514,10 @@ a.ico:hover{color:var(--ink)}
 .xbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
 .filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 18px}
 .filters .seg{max-width:100%;overflow-x:auto}
-.xbar .mini.search{flex:1 1 320px;height:50px;padding:0 18px;border-radius:14px}
+.xbar .mini.search{flex:1 1 320px;height:42px;padding:0 16px;border-radius:12px}
 .xbar .mini.search input{width:100%;font-size:15.5px}
 .xbar .mini.search svg{width:17px;height:17px}
-.xbar .btn{height:50px;border-radius:14px;padding:0 22px;font-size:15px}
+.xbar .btn{height:42px;border-radius:12px;padding:0 18px;font-size:14px}
 
 .br.flash{animation:flash 1.8s ease-out}
 .br.fresh{animation:cardIn .4s var(--ease-out) backwards;animation-delay:calc(var(--i,0)*35ms)}
@@ -524,7 +525,7 @@ a.ico:hover{color:var(--ink)}
 .pick::after{content:"";position:absolute;inset:0;border-radius:18px}
 .pick:focus-visible{outline:none}.pick:focus-visible::after{outline:2px solid var(--navy);outline-offset:2px}
 .t-act{text-align:right;position:relative;z-index:1}
-.qb{border:1px solid var(--hair-2);background:var(--chip);border-radius:10px;padding:9px 16px;font-size:13.5px;font-weight:600;white-space:nowrap;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}
+.qb{border:1px solid var(--hair-2);background:var(--chip);border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:600;white-space:nowrap;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}
 .qb:hover,.qb.hot{background:var(--accent);border-color:var(--accent);color:#fff}
 .qb:active{transform:scale(.97)}
 .qb[disabled]{opacity:.5;cursor:wait}
@@ -591,7 +592,7 @@ a.ico:hover{color:var(--ink)}
    Docs are for reading, so the page stops growing at 1560px instead of filling a very wide window. */
 .docs{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:20px 24px 72px;display:grid;grid-template-columns:clamp(230px,16vw,280px) minmax(0,1fr);gap:18px;align-items:start}
 .toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);display:flex;flex-direction:column;gap:2px;padding:14px;border:1px solid var(--panel-line);border-radius:18px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost)}
-.toc a{padding:10px 14px;border-radius:10px;color:var(--muted);font-size:15px;font-weight:500;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
+.toc a{padding:8px 12px;border-radius:9px;color:var(--muted);font-size:14px;font-weight:500;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
 .toc a:hover{color:var(--ink)}
 .toc a.on{background:var(--navy-wash);color:var(--navy-deep);font-weight:600}
 .docs article{display:flex;flex-direction:column;gap:18px;min-width:0}
@@ -733,18 +734,19 @@ a.ico:hover{color:var(--ink)}
       <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="bq" placeholder="Search the board by name or ticker" autocomplete="off" aria-label="Search the board"></label>
       <div class="quick"><span>Quick deposit</span>
         <label class="mini"><input id="qbAmt" inputmode="decimal" aria-label="Quick deposit amount"></label>
-        <label class="mini"><select id="qbAsset" aria-label="Quick deposit asset"></select></label>
+        <button type="button" class="mini" id="qbAsset" aria-haspopup="listbox" aria-expanded="false" aria-label="Quick deposit asset"><span class="num" data-label>SOL</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button>
       </div>
       <a class="btn btn-ink" href="#/launch"><span aria-hidden="true">+</span> Start a raise</a>
     </div>
     <div class="filters">
       <div class="seg" id="assetSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span>
         <button data-v="all" aria-pressed="true">All pairs</button><button data-v="SOL" aria-pressed="false">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="stock" aria-pressed="false">Stocks</button><button data-v="other" aria-pressed="false">Other</button></div>
+      <button type="button" class="mini fbtn" id="filterBtn" aria-haspopup="dialog"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12l-4.6 5.4V13l-2.8 1V8.9z"/></svg><span>Filters</span><span class="ct num" id="filterCt" hidden></span></button>
     </div>
     <div class="board">
-      <section class="panel col" aria-labelledby="h-new"><header class="col-head"><h2 id="h-new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5"/></svg>New ideas<span class="tag" id="n-new"></span></h2><div class="col-side"><span class="col-note">Under 50% filled</span><label class="mini col-sort"><select data-sort="new" aria-label="Sort new"><option value="ending">Ending soon</option><option value="filled">Most filled</option><option value="new" selected>Newest</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></label></div></header><div class="col-list" id="col-new"></div></section>
-      <section class="panel col" aria-labelledby="h-seeding"><header class="col-head"><h2 id="h-seeding"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9"/><path d="M12 12c0-3.5-2.5-6-6.5-6 0 3.5 2.5 6 6.5 6z"/><path d="M12 14.5c0-3 2.2-5 5.8-5 0 3-2.2 5-5.8 5z"/></svg>Seeding<span class="tag" id="n-seeding"></span></h2><div class="col-side"><span class="col-note">Past halfway</span><label class="mini col-sort"><select data-sort="seeding" aria-label="Sort seeding"><option value="ending">Ending soon</option><option value="filled" selected>Most filled</option><option value="new">Newest</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></label></div></header><div class="col-list" id="col-seeding"></div></section>
-      <section class="panel col" aria-labelledby="h-seeded"><header class="col-head"><h2 id="h-seeded"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.6 2.6 4.9-5.4"/></svg>Seeded<span class="tag" id="n-seeded"></span></h2><div class="col-side"><span class="col-note">Target met</span><label class="mini col-sort"><select data-sort="seeded" aria-label="Sort seeded"><option value="ending" selected>Recently seeded</option><option value="filled">Most filled</option><option value="new">Newest</option></select><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></label></div></header><div class="col-list" id="col-seeded"></div></section>
+      <section class="panel col" aria-labelledby="h-new"><header class="col-head"><h2 id="h-new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5"/></svg>New ideas<span class="tag" id="n-new"></span></h2><div class="col-side"><span class="col-note">Under 50% filled</span><button type="button" class="col-filt" data-filt="new" hidden></button><button type="button" class="mini col-sort" data-sort="new" aria-haspopup="listbox" aria-expanded="false" aria-label="Sort new"><span data-label>Newest</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button></div></header><div class="col-list" id="col-new"></div></section>
+      <section class="panel col" aria-labelledby="h-seeding"><header class="col-head"><h2 id="h-seeding"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9"/><path d="M12 12c0-3.5-2.5-6-6.5-6 0 3.5 2.5 6 6.5 6z"/><path d="M12 14.5c0-3 2.2-5 5.8-5 0 3-2.2 5-5.8 5z"/></svg>Seeding<span class="tag" id="n-seeding"></span></h2><div class="col-side"><span class="col-note">Past halfway</span><button type="button" class="col-filt" data-filt="seeding" hidden></button><button type="button" class="mini col-sort" data-sort="seeding" aria-haspopup="listbox" aria-expanded="false" aria-label="Sort seeding"><span data-label>Most filled</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button></div></header><div class="col-list" id="col-seeding"></div></section>
+      <section class="panel col" aria-labelledby="h-seeded"><header class="col-head"><h2 id="h-seeded"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.6 2.6 4.9-5.4"/></svg>Seeded<span class="tag" id="n-seeded"></span></h2><div class="col-side"><span class="col-note">Target met</span><button type="button" class="col-filt" data-filt="seeded" hidden></button><button type="button" class="mini col-sort" data-sort="seeded" aria-haspopup="listbox" aria-expanded="false" aria-label="Sort seeded"><span data-label>Recently seeded</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button></div></header><div class="col-list" id="col-seeded"></div></section>
     </div>
     <div class="board-foot">
       <p class="board-note" id="tryHint" hidden></p><p class="board-note" id="refundNote" hidden></p>
@@ -1281,6 +1283,7 @@ a.ico:hover{color:var(--ink)}
 
 <dialog id="walletDlg" aria-label="Connect a wallet"><div class="sheet" id="walletDlgBody"></div></dialog>
 <dialog id="xDlg" aria-label="Link an X account"><div class="sheet" id="xDlgBody"></div></dialog>
+<dialog id="filterDlg" aria-label="Board filters"><div class="sheet fsheet" id="filterBody"></div></dialog>
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
 <script>
@@ -1521,8 +1524,8 @@ function actCell(p) {
 /* which column a raise sits in. Refunded ones are not on the board: they are named under it, and claims live in the portfolio. */
 const colOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : 'seeding') : null;
 function renderTerminal() {
-  const q = ui.bq.trim().toLowerCase(), hit = state.presales.filter(p => pairOk(p) && (!q || (p.name + ' ' + p.ticker).toLowerCase().includes(q)));
-  const cols = {}; for (const k of ['new', 'seeding', 'seeded']) cols[k] = hit.filter(p => colOf(p) === k).sort(sorter(k));
+  const q = ui.bq.trim(), cols = {}; for (const k of ['new', 'seeding', 'seeded']) cols[k] = boardHit(k).sort(sorter(k));
+  syncFilterBadges();
   const fresh = freshIn('term', [...cols.new, ...cols.seeding, ...cols.seeded]);
   const none = { new: 'No new ideas right now. <a href="#/launch">Start one</a>', seeding: 'Nothing is past halfway yet.', seeded: 'Nothing has seeded yet.' };
   for (const k of ['new', 'seeding', 'seeded']) {
@@ -1533,7 +1536,7 @@ function renderTerminal() {
         <div class="br-meta">${p.status === 'live' ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}${rowLinks(p)}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span>${rowAnn(p)}</div>
         <div class="br-flags"><span class="tag">${esc(Q(p).sym)} pair</span>${riskChip(riskSummary(riskChecks(p)))}${p.status === 'live' ? `<span data-pacechip>${paceChip(paceInfo(p))}</span><span class="br-sub num" title="Pace needed to seed" data-pace>${paceTxt(p)}</span>` : ''}</div></div>
       <div class="br-side"><span class="br-val num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span><span class="t-act">${actCell(p)}</span></div></div>`).join('')
-      : `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${q ? `Nothing here matches "${esc(ui.bq.trim())}".` : ui.fAsset !== 'all' ? 'Nothing here with this pair.' : none[k]}</div>`;
+      : `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${q ? `Nothing here matches "${esc(q)}".` : ruleCounts(filters[k]).all ? `Nothing in ${k === 'new' ? 'New ideas' : k === 'seeding' ? 'Seeding' : 'Seeded'} passes its filters. <a href="#" data-filt="${k}">Change them</a>` : ui.fAsset !== 'all' ? 'Nothing here with this pair.' : none[k]}</div>`;
   }
   const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live';
   hint.hidden = !show; if (show) hint.textContent = 'To see both endings: quick-deposit into Osprey from the board until it fills and it seeds on the spot. Deposit into Moss and its deadline passes in about three minutes.';
@@ -2062,10 +2065,11 @@ function simulate() {
 document.addEventListener('click', e => { if (!e.target.closest('[data-reset]')) return; try { localStorage.removeItem(KEY); } catch (x) {} state = fresh(); ui.sel = null; syncQuickUI(); renderAll(); toast('Demo reset'); });
 
 /* quick buy presets are kept per pair asset */
+const quickKeys = () => [...new Set(['SOL', 'USDC', ...state.presales.filter(p => p.status === 'live').map(p => p.q)])];   // the assets a quick deposit can be in
 function syncQuickUI() {
-  const keys = [...new Set(['SOL', 'USDC', ...state.presales.filter(p => p.status === 'live').map(p => p.q)])];
+  const keys = quickKeys();
   if (!keys.includes(ui.qbAsset)) ui.qbAsset = 'SOL';
-  $('#qbAsset').innerHTML = keys.map(k => `<option value="${esc(k)}"${k === ui.qbAsset ? ' selected' : ''}>${esc(asset(k).sym)}</option>`).join('');
+  $('#qbAsset [data-label]').textContent = asset(ui.qbAsset).sym;
   const cur = state.quick[ui.qbAsset], any = state.presales.find(p => p.q === ui.qbAsset);
   $('#qbAmt').value = cur != null ? cur : any ? quickFor(any) : '';
 }
@@ -2076,11 +2080,9 @@ function boot() {
   seg.tabs = initSeg($('#tabSeg'), v => { location.hash = v === 'terminal' ? '#' : '#/' + v; });
   seg.perf = initSeg($('#perfSeg'), v => { ui.perf.mode = v; renderPerf(); });
   seg.assetF = initSeg($('#assetSeg'), v => { ui.fAsset = v; renderTerminal(); });
-  $$('[data-sort]').forEach(el => el.addEventListener('change', () => { ui.sort[el.dataset.sort] = el.value; renderTerminal(); }));
   seg.pair = initSeg($('#pairSeg'), v => { draft.pair = v; $('#fErr').textContent = ''; renderPreview(); if (v === 'any') $('#fMint').focus(); });
   seg.time = initSeg($('#timeSeg'), v => { draft.hours = +v; renderPreview(); });
   $('#bq').addEventListener('input', e => { ui.bq = e.target.value; renderTerminal(); });
-  $('#qbAsset').addEventListener('change', e => { ui.qbAsset = e.target.value; syncQuickUI(); });
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();
   initDocs(); renderPreview(); tick(true); renderAll(); route(); resume().then(() => xAdapter.finish());   // back from an X sign-in, the link is made once the wallet is back
@@ -2116,6 +2118,7 @@ addEventListener('storage', e => {
 <script src="js/risk.js"></script>
 <script src="js/presale-page.js"></script>
 <script src="js/launch.js"></script>
+<script src="js/filters.js"></script>
 <script>boot();</script>
 </body>
 </html>
