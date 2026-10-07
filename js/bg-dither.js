@@ -16,7 +16,7 @@
     pitch: 4,                  // css px between cells
     dot: 2,                    // css px, the square inside each cell
     color: [0x2E, 0x63, 0xE7], // accent blue, the only hue
-    alpha: [0.10, 0.45],       // the lowest tone step .. the densest cores
+    alpha: [0.24, 0.78],       // the lowest tone step .. the densest cores
     levels: 4,                 // tone steps above empty
     speed: 6,                  // css px per second of horizontal drift
     evolve: 25,                // seconds for the noise to change shape (its third axis)
@@ -24,11 +24,11 @@
     octaves: 4,                // fbm octaves, 1 to 4
     gain: 0.5, lacunarity: 2.05,
     bands: { dir: [0.34, 0.94], count: 1.15, warp: 2.4, flow: 0.02 },   // the bands: direction they stack in, how many per noise unit, how far noise bends them, cycles per second they travel
-    mix: { bands: 0.32, noise: 0.56, bias: 0.48 },                      // field = bands * wave + noise * fbm - bias
+    mix: { bands: 0.32, noise: 0.56, bias: 0.40 },                      // field = bands * wave + noise * fbm - bias
     hill: { x: 0.86, y: 0.95, rx: 0.74, ry: 0.66, gain: 0.98 },         // the big mass low and to the right, added to the field
-    header: { px: 72, fade: 70, floor: 0.04 },   // the top 72px stay almost empty
-    foot: { px: 40, fade: 50, floor: 0.35 },     // the foot line of the window stays readable over the hill
-    center: { thin: 0.40, radius: 0.55 },        // thin the middle of the viewport by 40%
+    header: { px: 72, fade: 70, floor: 0.2 },   // the top 72px stay almost empty
+    foot: { px: 40, fade: 50, floor: 0.3 },     // the foot line of the window stays readable over the hill
+    center: { thin: 0.22, radius: 0.55 },        // thin the middle of the viewport by 40%
     fps: 30, dprCap: 2,
     fallback: { pitch: 6, fps: 15, octaves: 3 }
   };
