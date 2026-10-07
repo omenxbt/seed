@@ -430,7 +430,7 @@ function placeTabInd() {
   const bar = detailBox && $('.tabbar', detailBox), a = bar && $('[data-ptab][aria-selected="true"]', bar); if (!a) return;
   let ind = $('.tab-ind', bar); const first = !ind;
   if (first) { ind = document.createElement('span'); ind.className = 'tab-ind first'; ind.setAttribute('aria-hidden', 'true'); bar.appendChild(ind); }
-  ind.style.transform = `translateX(${a.offsetLeft + 11}px)`; ind.style.width = Math.max(0, a.offsetWidth - 22) + 'px';
+  ind.style.transform = `translateX(${a.offsetLeft + 9}px)`; ind.style.width = Math.max(0, a.offsetWidth - 18) + 'px';
   if (first) setTimeout(() => ind.classList.remove('first'), 60);   // a timer, not a frame: frames do not run in a background tab
 }
 
