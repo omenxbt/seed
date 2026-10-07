@@ -156,7 +156,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 :is(.pp,.ws) .mini-seg{padding:4px;border:0;border-radius:12px;background:var(--paper)}
 .mini-seg button{padding:7px 13px;font-size:13.5px;font-weight:600;border-radius:9px;color:var(--muted)}
 .mini-seg button:hover{color:var(--ink)}
-.mini-seg button[aria-pressed="true"]{background:var(--raised);color:var(--ink)}
+.mini-seg button[aria-pressed="true"]{background:var(--pill);color:var(--navy-deep)}
 .pool-card{margin-top:20px;border-top:1px solid var(--hair);padding-top:20px}
 .pool-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
 .pool-grid dt{font-size:13.5px;color:var(--muted)}.pool-grid dd{font-size:17px;margin-top:3px}
