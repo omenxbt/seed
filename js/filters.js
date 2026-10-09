@@ -37,11 +37,11 @@ document.addEventListener('keydown', e => {
 addEventListener('resize', () => closeMenu(false)); addEventListener('scroll', () => closeMenu(false), true);
 
 /* the sort menu of each column, and the quick-deposit asset */
-const SORT_ITEMS = k => [{ v: 'ending', label: k === 'seeded' ? 'Recently seeded' : 'Ending soon' }, { v: 'filled', label: 'Most filled' }, { v: 'new', label: 'Newest' }];
+const SORT_ITEMS = k => [...(k === 'all' ? [{ v: 'trend', label: 'Trending' }] : []), { v: 'ending', label: k === 'seeded' ? 'Recently seeded' : k === 'refunded' ? 'Recently closed' : k === 'all' ? 'Ending soon' : 'Ending soon' }, { v: 'filled', label: 'Most filled' }, { v: 'new', label: 'Newest' }];
 const sortLabel = (k, v) => (SORT_ITEMS(k).find(i => i.v === v) || SORT_ITEMS(k)[0]).label;
 document.addEventListener('click', e => {
   const s = e.target.closest('button[data-sort]');
-  if (s) { const k = s.dataset.sort; return openMenu(s, SORT_ITEMS(k), ui.sort[k], v => { ui.sort[k] = v; $('[data-label]', s).textContent = sortLabel(k, v); renderTerminal(); }); }
+  if (s) { const k = s.dataset.sort === 'feed' ? ui.feed : s.dataset.sort; return openMenu(s, SORT_ITEMS(k), ui.sort[k], v => { ui.sort[k] = v; $('[data-label]', s).textContent = sortLabel(k, v); renderTerminal(); }); }
   const a = e.target.closest('#qbAsset');
   if (a) { const keys = quickKeys(); return openMenu(a, keys.map(k => ({ v: k, label: asset(k).sym, sub: k === 'SOL' || k === 'USDC' ? '' : 'live raise' })), ui.qbAsset, v => { ui.qbAsset = v; syncQuickUI(); }); }
 });

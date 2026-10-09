@@ -311,12 +311,12 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 @keyframes growY{from{transform:scaleY(0)}}
 @keyframes chipUp{0%{opacity:0;transform:translateY(14px) scale(.9)}15%{opacity:1;transform:none}75%{opacity:1;transform:translateY(-6px)}100%{opacity:0;transform:translateY(-16px)}}
 @media (prefers-reduced-motion:no-preference){
-  .ws-main,.pp-main,.board>.col:nth-child(2){--ec:1}
-  .ws-rail,.pp-rail,.board>.col:nth-child(3){--ec:2}
+  .ws-main,.pp-main,.board{--ec:1}
+  .ws-rail,.pp-rail{--ec:2}
   :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>:nth-child(2){--en:1}
   :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>:nth-child(3){--en:2}
   :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>:nth-child(n+4){--en:3}
-  body.enter :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>*,body.enter .board>.col,body.enter .toc,body.enter .doc-hero{
+  body.enter :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>*,body.enter .trend,body.enter .board,body.enter .toc,body.enter .doc-hero{
     animation:rise .5s var(--ease-out) both;animation-delay:calc(var(--ec,0)*60ms + var(--en,0)*45ms)}
   body.enter :is(.xbar,.filters){animation:swapIn .4s var(--ease-out) both}
   body.enter :is(.pagehead h1,.pp-name h1,.doc-hero h1 span){animation:sharpen .6s var(--ease-out) .05s both}
@@ -421,25 +421,53 @@ a.ico:hover{color:var(--ink)}
 /* terminal grid */
 /* the terminal is a board: new ideas (live, under halfway), seeding (live, past halfway), seeded. Three tall columns that scroll on
    their own. A row is a raise and links to its page in a new tab; the quick-buy button is raised above that link. */
-.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
-.col{display:flex;flex-direction:column;height:calc(100dvh - 214px);min-height:460px;padding:24px 18px 0}
-.col-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 6px 20px}
-.col-head h2{display:flex;align-items:center;gap:11px;font-size:20px;font-weight:500;letter-spacing:-.035em;line-height:1.1;white-space:nowrap}
-.col-head h2 svg{flex:none;width:22px;height:22px;stroke:var(--navy-deep);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.col-head h2 .tag{font-size:13px;letter-spacing:-.01em}
+/* Trending: a row of tiles for the most active raises, scrolled sideways */
+.trend{margin:0 0 18px}
+.trend-head{display:flex;align-items:center;gap:12px;padding:0 4px 12px}
+.trend-head h2{display:flex;align-items:center;gap:10px;font-size:20px;letter-spacing:-.035em;line-height:1.1;white-space:nowrap}
+.trend-head h2 svg{flex:none;width:22px;height:22px;stroke:var(--navy-deep);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.trend-nav{margin-left:auto;display:flex;gap:6px}
+.trend-nav .x{margin:0;width:30px;height:30px;font-size:20px;padding-bottom:2px}
+.trend-row{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding:2px 2px 6px;scroll-behavior:smooth}
+.trend-row::-webkit-scrollbar{display:none}
+.trend-row:empty::after{content:"Nothing is moving right now.";font-size:14px;color:var(--muted);padding:8px 4px}
+.tr-card{flex:none;width:188px;scroll-snap-align:start;display:flex;flex-direction:column;gap:10px;padding:10px 10px 12px;border-radius:16px;background:var(--panel);border:1px solid var(--panel-line);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);color:inherit;transition:border-color var(--fast) var(--ease-out),transform var(--dur) var(--ease-out)}
+.tr-card:hover{border-color:var(--hair-2);transform:translateY(-2px)}
+.tr-art{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:linear-gradient(150deg,hsl(var(--h) 90% 93%/.95),hsl(calc(var(--h) + 55) 90% 87%/.85));display:grid;place-items:center}
+.tr-art img{width:100%;height:100%;object-fit:cover}
+.tr-art .glyph-art{display:grid;place-items:center;width:100%;height:100%}
+.tr-art .glyph-art svg{width:44%;height:44%;fill:hsl(calc(var(--h) + 20) 42% 44%)}
+.tr-rank{position:absolute;left:8px;top:8px;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:rgba(18,19,22,.72);color:#fff;font-family:var(--mono);font-size:12px;display:grid;place-items:center}
+.tr-name{display:flex;align-items:baseline;gap:7px;min-width:0;padding:0 2px;white-space:nowrap}
+.tr-name b{font-size:15px;letter-spacing:-.02em}
+.tr-name span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.tr-fig{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:0 2px}
+.tr-fig b{font-size:16px;font-weight:400;white-space:nowrap}
+.tr-fig em{font-style:normal;font-size:12px;color:var(--faint)}
+.tr-chg{font-size:12px;font-weight:500;border-radius:999px;padding:2px 8px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.tr-chg.up{background:var(--ok-bg);color:var(--ok-ink)}
+.tr-chg.seeded{background:var(--pill);color:var(--navy-deep)}
+/* the feed: one list of raises under tabs for each stage, in as many columns as fit */
+.board{display:flex;flex-direction:column;min-height:360px;padding:18px 18px 0}
+.col-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px 16px}
 .col-side{display:flex;align-items:center;gap:12px;min-width:0}
 .col-note{font-size:14px;color:var(--muted);white-space:nowrap}
-/* a narrow column keeps its title and its sort; the note is the first thing to go */
-.col{container-type:inline-size}
-@container (max-width:460px){.col-note{display:none}}
-/* each column sorts on its own: a small dropdown in its head */
-.col-sort{height:28px;padding:0 6px 0 9px;gap:4px;border-radius:8px}
-.col-sort select{font-size:13.5px;font-weight:500;color:var(--ink-2)}
-.col-sort svg{width:12px;height:12px}
-.col-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:12px;padding:0 0 18px}
-.col-empty{padding:36px 12px 40px;text-align:center;color:var(--muted);font-size:15px}
+.feed-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;min-width:0}
+.feed-tabs::-webkit-scrollbar{display:none}
+.feed-tabs button{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;font-size:14px;font-weight:500;color:var(--muted);white-space:nowrap;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
+.feed-tabs button:hover{color:var(--ink)}
+.feed-tabs button[aria-selected="true"]{background:var(--pill);color:var(--navy-deep)}
+.feed-tabs .ct{font-size:12px;border-radius:999px;padding:0 7px;background:var(--chip);color:var(--muted)}
+.feed-tabs .ct:empty{display:none}
+.feed-tabs button[aria-selected="true"] .ct{background:var(--solid);color:#fff}
+.col-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:12px;align-content:start;padding:0 0 18px}
+.cell{container-type:inline-size;min-width:0}
+.col-empty{grid-column:1 / -1;padding:36px 12px 40px;text-align:center;color:var(--muted);font-size:15px}
 .col-empty .mark{width:48px;height:48px;margin:0 auto 12px;color:var(--navy-soft)}
 .col-empty a{color:var(--navy-deep);font-weight:500;border-bottom:1px solid var(--hair-2)}
+@media (max-width:700px){.col-note{display:none}.feed-head{flex-wrap:wrap}}
+.col-sort{height:28px;padding:0 6px 0 9px;gap:4px;border-radius:8px}
+.col-sort svg{width:12px;height:12px}
 /* A raise on the board, three short lines: its name; its countdown, links and backers; its checks. The fill sits under the
    avatar, the raised amount and the deposit button on the right. */
 .br{position:relative;flex:none;display:grid;grid-template-columns:48px minmax(0,1fr) auto;grid-template-areas:"av name val" "av soc act" "av flags act";gap:5px 14px;align-items:center;padding:12px 14px;border:1px solid transparent;border-radius:14px;background:var(--tile);transition:background var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
@@ -501,18 +529,18 @@ a.ico:hover{color:var(--ink)}
 .board-foot button{color:var(--ink-2);border-bottom:1px solid var(--hair-2);margin-left:6px}
 .board-note{font-size:13px}
 .board-note a{color:var(--navy-deep);font-weight:500;border-bottom:1px solid var(--hair-2)}
-@media (max-width:1000px){.board{grid-template-columns:1fr}.col{height:auto;min-height:0}.col-list{overflow:visible}}
+@media (max-width:1000px){.board{min-height:0}.col-list{overflow:visible;grid-template-columns:1fr}}
 /* on a wide window the board fills the window: header, toolbar, columns, then the foot line, with no page scroll. The columns take
    whatever height is left, so the foot line always sits at the bottom edge. Under 1000px the columns stack and the page scrolls. */
 @media (min-width:1001px){
   #view-app.wide{display:flex;flex-direction:column;height:100dvh}
   #view-app.wide .appmain{flex:1;min-height:0;width:100%;display:flex;flex-direction:column}
   #view-app.wide #tab-terminal{flex:1;min-height:0;display:flex;flex-direction:column}
-  #view-app.wide .board{flex:1;min-height:0;align-items:stretch}
-  #view-app.wide .col{height:auto;min-height:0}
+  #view-app.wide .board{flex:1;min-height:0}
+  #view-app.wide .trend{flex:none}
   #view-app.wide .board-foot{flex:none}
 }
-/* the board's toolbar: a search row (search, quick buy, start a raise), then the pair filter, which applies to all three columns */
+/* the board's toolbar: a search row (search, quick buy, start a raise), then the pair filter, which applies to the whole board */
 .xbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px}
 .filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 18px}
 .filters .seg{max-width:100%;overflow-x:auto}
@@ -745,11 +773,18 @@ a.ico:hover{color:var(--ink)}
         <button data-v="all" aria-pressed="true">All pairs</button><button data-v="SOL" aria-pressed="false">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="stock" aria-pressed="false">Stocks</button><button data-v="other" aria-pressed="false">Other</button></div>
       <button type="button" class="mini fbtn" id="filterBtn" aria-haspopup="dialog"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12l-4.6 5.4V13l-2.8 1V8.9z"/></svg><span>Filters</span><span class="ct num" id="filterCt" hidden></span></button>
     </div>
-    <div class="board">
-      <section class="panel col" aria-labelledby="h-new"><header class="col-head"><h2 id="h-new"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6.3 6.3l2.5 2.5M15.2 15.2l2.5 2.5M6.3 17.7l2.5-2.5M15.2 8.8l2.5-2.5"/></svg>New ideas<span class="tag" id="n-new"></span></h2><div class="col-side"><span class="col-note">Under 50% filled</span><button type="button" class="col-filt" data-filt="new" hidden></button><button type="button" class="mini col-sort" data-sort="new" aria-haspopup="listbox" aria-expanded="false" aria-label="Sort new"><span data-label>Newest</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button></div></header><div class="col-list" id="col-new"></div></section>
-      <section class="panel col" aria-labelledby="h-seeding"><header class="col-head"><h2 id="h-seeding"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21v-9"/><path d="M12 12c0-3.5-2.5-6-6.5-6 0 3.5 2.5 6 6.5 6z"/><path d="M12 14.5c0-3 2.2-5 5.8-5 0 3-2.2 5-5.8 5z"/></svg>Seeding<span class="tag" id="n-seeding"></span></h2><div class="col-side"><span class="col-note">Past halfway</span><button type="button" class="col-filt" data-filt="seeding" hidden></button><button type="button" class="mini col-sort" data-sort="seeding" aria-haspopup="listbox" aria-expanded="false" aria-label="Sort seeding"><span data-label>Most filled</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button></div></header><div class="col-list" id="col-seeding"></div></section>
-      <section class="panel col" aria-labelledby="h-seeded"><header class="col-head"><h2 id="h-seeded"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.3 12.3l2.6 2.6 4.9-5.4"/></svg>Seeded<span class="tag" id="n-seeded"></span></h2><div class="col-side"><span class="col-note">Target met</span><button type="button" class="col-filt" data-filt="seeded" hidden></button><button type="button" class="mini col-sort" data-sort="seeded" aria-haspopup="listbox" aria-expanded="false" aria-label="Sort seeded"><span data-label>Recently seeded</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button></div></header><div class="col-list" id="col-seeded"></div></section>
-    </div>
+    <section class="trend" aria-labelledby="h-trend">
+      <div class="trend-head"><h2 id="h-trend"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 3 4 4.5 4 8.5a4 4 0 0 1-8 0c0-1.4.5-2.5 1.2-3.4.3 1.2 1 2 1.8 2.4C11 8.5 11.3 5.5 12 3z"/><path d="M8.5 13.2c-1.3 1.2-2 2.6-2 4.3a5.5 5.5 0 0 0 11 0c0-1.3-.4-2.5-1.2-3.5"/></svg>Trending</h2><span class="col-note">Most active right now</span>
+        <span class="trend-nav"><button type="button" class="x" data-tr="-1" aria-label="Scroll back">&#8249;</button><button type="button" class="x" data-tr="1" aria-label="Scroll forward">&#8250;</button></span></div>
+      <div class="trend-row" id="trendRow"></div>
+    </section>
+    <section class="panel board" aria-label="All raises">
+      <header class="col-head feed-head">
+        <div class="feed-tabs" role="tablist" id="feedTabs"><button type="button" role="tab" data-feed="all" aria-selected="true">All<span class="ct num" id="n-all"></span></button><button type="button" role="tab" data-feed="new" aria-selected="false">New ideas<span class="ct num" id="n-new"></span></button><button type="button" role="tab" data-feed="seeding" aria-selected="false">Seeding<span class="ct num" id="n-seeding"></span></button><button type="button" role="tab" data-feed="seeded" aria-selected="false">Seeded<span class="ct num" id="n-seeded"></span></button><button type="button" role="tab" data-feed="refunded" aria-selected="false">Refunded<span class="ct num" id="n-refunded"></span></button></div>
+        <div class="col-side"><span class="col-note" id="feedNote"></span><button type="button" class="col-filt" id="feedFilt" hidden></button><button type="button" class="mini col-sort" data-sort="feed" aria-haspopup="listbox" aria-expanded="false" aria-label="Sort"><span data-label>Trending</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button></div>
+      </header>
+      <div class="col-list feed-list" id="feed"></div>
+    </section>
     <div class="board-foot">
       <p class="board-note" id="tryHint" hidden></p><p class="board-note" id="refundNote" hidden></p>
       <span class="foot-note">Prototype. Raise data is simulated and no transactions are sent. A connected wallet is only read for its address and balances. <button data-reset>Reset demo</button></span>
@@ -1340,7 +1375,7 @@ function addr(seed) {
 
 const QUICK0 = () => ({ SOL: 2, USDC: 250, JUP: 500, BONK: 5000000, NVDAx: 1 });
 let state = { wallet: null, presales: [], positions: {}, claimed: {}, tokens: {}, quick: QUICK0(), custom: {} };
-const ui = { view: '', tab: 'terminal', sel: null, fAsset: 'all', bq: '', sort: { new: 'new', seeding: 'filled', seeded: 'ending' }, qbAsset: 'SOL' };
+const ui = { view: '', tab: 'terminal', sel: null, fAsset: 'all', bq: '', feed: 'all', sort: { all: 'trend', new: 'new', seeding: 'filled', seeded: 'ending', refunded: 'ending' }, qbAsset: 'SOL' };
 function fresh() { return { wallet: null, presales: seedData(), positions: Object.assign({}, DEMO_WALLET_BUYS), claimed: {}, tokens: {}, quick: QUICK0(), custom: {} }; }
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q && s.presales[0].buys) { state = Object.assign(fresh(), s); return; } } catch (e) {}
@@ -1491,6 +1526,8 @@ const pairOk = p => ui.fAsset === 'all' || (ui.fAsset === 'stock' ? !!Q(p).stock
    Most filled: by percentage, then newest. Newest: by when it opened. */
 function sorter(k) {
   const s = ui.sort[k];
+  if (s === 'trend') return (a, b) => trendScore(b) - trendScore(a) || b.openedAt - a.openedAt;
+  if (k === 'refunded') return s === 'new' ? (a, b) => b.openedAt - a.openedAt : s === 'filled' ? (a, b) => pctOf(b) - pctOf(a) : (a, b) => (b.resolvedAt || 0) - (a.resolvedAt || 0);
   if (s === 'filled') return (a, b) => pctOf(b) - pctOf(a) || b.openedAt - a.openedAt;
   if (s === 'new') return (a, b) => b.openedAt - a.openedAt;
   return k === 'seeded' ? (a, b) => (b.resolvedAt || 0) - (a.resolvedAt || 0) : (a, b) => a.endsAt - b.endsAt;
@@ -1525,21 +1562,48 @@ function actCell(p) {
 }
 /* which column a raise sits in. Refunded ones are not on the board: they are named under it, and claims live in the portfolio. */
 const colOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : 'seeding') : null;
+/* what is moving: a live raise by what it took in the last six hours as a share of its target, a seeded token by how recently
+   it seeded. Refunded raises never trend. */
+function trendScore(p) {
+  const now = Date.now();
+  if (p.status === 'live') return (p.raised - raisedAt(p, now - 6 * H)) / p.target * 100 + pctOf(p) * 0.05;
+  if (p.status === 'seeded') return Math.max(0, 40 - (now - (p.resolvedAt || now)) / D * 5);
+  return -1;
+}
+function trendCard(p, i) {
+  const now = Date.now(), C = Q(p);
+  const chg = p.status === 'live' ? (() => { const r = (p.raised - raisedAt(p, now - 6 * H)) / p.target * 100; return r > 0 ? `<span class="tr-chg up">+${r < 10 ? r.toFixed(1) : Math.round(r)}% · 6h</span>` : '<span class="tr-chg">Quiet · 6h</span>'; })()
+    : `<span class="tr-chg seeded">Seeded ${fmtAgo(now - (p.resolvedAt || now))}</span>`;
+  return `<a class="tr-card" href="#/presale/${p.id}" target="_blank" rel="noopener" style="--h:${hashStr(p.ticker) % 360}" data-row="${p.id}" aria-label="${esc(p.name)}, number ${i + 1} trending">
+    <span class="tr-art">${artHTML(p, 'tr-img')}<span class="tr-rank">${i + 1}</span></span>
+    <span class="tr-name"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></span>
+    <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b>${chg}</span></a>`;
+}
+const FEED_NOTE = { all: 'Live and seeded', new: 'Under 50% filled', seeding: 'Past halfway', seeded: 'Target met', refunded: 'Missed the target' };
 function renderTerminal() {
-  const q = ui.bq.trim(), cols = {}; for (const k of ['new', 'seeding', 'seeded']) cols[k] = boardHit(k).sort(sorter(k));
+  const q = ui.bq.trim(), cols = {}; for (const k of ['new', 'seeding', 'seeded']) cols[k] = boardHit(k);
+  const ql = q.toLowerCase(), refunded = state.presales.filter(p => p.status === 'refunded' && pairOk(p) && (!ql || (p.name + ' ' + p.ticker).toLowerCase().includes(ql)));
+  const lists = { all: [...cols.new, ...cols.seeding, ...cols.seeded], new: cols.new, seeding: cols.seeding, seeded: cols.seeded, refunded };
+  for (const k in lists) { const n = $('#n-' + k); if (n) n.textContent = lists[k].length || ''; }
   syncFilterBadges();
-  const fresh = freshIn('term', [...cols.new, ...cols.seeding, ...cols.seeded]);
-  const none = { new: 'No new ideas right now. <a href="#/launch">Start one</a>', seeding: 'Nothing is past halfway yet.', seeded: 'Nothing has seeded yet.' };
-  for (const k of ['new', 'seeding', 'seeded']) {
-    $('#n-' + k).textContent = cols[k].length;
-    $('#col-' + k).innerHTML = cols[k].length ? cols[k].map((p, i) => `<div class="br ${p.status}${fresh(p)}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
+  /* trending: the eight most active, whatever the tabs and filters say */
+  const trend = state.presales.filter(p => trendScore(p) >= 0).sort((a, b) => trendScore(b) - trendScore(a) || b.openedAt - a.openedAt).slice(0, 8);
+  $('#trendRow').innerHTML = trend.map(trendCard).join('');
+  /* the feed */
+  const k = ui.feed, list = lists[k].slice().sort(sorter(k)), fresh = freshIn('term', list);
+  $$('#feedTabs [data-feed]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.feed === k)));
+  $('#feedNote').textContent = FEED_NOTE[k]; $('.col-sort[data-sort="feed"] [data-label]').textContent = sortLabel(k, ui.sort[k]);
+  const fb = $('#feedFilt'), fn = k === 'refunded' ? 0 : COLS.includes(k) ? ruleCounts(filters[k]).all : filterTotal();
+  fb.hidden = !fn; fb.dataset.filt = COLS.includes(k) ? k : ''; fb.innerHTML = `${FUNNEL}${fn}`; fb.title = `${fn} filter${fn > 1 ? 's' : ''} on this tab`;
+  const none = { all: 'Nothing is live or seeded right now. <a href="#/launch">Start a raise</a>', new: 'No new ideas right now. <a href="#/launch">Start one</a>', seeding: 'Nothing is past halfway yet.', seeded: 'Nothing has seeded yet.', refunded: 'Nothing has refunded.' };
+  const name = { new: 'New ideas', seeding: 'Seeding', seeded: 'Seeded' }[k];
+  $('#feed').innerHTML = list.length ? list.map((p, i) => `<div class="cell"><div class="br ${p.status}${fresh(p)}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
       <span class="br-avc"><span class="br-av"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>${progCell(p)}</span>
-      <div class="br-main"><div class="br-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}</div>
+      <div class="br-main"><div class="br-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}${p.status === 'refunded' ? '<span class="tag">Refunded</span>' : ''}</div>
         <div class="br-meta">${p.status === 'live' ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}${rowLinks(p)}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span>${rowAnn(p)}</div>
         <div class="br-flags"><span class="tag">${esc(Q(p).sym)} pair</span>${riskChip(riskSummary(riskChecks(p)))}${p.status === 'live' ? `<span data-pacechip>${paceChip(paceInfo(p))}</span><span class="br-sub num" title="Pace needed to seed" data-pace>${paceTxt(p)}</span>` : ''}</div></div>
-      <div class="br-side"><span class="br-val num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span><span class="t-act">${actCell(p)}</span></div></div>`).join('')
-      : `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${q ? `Nothing here matches "${esc(q)}".` : ruleCounts(filters[k]).all ? `Nothing in ${k === 'new' ? 'New ideas' : k === 'seeding' ? 'Seeding' : 'Seeded'} passes its filters. <a href="#" data-filt="${k}">Change them</a>` : ui.fAsset !== 'all' ? 'Nothing here with this pair.' : none[k]}</div>`;
-  }
+      <div class="br-side"><span class="br-val num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span><span class="t-act">${actCell(p)}</span></div></div></div>`).join('')
+    : `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${q ? `Nothing here matches "${esc(q)}".` : name && ruleCounts(filters[k]).all ? `Nothing in ${name} passes its filters. <a href="#" data-filt="${k}">Change them</a>` : k === 'all' && filterTotal() && (state.presales.some(p => colOf(p))) ? 'Nothing passes the filters. <a href="#" data-filt="">Change them</a>' : ui.fAsset !== 'all' ? 'Nothing here with this pair.' : none[k]}</div>`;
   const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live';
   hint.hidden = !show; if (show) hint.textContent = 'To see both endings: quick-deposit into Osprey from the board until it fills and it seeds on the spot. Deposit into Moss and its deadline passes in about three minutes.';
   const dead = state.presales.filter(p => p.status === 'refunded'), owed = dead.some(p => state.positions[p.id] && !state.claimed[p.id]), note = $('#refundNote');
@@ -1557,6 +1621,8 @@ function patchRows(p) {
     s('[data-qbamt]', e => roll(e, qbLabel(p))); s('[data-pacechip]', e => e.innerHTML = paceChip(paceInfo(p)));
   });
 }
+$('#feedTabs').addEventListener('click', e => { const b = e.target.closest('[data-feed]'); if (b && b.dataset.feed !== ui.feed) { ui.feed = b.dataset.feed; renderTerminal(); } });
+$('.trend-nav').addEventListener('click', e => { const b = e.target.closest('[data-tr]'); if (b) $('#trendRow').scrollBy({ left: +b.dataset.tr * 420, behavior: 'smooth' }); });
 $('.board').addEventListener('click', e => {
   const qb = e.target.closest('[data-qb]'), cl = e.target.closest('[data-claim]');
   if (qb) return quickBuy(find(qb.dataset.qb), qb);
