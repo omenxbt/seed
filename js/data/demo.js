@@ -313,6 +313,36 @@ The shared vault program and a review of its withdrawal rules.`,
   }
 };
 
+/* the wider board: a lighter profile for each of these, built from a few lines into the same shape as the full ones */
+function lite(o) {
+  const links = Object.assign({ website: null, x: null, telegram: null, discord: null, github: null }, o.links || {});
+  const teamPct = o.teamPct || 0, share = (100 - teamPct) / 2;
+  const team = (o.members || []).map(m => ({ name: m[0], role: m[1], x: m[2] || null, github: null, linkedin: null, verified: { x: !!m[2], github: false, domain: false } }));
+  return {
+    tagline: o.tagline, description: o.description || `**${o.tagline}**\n\n${o.about || ''}`, links, minBuy: o.minBuy || 0, maxBuy: o.maxBuy || 0,
+    tokenomics: { allocations: [alloc('Raise backers', 'presale', share), alloc('Locked Meteora pool', 'lp', share), ...(teamPct ? [alloc('Team', 'team', teamPct, vest(180, 540))] : [])], useOfFunds: o.uof || [{ label: 'Build', pct: 70 }, { label: 'Operations', pct: 30 }] },
+    team, founder: { name: team[0] ? team[0].name : 'Founder', x: links.x, xAgeDays: o.xAge == null ? 420 : o.xAge, funding: o.funding || { kind: 'exchange', label: 'Coinbase', hoursBeforeLaunch: 24 * 60 }, pastLaunches: [] },
+    deck: null, roadmap: o.roadmap || [], updates: o.updates || [],
+    crowd: Object.assign({ top10: 0.33, fresh: 0.15, bundle: null, kols: 1, tracked: 2, repeat: 0.1 }, o.crowd || {}), chat: o.chat || [], watchers: o.watchers || 0
+  };
+}
+const LITE = {
+  lumen: { tagline: 'Pay-as-you-go GPU minutes for indie game servers.', about: 'Lumen meters GPU time by the minute and bills in USDC, so a small studio only pays while players are on.', links: { website: 'https://lumen.example', x: 'https://x.com/lumen_seeddemo', github: 'https://github.com/lumen-seeddemo' }, members: [['Ada Reyes', 'Founder', 'https://x.com/lumen_seeddemo'], ['Tom Vance', 'Infra']], teamPct: 10, roadmap: [{ title: 'Metering on devnet', due: -4, status: 'shipped', proof: 'https://lumen.example/devnet' }, { title: 'First three studios', due: 14, status: 'planned' }], updates: [{ title: 'Devnet metering is live', body: 'Minutes are counted on devnet and billed to a test wallet. Mainnet after the audit.', daysAgo: 0.3, author: 'Ada Reyes' }], chat: [{ by: 'visitor:1', body: 'Does it work with Unity servers?', mins: 50 }, { by: 'founder', body: 'Anything that runs in a container.', mins: 40, reply: -1 }], watchers: 120 },
+  kiln: { tagline: 'Ceramics studios share a kiln schedule and split the firing.', about: 'Kiln books shared firings across studios in a city and settles the split in USDC after each firing.', links: { website: 'https://kiln.example', x: 'https://x.com/kiln_seeddemo', discord: 'https://discord.gg/kiln-seeddemo' }, members: [['Priya Nair', 'Founder', 'https://x.com/kiln_seeddemo']], roadmap: [{ title: 'Lisbon pilot', due: -10, status: 'shipped', proof: 'https://kiln.example/lisbon' }, { title: 'Berlin and Porto', due: 30, status: 'planned' }], crowd: { top10: 0.29, fresh: 0.11, kols: 0, tracked: 1, repeat: 0.14 }, watchers: 86 },
+  harbor: { tagline: 'Escrow for second-hand boat sales.', about: 'Harbor holds the buyer\'s SOL until the survey is signed off, then releases it.', links: { website: 'https://harbor.example', x: 'https://x.com/harbor_seeddemo' }, members: [['Jonas Lind', 'Founder', 'https://x.com/harbor_seeddemo']], xAge: 60, funding: { kind: 'wallet', label: 'Fresh wallet', hoursBeforeLaunch: 30 }, crowd: { top10: 0.48, fresh: 0.35, kols: 0, tracked: 0, repeat: 0 }, watchers: 24 },
+  satchel: { tagline: 'A courier network paid per parcel, settled hourly.', about: 'Satchel pays couriers in SOL the hour a parcel lands, with the fee split written on chain.', links: { website: 'https://satchel.example', x: 'https://x.com/satchel_seeddemo', telegram: 'https://t.me/satchel_seeddemo' }, members: [['Leo Okoro', 'Founder', 'https://x.com/satchel_seeddemo'], ['Nina Berg', 'Ops']], teamPct: 12, updates: [{ title: 'Two hundred parcels a day', body: 'The Lagos pilot crossed 200 parcels a day this week.', daysAgo: 1, author: 'Leo Okoro' }], crowd: { top10: 0.36, fresh: 0.22, kols: 1, tracked: 2, repeat: 0.09 }, watchers: 140 },
+  vellum: { tagline: 'Signed PDFs that settle a deposit when both sides sign.', about: 'Vellum attaches a USDC deposit to a contract and releases it on the second signature.', links: { website: 'https://vellum.example', github: 'https://github.com/vellum-seeddemo' }, members: [['Sara Holm', 'Founder'], ['Ivo Marek', 'Engineer']], roadmap: [{ title: 'Signing flow', due: -2, status: 'shipped', proof: 'https://vellum.example/sign' }], crowd: { top10: 0.31, fresh: 0.1, kols: 2, tracked: 3, repeat: 0.18 }, watchers: 210 },
+  pollen: { tagline: 'Tips for open-source maintainers, routed by commit.', about: 'Pollen splits a tip across the people who wrote the code you depend on, by commit share.', links: { website: 'https://pollen.example', x: 'https://x.com/pollen_seeddemo', github: 'https://github.com/pollen-seeddemo' }, members: [['Dev Patel', 'Founder', 'https://x.com/pollen_seeddemo']], chat: [{ by: 'backer:2', body: 'How do you weight a one-line fix against a rewrite?', mins: 200 }, { by: 'founder', body: 'By lines touched, capped per commit. The weights are public.', mins: 190, reply: -1 }], watchers: 95 },
+  cobalt: { tagline: 'Battery passports for second-life packs.', about: 'Cobalt records a pack\'s cycles and health on chain, so a used pack sells on its record, not a guess.', links: { website: 'https://cobalt.example', x: 'https://x.com/cobalt_seeddemo', discord: 'https://discord.gg/cobalt-seeddemo', github: 'https://github.com/cobalt-seeddemo' }, members: [['Ruth Adler', 'Founder', 'https://x.com/cobalt_seeddemo'], ['Kenji Mori', 'Hardware'], ['Ola Berg', 'Growth']], teamPct: 10, roadmap: [{ title: 'Reader firmware', due: -12, status: 'shipped', proof: 'https://cobalt.example/firmware' }, { title: 'First 1,000 packs', due: 20, status: 'planned' }], updates: [{ title: '400 packs logged', body: 'The Rotterdam yard has 400 packs on passports. Buyers are paying a premium for a full record.', daysAgo: 0.5, author: 'Ruth Adler' }, { title: 'Reader firmware shipped', body: 'The handheld reader writes a pack\'s health straight to its passport.', daysAgo: 6, author: 'Kenji Mori' }], chat: [{ by: 'backer:1', body: 'Who pays for the reader?', mins: 420 }, { by: 'team:1', body: 'The yard. It pays for itself in a week of sales.', mins: 400, reply: -1, pinned: true }], crowd: { top10: 0.27, fresh: 0.09, kols: 3, tracked: 5, repeat: 0.28 }, watchers: 480 },
+  marrow: { tagline: 'Bone-density screening vans, booked by neighbourhood.', about: 'Marrow runs a van with a scanner and books whole streets at once. The raise pays for the second van.', links: { website: 'https://marrow.example', x: 'https://x.com/marrow_seeddemo' }, members: [['Dr Hana Sato', 'Founder', 'https://x.com/marrow_seeddemo'], ['Ben Cole', 'Operations']], roadmap: [{ title: 'Van one, 2,000 scans', due: -30, status: 'shipped', proof: 'https://marrow.example/scans' }, { title: 'Van two on the road', due: 45, status: 'planned' }], updates: [{ title: 'Van two ordered', body: 'The second van is ordered. Delivery in six weeks.', daysAgo: 2, author: 'Ben Cole' }], crowd: { top10: 0.22, fresh: 0.07, kols: 2, tracked: 4, repeat: 0.35 }, watchers: 620 },
+  kite: { tagline: 'Wind forecasts sold to kite schools by the hour.', about: 'Drift Kite sells a one-hour wind window to schools on the beach, refunded if the wind misses.', links: { website: 'https://kite.example', x: 'https://x.com/kite_seeddemo', telegram: 'https://t.me/kite_seeddemo' }, members: [['Marco Silva', 'Founder', 'https://x.com/kite_seeddemo']], teamPct: 8, chat: [{ by: 'visitor:3', body: 'Tarifa?', mins: 30 }, { by: 'founder', body: 'Tarifa and Cumbuco first.', mins: 25, reply: -1 }], crowd: { top10: 0.4, fresh: 0.18, kols: 1, tracked: 1, repeat: 0.06 }, watchers: 260 },
+  ferrule: { tagline: 'Rebuilt bike frames with a chain of custody.', about: 'Ferrule rebuilds alloy frames and records every weld and inspection on the frame\'s own record.', links: { website: 'https://ferrule.example', github: 'https://github.com/ferrule-seeddemo' }, members: [['Anya Volkov', 'Founder'], ['Sam Reed', 'Welder']], roadmap: [{ title: 'First 50 frames', due: -20, status: 'shipped', proof: 'https://ferrule.example/frames' }], crowd: { top10: 0.45, fresh: 0.2, kols: 0, tracked: 2, repeat: 0.12 }, watchers: 75 },
+  oriel: { tagline: 'Window-box farms with a buyer for every harvest.', about: 'Oriel installs a window box, sells the harvest to a restaurant down the street, and splits the sale with the grower.', links: { website: 'https://oriel.example', x: 'https://x.com/oriel_seeddemo', discord: 'https://discord.gg/oriel-seeddemo' }, members: [['Grace Obi', 'Founder', 'https://x.com/oriel_seeddemo'], ['Luis Ortega', 'Growers']], teamPct: 10, roadmap: [{ title: '300 boxes installed', due: -8, status: 'shipped', proof: 'https://oriel.example/boxes' }, { title: 'Second city', due: 40, status: 'planned' }], updates: [{ title: 'Seeded, and the first harvest sold', body: 'The pool is open and the first 40 boxes sold their harvest to three restaurants on Monday.', daysAgo: 5, author: 'Grace Obi' }], chat: [{ by: 'backer:3', body: 'Claimed, thanks.', mins: 5000 }, { by: 'founder', body: 'Welcome aboard. Harvest reports come every Monday.', mins: 4900, reply: -1 }], crowd: { top10: 0.3, fresh: 0.1, kols: 2, tracked: 3, repeat: 0.2 }, watchers: 540 },
+  peat: { tagline: 'Rewetting drained peatland, paid per hectare held wet.', about: 'Peat pays landowners in USDC per hectare that stays wet, checked by satellite each month.', links: { website: 'https://peat.example', x: 'https://x.com/peat_seeddemo', github: 'https://github.com/peat-seeddemo' }, members: [['Fiona Walsh', 'Founder', 'https://x.com/peat_seeddemo'], ['Eoin Byrne', 'Science'], ['Maya Lin', 'Data']], roadmap: [{ title: '1,200 hectares under contract', due: -25, status: 'shipped', proof: 'https://peat.example/contracts' }, { title: 'First satellite audit', due: 10, status: 'planned' }], updates: [{ title: 'Pool open', body: 'Peat seeded at target. The first monthly audit runs on the 1st.', daysAgo: 8, author: 'Fiona Walsh' }], crowd: { top10: 0.25, fresh: 0.08, kols: 3, tracked: 6, repeat: 0.3 }, watchers: 910 },
+  nimbus: { tagline: 'Rain-day cover for street markets.', about: 'Nimbus pays a stall a fixed USDC sum on a washed-out day, triggered by the local rain gauge.', links: { website: 'https://nimbus.example', x: 'https://x.com/nimbus_seeddemo', telegram: 'https://t.me/nimbus_seeddemo' }, members: [['Omar Haddad', 'Founder', 'https://x.com/nimbus_seeddemo'], ['Lucy Grant', 'Actuary']], teamPct: 12, updates: [{ title: 'Seeded', body: 'Nimbus seeded with 445 backers. Cover goes on sale at the Borough market on Saturday.', daysAgo: 2, author: 'Omar Haddad' }], chat: [{ by: 'backer:5', body: 'Which gauge counts?', mins: 3000 }, { by: 'team:1', body: 'The nearest Met Office gauge, named on each policy.', mins: 2900, reply: -1 }], crowd: { top10: 0.34, fresh: 0.13, kols: 2, tracked: 2, repeat: 0.16 }, watchers: 700 },
+  gully: { tagline: 'Storm-drain sensors that text the council.', about: 'Gully clips a level sensor into a drain and texts the council before it floods.', links: { website: 'https://gully.example' }, members: [['Pat Doyle', 'Founder']], xAge: 25, funding: { kind: 'wallet', label: 'Fresh wallet', hoursBeforeLaunch: 12 }, crowd: { top10: 0.6, fresh: 0.4, kols: 0, tracked: 0, repeat: 0.02 }, watchers: 18 }
+};
+Object.keys(LITE).forEach(id => { DEMO_PROFILES[id] = Object.assign(lite(LITE[id]), { demo: true }); });
 /* every demo profile gets a mint and a vault address (demo), deployer and team wallets (demo) */
 Object.entries(DEMO_PROFILES).forEach(([id, pr]) => {
   pr.mint = pr.mint || fakeAddr('mint/' + id);
@@ -387,7 +417,7 @@ function demoPnlDays(now) {
   }
   return out;
 }
-const DEMO_WALLET_BUYS = { quill: 500, ember: 25000000 };
+const DEMO_WALLET_BUYS = { quill: 500, ember: 400, oriel: 3, cobalt: 5 };
 function seedData() {
   const n = Date.now();
   const mk = (id, name, ticker, q, target, pct, backers, openedAgo, dur, status = 'live', resolvedAgo = 0) => {
@@ -408,10 +438,25 @@ function seedData() {
     mk('osprey', 'Osprey', 'OSPR', 'SOL', 85, .96, 212, 1.75 * D, 3 * D),
     mk('moss', 'Moss', 'MOSS', 'SOL', 150, .61, 97, D - 200e3, D),
     mk('tidewater', 'Tidewater', 'TIDE', 'USDC', 60000, .85, 388, 3.9 * D, 7 * D),
-    mk('lattice', 'Lattice', 'LATT', 'JUP', 120000, .48, 176, 2.2 * D, 7 * D),
-    mk('overclock', 'Overclock', 'RENDER', 'NVDAx', 400, .57, 203, 2.9 * D, 7 * D),
+    mk('lattice', 'Lattice', 'LATT', 'USDC', 48000, .48, 176, 2.2 * D, 7 * D),
+    mk('overclock', 'Overclock', 'RENDER', 'SOL', 450, .57, 203, 2.9 * D, 7 * D),
     mk('halfmoon', 'Halfmoon', 'HALF', 'SOL', 300, .20, 141, 1.6 * D, 7 * D),
     mk('quill', 'Quill', 'QUILL', 'USDC', 25000, 1, 264, 3.6 * D, 3 * D, 'seeded', 2 * D),
-    mk('ember', 'Ember', 'EMBR', 'BONK', 2e9, .41, 58, 4 * D, 3 * D, 'refunded', D)
+    mk('ember', 'Ember', 'EMBR', 'USDC', 30000, .41, 58, 4 * D, 3 * D, 'refunded', D),
+    /* the wider board */
+    mk('lumen', 'Lumen', 'LUMN', 'USDC', 30000, .12, 44, 6 * H, 3 * D),
+    mk('kiln', 'Kiln', 'KILN', 'USDC', 40000, .33, 120, 20 * H, 7 * D),
+    mk('harbor', 'Harbor', 'HRBR', 'SOL', 500, .08, 31, 3 * H, 7 * D),
+    mk('satchel', 'Satchel', 'SATCH', 'SOL', 180, .27, 73, 1.2 * D, 3 * D),
+    mk('vellum', 'Vellum', 'VELM', 'USDC', 55000, .41, 88, 2 * D, 7 * D),
+    mk('pollen', 'Pollen', 'POLN', 'SOL', 90, .19, 52, 9 * H, 3 * D),
+    mk('cobalt', 'Cobalt', 'CBLT', 'SOL', 220, .78, 301, 2.5 * D, 3 * D),
+    mk('marrow', 'Marrow', 'MARO', 'USDC', 90000, .66, 412, 3 * D, 7 * D),
+    mk('kite', 'Drift Kite', 'KITE', 'SOL', 140, .91, 240, 1.4 * D, 3 * D),
+    mk('ferrule', 'Ferrule', 'FERR', 'USDC', 20000, .55, 160, 4 * D, 7 * D),
+    mk('oriel', 'Oriel', 'ORIL', 'SOL', 200, 1, 330, 9 * D, 3 * D, 'seeded', 6 * D),
+    mk('peat', 'Peat', 'PEAT', 'USDC', 50000, 1, 510, 15 * D, 7 * D, 'seeded', 8 * D),
+    mk('nimbus', 'Nimbus', 'NMBS', 'USDC', 35000, 1, 445, 5 * D, 3 * D, 'seeded', 2.1 * D),
+    mk('gully', 'Gully', 'GULY', 'SOL', 400, .36, 64, 12 * D, 7 * D, 'refunded', 5 * D)
   ];
 }
