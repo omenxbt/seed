@@ -60,6 +60,8 @@ html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px);-webkit-text-s
 html{min-height:100vh;background:var(--bg)}
 body{min-height:100vh;background:transparent}
 #bg-dither{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
+b,strong{font-weight:500}
+h1,h2,h3,h4{font-weight:500}
 body{color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
 button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
 button{cursor:pointer;background:none;border:0}
@@ -70,10 +72,10 @@ a{color:inherit;text-decoration:none}
 
 /* the horizontal lockup: the 21-dot mark in muted blue with the bright blue seed (the same mark an empty column shows),
    box 1.6 × the wordmark size, wordmark 600 at -3% */
-.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:20px;letter-spacing:-.03em;color:var(--ink)}
+.brand{display:flex;align-items:center;gap:8px;font-weight:500;font-size:20px;letter-spacing:-.03em;color:var(--ink)}
 .mark{display:block;color:var(--ink);--seed:var(--navy)}
 .brand .mark{flex:none;width:32px;height:32px;color:var(--navy-soft)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;font-weight:600;font-size:12.5px;padding:8px 16px;
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;font-weight:500;font-size:12.5px;padding:8px 16px;
   transition:transform var(--dur) var(--ease-out),background var(--dur) var(--ease-out),box-shadow var(--dur) var(--ease-out),opacity var(--fast) var(--ease-out);white-space:nowrap}
 .btn:active{transform:scale(.98)}
 .btn-ink{background:var(--solid);color:#fff}
@@ -86,35 +88,35 @@ a{color:inherit;text-decoration:none}
 .wdot{width:7px;height:7px;border-radius:50%;background:#7FC8A9;box-shadow:0 0 0 3px rgba(127,200,169,.25)}
 .pop{position:absolute;right:0;top:calc(100% + 10px);width:264px;border-radius:16px;padding:16px;background:var(--card);border:1px solid var(--panel-line);box-shadow:0 24px 60px -20px var(--sh-pop);display:none}
 .pop.open{display:block}
-.pop h4{font-size:13px;font-weight:600;color:var(--muted);margin-bottom:10px}
+.pop h4{font-size:13px;font-weight:500;color:var(--muted);margin-bottom:10px}
 .pop .bal{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-top:1px solid var(--hair);font-size:13.5px}
 .pop .bal span:first-child{color:var(--muted)}
-.pop button{margin-top:12px;width:100%;padding:8px;border-radius:10px;border:1px solid var(--hair-2);font-weight:600;font-size:13px}
+.pop button{margin-top:12px;width:100%;padding:8px;border-radius:10px;border:1px solid var(--hair-2);font-weight:500;font-size:13px}
 .pop button:hover{background:var(--mist)}
 /* an X account linked to the wallet: optional, shown as a small chip wherever the wallet is named */
-.x-chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap}
+.x-chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;font-size:13px;font-weight:500;color:var(--ink);white-space:nowrap}
 .x-chip svg{flex:none;width:11px;height:11px;fill:currentColor}
 a.x-chip:hover{color:var(--navy-deep)}
-.x-chip em{font-style:normal;font-size:11px;font-weight:500;color:var(--muted);border:1px dashed var(--hair-2);border-radius:999px;padding:0 6px;margin-left:2px}
+.x-chip em{font-style:normal;font-size:11px;font-weight:400;color:var(--muted);border:1px dashed var(--hair-2);border-radius:999px;padding:0 6px;margin-left:2px}
 .xrow{align-items:center}
 .x-set{display:inline-flex;align-items:center;gap:10px;min-width:0}
-.xrow .linkbtn{margin:0;font-size:13.5px;font-weight:600;color:var(--navy-deep)}
+.xrow .linkbtn{margin:0;font-size:13.5px;font-weight:500;color:var(--navy-deep)}
 .pop .xrow .linkbtn,.pop .x-set .linkbtn{width:auto;padding:0;border:0;margin:0}
 .pop .x-link{display:flex;align-items:center;justify-content:center;gap:8px}
 .x-link svg{width:12px;height:12px;fill:currentColor}
 .x-note{font-size:12.5px;line-height:1.45;color:var(--muted);margin-top:8px}
 .x-why{margin:14px 0 18px}
 .x-steps{margin:0 0 6px 20px;display:grid;gap:10px;font-size:14.5px;line-height:1.5;color:var(--ink-2)}
-.x-steps b{color:var(--ink);font-weight:600}
+.x-steps b{color:var(--ink);font-weight:500}
 #xDlg .err{margin-top:10px}
-#walletBtn .wx{display:inline-flex;align-items:center;gap:6px;font-weight:500}
+#walletBtn .wx{display:inline-flex;align-items:center;gap:6px;font-weight:400}
 #walletBtn .wx svg{width:11px;height:11px;fill:currentColor}
 
 h1{line-height:.96;font-weight:400}
 h1 .l1{display:block;font-family:var(--serif);font-style:italic;font-size:clamp(42px,6.6vw,88px);letter-spacing:-.025em}
-h1 .l2{display:block;font-weight:600;font-size:clamp(36px,5.7vw,76px);letter-spacing:-.05em;margin-top:2px}
+h1 .l2{display:block;font-weight:500;font-size:clamp(36px,5.7vw,76px);letter-spacing:-.05em;margin-top:2px}
 /* ---------------------------------------------------------------- sections */
-h2{font-weight:600;font-size:clamp(30px,4.3vw,50px);line-height:1.04;letter-spacing:-.045em}
+h2{font-weight:500;font-size:clamp(30px,4.3vw,50px);line-height:1.04;letter-spacing:-.045em}
 h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em;line-height:1}
 .panel{position:relative;border:1px solid var(--panel-line);border-radius:18px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);box-shadow:var(--panel-shadow)}
 
@@ -133,13 +135,13 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 /* segmented control: a dark well, a lighter block slides under the chosen segment */
 .seg{position:relative;display:inline-flex;padding:4px;border-radius:12px;background:var(--paper)}
 .seg .seg-ind{position:absolute;top:4px;bottom:4px;left:0;border-radius:9px;background:var(--pill);transition:transform var(--dur) var(--ease-out),width var(--dur) var(--ease-out);will-change:transform}
-.seg button{position:relative;z-index:1;padding:5px 12px;border-radius:8px;font-size:12.5px;font-weight:600;color:var(--muted);transition:color var(--fast) var(--ease-out);white-space:nowrap}
+.seg button{position:relative;z-index:1;padding:5px 12px;border-radius:8px;font-size:12.5px;font-weight:500;color:var(--muted);transition:color var(--fast) var(--ease-out);white-space:nowrap}
 .seg button:hover{color:var(--ink)}
 .seg button[aria-pressed="true"]{color:var(--navy-deep)}
 .seg button .ct{font-family:var(--mono);font-weight:400;font-size:11.5px;opacity:.7;margin-left:5px}
 
 /* ------------------------------------------------------------ raise list */
-.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:600;border-radius:999px;padding:2px 8px;border:1px solid var(--hair-2);color:var(--muted);background:var(--chip)}
+.tag{display:inline-flex;align-items:center;font-size:11px;font-weight:500;border-radius:999px;padding:2px 8px;border:1px solid var(--hair-2);color:var(--muted);background:var(--chip)}
 .tag.in{border-color:transparent;background:var(--navy-wash);color:var(--navy-deep)}
 .row{display:grid;gap:18px;align-items:center}   /* a raise in a list; #mineList lays it out */
 .row{width:100%;text-align:left;padding-top:18px;padding-bottom:18px;border-bottom:1px solid var(--hair);transition:background var(--fast) var(--ease-out)}
@@ -152,7 +154,7 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .av svg{width:26px;height:26px;fill:var(--navy-deep)}
 .av.lg{width:52px;height:52px;border-radius:14px}.av.lg svg{width:34px;height:34px}
 .nm{min-width:0;display:flex;flex-direction:column;gap:2px}
-.nm b{font-weight:600;font-size:16px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nm b{font-weight:500;font-size:16px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nm b .tk{font-family:var(--mono);font-weight:400;font-size:13px;color:var(--muted);margin-left:7px;letter-spacing:-.02em}
 .meta{display:flex;align-items:center;gap:7px;font-size:13.5px;color:var(--muted);white-space:nowrap}
 .chain{display:inline-flex;align-items:center;gap:6px}
@@ -179,10 +181,10 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .c-raised em{font-style:normal;color:var(--faint)}
 .c-time{color:var(--ink-2)}
 .c-act{text-align:right}
-.pill-sm{display:inline-block;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;border:1px solid var(--hair-2);background:var(--chip);transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
+.pill-sm{display:inline-block;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:500;border:1px solid var(--hair-2);background:var(--chip);transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
 .row:hover .pill-sm,.pill-sm.hot{background:var(--accent);border-color:var(--accent);color:#fff}
 .empty{padding:48px 24px;text-align:center;color:var(--muted);font-size:15px}
-.empty a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
+.empty a{color:var(--navy-deep);font-weight:500;border-bottom:1px solid var(--hair-2)}
 
 /* ------------------------------------------------------------- mechanism */
 .tick{position:absolute;width:9px;height:9px;border:0 solid var(--navy);pointer-events:none}
@@ -200,7 +202,7 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .form{padding:30px;display:grid;gap:18px;grid-template-columns:1fr 1fr}
 .f{display:flex;flex-direction:column;gap:7px;min-width:0}
 .f.full{grid-column:1/-1}
-.f label,.f .lab{font-size:14px;font-weight:600;color:var(--ink-2)}
+.f label,.f .lab{font-size:14px;font-weight:500;color:var(--ink-2)}
 .f .hint{font-size:13px;color:var(--faint);font-weight:400;margin-left:6px}
 .inp{display:flex;align-items:center;border:1px solid var(--hair);border-radius:14px;background:var(--paper);transition:border-color var(--fast) var(--ease-out),box-shadow var(--fast) var(--ease-out)}
 .inp:focus-within{border-color:var(--navy);box-shadow:0 0 0 4px var(--ring)}
@@ -209,7 +211,7 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .inp .suf{padding-right:16px;color:var(--muted);font-size:14px}
 .err{font-size:14px;color:var(--err);min-height:0}
 .preview{padding:30px;display:flex;flex-direction:column;gap:18px}
-.preview .lab{font-size:13px;font-weight:600;color:var(--ink-2)}
+.preview .lab{font-size:13px;font-weight:500;color:var(--ink-2)}
 .pcard{position:relative;border:1px solid var(--hair);background:var(--tile);padding:18px}
 .pcard .c-prog{margin-top:16px}
 .facts{display:grid;gap:0;border-top:1px solid var(--hair)}
@@ -236,13 +238,13 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 .idea{margin-top:16px;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.25;color:var(--ink-2)}
 .readout{position:relative;border:1px solid var(--hair);margin-top:20px;padding:16px 18px}
 .readout .big{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
-.readout .big b{font-family:var(--mono);font-weight:500;font-size:24px;letter-spacing:-.05em}
+.readout .big b{font-family:var(--mono);font-weight:400;font-size:24px;letter-spacing:-.05em}
 .readout .big b em{font-style:normal;color:var(--faint);font-size:15px}
 .readout .bar{margin:13px 0 12px;height:8px;flex:none}
 .readout .sub{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
 .amt{margin-top:22px}
 .amt-top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px}
-.amt-top label{font-weight:600}.amt-top span{color:var(--muted)}
+.amt-top label{font-weight:500}.amt-top span{color:var(--muted)}
 .amt .inp input{font-family:var(--mono);font-size:24px;letter-spacing:-.05em;padding:13px 16px}
 .amt .inp .suf{font-family:var(--mono);font-size:14px}
 .chips{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
@@ -257,7 +259,7 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 #xDlg{width:min(440px,calc(100vw - 24px))}
 #filterDlg{width:min(600px,calc(100vw - 24px))}
 .wlist{display:grid;gap:8px;margin-top:18px}
-.wlist button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:11px 14px;border:1px solid var(--hair-2);border-radius:11px;font-weight:600;font-size:14px;transition:background var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
+.wlist button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:11px 14px;border:1px solid var(--hair-2);border-radius:11px;font-weight:500;font-size:14px;transition:background var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
 .wlist button:hover{background:var(--mist);border-color:var(--navy)}
 .wlist small{font-weight:400;font-size:12.5px;color:var(--muted)}
 .state{margin-top:20px;border-radius:16px;background:var(--mist);padding:16px 18px;font-size:14.5px;color:var(--ink-2)}
@@ -269,7 +271,7 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 .ca:hover{color:var(--navy-deep);border-color:var(--navy)}
 .ca i{font-style:normal;color:var(--faint)}
 .toasts{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:300;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:max-content;max-width:calc(100vw - 24px)}
-.toast{background:var(--raised);color:var(--ink);border:1px solid var(--hair-2);border-radius:12px;padding:11px 20px;font-size:14px;font-weight:500;box-shadow:0 18px 40px -14px var(--sh-toast);animation:toastIn .5s var(--out);text-align:center}
+.toast{background:var(--raised);color:var(--ink);border:1px solid var(--hair-2);border-radius:12px;padding:11px 20px;font-size:14px;font-weight:400;box-shadow:0 18px 40px -14px var(--sh-toast);animation:toastIn .5s var(--out);text-align:center}
 .toast.out{opacity:0;transform:translateY(8px);transition:opacity var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}
 @keyframes toastIn{0%{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
@@ -327,7 +329,7 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 /* ================================================================== views */
 .view[hidden]{display:none}
 a.row{color:inherit}
-.bar-link{font-size:14px;font-weight:600;color:var(--navy-deep);border-bottom:1px solid var(--hair-2);padding-bottom:1px}
+.bar-link{font-size:14px;font-weight:500;color:var(--navy-deep);border-bottom:1px solid var(--hair-2);padding-bottom:1px}
 .bar-link:hover{border-color:var(--navy-deep)}
 
 /* ================================================================ app bar */
@@ -338,14 +340,14 @@ a.row{color:inherit}
 .appbar>span:empty{display:none}   /* the docs bar has no sections */
 .appbar .tabs{justify-self:start;padding:0;gap:4px;border-color:transparent;background:none}
 .appbar .tabs .seg-ind{display:block;top:0;bottom:0;border-radius:999px;background:var(--pill)}
-.appbar .tabs button{padding:5px 11px;border-radius:999px;font-size:13.5px;font-weight:500;color:var(--muted);transition:color var(--fast) var(--ease-out),background var(--fast) var(--ease-out)}
+.appbar .tabs button{padding:5px 11px;border-radius:999px;font-size:13.5px;font-weight:400;color:var(--muted);transition:color var(--fast) var(--ease-out),background var(--fast) var(--ease-out)}
 .appbar .tabs button:hover{color:var(--ink)}
 .appbar .tabs button[aria-pressed="true"]{color:var(--navy-deep)}
 .appbar .brand small{font-family:var(--serif);font-style:italic;font-weight:400;font-size:19px;color:var(--muted);letter-spacing:-.01em;margin-left:2px}
 .appbar .right{justify-self:end;display:flex;align-items:center;gap:16px;position:relative}
 .appbar .btn{height:32px;padding:0 14px;font-size:12.5px;background:var(--pill);color:var(--navy-deep)}
 .appbar .btn:hover{background:var(--pill-hover)}
-.textlink{font-size:14px;font-weight:500;color:var(--navy-deep)}
+.textlink{font-size:14px;font-weight:400;color:var(--navy-deep)}
 .textlink:hover{color:var(--ink)}
 .appbar .textlink{font-size:15px;color:var(--muted)}
 .appbar .textlink:hover{color:var(--ink)}
@@ -380,15 +382,15 @@ a.ico:hover{color:var(--ink)}
 }
 /* the card that names a page, at the top of its side column; .card-h is the title of a card whose body is a list */
 .pagehead{padding:28px 24px 24px}
-.pagehead h1{font-weight:600;font-size:30px;letter-spacing:-.045em;line-height:1.05}
+.pagehead h1{font-weight:500;font-size:30px;letter-spacing:-.045em;line-height:1.05}
 .pagehead h1 i{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.12em;margin-right:.18em}
 .pagehead p{margin-top:14px;color:var(--muted);font-size:15px;line-height:1.55}
 .steps{display:flex;flex-direction:column;margin-top:20px}
-.steps button{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--hair);font-size:13.5px;font-weight:500;color:var(--ink-2);text-align:left;transition:color var(--dur) var(--ease-out),padding-left var(--dur) var(--ease-out)}
+.steps button{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--hair);font-size:13.5px;font-weight:400;color:var(--ink-2);text-align:left;transition:color var(--dur) var(--ease-out),padding-left var(--dur) var(--ease-out)}
 .steps button:last-child{padding-bottom:0}
 .steps button:hover{padding-left:4px}
 .steps button:hover{color:var(--navy-deep)}
-.steps-h{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);padding:18px 0 10px;border-top:1px solid var(--hair)}
+.steps-h{font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);padding:18px 0 10px;border-top:1px solid var(--hair)}
 .step-opt{display:flex;align-items:center;gap:12px;border-top:1px solid var(--hair)}
 .step-opt>button[data-step]{flex:1;border-top:0;padding-bottom:13px}
 /* an on/off switch: the optional sections of the Launch form */
@@ -397,8 +399,8 @@ a.ico:hover{color:var(--ink)}
 .switch[aria-checked="true"],.steps .switch[aria-checked="true"]{background:var(--solid)}
 .switch[aria-checked="true"]::after{transform:translateX(14px);background:#fff}
 .switch:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
-.steps .num{font-size:11.5px;font-weight:500;background:var(--navy-wash);color:var(--navy-deep);border-radius:6px;padding:4px 6px}
-.card-h{padding:24px 24px 14px;font-size:18px;font-weight:600;letter-spacing:-.03em;line-height:1.2}
+.steps .num{font-size:11.5px;font-weight:400;background:var(--navy-wash);color:var(--navy-deep);border-radius:6px;padding:4px 6px}
+.card-h{padding:24px 24px 14px;font-size:18px;font-weight:500;letter-spacing:-.03em;line-height:1.2}
 /* in the side column a raise row stacks: project and action, then the bar, then raised and time */
 #mineList .row{grid-template-columns:1fr auto;grid-template-areas:"proj act" "prog prog" "raised time";row-gap:12px;padding:16px 24px;border-top:1px solid var(--hair);border-bottom:0}
 #mineList .c-proj{grid-area:proj}#mineList .c-act{grid-area:act}#mineList .c-prog{grid-area:prog}#mineList .c-raised{grid-area:raised;text-align:left}#mineList .c-time{grid-area:time}
@@ -409,9 +411,9 @@ a.ico:hover{color:var(--ink)}
 .mini:focus-within{border-color:var(--navy);box-shadow:0 0 0 4px var(--ring)}
 .mini input,.mini select{border:0;outline:0;background:transparent;font-size:14px;min-width:0}
 .mini svg{width:15px;height:15px;stroke:var(--faint);fill:none;stroke-width:1.8;stroke-linecap:round;flex:none}
-.mini select{font-weight:600;color:var(--ink-2);cursor:pointer;padding-right:2px}
+.mini select{font-weight:500;color:var(--ink-2);cursor:pointer;padding-right:2px}
 .mini.search input{width:150px}
-.quick{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);font-weight:600}
+.quick{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);font-weight:500}
 .quick .mini{padding:0 13px;height:38px;border-radius:11px}
 .quick .mini input{width:46px;font-family:var(--mono);font-size:15px;text-align:right;letter-spacing:-.03em}
 .quick .mini span{font-family:var(--mono);font-size:13px;color:var(--faint)}
@@ -422,7 +424,7 @@ a.ico:hover{color:var(--ink)}
 .board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:start}
 .col{display:flex;flex-direction:column;height:calc(100dvh - 214px);min-height:460px;padding:24px 18px 0}
 .col-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 6px 20px}
-.col-head h2{display:flex;align-items:center;gap:11px;font-size:20px;font-weight:600;letter-spacing:-.035em;line-height:1.1;white-space:nowrap}
+.col-head h2{display:flex;align-items:center;gap:11px;font-size:20px;font-weight:500;letter-spacing:-.035em;line-height:1.1;white-space:nowrap}
 .col-head h2 svg{flex:none;width:22px;height:22px;stroke:var(--navy-deep);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .col-head h2 .tag{font-size:13px;letter-spacing:-.01em}
 .col-side{display:flex;align-items:center;gap:12px;min-width:0}
@@ -432,12 +434,12 @@ a.ico:hover{color:var(--ink)}
 @container (max-width:460px){.col-note{display:none}}
 /* each column sorts on its own: a small dropdown in its head */
 .col-sort{height:28px;padding:0 6px 0 9px;gap:4px;border-radius:8px}
-.col-sort select{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.col-sort select{font-size:13.5px;font-weight:500;color:var(--ink-2)}
 .col-sort svg{width:12px;height:12px}
 .col-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:12px;padding:0 0 18px}
 .col-empty{padding:36px 12px 40px;text-align:center;color:var(--muted);font-size:15px}
 .col-empty .mark{width:48px;height:48px;margin:0 auto 12px;color:var(--navy-soft)}
-.col-empty a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
+.col-empty a{color:var(--navy-deep);font-weight:500;border-bottom:1px solid var(--hair-2)}
 /* A raise on the board, three short lines: its name; its countdown, links and backers; its checks. The fill sits under the
    avatar, the raised amount and the deposit button on the right. */
 .br{position:relative;flex:none;display:grid;grid-template-columns:48px minmax(0,1fr) auto;grid-template-areas:"av name val" "av soc act" "av flags act";gap:5px 14px;align-items:center;padding:12px 14px;border:1px solid transparent;border-radius:14px;background:var(--tile);transition:background var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
@@ -453,7 +455,7 @@ a.ico:hover{color:var(--ink)}
 .br .pct{width:auto;font-size:11.5px;line-height:1.2;text-align:center;color:var(--ink-2)}
 .br-name{grid-area:name;display:flex;align-items:center;gap:8px;min-width:0}
 .br .pick{display:flex;align-items:baseline;gap:8px;min-width:0;white-space:nowrap}
-.br .pick b{font-size:16px;font-weight:600;letter-spacing:-.02em}
+.br .pick b{font-size:16px;font-weight:500;letter-spacing:-.02em}
 .br .pick span{font-size:14px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
 .br-name .tag,.br-flags .tag{flex:none;font-size:11.5px;padding:1px 8px}
 .br-meta{grid-area:soc;display:flex;align-items:center;gap:10px;min-width:0;min-height:24px;font-size:13px;color:var(--muted);white-space:nowrap}
@@ -469,7 +471,7 @@ a.ico:hover{color:var(--ink)}
 .br-ico svg{width:14px;height:14px;fill:currentColor}
 .br-ico svg.line{fill:none;stroke:currentColor;stroke-width:1.7}
 .br-ico.is-x{display:none}
-.br-handle{display:inline-flex;align-items:center;gap:5px;min-width:0;margin-left:5px;padding:2px 9px 2px 7px;border-radius:999px;background:var(--chip);color:var(--ink-2);font-size:12.5px;font-weight:500;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
+.br-handle{display:inline-flex;align-items:center;gap:5px;min-width:0;margin-left:5px;padding:2px 9px 2px 7px;border-radius:999px;background:var(--chip);color:var(--ink-2);font-size:12.5px;font-weight:400;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
 .br-handle svg{flex:none;width:11px;height:11px;fill:currentColor}
 .br-handle span{overflow:hidden;text-overflow:ellipsis}
 .br-val{grid-area:val;justify-self:end;font-size:15px;color:var(--ink);white-space:nowrap}
@@ -498,7 +500,7 @@ a.ico:hover{color:var(--ink)}
 .board-foot .foot-note{margin-left:auto}
 .board-foot button{color:var(--ink-2);border-bottom:1px solid var(--hair-2);margin-left:6px}
 .board-note{font-size:13px}
-.board-note a{color:var(--navy-deep);font-weight:600;border-bottom:1px solid var(--hair-2)}
+.board-note a{color:var(--navy-deep);font-weight:500;border-bottom:1px solid var(--hair-2)}
 @media (max-width:1000px){.board{grid-template-columns:1fr}.col{height:auto;min-height:0}.col-list{overflow:visible}}
 /* on a wide window the board fills the window: header, toolbar, columns, then the foot line, with no page scroll. The columns take
    whatever height is left, so the foot line always sits at the bottom edge. Under 1000px the columns stack and the page scrolls. */
@@ -525,11 +527,11 @@ a.ico:hover{color:var(--ink)}
 .pick::after{content:"";position:absolute;inset:0;border-radius:18px}
 .pick:focus-visible{outline:none}.pick:focus-visible::after{outline:2px solid var(--navy);outline-offset:2px}
 .t-act{text-align:right;position:relative;z-index:1}
-.qb{border:1px solid var(--hair-2);background:var(--chip);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;white-space:nowrap;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}
+.qb{border:1px solid var(--hair-2);background:var(--chip);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:500;white-space:nowrap;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}
 .qb:hover,.qb.hot{background:var(--accent);border-color:var(--accent);color:#fff}
 .qb:active{transform:scale(.97)}
 .qb[disabled]{opacity:.5;cursor:wait}
-.qb .num{font-weight:500}
+.qb .num{font-weight:400}
 
 /* a raise's own page. Every list opens it in a new browser tab, so the list stays where it was. Stacked on a phone; on a wide screen
    the raise sits on the left (readout, chart, recent buys) and the buy on the right (amount, terms, facts). */
@@ -554,12 +556,12 @@ a.ico:hover{color:var(--ink)}
 .chart .legend i{display:inline-block;width:16px;height:0;border-top:2px solid var(--navy);vertical-align:middle;margin-right:6px}
 .chart .legend i.dash{border-top:1.5px dashed var(--navy-soft)}
 .pace{display:flex;justify-content:space-between;gap:12px;margin-top:10px;font-size:13px;color:var(--muted)}
-.pace b{font-family:var(--mono);font-weight:500;color:var(--ink);letter-spacing:-.03em}
+.pace b{font-family:var(--mono);font-weight:400;color:var(--ink);letter-spacing:-.03em}
 .acts{margin-top:18px}
-.acts h4{font-size:13px;font-weight:600;color:var(--ink-2);margin-bottom:6px}
+.acts h4{font-size:13px;font-weight:500;color:var(--ink-2);margin-bottom:6px}
 .acts div{display:grid;grid-template-columns:1fr auto 64px;gap:12px;padding:7px 0;border-top:1px solid var(--hair);font-size:12px;font-family:var(--mono);letter-spacing:-.03em}
 .acts div span:nth-child(1){color:var(--muted)}.acts div span:nth-child(3){color:var(--faint);text-align:right}
-.acts div.you span:nth-child(1){color:var(--navy-deep);font-weight:500}
+.acts div.you span:nth-child(1){color:var(--navy-deep);font-weight:400}
 .split{display:grid;grid-template-columns:1fr 1fr;gap:0;margin-top:12px;border:1px solid var(--hair);background:var(--paper)}
 .split div{padding:10px 13px}.split div+div{border-left:1px solid var(--hair)}
 .split dt{font-size:11.5px;color:var(--faint)}.split dd{font-family:var(--mono);font-size:13px;letter-spacing:-.03em;margin-top:1px}
@@ -577,7 +579,7 @@ a.ico:hover{color:var(--ink)}
   .prow,.pcols{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1.3fr) 132px}
   .pcols span:nth-child(3),.prow>span:nth-child(3){display:none}
 }
-.pcols{padding-top:4px;padding-bottom:12px;border-bottom:1px solid var(--hair);font-size:13.5px;color:var(--faint);font-weight:500}
+.pcols{padding-top:4px;padding-bottom:12px;border-bottom:1px solid var(--hair);font-size:13.5px;color:var(--faint);font-weight:400}
 .prow{padding-top:18px;padding-bottom:18px;border-bottom:1px solid var(--hair)}
 .prow:last-child{border-bottom:0}
 .pcols span:nth-child(n+2),.prow>span:nth-child(n+2){text-align:right}
@@ -592,9 +594,9 @@ a.ico:hover{color:var(--ink)}
    Docs are for reading, so the page stops growing at 1560px instead of filling a very wide window. */
 .docs{position:relative;z-index:1;max-width:1560px;margin:0 auto;padding:20px 24px 72px;display:grid;grid-template-columns:clamp(230px,16vw,280px) minmax(0,1fr);gap:18px;align-items:start}
 .toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);display:flex;flex-direction:column;gap:2px;padding:14px;border:1px solid var(--panel-line);border-radius:18px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost)}
-.toc a{padding:7px 11px;border-radius:8px;color:var(--muted);font-size:13.5px;font-weight:500;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
+.toc a{padding:7px 11px;border-radius:8px;color:var(--muted);font-size:13.5px;font-weight:400;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
 .toc a:hover{color:var(--ink)}
-.toc a.on{background:var(--navy-wash);color:var(--navy-deep);font-weight:600}
+.toc a.on{background:var(--navy-wash);color:var(--navy-deep);font-weight:500}
 .docs article{display:flex;flex-direction:column;gap:18px;min-width:0}
 .doc-hero,.prose,.aside{border:1px solid var(--panel-line);border-radius:18px;background:var(--panel);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost)}
 .doc-hero{position:relative;overflow:hidden;padding:40px 34px 36px}
@@ -609,11 +611,11 @@ a.ico:hover{color:var(--ink)}
 .prose ol,.prose ul{margin:4px 0 16px 1.15em;color:var(--ink-2);font-size:16px}
 .prose li{margin-bottom:9px;padding-left:4px;line-height:1.6}
 .prose li::marker{color:var(--navy);font-family:var(--mono);font-size:13.5px}
-.prose b{font-weight:600;color:var(--ink)}
+.prose b{font-weight:500;color:var(--ink)}
 .prose .note{border:0;background:var(--tile);border-radius:14px;padding:16px 18px;font-size:15px;color:var(--ink-2);margin-top:6px}
 .aside{position:sticky;top:calc(env(safe-area-inset-top,0px) + 84px);padding:26px 26px 24px}
 .aside .tick{display:none}
-.aside h3{font-size:14px;font-weight:600;color:var(--muted);margin-bottom:8px}
+.aside h3{font-size:14px;font-weight:500;color:var(--muted);margin-bottom:8px}
 .aside h3:not(:first-of-type){margin-top:22px;padding-top:20px;border-top:1px solid var(--hair)}
 .eq{font-family:var(--serif);font-size:21px;line-height:1.5;padding:8px 0;color:var(--ink);word-spacing:.06em}
 .eq i{font-style:italic}
@@ -629,7 +631,7 @@ a.ico:hover{color:var(--ink)}
 .kv dt{color:var(--muted)}.kv dd{font-family:var(--mono);letter-spacing:-.03em;text-align:right;color:var(--ink)}
 .kv dd.t{font-family:var(--sans);letter-spacing:-.01em}
 .dtable{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:4px}
-.dtable th{text-align:left;font-weight:500;color:var(--faint);font-size:13.5px;padding:9px 12px 9px 0;border-bottom:1px solid var(--hair)}
+.dtable th{text-align:left;font-weight:400;color:var(--faint);font-size:13.5px;padding:9px 12px 9px 0;border-bottom:1px solid var(--hair)}
 .dtable td{padding:12px 12px 12px 0;border-bottom:1px solid var(--hair);color:var(--ink-2);vertical-align:top}
 .dtable td.num,.dtable th.r{text-align:right}
 .dtable tr:last-child td{border-bottom:0}
@@ -639,7 +641,7 @@ a.ico:hover{color:var(--ink)}
 .calc .inp{border-radius:12px}.calc .inp input{padding:11px 14px;font-family:var(--mono);font-size:15px;letter-spacing:-.03em}
 .calc .seg{grid-column:1/-1;justify-self:start}
 .calc .seg button{padding:7px 14px;font-size:13.5px}
-.st{display:inline-block;font-size:12.5px;font-weight:600;border-radius:999px;padding:2px 10px;border:1px solid var(--hair-2);color:var(--muted)}
+.st{display:inline-block;font-size:12.5px;font-weight:500;border-radius:999px;padding:2px 10px;border:1px solid var(--hair-2);color:var(--muted)}
 .st.set{background:var(--accent);border-color:var(--accent);color:#fff}
 .st.open{border-style:dashed}
 .life{width:100%;height:auto;display:block;margin:6px 0 18px}
@@ -684,13 +686,13 @@ a.ico:hover{color:var(--ink)}
 .state.warnbox{background:var(--warn-bg);color:var(--warn-ink-2);font-size:14.5px;margin-top:14px}
 .state.warnbox b{color:var(--warn-strong);font-size:14.5px}
 .quick .mini input{width:84px}
-.quick .mini select{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--muted)}
+.quick .mini select{font-family:var(--mono);font-size:14px;font-weight:400;color:var(--muted)}
 .f .lab .hint{display:inline}
 @media (max-width:900px){.quick .mini input{width:100%}.quick .mini:first-of-type{flex:1}}
 .sh-head .meta{flex-wrap:wrap;row-gap:4px;white-space:normal}
 .sh-head .nm{min-width:0}
 .chips.stocks button[aria-pressed="true"]{background:var(--solid);border-color:var(--solid);color:#fff}
-.promise b{font-weight:500}
+.promise b{font-weight:400}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -1717,7 +1719,7 @@ function renderWallet() {
   const b = $('#walletBtn');
   if (state.wallet) {
     const xl = xAdapter.of();   // a linked X account names the wallet; without one the address does
-    b.innerHTML = `<span class="wdot"></span>${xl ? `<span class="wx">${X_GLYPH}@${esc(xl.handle)}</span>` : `<span class="num" style="font-weight:500">${esc(state.wallet.addr)}</span>`}`;
+    b.innerHTML = `<span class="wdot"></span>${xl ? `<span class="wx">${X_GLYPH}@${esc(xl.handle)}</span>` : `<span class="num" style="font-weight:400">${esc(state.wallet.addr)}</span>`}`;
     $('#walletName').textContent = (state.wallet.name || 'Demo wallet') + (xl ? ' · ' + state.wallet.addr : '');
     $('#walletBals').innerHTML = balRows() + (state.wallet.stale ? '<p class="where" style="margin-top:8px">Balances could not be loaded from Solana. Open this menu again to retry.</p>' : '');
   }
