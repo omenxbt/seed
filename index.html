@@ -295,7 +295,7 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 @media (prefers-reduced-motion:reduce){
   dialog[open],.toast{animation-duration:.01s;animation-delay:0s}
   .rd-s{transition:none}.pp-loading::after{animation:none}
-  .br.fresh,.fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct,.bump [data-dpct]{animation:none}
+  .tile.fresh,.fresh .bar i,.live .bar i::after,.bump .bar i::after,.bump .pct,.bump [data-dpct]{animation:none}
 }
 
 /* ================================================================= motion */
@@ -431,22 +431,6 @@ a.ico:hover{color:var(--ink)}
 .trend-row{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding:2px 2px 6px;scroll-behavior:smooth}
 .trend-row::-webkit-scrollbar{display:none}
 .trend-row:empty::after{content:"Nothing is moving right now.";font-size:14px;color:var(--muted);padding:8px 4px}
-.tr-card{flex:none;width:188px;scroll-snap-align:start;display:flex;flex-direction:column;gap:10px;padding:10px 10px 12px;border-radius:16px;background:var(--panel);border:1px solid var(--panel-line);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);color:inherit;transition:border-color var(--fast) var(--ease-out),transform var(--dur) var(--ease-out)}
-.tr-card:hover{border-color:var(--hair-2);transform:translateY(-2px)}
-.tr-art{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:linear-gradient(150deg,hsl(var(--h) 90% 93%/.95),hsl(calc(var(--h) + 55) 90% 87%/.85));display:grid;place-items:center}
-.tr-art img{width:100%;height:100%;object-fit:cover}
-.tr-art .glyph-art{display:grid;place-items:center;width:100%;height:100%}
-.tr-art .glyph-art svg{width:44%;height:44%;fill:hsl(calc(var(--h) + 20) 42% 44%)}
-.tr-rank{position:absolute;left:8px;top:8px;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:rgba(18,19,22,.72);color:#fff;font-family:var(--mono);font-size:12px;display:grid;place-items:center}
-.tr-name{display:flex;align-items:baseline;gap:7px;min-width:0;padding:0 2px;white-space:nowrap}
-.tr-name b{font-size:15px;letter-spacing:-.02em}
-.tr-name span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
-.tr-fig{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:0 2px}
-.tr-fig b{font-size:16px;font-weight:400;white-space:nowrap}
-.tr-fig em{font-style:normal;font-size:12px;color:var(--faint)}
-.tr-chg{font-size:12px;font-weight:500;border-radius:999px;padding:2px 8px;background:var(--chip);color:var(--muted);white-space:nowrap}
-.tr-chg.up{background:var(--ok-bg);color:var(--ok-ink)}
-.tr-chg.seeded{background:var(--pill);color:var(--navy-deep)}
 /* the feed: one list of raises under tabs for each stage, in as many columns as fit */
 .board{display:flex;flex-direction:column;min-height:360px;padding:18px 18px 0}
 .col-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px 16px}
@@ -460,67 +444,65 @@ a.ico:hover{color:var(--ink)}
 .feed-tabs .ct{font-size:12px;border-radius:999px;padding:0 7px;background:var(--chip);color:var(--muted)}
 .feed-tabs .ct:empty{display:none}
 .feed-tabs button[aria-selected="true"] .ct{background:var(--solid);color:#fff}
-.col-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:repeat(auto-fill,minmax(520px,1fr));gap:12px;align-content:start;padding:0 0 18px}
-.cell{container-type:inline-size;min-width:0}
+.col-list{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:grid;grid-template-columns:repeat(auto-fill,minmax(236px,1fr));gap:12px;align-content:start;padding:2px 2px 18px}
 .col-empty{grid-column:1 / -1;padding:36px 12px 40px;text-align:center;color:var(--muted);font-size:15px}
 .col-empty .mark{width:48px;height:48px;margin:0 auto 12px;color:var(--navy-soft)}
 .col-empty a{color:var(--navy-deep);font-weight:500;border-bottom:1px solid var(--hair-2)}
 @media (max-width:700px){.col-note{display:none}.feed-head{flex-wrap:wrap}}
 .col-sort{height:28px;padding:0 6px 0 9px;gap:4px;border-radius:8px}
 .col-sort svg{width:12px;height:12px}
-/* A raise on the board, three short lines: its name; its countdown, links and backers; its checks. The fill sits under the
-   avatar, the raised amount and the deposit button on the right. */
-.br{position:relative;flex:none;display:grid;grid-template-columns:48px minmax(0,1fr) auto;grid-template-areas:"av name val" "av soc act" "av flags act";gap:5px 14px;align-items:center;padding:12px 14px;border:1px solid transparent;border-radius:14px;background:var(--tile);transition:background var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
-.br:hover{border-color:var(--hair-2);background:var(--mist)}
-.br:hover .br-av{transform:scale(1.07)}
-.br .pick::after{border-radius:14px}
-.br-main,.br-side{display:contents}
-.br-avc{grid-area:av;align-self:center;display:flex;flex-direction:column;gap:6px;min-width:0}
-.br-av{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;transition:transform .4s var(--ease-out);background:linear-gradient(150deg,hsl(var(--h) 90% 93%/.95),hsl(calc(var(--h) + 55) 90% 87%/.85))}
-.br-av svg{width:56%;height:56%;fill:hsl(calc(var(--h) + 20) 42% 44%)}
-.br .c-prog{flex-direction:column;align-items:stretch;gap:3px}
-.br .bar{flex:none;height:4px}
-.br .pct{width:auto;font-size:11.5px;line-height:1.2;text-align:center;color:var(--ink-2)}
-.br-name{grid-area:name;display:flex;align-items:center;gap:8px;min-width:0}
-.br .pick{display:flex;align-items:baseline;gap:8px;min-width:0;white-space:nowrap}
-.br .pick b{font-size:16px;font-weight:500;letter-spacing:-.02em}
-.br .pick span{font-size:14px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
-.br-name .tag,.br-flags .tag{flex:none;font-size:11.5px;padding:1px 8px}
-.br-meta{grid-area:soc;display:flex;align-items:center;gap:10px;min-width:0;min-height:24px;font-size:13px;color:var(--muted);white-space:nowrap}
+/* A raise as a tile, on the Trending row and in the feed: its art with the fill drawn along the bottom, name, raised
+   amount with a chip for what it is doing, then (in the feed) its time, backers, links and checks, and the button. */
+.tile{position:relative;display:flex;flex-direction:column;gap:9px;padding:10px 10px 12px;border-radius:16px;background:var(--panel);border:1px solid var(--panel-line);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);transition:border-color var(--fast) var(--ease-out),transform var(--dur) var(--ease-out),background var(--fast) var(--ease-out)}
+.tile:hover{border-color:var(--hair-2);transform:translateY(-2px)}
+.tile .pick::after{border-radius:16px}
+.tile:hover .tr-art img,.tile:hover .tr-art .glyph-art{transform:scale(1.04)}
+.tr-art{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:linear-gradient(150deg,hsl(var(--h) 90% 93%/.95),hsl(calc(var(--h) + 55) 90% 87%/.85));display:grid;place-items:center}
+.tr-card .tr-art{aspect-ratio:4 / 3}
+.tr-art img,.tr-art .glyph-art{width:100%;height:100%;transition:transform .7s var(--ease-out)}
+.tr-art img{object-fit:cover}
+.tr-art .glyph-art{display:grid;place-items:center}
+.tr-art .glyph-art svg{width:40%;height:40%;fill:hsl(calc(var(--h) + 20) 42% 44%)}
+.tr-rank,.tr-pct{position:absolute;top:8px;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:rgba(18,19,22,.72);color:#fff;font-family:var(--mono);font-size:12px;display:grid;place-items:center}
+.tr-rank{left:8px}.tr-pct{right:8px}
+.tr-art .bar{position:absolute;left:8px;right:8px;bottom:8px;height:5px;flex:none;background:rgba(18,19,22,.45)}
+.tr-name{display:flex;align-items:baseline;gap:7px;min-width:0;padding:0 2px;white-space:nowrap}
+.tr-name .pick{display:flex;align-items:baseline;gap:7px;min-width:0}
+.tr-name b{font-size:15px;letter-spacing:-.02em}
+.tr-name .pick span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.tr-name .tag{flex:none;font-size:11px;padding:1px 7px}
+.tr-fig{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 2px;min-width:0}
+.tr-fig b{font-size:15px;font-weight:400;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.tr-fig em{font-style:normal;font-size:12px;color:var(--faint)}
+.tr-chg{flex:none;font-size:12px;font-weight:500;border-radius:999px;padding:2px 8px;background:var(--chip);color:var(--muted);white-space:nowrap}
+.tr-chg.up{background:var(--ok-bg);color:var(--ok-ink)}
+.tr-chg.seeded{background:var(--pill);color:var(--navy-deep)}
+.tr-chg.off{background:var(--chip);color:var(--muted)}
+.tile-meta,.tile-flags{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:0 2px;font-size:13px;color:var(--muted)}
+.tile-flags{gap:6px;position:relative;z-index:1;pointer-events:none}
+.tile-flags .risk-chip,.tile-flags .pace-chip{font-size:11.5px;padding:2px 8px 2px 6px;gap:4px}
+.tile-flags .pace-chip{padding:2px 8px}
+.tile-flags .risk-chip svg{width:12px;height:12px}
 .br-stat{display:inline-flex;align-items:center;gap:5px;flex:none}
 .br-stat svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .br-stat.time{color:var(--ok-ink)}
 .br-stat.time.soon{color:var(--caution-ink)}
 .br-stat.fresh-ann{color:var(--navy-deep)}
-/* the links sit above the card's own link, so each one opens its site and not the raise */
+/* the links sit above the tile's own link, so each one opens its site and not the raise */
 .br-links{display:flex;align-items:center;gap:1px;position:relative;z-index:1;min-width:0;overflow:hidden}
 .br-ico{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:7px;color:var(--ink-2);transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
-.br-ico:hover,.br-handle:hover{background:var(--navy-wash);color:var(--ink)}
+.br-ico:hover{background:var(--navy-wash);color:var(--ink)}
 .br-ico svg{width:14px;height:14px;fill:currentColor}
 .br-ico svg.line{fill:none;stroke:currentColor;stroke-width:1.7}
-.br-ico.is-x{display:none}
-.br-handle{display:inline-flex;align-items:center;gap:5px;min-width:0;margin-left:5px;padding:2px 9px 2px 7px;border-radius:999px;background:var(--chip);color:var(--ink-2);font-size:12.5px;font-weight:400;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
-.br-handle svg{flex:none;width:11px;height:11px;fill:currentColor}
-.br-handle span{overflow:hidden;text-overflow:ellipsis}
-.br-val{grid-area:val;justify-self:end;font-size:15px;color:var(--ink);white-space:nowrap}
-.br-val em{font-style:normal;color:var(--faint);font-size:12.5px}
-.br-sub{font-size:12.5px;color:var(--muted);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.br .t-act{grid-area:act;justify-self:end;align-self:center}
-.br .t-act:empty{display:none}
-.br .qb{display:inline-flex;align-items:center;gap:5px;background:var(--accent);border-color:var(--accent);color:#fff;padding:6px 11px;font-size:12px;border-radius:999px}
-.br .qb:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.br-handle{display:none}
+.tile .t-act{margin-top:auto;padding-top:2px}
+.tile .t-act:empty{display:none}
+.tile .qb{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;background:var(--accent);border-color:var(--accent);color:#fff;padding:8px 12px;font-size:12.5px;border-radius:10px}
+.tile .qb:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
 .qb-bolt{display:none}
-.br .qb-bolt{display:block;width:13px;height:13px;fill:currentColor}
-/* in a narrow column the X account shows as an icon, and the button keeps only its amount */
-@container (max-width:540px){
-  .br{grid-template-areas:"av name val" "av soc soc" "av flags act";column-gap:11px;padding:11px 12px}
-  .br-flags{flex-wrap:wrap}
-  .br-handle,.br-flags .tag,.br-flags .br-sub{display:none}
-  .br-ico.is-x{display:grid}
-  .br-meta{gap:8px;flex-wrap:wrap}
-  .br .qb{padding:6px 10px}
-  .br .qb-w{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
-}
+.tile .qb-bolt{display:block;width:13px;height:13px;fill:currentColor}
+/* the Trending row's tiles are wider and show less */
+.tr-card{flex:none;width:272px;scroll-snap-align:start}
 /* one line under the columns: the refunded-presales note on the left, the prototype disclaimer and reset on the right. The columns are
    sized so this line sits at the foot of the window. */
 .board-foot{display:flex;align-items:baseline;gap:4px 24px;flex-wrap:wrap;margin-top:16px;padding:0 2px;font-size:13px;color:var(--muted)}
@@ -529,13 +511,15 @@ a.ico:hover{color:var(--ink)}
 .board-foot button{color:var(--ink-2);border-bottom:1px solid var(--hair-2);margin-left:6px}
 .board-note{font-size:13px}
 .board-note a{color:var(--navy-deep);font-weight:500;border-bottom:1px solid var(--hair-2)}
-@media (max-width:1000px){.board{min-height:0}.col-list{overflow:visible;grid-template-columns:1fr}}
+@media (max-width:1000px){.board{min-height:0}.col-list{overflow:visible}}
+@media (max-width:560px){.col-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tile{padding:8px 8px 10px}.tile .tr-fig em{display:none}}
 /* on a wide window the board fills the window: header, toolbar, columns, then the foot line, with no page scroll. The columns take
    whatever height is left, so the foot line always sits at the bottom edge. Under 1000px the columns stack and the page scrolls. */
 @media (min-width:1001px){
   #view-app.wide{display:flex;flex-direction:column;height:100dvh}
   #view-app.wide .appmain{flex:1;min-height:0;width:100%;display:flex;flex-direction:column}
   #view-app.wide #tab-terminal{flex:1;min-height:0;display:flex;flex-direction:column}
+  #tab-terminal{width:100%;max-width:1560px;margin:0 auto;padding:0 clamp(8px,2.5vw,48px)}
   #view-app.wide .board{flex:1;min-height:0}
   #view-app.wide .trend{flex:none}
   #view-app.wide .board-foot{flex:none}
@@ -550,7 +534,7 @@ a.ico:hover{color:var(--ink)}
 .xbar .btn{height:38px;border-radius:11px;padding:0 16px;font-size:13.5px}
 
 .br.flash{animation:flash 1.8s ease-out}
-.br.fresh{animation:cardIn .4s var(--ease-out) backwards;animation-delay:calc(var(--i,0)*35ms)}
+.tile.fresh{animation:cardIn .4s var(--ease-out) backwards;animation-delay:calc(var(--i,0)*35ms)}
 @keyframes cardIn{from{opacity:0;transform:translateY(8px)}}
 .pick::after{content:"";position:absolute;inset:0;border-radius:18px}
 .pick:focus-visible{outline:none}.pick:focus-visible::after{outline:2px solid var(--navy);outline-offset:2px}
@@ -1570,14 +1554,23 @@ function trendScore(p) {
   if (p.status === 'seeded') return Math.max(0, 40 - (now - (p.resolvedAt || now)) / D * 5);
   return -1;
 }
-function trendCard(p, i) {
-  const now = Date.now(), C = Q(p);
-  const chg = p.status === 'live' ? (() => { const r = (p.raised - raisedAt(p, now - 6 * H)) / p.target * 100; return r > 0 ? `<span class="tr-chg up">+${r < 10 ? r.toFixed(1) : Math.round(r)}% · 6h</span>` : '<span class="tr-chg">Quiet · 6h</span>'; })()
-    : `<span class="tr-chg seeded">Seeded ${fmtAgo(now - (p.resolvedAt || now))}</span>`;
-  return `<a class="tr-card" href="#/presale/${p.id}" target="_blank" rel="noopener" style="--h:${hashStr(p.ticker) % 360}" data-row="${p.id}" aria-label="${esc(p.name)}, number ${i + 1} trending">
-    <span class="tr-art">${artHTML(p, 'tr-img')}<span class="tr-rank">${i + 1}</span></span>
-    <span class="tr-name"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></span>
-    <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b>${chg}</span></a>`;
+/* what a raise is doing, as a chip: a live one by its last six hours, a seeded one by when it seeded */
+function doingChip(p) {
+  const now = Date.now();
+  if (p.status === 'live') { const r = (p.raised - raisedAt(p, now - 6 * H)) / p.target * 100; return r > 0 ? `<span class="tr-chg up">+${r < 10 ? r.toFixed(1) : Math.round(r)}% · 6h</span>` : '<span class="tr-chg">Quiet · 6h</span>'; }
+  if (p.status === 'seeded') return `<span class="tr-chg seeded">Seeded ${fmtAgo(now - (p.resolvedAt || now))}</span>`;
+  return '<span class="tr-chg off">Refunded</span>';
+}
+/* a raise as a tile. The Trending row shows the short form with its rank; the feed adds time, backers, links, checks and the button. */
+function tile(p, i, trend, fresh = '') {
+  const C = Q(p), pc = pctOf(p), live = p.status === 'live';
+  return `<div class="tile ${p.status}${trend ? ' tr-card' : fresh}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
+    <span class="tr-art">${artHTML(p, 'tr-img')}${trend ? `<span class="tr-rank">${i + 1}</span>` : ''}<span class="tr-pct" data-pct>${Math.floor(pc + 1e-7)}%</span><span class="bar"><i data-bar style="width:${pc}%"></i></span></span>
+    <span class="tr-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${trend ? '' : `${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}`}</span>
+    <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b>${doingChip(p)}</span>
+    ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span>${rowAnn(p)}${rowLinks(p)}</span>
+    <span class="tile-flags">${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
+    <span class="t-act">${actCell(p)}</span>`}</div>`;
 }
 const FEED_NOTE = { all: 'Live and seeded', new: 'Under 50% filled', seeding: 'Past halfway', seeded: 'Target met', refunded: 'Missed the target' };
 function renderTerminal() {
@@ -1588,7 +1581,7 @@ function renderTerminal() {
   syncFilterBadges();
   /* trending: the eight most active, whatever the tabs and filters say */
   const trend = state.presales.filter(p => trendScore(p) >= 0).sort((a, b) => trendScore(b) - trendScore(a) || b.openedAt - a.openedAt).slice(0, 8);
-  $('#trendRow').innerHTML = trend.map(trendCard).join('');
+  $('#trendRow').innerHTML = trend.map((p, i) => tile(p, i, true)).join('');
   /* the feed */
   const k = ui.feed, list = lists[k].slice().sort(sorter(k)), fresh = freshIn('term', list);
   $$('#feedTabs [data-feed]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.feed === k)));
@@ -1597,12 +1590,7 @@ function renderTerminal() {
   fb.hidden = !fn; fb.dataset.filt = COLS.includes(k) ? k : ''; fb.innerHTML = `${FUNNEL}${fn}`; fb.title = `${fn} filter${fn > 1 ? 's' : ''} on this tab`;
   const none = { all: 'Nothing is live or seeded right now. <a href="#/launch">Start a raise</a>', new: 'No new ideas right now. <a href="#/launch">Start one</a>', seeding: 'Nothing is past halfway yet.', seeded: 'Nothing has seeded yet.', refunded: 'Nothing has refunded.' };
   const name = { new: 'New ideas', seeding: 'Seeding', seeded: 'Seeded' }[k];
-  $('#feed').innerHTML = list.length ? list.map((p, i) => `<div class="cell"><div class="br ${p.status}${fresh(p)}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
-      <span class="br-avc"><span class="br-av"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>${progCell(p)}</span>
-      <div class="br-main"><div class="br-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pctOf(p) + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}${p.status === 'refunded' ? '<span class="tag">Refunded</span>' : ''}</div>
-        <div class="br-meta">${p.status === 'live' ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}${rowLinks(p)}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span>${rowAnn(p)}</div>
-        <div class="br-flags"><span class="tag">${esc(Q(p).sym)} pair</span>${riskChip(riskSummary(riskChecks(p)))}${p.status === 'live' ? `<span data-pacechip>${paceChip(paceInfo(p))}</span><span class="br-sub num" title="Pace needed to seed" data-pace>${paceTxt(p)}</span>` : ''}</div></div>
-      <div class="br-side"><span class="br-val num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(Q(p).sym)}</em></span><span class="t-act">${actCell(p)}</span></div></div></div>`).join('')
+  $('#feed').innerHTML = list.length ? list.map((p, i) => tile(p, i, false, fresh(p))).join('')
     : `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${q ? `Nothing here matches "${esc(q)}".` : name && ruleCounts(filters[k]).all ? `Nothing in ${name} passes its filters. <a href="#" data-filt="${k}">Change them</a>` : k === 'all' && filterTotal() && (state.presales.some(p => colOf(p))) ? 'Nothing passes the filters. <a href="#" data-filt="">Change them</a>' : ui.fAsset !== 'all' ? 'Nothing here with this pair.' : none[k]}</div>`;
   const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live';
   hint.hidden = !show; if (show) hint.textContent = 'To see both endings: quick-deposit into Osprey from the board until it fills and it seeds on the spot. Deposit into Moss and its deadline passes in about three minutes.';

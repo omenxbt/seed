@@ -516,13 +516,6 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
   .alloc-fixed{grid-template-columns:1fr 1fr}
 }
 
-/* Terminal rows: the risk summary and the fill pace under the bar */
-.br-flags{grid-area:flags;display:flex;align-items:center;gap:6px;min-width:0;min-height:24px;position:relative;z-index:1;pointer-events:none}
-.br-flags .risk-chip,.br-flags .pace-chip{flex:none;font-size:12px;padding:2px 9px 2px 7px;gap:5px}
-.br-flags .pace-chip{padding:2px 9px}
-.br-flags>[data-pacechip]{display:inline-flex;flex:none}
-.br-flags .risk-chip svg{width:13px;height:13px}
-
 /* ------------------------------------------------------------ portfolio: performance (PnL graph and calendar) */
 .perf-head{display:flex;align-items:center;justify-content:space-between;gap:14px;padding-right:20px;flex-wrap:wrap}
 .perf-head .card-h{padding-bottom:10px}
