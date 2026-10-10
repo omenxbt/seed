@@ -712,6 +712,8 @@ a.ico:hover{color:var(--ink)}
 <!-- the dot field behind every page; its script comes first so the field is there at first paint -->
 <canvas id="bg-dither" aria-hidden="true"></canvas>
 <script src="js/bg-dither.js"></script>
+<script src="js/config/seed.js"></script>
+<script src="js/model.js"></script>
 <!-- the mark, from the brand kit: dot n at r = c√n, angle n × 137.508°, sized from 0.72c at the centre to 0.36c at the rim; the innermost dot is the
      seed in accent blue. Dots take currentColor, the seed takes --seed. 7 dots at 32px and under, 13 to 56px, 21 to 160px. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="seed7" viewBox="0 0 100 100"><circle cx="41.66" cy="62.80" r="11.48" fill="var(--seed,#2E63E7)"></circle><circle cx="55.38" cy="29.57" r="10.52" fill="currentColor"></circle><circle cx="70.21" cy="73.94" r="9.57" fill="currentColor"></circle><circle cx="22.01" cy="46.47" r="8.61" fill="currentColor"></circle><circle cx="83.49" cy="32.89" r="7.65" fill="currentColor"></circle><circle cx="43.27" cy="89.74" r="6.70" fill="currentColor"></circle><circle cx="33.97" cy="14.59" r="5.74" fill="currentColor"></circle></symbol><symbol id="seed13" viewBox="0 0 100 100"><circle cx="39.96" cy="59.05" r="8.68" fill="var(--seed,#2E63E7)"></circle><circle cx="50.34" cy="33.94" r="8.31" fill="currentColor"></circle><circle cx="61.55" cy="67.48" r="7.95" fill="currentColor"></circle><circle cx="25.12" cy="46.72" r="7.59" fill="currentColor"></circle><circle cx="71.58" cy="36.45" r="7.23" fill="currentColor"></circle><circle cx="41.19" cy="79.42" r="6.87" fill="currentColor"></circle><circle cx="34.15" cy="22.62" r="6.51" fill="currentColor"></circle><circle cx="80.86" cy="62.60" r="6.15" fill="currentColor"></circle><circle cx="15.43" cy="64.71" r="5.78" fill="currentColor"></circle><circle cx="65.00" cy="16.40" r="5.42" fill="currentColor"></circle><circle cx="60.81" cy="89.04" r="5.06" fill="currentColor"></circle><circle cx="12.73" cy="29.98" r="4.70" fill="currentColor"></circle><circle cx="91.28" cy="41.59" r="4.34" fill="currentColor"></circle></symbol><symbol id="seed21" viewBox="0 0 100 100"><circle cx="42.00" cy="56.70" r="6.91" fill="var(--seed,#2E63E7)"></circle><circle cx="50.27" cy="36.69" r="6.74" fill="currentColor"></circle><circle cx="59.20" cy="63.42" r="6.57" fill="currentColor"></circle><circle cx="30.17" cy="46.87" r="6.39" fill="currentColor"></circle><circle cx="67.19" cy="38.70" r="6.22" fill="currentColor"></circle><circle cx="42.97" cy="72.93" r="6.05" fill="currentColor"></circle><circle cx="37.37" cy="27.67" r="5.88" fill="currentColor"></circle><circle cx="74.59" cy="59.53" r="5.70" fill="currentColor"></circle><circle cx="22.45" cy="61.21" r="5.53" fill="currentColor"></circle><circle cx="61.95" cy="22.72" r="5.36" fill="currentColor"></circle><circle cx="58.61" cy="80.60" r="5.18" fill="currentColor"></circle><circle cx="20.30" cy="33.54" r="5.01" fill="currentColor"></circle><circle cx="82.89" cy="42.79" r="4.84" fill="currentColor"></circle><circle cx="28.42" cy="79.61" r="4.67" fill="currentColor"></circle><circle cx="44.30" cy="13.34" r="4.49" fill="currentColor"></circle><circle cx="78.45" cy="74.97" r="4.32" fill="currentColor"></circle><circle cx="9.52" cy="51.85" r="4.15" fill="currentColor"></circle><circle cx="77.95" cy="21.48" r="3.98" fill="currentColor"></circle><circle cx="47.15" cy="92.03" r="3.80" fill="currentColor"></circle><circle cx="21.57" cy="17.25" r="3.63" fill="currentColor"></circle><circle cx="92.69" cy="56.09" r="3.46" fill="currentColor"></circle></symbol></defs></svg>
@@ -1010,7 +1012,7 @@ a.ico:hover{color:var(--ink)}
         <p class="where">where <i>c<sub>i</sub></i> = (1 − <i>f</i>) · <i>g<sub>i</sub></i></p>
         <h3>Try the numbers</h3>
         <div class="calc">
-          <div class="seg" id="calcSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span><button data-v="SOL" aria-pressed="true">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button><button data-v="JUP" aria-pressed="false">JUP</button></div>
+          <div class="seg" id="calcSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span><button data-v="SOL" aria-pressed="true">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button></div>
           <div><label for="cT">Target</label><div class="inp"><input id="cT" inputmode="decimal" value="100"></div></div>
           <div><label for="cC">You pay</label><div class="inp"><input id="cC" inputmode="decimal" value="4"></div></div>
         </div>
@@ -1338,7 +1340,7 @@ const chipsFor = p => Q(p).chips || [0.01, 0.05, 0.1].map(f => Number((p.target 
 const quickFor = p => state.quick[p.q] != null ? state.quick[p.q] : Number((p.target * 0.01).toPrecision(2));
 const shortMint = m => m ? m.slice(0, 4) + '…' + m.slice(-4) : '';
 const B58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-const SUPPLY = 1e9, A = 0.5, FEE = 0.01;          // supply, backer share, protocol fee
+const SUPPLY = SEED.supply;
 const H = 3600e3, D = 24 * H, KEY = 'seed.v6';
 
 function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -1415,7 +1417,8 @@ const adapter = {
     try { wallet.bal = await chainBalances(pk); } catch (e) { wallet.stale = true; }
     return wallet;
   },
-  contribute: sim(900), claimRefund: sim(800), claimTokens: sim(800), openPresale: sim(1000), swap: sim(900), deposit: sim(800), withdraw: sim(800)
+  contribute: sim(900), claimRefund: sim(800), claimTokens: sim(800), openPresale: sim(1000), swap: sim(900), deposit: sim(800), withdraw: sim(800),
+  cancelRaise: sim(900), seedStep: sim(700), claimFees: sim(800), claimVested: sim(800), requestPayoutChange: sim(800), report: sim(400)
 };
 
 /* ------------------------------------------------------------ formatting */
@@ -1428,11 +1431,6 @@ function fmtC(n, k, raised) { const a = Math.abs(n); return a >= 1e9 ? trim2(n /
 const balOf = k => (state.wallet && state.wallet.bal[k]) || 0;
 const fmtTok = n => Math.round(n).toLocaleString('en-US');
 const fmtSig = n => n >= 100 ? Math.round(n).toLocaleString('en-US') : n >= 1 ? n.toFixed(2) : n >= 0.01 ? n.toFixed(3) : n.toFixed(4);
-const pctOf = p => Math.min(100, p.raised / p.target * 100);
-const leftOf = p => r6(p.target - p.raised);                                   // room left in the raise (net)
-const NET = 1 - FEE, netOf = g => r6(g * NET), feeOf = g => r6(g * FEE);
-const payLeft = p => Math.ceil(leftOf(p) / NET * 1e6) / 1e6;                     // what a wallet pays to fill the rest, fee included
-const tokensFor = (p, paid) => Math.min(netOf(paid), p.target) / p.target * SUPPLY * presaleShare(p);
 const pad = n => String(n).padStart(2, '0');
 function fmtLeft(ms) {
   if (ms <= 0) return '00:00:00';
@@ -1459,7 +1457,7 @@ const fmtDate = ms => new Date(ms).toLocaleString(undefined, { month: 'short', d
 const fmtDay = ms => new Date(ms).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 function paceOf(p) { const h = (p.endsAt - Date.now()) / H; return h > 0 ? leftOf(p) / h : Infinity; }
 function paceTxt(p) { if (p.status !== 'live') return ''; const v = paceOf(p); return isFinite(v) ? `${v >= 1e4 ? fmtC(v, p.q) : fmtSig(v)} ${Q(p).sym}/h` : ''; }
-function timeCell(p) { return p.status === 'live' ? fmtLeft(p.endsAt - Date.now()) : (p.status === 'seeded' ? 'Seeded ' : 'Closed ') + fmtDay(p.resolvedAt || p.endsAt); }
+function timeCell(p) { return p.status === 'live' ? fmtLeft(p.endsAt - Date.now()) : p.status === 'filled' ? 'Filled ' + fmtAgo(Date.now() - p.filledAt) : (p.status === 'seeded' ? 'Seeded ' : 'Closed ') + fmtDay(p.resolvedAt || p.endsAt); }
 const find = id => state.presales.find(p => p.id === id);
 
 function glyph(p) {
@@ -1531,18 +1529,20 @@ function rowLinks(p) {
 }
 function actCell(p) {
   const C = Q(p), pos = state.positions[p.id];
+  if (p.status === 'filled') return `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Seeding ${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1}/4</a>`;
   if (p.status === 'live') return `<button class="qb" data-qb="${p.id}">${BOLT}<span class="qb-w">Deposit </span><span><span class="num" data-qbamt>${qbLabel(p)}</span> ${esc(C.sym)}</span></button>`;
   if (pos && !state.claimed[p.id]) return `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
   if (p.status === 'seeded') return `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Trade</a>`;   // a seeded token is bought and sold on its page
   return '';   // the card's status chip already says refunded
 }
 /* which column a raise sits in. Refunded ones are not on the board: they are named under it, and claims live in the portfolio. */
-const colOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : 'seeding') : null;
+const colOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'filled' ? 'seeding' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : 'seeding') : null;   // a filled raise sits with the seeding ones until it seeds
 /* what is moving: a live raise by what it took in the last six hours as a share of its target, a seeded token by how recently
    it seeded. Refunded raises never trend. */
 function trendScore(p) {
   const now = Date.now();
   if (p.status === 'live') return (p.raised - raisedAt(p, now - 6 * H)) / p.target * 100 + pctOf(p) * 0.05;
+  if (p.status === 'filled') return 60;   // a fill is the most that can happen to a raise
   if (p.status === 'seeded') return Math.max(0, 40 - (now - (p.resolvedAt || now)) / D * 5);
   return -1;
 }
@@ -1551,6 +1551,7 @@ function doingChip(p) {
   const now = Date.now();
   if (p.status === 'live') { const r = (p.raised - raisedAt(p, now - 6 * H)) / p.target * 100; return r > 0 ? `<span class="tr-chg up">+${r < 10 ? r.toFixed(1) : Math.round(r)}% · 6h</span>` : '<span class="tr-chg">Quiet · 6h</span>'; }
   if (p.status === 'seeded') return `<span class="tr-chg seeded">Seeded ${fmtAgo(now - (p.resolvedAt || now))}</span>`;
+  if (p.status === 'filled') return '<span class="tr-chg seeded">Filled, seeding</span>';
   return '<span class="tr-chg off">Refunded</span>';
 }
 /* a raise as a tile. The Trending row shows the short form with its rank; the feed adds time, backers, links, checks and the button. */
@@ -1564,7 +1565,7 @@ function tile(p, i, trend, fresh = '') {
     <span class="tile-flags">${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
     <span class="t-act">${actCell(p)}</span>`}</div>`;
 }
-const FEED_NOTE = { all: 'Live and seeded', new: 'Under 50% filled', seeding: 'Past halfway', seeded: 'Target met', refunded: 'Missed the target' };
+const FEED_NOTE = { all: 'Live and seeded', new: 'Under 50% filled', seeding: 'Past halfway, or filled and seeding', seeded: 'Pool open', refunded: 'Missed, cancelled or timed out' };
 function renderTerminal() {
   const q = ui.bq.trim(), cols = {}; for (const k of ['new', 'seeding', 'seeded']) cols[k] = boardHit(k);
   const ql = q.toLowerCase(), refunded = state.presales.filter(p => p.status === 'refunded' && pairOk(p) && (!ql || (p.name + ' ' + p.ticker).toLowerCase().includes(ql)));
@@ -1616,7 +1617,7 @@ async function ensureWallet() { if (state.wallet) return true; await connect(); 
 function record(p, who, paid, you) {
   const now = Date.now();
   p.hist.push([now, p.raised]); if (p.hist.length > 160) p.hist.splice(1, 1);
-  (p.buys = p.buys || []).push({ wallet: who, amount: r6(Math.min(netOf(paid), p.target)), paid, at: now, fundedBy: null, isFresh: false, tags: [], you: !!you });
+  (p.buys = p.buys || []).push({ wallet: who, amount: r6(Math.min(amountFor(paid), p.target)), paid, at: now, fundedBy: null, isFresh: false, tags: [], you: !!you });
 }
 async function executeBuy(p, amt) {
   const C = Q(p);
@@ -1627,13 +1628,13 @@ async function executeBuy(p, amt) {
   busy = true; try { await adapter.contribute(p, pay); } catch (e) { busy = false; toast(e.message); return false; } busy = false;
   if (p.status !== 'live') { toast(`${p.name} closed before your transaction landed. Nothing was taken.`); return false; }
   pay = Math.min(pay, payLeft(p));
-  const net = Math.min(netOf(pay), leftOf(p));
+  const net = Math.min(amountFor(pay), leftOf(p));
   if (!state.positions[p.id]) p.backers++;
-  state.positions[p.id] = r6((state.positions[p.id] || 0) + pay);
+  state.positions[p.id] = r6((state.positions[p.id] || 0) + net);   // positions are the buys themselves; the fee rides on top and comes back with a refund
   state.wallet.bal[p.q] = r6(balOf(p.q) - pay);
   p.raised = r6(p.raised + net); record(p, walletId(), pay, true);
-  if (p.raised >= p.target - 1e-6) { p.raised = p.target; p.status = 'seeded'; p.resolvedAt = Date.now(); toast(`${p.name} seeded. Your tokens are ready to claim.`); }
-  else toast(`Deposited ${fmtC(pay, p.q)} ${C.sym} into ${p.name}`);
+  if (p.raised >= p.target - 1e-6) { p.raised = p.target; fillRaise(p); toast(`${p.name} filled. Seeding has started; tokens are claimable the moment it lands.`); }
+  else toast(`Bought ${fmtC(net, p.q)} ${C.sym} of ${p.name} (${fmtC(pay, p.q)} ${C.sym} with the fee)`);
   save(); renderAll();
   $$(`[data-row="${p.id}"]`).forEach(r => r.classList.add('flash'));
   return true;
@@ -1645,8 +1646,7 @@ async function executeBuy(p, amt) {
    wallet; a real wallet is refused until the Seed program exists. */
 function ammOf(p) {
   if (!p.amm) {
-    const x0 = p.target, y0 = SUPPLY * presaleShare(p), pool = profileOf(p).pool; let P = x0 / y0;
-    if (!(pool && isRealAddr(pool.address))) { const s = demoSeries(p, '1h', 48); P = s[s.length - 1][4]; }   // a demo token has already traded: start where its chart ends
+    const x0 = p.target, y0 = splitOf(p.teamBps).pool, P = priceOf(p) * (p.poolX || 1);   // where the demo pool has drifted to since it opened
     const k = x0 * y0; p.amm = { x: Math.sqrt(k * P), y: Math.sqrt(k / P) };
   }
   return p.amm;
@@ -1692,7 +1692,7 @@ async function claim(p, btn) {
   busy = true; btn.disabled = true; btn.textContent = 'Confirm in wallet…';
   try {
     if (p.status === 'seeded') { await adapter.claimTokens(p); const had = (state.tokens = state.tokens || {})[p.id] || 0; state.tokens[p.id] = had + Math.round(tokensFor(p, amt)); state.claimed[p.id] = 'tokens'; toast(`Claimed ${fmtTok(tokensFor(p, amt))} $${p.ticker}`); }
-    else { await adapter.claimRefund(p); state.wallet.bal[p.q] = r6(balOf(p.q) + amt); state.claimed[p.id] = 'refund'; toast(`Refund claimed: ${fmtAmt(amt, p.q)} ${C.sym} is back in your wallet`); }
+    else { await adapter.claimRefund(p); const back = paidFor(amt); state.wallet.bal[p.q] = r6(balOf(p.q) + back); state.claimed[p.id] = 'refund'; toast(`Refund claimed: ${fmtAmt(back, p.q)} ${C.sym} is back in your wallet, fee included`); }
   } catch (e) { toast(e.message); }
   busy = false; save(); renderAll();
 }
@@ -1902,7 +1902,7 @@ function renderPortfolio() {
   $('#pstats').innerHTML = `<div class="sum"><dt>Positions</dt><dd class="num">${ids.length}</dd></div><div class="sum"><dt>In live raises</dt><dd class="num">${nLive}</dd></div>
     <div class="sum"><dt>Refunds to claim</dt><dd class="num">${nRef}</dd></div><div class="sum"><dt>Token claims ready</dt><dd class="num">${nTok}</dd></div>`;
   $('#prows').innerHTML = ids.length ? ids.map(id => { const p = find(id); if (!p) return ''; const sym = esc(Q(p).sym), a = state.positions[id], cl = state.claimed[id];
-      const st = { live: 'Live', seeded: 'Seeded', refunded: 'Refunded' }[p.status];
+      const st = RAISE_STATE[p.status];
       const holds = p.status === 'seeded' && (cl || !a);   // claimed, or bought in the pool without backing the raise
       const yours = p.status === 'live' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)} if it seeds` : holds ? `${fmtTok(heldOf(p))} $${esc(p.ticker)} held` : p.status === 'seeded' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)}` : `${fmtAmt(a, p.q)} ${sym}`;
       const act = p.status === 'live' ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">View</a>` : holds ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Trade</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
@@ -2015,15 +2015,15 @@ function fmtPrice(n) { if (n >= 1) return fmtSig(n); const d = Math.min(14, Math
 function renderCalc() {
   const T = parseFloat(($('#cT').value || '').replace(/,/g, '')), g = parseFloat(($('#cC').value || '').replace(/,/g, '')), cur = calc.q, out = $('#calcOut');
   if (!(T > 0) || !(g >= 0)) { out.innerHTML = '<div><dt>Enter a target above zero</dt><dd></dd></div>'; return; }
-  const gross = Math.min(g || 0, T / NET), net = Math.min(gross * NET, T), fee = gross - net, P = T / (A * SUPPLY), s = net / T;
+  const teamBps = calc.teamBps || 0, sp = splitOf(teamBps), a = Math.min(g || 0, T), paid = paidFor(a), P = T / sp.backers, s = a / T;
   out.innerHTML = [
-    ['Goes to the raise', `${fmtSig(net)} ${cur}`], ['Protocol fee, 1% of the buy', `${fmtSig(fee)} ${cur}`],
-    ['Price per token', `${fmtPrice(P)} ${cur}`], [`Tokens per 1 ${cur} in the raise`, fmtTok(1 / P)], ['Your tokens', fmtTok(net / P)],
-    ['Your share of supply', (s * A * 100).toFixed(3) + '%'], ['Locked in the Meteora pool', `${fmtSig(T)} ${cur}`], ['Total fees if it seeds', `${fmtSig(T / NET - T)} ${cur}`],
+    ['Goes to the raise', `${fmtSig(a)} ${cur}`], ['Seed fee, 1% on top', `${fmtSig(feeOf(a))} ${cur}`], ['You pay', `${fmtSig(paid)} ${cur}`],
+    ['Price per token', `${fmtPrice(P)} ${cur}`], [`Tokens per 1 ${cur}`, fmtTok(1 / P)], ['Your tokens', fmtTok(a / P)],
+    ['Your share of supply', (s * sp.backers / SUPPLY * 100).toFixed(3) + '%'], ['Locked in the Meteora pool', `${fmtSig(T)} ${cur} and ${fmtTok(sp.pool)} tokens`], ['Seed fees if it fills', `${fmtSig(feeOf(T))} ${cur}`],
     ['Fully diluted value at open', `${fmtSig(P * SUPPLY)} ${cur}`],
-    ['You recover selling all at open', s > 0 ? `${fmtSig(net / (1 + s))} ${cur} (${(100 * NET / (1 + s)).toFixed(1)}% of what you paid)` : `0 ${cur}`],
-    ['You get back if it misses', `${fmtSig(gross)} ${cur}`]
-  ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('') + (g > T / NET ? `<div><dt>Your buy is trimmed to what fits the ${fmtSig(T)} ${cur} target</dt><dd></dd></div>` : '');
+    ['You recover selling all at open', s > 0 ? `${fmtSig(a / (1 + s))} ${cur} (${(100 / (1 + s) / (1 + SEED.feeBps / BPS)).toFixed(1)}% of what you paid)` : `0 ${cur}`],
+    ['You get back if it misses', `${fmtSig(paid)} ${cur}`]
+  ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('') + (g > T ? `<div><dt>Your buy is trimmed to what fits the ${fmtSig(T)} ${cur} target</dt><dd></dd></div>` : '');
 }
 function initDocs() {
   const secs = $$('.doc-sec');
@@ -2034,7 +2034,7 @@ function initDocs() {
   /* each section's cards rise in as they are scrolled to (the spy marks them) */
   if (!matchMedia('(prefers-reduced-motion: reduce)').matches) $$('.doc-sec>.prose,.doc-sec>.aside').forEach(el => el.classList.add('rv'));
   $('#cT').addEventListener('input', renderCalc); $('#cC').addEventListener('input', renderCalc);
-  seg.calc = initSeg($('#calcSeg'), v => { calc.q = v; const d = { SOL: [100, 4], USDC: [60000, 500], JUP: [120000, 2000] }[v]; $('#cT').value = d[0]; $('#cC').value = d[1]; renderCalc(); });
+  seg.calc = initSeg($('#calcSeg'), v => { calc.q = v; const d = { SOL: [100, 4], USDC: [60000, 500] }[v]; $('#cT').value = d[0]; $('#cC').value = d[1]; renderCalc(); });
   renderCalc();
 }
 
@@ -2088,11 +2088,27 @@ addEventListener('hashchange', route);
 function renderAll() { renderWallet(); syncQuickUI(); renderTerminal(); renderMine(); renderPortfolio(); }
 
 /* ----------------------------------------------------------------- clock */
+/* the target landed: the raise closes to buys and seeding starts. Anyone may run the steps; the demo runs them itself. */
+function fillRaise(p) { p.raised = p.target; p.status = 'filled'; p.filledAt = Date.now(); p.seedStep = 'filled'; p.resolvedAt = null; }
+/* one idempotent step of seeding: filled -> minted -> pooled -> seeded. The demo takes a step every half minute. */
+async function seedCrank(p, by) {
+  if (p.status !== 'filled') return false;
+  const i = SEED_STEPS.indexOf(p.seedStep || 'filled'), next = SEED_STEPS[i + 1]; if (!next) return false;
+  try { await adapter.seedStep(p, next); } catch (e) { if (by) toast(e.message); return false; }
+  p.seedStep = next;
+  if (next === 'seeded') { p.status = 'seeded'; p.seededAt = p.resolvedAt = Date.now(); p.poolX = 1; p.fees = { volume: 0, founderClaimed: 0, seedClaimed: 0 }; if (state.positions[p.id]) toast(`${p.name} seeded. Your tokens are ready to claim.`); }
+  save(); renderAll(); if (detailBox) renderDetail(true);
+  return true;
+}
 function tick(silent) {
   const now = Date.now(); let changed = false;
   for (const p of state.presales) if (p.status === 'live' && now >= p.endsAt) {
-    p.status = 'refunded'; p.resolvedAt = p.endsAt; changed = true; const pos = state.positions[p.id];
-    if (silent !== true) toast(pos ? `${p.name} missed its target. Your ${fmtAmt(pos, p.q)} ${Q(p).sym} refund is ready to claim.` : `${p.name} missed its target. Backers can claim refunds.`);
+    p.status = 'refunded'; p.refundReason = 'missed'; p.resolvedAt = p.endsAt; changed = true; const pos = state.positions[p.id];
+    if (silent !== true) toast(pos ? `${p.name} missed its target. Your ${fmtAmt(paidFor(pos), p.q)} ${Q(p).sym} refund is ready to claim.` : `${p.name} missed its target. Backers can claim refunds.`);
+  }
+  for (const p of state.presales) if (p.status === 'filled') {
+    if (now >= seedDeadline(p)) { p.status = 'refunded'; p.refundReason = 'timeout'; p.resolvedAt = now; changed = true; if (silent !== true) toast(`${p.name} did not seed in time. Every backer can claim a refund.`); }
+    else { const last = p.crankAt || p.filledAt; if (now - last > 30e3 && !document.hidden && !busy) { p.crankAt = now; seedCrank(p); } }
   }
   if (changed) { save(); renderAll(); }
   $$('.live[data-row]').forEach(row => { const p = find(row.dataset.row); if (!p) return; const t = $('[data-time]', row); if (t) roll(t, fmtLeft(p.endsAt - now)); const pc = $('[data-pace]', row); if (pc) roll(pc, paceTxt(p)); });
@@ -2106,7 +2122,7 @@ function simulate() {
   const p = pool[Math.floor(Math.random() * pool.length)], amt = r6(Math.min(p.target * .95 - p.raised, p.target * (0.0008 + Math.random() * 0.004)));
   if (!(amt > 0)) return;
   const was = colOf(p);
-  p.raised = r6(p.raised + amt); p.backers++; record(p, fakeAddr('sim/' + Math.random()), r6(amt / NET));
+  p.raised = r6(p.raised + amt); p.backers++; record(p, fakeAddr('sim/' + Math.random()), paidFor(amt));
   if (colOf(p) !== was) renderTerminal(); else patchRows(p);
   patchDetail(p); save();
 }

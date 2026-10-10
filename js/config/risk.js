@@ -9,7 +9,6 @@ const RISK = {
   bundledWarnPct: 15,            // bundled share of the raise: warn above
   freshWalletDays: 7,            // a backer is fresh if its first transaction was less than this many days before it backed
   freshWarnPct: 40,              // fresh share of backers: warn above
-  teamTreasuryMaxPct: 30,        // team + treasury allocation above this with no vesting: fail (the tokenomics tab flags it with or without vesting)
 
   /* live lookups on the keyless public RPC: it answers one account per call and throttles bursts, so lookups are capped and cached */
   liveLookupCap: 20,             // fresh-wallet and funding-source lookups per raise, largest backers first

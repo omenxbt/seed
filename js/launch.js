@@ -126,9 +126,7 @@ function bindDrop(el) {
 /* ---------------------------------------------------------------- the draft as a raise */
 const posTxt = k => `${lf.pos[k][0].toFixed(1)}% ${lf.pos[k][1].toFixed(1)}%`;
 function draftProfile(d) {
-  const share = shareNow() || 0, since = $('#fXSince').value, on = lf.on;
-  const allocations = [alloc('Raise backers', 'presale', share), alloc('Locked Meteora pool', 'lp', share)]
-    .concat((on.tokenomics ? lf.alloc : []).filter(r => r.label || r.pct).map(r => alloc(r.label || 'Unnamed', r.kind, numv(r.pct) || 0, numv(r.dur) > 0 ? vest(Math.max(0, numv(r.cliff) || 0), numv(r.dur)) : null, B58.test(r.wallet) ? r.wallet : null)));
+  const since = $('#fXSince').value, on = lf.on;
   const founderWallet = state.wallet ? (state.wallet.pk || walletId()) : null;
   const team = (on.team ? lf.team : []).filter(m => m.name.trim()).map(m => ({ name: m.name.trim(), role: m.role.trim(), x: m.x.trim() || null, github: m.github.trim() || null, linkedin: m.linkedin.trim() || null, wallet: B58.test(m.wallet.trim()) ? m.wallet.trim() : null, verified: { x: false, github: false, domain: false } }));
   if (team[0] && !team[0].wallet && founderWallet) team[0].wallet = founderWallet;
@@ -137,7 +135,6 @@ function draftProfile(d) {
     links: { website: $('#lWebsite').value.trim() || null, x: $('#lX').value.trim() || null, telegram: $('#lTelegram').value.trim() || null, discord: $('#lDiscord').value.trim() || null, github: $('#lGithub').value.trim() || null },
     minBuy: numv($('#fMin').value) || 0, maxBuy: numv($('#fMax').value) || 0,
     whitelist: $('#fWl').value.split(/\s+/).map(x => x.trim()).filter(Boolean),
-    tokenomics: { allocations, useOfFunds: (on.tokenomics ? lf.uof : []).filter(r => r.label || r.pct).map(r => ({ label: r.label.trim() || 'Unnamed', pct: numv(r.pct) || 0 })) },
     team, founder: { name: team[0] ? team[0].name : 'Founder', x: $('#fFounderX').value.trim() || null, xAgeDays: since ? Math.max(0, (Date.now() - Date.parse(since + '-01')) / D) : null, wallet: founderWallet, pastLaunches: [] },
     deck: lf.urls.deck || null, deckKind: lf.files.deck ? deckInfo(lf.files.deck)[0] : null, deckName: lf.files.deck ? lf.files.deck.name : null, banner: lf.urls.banner || null, art: lf.urls.art || null, bannerPos: posTxt('banner'), artPos: posTxt('art'),
     roadmap: (on.road ? lf.road : []).filter(r => r.title.trim()).map(r => ({ title: r.title.trim(), dueAt: r.due ? Date.parse(r.due) : Date.now(), status: r.status, proof: r.proof.trim() || null })),
@@ -147,7 +144,7 @@ function draftProfile(d) {
 function draftPresale() {
   const d = readDraft(), da = draftAsset(), now = Date.now();
   return { id: 'draft', name: d.name || 'Your project', ticker: d.ticker || 'TICKER', idea: d.idea, q: da.key || 'SOL', target: isFinite(d.target) && d.target > 0 ? d.target : 0, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H,
-    status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [], profile: draftProfile(d) };
+    status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [], teamBps: 0, teamSchedule: null, roadmap: [], tokenUseCase: 'none', xAccount: { handle: '', verified: false, createdAt: null, followers: 0 }, pastRaises: [], reports: [], profile: draftProfile(d) };
 }
 
 /* ---------------------------------------------------------------- validation */
@@ -201,12 +198,12 @@ function renderPreview() {
   const art = pr.art ? `<img class="pv-art" src="${esc(pr.art)}" alt="" style="object-position:${pr.artPos}">` : `<span class="pv-art glyph-art" style="--h:${hashStr(dp.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(dp)}</svg></span>`;
   $('#pvCard').innerHTML = `${pr.banner ? `<div class="pv-banner"><img src="${esc(pr.banner)}" alt="" style="object-position:${pr.bannerPos}"></div>` : ''}<div class="pv-id">${art}<span class="nm"><b>${esc(dp.name)}<span class="tk">$${esc(dp.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div>
     ${d.idea ? `<p class="pv-tag">${esc(d.idea)}</p>` : ''}<div class="c-prog"><span class="bar"><i style="width:0%"></i></span><span class="pct num">0%</span></div>`;
-  const label = { 24: '24 hours', 72: '3 days', 168: '7 days' }[d.hours], share = presaleShare(dp), f = n => Number(n.toFixed(C.dp)).toLocaleString('en-US', { maximumFractionDigits: C.dp });
+  const label = { 24: '24 hours', 72: '3 days', 168: '7 days' }[d.hours], split = splitOf(dp.teamBps), f = n => Number(n.toFixed(C.dp)).toLocaleString('en-US', { maximumFractionDigits: C.dp });
   $('#pvFacts').innerHTML = [
-    ['Backers pay', ok ? `<span class="num">1 ${sym} = ${fmtTok(SUPPLY * share / d.target)} $${esc(dp.ticker)}</span>` : 'Set a target'],
+    ['Backers pay', ok ? `<span class="num">1 ${sym} = ${fmtTok(split.backers / d.target)} $${esc(dp.ticker)}</span>` : 'Set a target'],
     ['Closes', `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
     ['If it fills', ok ? `<span class="num">${f(d.target)} ${sym}</span> locked in a Meteora pool` : 'Locked in a Meteora pool'],
-    ['Value at open', ok ? `<span class="num">${f(d.target / share)} ${sym}</span> fully diluted` : 'Set a target'],
+    ['Value at open', ok ? `<span class="num">${f(fdvOf(dp))} ${sym}</span> fully diluted` : 'Set a target'],
     ['If it misses', `Buys and fees go back to backers after ${label}. The supply is burned`]
   ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
   const checks = riskChecks(dp, { draft: true }), s = riskSummary(checks);
@@ -232,8 +229,8 @@ async function openPresale() {
     if (supa.configured() && lf.files.deck) { b.textContent = 'Uploading deck…'; profile.deck = await supa.upload(lf.files.deck); }
     b.textContent = 'Confirm in wallet…';
     if (da.custom) state.custom[da.key] = da.a;
-    profile.mint = fakeAddr('mint/' + id); profile.vault = { address: fakeAddr('vault/' + id) };
-    const p = { id, name: d.name, ticker: d.ticker, idea: d.idea, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [], profile };
+    profile.mint = fakeAddr('mint/' + id);
+    const p = { id, name: d.name, ticker: d.ticker, idea: d.idea, q: da.key, target: d.target, targetUsd: r6(usdOf({ q: da.key }, d.target)), solUsdAtOpen: SEED.demoSolUsd, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [], feeBps: SEED.feeBps, creatorShareBps: SEED.creatorShareBps, teamBps: 0, teamSchedule: null, roadmap: [], tokenUseCase: 'none', xAccount: { handle: '', verified: false, createdAt: null, followers: 0 }, pastRaises: [], reports: [], payoutWallet: walletId(), profile };
     await adapter.openPresale(p);
     if (supa.configured()) supa.call('register', { presaleId: id }).catch(() => {});
     state.presales.unshift(p); save();

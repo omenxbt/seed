@@ -60,11 +60,6 @@ function riskChecks(p, opts = {}) {
   add('deck', 'Deck', pr.deck ? 'pass' : 'warn', pr.deck ? 'A deck is attached.' : 'No deck is attached.', fromPr);
   add('team', 'Team', pr.team && pr.team.length ? 'pass' : 'warn', pr.team && pr.team.length ? `${pr.team.length} team member${pr.team.length > 1 ? 's' : ''} listed.` : 'No team is listed.', fromPr);
 
-  // 11. insider allocation without vesting
-  const ins = (pr.tokenomics.allocations || []).filter(a => a.kind === 'team' || a.kind === 'treasury'), insPct = ins.reduce((a, x) => a + x.pct, 0), unvested = ins.filter(a => !a.vesting || !a.vesting.durationDays);
-  add('vesting', 'Team and treasury vesting', insPct > RISK.teamTreasuryMaxPct && unvested.length ? 'fail' : 'pass',
-    insPct > RISK.teamTreasuryMaxPct && unvested.length ? `Team and treasury hold ${insPct}% of supply and ${unvested.map(a => a.label.toLowerCase()).join(' and ')} ${unvested.length > 1 ? 'have' : 'has'} no vesting.`
-      : insPct ? `Team and treasury hold ${insPct}% of supply${unvested.length ? '' : ', all vesting'}.` : 'No team or treasury allocation.', fromPr);
   return out;
 }
 function riskSummary(checks) {

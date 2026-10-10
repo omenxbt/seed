@@ -48,9 +48,9 @@ const backersAdapter = {
       const res = await rpcPaced('getTokenLargestAccounts', [pr.mint]);
       return withSrc(res.value.map(a => ({ wallet: a.address, amount: Number(a.uiAmountString), pct: Number(a.uiAmountString) / supply * 100, label: '' })), 'chain');
     }
-    const r = rng('holders/' + p.id), backerTok = supply * presaleShare(p), rows = this.rows(p);
-    const list = [{ wallet: fakeAddr('pool/' + p.id), amount: supply * (pr.tokenomics.allocations.find(a => a.kind === 'lp') || { pct: 50 }).pct / 100 * (0.9 + r() * 0.2), label: 'Meteora DAMM v2 pool, LP locked' }];
-    pr.tokenomics.allocations.filter(a => a.kind === 'team' || a.kind === 'treasury').forEach(a => list.push({ wallet: a.wallet || fakeAddr(`vest/${p.id}/${a.label}`), amount: supply * a.pct / 100, label: `${a.label}${a.vesting ? ', vesting' : ''}` }));
+    const r = rng('holders/' + p.id), split = splitOf(p.teamBps), backerTok = split.backers, rows = this.rows(p);
+    const list = [{ wallet: fakeAddr('pool/' + p.id), amount: split.pool * (0.9 + r() * 0.2), label: 'Meteora DAMM v2 pool, LP locked' }];
+    if (split.team) { const u = unlockState(p); list.push({ wallet: fakeAddr(`vest/${p.id}`), amount: split.team - u.unlocked, label: `Team tokens, unlocking on schedule` }); if (u.unlocked) list.push({ wallet: p.payoutWallet, amount: u.unlocked, label: 'Payout wallet, unlocked team tokens' }); }
     rows.slice(0, 40).forEach(b => { const sold = r() < 0.3 ? r() * 0.7 : 0; list.push({ wallet: b.wallet, amount: backerTok * b.pct / 100 * (1 - sold), label: b.tags.includes('kol') ? 'KOL' : '', tags: b.tags }); });
     list.sort((a, b) => b.amount - a.amount);
     return withSrc(list.slice(0, 30).map(h => Object.assign(h, { pct: h.amount / supply * 100 })), 'demo', { count: Math.round(rows.length * 1.35) });

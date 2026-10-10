@@ -1,7 +1,7 @@
 /* ==========================================================================
-   PRESALE ADAPTER: the vault, and after seeding the pool (price, market cap, liquidity, candles).
+   PRESALE ADAPTER: the pool after seeding (price, market cap, liquidity, candles).
    Demo: the raise from state and a price series generated from the raise price.
-   Real: the vault's token balance from Solana RPC, the pool from GeckoTerminal (keyless, cached 60s per request).
+   Real: the pool from GeckoTerminal (keyless, cached 60s per request) when the profile names a real pool address.
    ========================================================================== */
 const GECKO = 'https://api.geckoterminal.com/api/v2/networks/solana/pools/';
 const CANDLE_TTL = 60e3;
@@ -20,22 +20,8 @@ async function geckoGet(path) {
   }
 }
 /* the raise price: what one token costs in the pair asset */
-const priceOf = p => p.target / (SUPPLY * presaleShare(p));
 
 const presaleAdapter = {
-  vaultAddress(p) { const v = profileOf(p).vault || {}; return v.address || ''; },
-  vaultIsStandin(p) { return !!(profileOf(p).vault || {}).presale; },
-
-  /* live from Solana when the vault is a real account; the demo raise otherwise */
-  async vaultBalance(p) {
-    const v = profileOf(p).vault || {}, from = v.presale ? 'standin' : 'chain';
-    if (!isRealAddr(v.address)) return withSrc(p.status === 'seeded' ? 0 : p.status === 'refunded' ? r6(p.raised * refundLeftShare(p)) : p.raised, 'demo');
-    const key = 'vault/' + v.address, hit = cacheGet(key, 30e3);
-    if (hit !== undefined) return withSrc(hit, from);
-    const res = await rpcPaced('getTokenAccountBalance', [v.address]), amt = Number(res.value.uiAmountString);
-    cacheSet(key, amt); return withSrc(amt, from, { asset: v.asset });
-  },
-
   /* pool facts after seeding */
   async pool(p) {
     const pr = profileOf(p), pool = pr.pool;
@@ -45,8 +31,8 @@ const presaleAdapter = {
         change24h: Number((a.price_change_percentage || {}).h24 || 0), volume24h: Number((a.volume_usd || {}).h24 || 0), supply: Number(a.fdv_usd) / price, url: `https://app.meteora.ag/dammv2/${pool.address}` }, 'standin');
     }
     const s = demoSeries(p, '1h', 48), amm = ammOf(p), last = amm.x / amm.y, supply = SUPPLY;   // the price is the in-app pool's, so a trade made here moves it
-    return withSrc({ address: fakeAddr('pool/' + p.id), pair: `${p.ticker}/${Q(p).sym}`, dex: DEX, price: last, quote: Q(p).sym, mcap: last * supply, fdv: last * supply,
-      liquidity: amm.x * 2, change24h: (last / s[Math.max(0, s.length - 25)][4] - 1) * 100, volume24h: p.target * 0.4, supply, url: 'https://app.meteora.ag' }, 'demo');
+    return withSrc({ address: fakeAddr('pool/' + p.id), pair: `${p.ticker}/${Q(p).sym}`, dex: DEX, price: last, quote: Q(p).sym, mcap: last * supply, fdv: last * supply, raisePrice: priceOf(p),
+      liquidity: amm.x * 2, change24h: (last / s[Math.max(0, s.length - 25)][4] - 1) * 100, volume24h: ((p.fees || {}).volume || 0) / Math.max(1, (Date.now() - (p.seededAt || Date.now())) / D), supply, url: 'https://app.meteora.ag' }, 'demo');
   },
 
   /* candles: [time, open, high, low, close, volume], oldest first */
@@ -61,13 +47,17 @@ const presaleAdapter = {
     return withSrc(ser, 'demo');
   }
 };
-/* a seeded demo raise trades around its raise price: a seeded random walk from the moment it seeded */
+/* a seeded demo raise's chart: a seeded random walk from the raise price at the moment it seeded, bent so it ends where the
+   pool is now (the raise price times p.poolX, moved further by any in-app trade) */
 function demoSeries(p, tf, n) {
-  const step = { '1m': 60e3, '5m': 300e3, '1h': H, '1D': D }[tf], r = rng('px/' + p.id + '/' + tf), out = [];
-  let px = priceOf(p), t = Math.max(p.resolvedAt || Date.now(), Date.now() - step * n);
+  const step = { '1m': 60e3, '5m': 300e3, '1h': H, '1D': D }[tf], r = rng('px/' + p.id + '/' + tf), walk = [];
+  const p0 = priceOf(p), end = spotOf(p), t0 = Math.max(p.seededAt || p.resolvedAt || Date.now(), Date.now() - step * n);
+  let px = p0;
+  for (let i = 0; i < n; i++) { const drift = (r() - 0.5) * 0.05; px = Math.max(p0 * 0.05, px * (1 + drift)); walk.push(px); }
+  const k = Math.log(end / walk[n - 1]) / n, out = []; let t = t0, o = p0;   // the geometric bend that lands the last close on the pool price
   for (let i = 0; i < n; i++, t += step) {
-    const o = px, drift = (r() - 0.47) * 0.06, c = Math.max(o * 0.2, o * (1 + drift)), hi = Math.max(o, c) * (1 + r() * 0.02), lo = Math.min(o, c) * (1 - r() * 0.02);
-    out.push([t, o, hi, lo, c, p.target * (0.002 + r() * 0.02)]); px = c;
+    const c = walk[i] * Math.exp(k * (i + 1)), hi = Math.max(o, c) * (1 + r() * 0.015), lo = Math.min(o, c) * (1 - r() * 0.015);
+    out.push([t, o, hi, lo, c, p.target * (0.002 + r() * 0.02)]); o = c;
   }
   return out;
 }

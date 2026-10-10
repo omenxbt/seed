@@ -1,33 +1,17 @@
 /* ==========================================================================
-   DEMO DATA. Eight raises with full project profiles.
-   A raise in `state` holds what changes (the raise, its buys, its history). Its profile (story, team, tokenomics, founder,
-   roadmap, updates, the shape of its crowd) lives here and is merged in by profileOf(p), so profile edits reach every
-   browser without resetting anyone's saved demo. A raise opened from the Launch form carries its own profile.
-   Everything here is demo data except the two STANDINS, which are real mainnet accounts read live.
+   DEMO DATA. Eight raises, one per state the model can be in: live, filled and seeding, refunded, seeded above its raise
+   price, seeded below it, flagged for fraud, under a community takeover, and one whose token has no use case.
+   A raise in `state` holds what changes and what the founder set (terms, team share and schedule, roadmap, payout wallet,
+   buys, history, fees, reports). Its profile (story, links, team, deck, announcements, the shape of its crowd) lives here
+   and is merged in by profileOf(p), so profile edits reach every browser without resetting anyone's saved demo. A raise
+   opened from the Launch form carries its own profile. Everything here is demo data; nothing is read from mainnet.
    ========================================================================== */
-
-/* Real accounts that stand in for Quill's, so its vault balance and its pool chart are read live. Neither belongs to Quill. */
-const STANDINS = {
-  vault: {
-    address: 'GLA4YsAG5eFDWnCy8rfq47PAQi3XHfxkNXULQ81xUinR', presale: 'FVADnfbrBkoB16zhx16Gi8STM5HvqvDSK3fAaeLvxk7c', asset: 'USDC',
-    note: 'Stand-in vault: the USDC vault of a real Meteora Presale Vault on mainnet, not Quill’s. Its balance is read live from Solana.'
-  },
-  pool: {
-    address: '8Pm2kZpnxD3hoMmt4bjStX2Pw2Z9abpbHzZxMPqxPmie', pair: 'SOL/USDC', dex: 'Meteora DAMM v2',
-    note: 'Stand-in pool: a real Meteora DAMM v2 SOL/USDC pool, not Quill’s. Prices and liquidity are live from GeckoTerminal.'
-  }
-};
 
 const B58ABC = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 /* a demo address: the right length and alphabet, never a real account. Real lookups skip anything in demoAddrs. */
 const demoAddrs = new Set();
 function fakeAddr(seed, len = 44) { const r = rng('addr/' + seed); let s = ''; for (let i = 0; i < len; i++) s += B58ABC[Math.floor(r() * 58)]; demoAddrs.add(s); return s; }
 const EXCHANGES = ['Binance', 'Coinbase', 'OKX', 'Kraken', 'Bybit', 'Backpack Exchange'];
-
-/* allocation kinds: raise (backers), lp (paired into the locked pool), team, treasury, other.
-   Seed keeps the raise share and the LP share equal, which is what makes the pool open at the raise price. */
-const alloc = (label, kind, pct, vesting, wallet) => ({ label, kind, pct, vesting: vesting || null, wallet: wallet || null });
-const vest = (cliffDays, durationDays) => ({ cliffDays, durationDays });
 
 const DEMO_PROFILES = {
   osprey: {
@@ -46,21 +30,12 @@ Perp volume on Solana passed spot this year, and most liquidations happen while 
 
 The app is free while the raise is open. After seeding, alerts cost 20 $OSPR a month, and holders of 5,000 $OSPR or more get them free.`,
     links: { website: 'https://osprey.example', x: 'https://x.com/osprey_seeddemo', telegram: 'https://t.me/osprey_seeddemo', discord: null, github: 'https://github.com/osprey-seeddemo' },
-    minBuy: 0.1, maxBuy: 10,
-    tokenomics: { allocations: [alloc('Raise backers', 'presale', 45), alloc('Locked Meteora pool', 'lp', 45), alloc('Team', 'team', 10, vest(90, 365))],
-      useOfFunds: [{ label: 'Carrier costs, 12 months', pct: 40 }, { label: 'Engineering', pct: 45 }, { label: 'Maths review', pct: 15 }] },
     team: [
       { name: 'Ines Carvalho', role: 'Founder, engineering', x: 'https://x.com/ines_seeddemo', github: 'https://github.com/ines-seeddemo', linkedin: null, verified: { x: true, github: true, domain: false } },
       { name: 'Tomasz Wrona', role: 'Risk maths', x: 'https://x.com/twrona_seeddemo', github: null, linkedin: 'https://www.linkedin.com/in/twrona-seeddemo', verified: { x: true, github: false, domain: false } }
     ],
     founder: { name: 'Ines Carvalho', x: 'https://x.com/ines_seeddemo', xAgeDays: 1460, funding: { kind: 'exchange', label: 'Coinbase', hoursBeforeLaunch: 24 * 210 }, pastLaunches: [] },
     deck: 'assets/demo/decks/osprey.pdf',
-    roadmap: [
-      { title: 'Drift position reader', due: -30, status: 'shipped', proof: 'https://github.com/osprey-seeddemo/reader/releases' },
-      { title: 'SMS alerts, closed beta', due: -6, status: 'shipped', proof: 'https://osprey.example/beta' },
-      { title: 'Jupiter Perps and Zeta', due: 21, status: 'planned' },
-      { title: 'Voice call escalation', due: 45, status: 'planned' }
-    ],
     updates: [
       { title: 'Beta numbers', body: '412 wallets connected in the first week. 38 alerts sent, 31 of them before the position was saved.', daysAgo: 1, author: 'Ines Carvalho' }
     ],
@@ -74,30 +49,6 @@ The app is free while the raise is open. After seeding, alerts cost 20 $OSPR a m
     watchers: 640
   },
 
-  moss: {
-    tagline: 'One art drop a day, minted slowly.',
-    description: `**Moss mints one piece of generative art a day, for a year.**
-
-Each piece grows from the one before it: the same seed, one more day of growth. Backers of the raise get a share of every sale for the full year.
-
-### How a drop works
-The piece for the day is revealed at noon UTC and minted over 24 hours, one edition an hour. That slow pace is the point: nobody can sweep a drop in one block.
-
-### What the raise pays for
-Rendering and storage for 365 pieces, and the minting program.`,
-    links: { website: 'https://moss.example', x: 'https://x.com/moss_seeddemo', telegram: null, discord: 'https://discord.gg/moss-seeddemo', github: null },
-    minBuy: 0.1, maxBuy: 15,
-    tokenomics: { allocations: [alloc('Raise backers', 'presale', 50), alloc('Locked Meteora pool', 'lp', 50)],
-      useOfFunds: [{ label: 'Rendering and storage', pct: 55 }, { label: 'Minting program', pct: 45 }] },
-    team: [{ name: 'Moss', role: 'Artist', x: 'https://x.com/moss_seeddemo', github: null, linkedin: null, verified: { x: true, github: false, domain: false } }],
-    founder: { name: 'Moss', x: 'https://x.com/moss_seeddemo', xAgeDays: 70, funding: { kind: 'wallet', label: 'Older personal wallet', hoursBeforeLaunch: 24 * 40 }, pastLaunches: [] },
-    deck: null,
-    roadmap: [{ title: 'First 30 pieces rendered', due: -3, status: 'shipped', proof: 'https://moss.example/preview' }, { title: 'Day one drop', due: 2, status: 'planned' }],
-    updates: [],
-    crowd: { top10: 0.44, fresh: 0.3, bundle: null, kols: 1, tracked: 1, repeat: 0.05 },
-    chat: [{ by: 'visitor:2', body: 'Is there a preview of the first piece?', mins: 90 }, { by: 'founder', body: 'Pieces 1 to 30 are on the site.', mins: 80, reply: -1 }],
-    watchers: 210
-  },
 
   tidewater: {
     tagline: 'Index vaults built from tokenized stocks.',
@@ -113,9 +64,6 @@ Anyone can check what a vault holds at any block. There is no manager discretion
 - Six months of keeper costs for rebalancing
 - Legal review of the basket definitions`,
     links: { website: 'https://tidewater.example', x: 'https://x.com/tidewater_seeddemo', telegram: 'https://t.me/tidewater_seeddemo', discord: 'https://discord.gg/tidewater-seeddemo', github: 'https://github.com/tidewater-seeddemo' },
-    minBuy: 50, maxBuy: 5000,
-    tokenomics: { allocations: [alloc('Raise backers', 'presale', 40), alloc('Locked Meteora pool', 'lp', 40), alloc('Team', 'team', 12, vest(180, 720)), alloc('Treasury', 'treasury', 8, vest(90, 540))],
-      useOfFunds: [{ label: 'Audits', pct: 45 }, { label: 'Keeper costs', pct: 20 }, { label: 'Legal review', pct: 15 }, { label: 'Engineering', pct: 20 }] },
     team: [
       { name: 'Aiko Tanaka', role: 'Founder, product', x: 'https://x.com/aiko_seeddemo', github: 'https://github.com/aiko-seeddemo', linkedin: 'https://www.linkedin.com/in/aiko-seeddemo', verified: { x: true, github: true, domain: true } },
       { name: 'Ruben Osei', role: 'Vault program', x: null, github: 'https://github.com/rosei-seeddemo', linkedin: null, verified: { x: false, github: true, domain: false } },
@@ -123,12 +71,6 @@ Anyone can check what a vault holds at any block. There is no manager discretion
     ],
     founder: { name: 'Aiko Tanaka', x: 'https://x.com/aiko_seeddemo', xAgeDays: 2200, funding: { kind: 'exchange', label: 'Kraken', hoursBeforeLaunch: 24 * 400 }, pastLaunches: [{ name: 'Basket', platform: 'Seed', outcome: 'seeded', daysAgo: 160 }] },
     deck: 'assets/demo/decks/tidewater.pdf',
-    roadmap: [
-      { title: 'Vault program on devnet', due: -40, status: 'shipped', proof: 'https://github.com/tidewater-seeddemo/vaults' },
-      { title: 'First audit', due: -5, status: 'missed' },
-      { title: 'First audit, rescheduled', due: 12, status: 'planned' },
-      { title: 'Nasdaq top ten vault on mainnet', due: 35, status: 'planned' }
-    ],
     updates: [
       { title: 'Audit moved', body: 'The auditor pushed our slot by two weeks. The mainnet date moves with it. Nothing else changes.', daysAgo: 2, author: 'Aiko Tanaka' },
       { title: 'Devnet vaults open', body: 'All three baskets are live on devnet. Rebalancing has run 14 times without a failed keeper call.', daysAgo: 12, author: 'Ruben Osei' }
@@ -156,9 +98,6 @@ Small DCA orders pay the same fixed costs as large ones. Netting them first cuts
 - A year of keeper costs
 - A grants fund for integrations`,
     links: { website: 'https://lattice.example', x: 'https://x.com/lattice_seeddemo', telegram: 'https://t.me/lattice_seeddemo', discord: 'https://discord.gg/lattice-seeddemo', github: 'https://github.com/lattice-seeddemo' },
-    minBuy: 100, maxBuy: 12000,
-    tokenomics: { allocations: [alloc('Raise backers', 'presale', 40), alloc('Locked Meteora pool', 'lp', 40), alloc('Team', 'team', 12, vest(180, 720)), alloc('Treasury', 'treasury', 8, vest(90, 540))],
-      useOfFunds: [{ label: 'Audit', pct: 40 }, { label: 'Keeper costs', pct: 25 }, { label: 'Integration grants', pct: 35 }] },
     team: [
       { name: 'Priya Raman', role: 'Founder, engineering', x: 'https://x.com/priya_seeddemo', github: 'https://github.com/priya-seeddemo', linkedin: 'https://www.linkedin.com/in/priya-seeddemo', verified: { x: true, github: true, domain: true } },
       { name: 'Jonas Lund', role: 'Netting program', x: 'https://x.com/jlund_seeddemo', github: 'https://github.com/jlund-seeddemo', linkedin: null, verified: { x: true, github: true, domain: true } },
@@ -166,12 +105,6 @@ Small DCA orders pay the same fixed costs as large ones. Netting them first cuts
     ],
     founder: { name: 'Priya Raman', x: 'https://x.com/priya_seeddemo', xAgeDays: 2400, funding: { kind: 'exchange', label: 'Coinbase', hoursBeforeLaunch: 24 * 420 }, pastLaunches: [{ name: 'Gridline', platform: 'Seed', outcome: 'seeded', daysAgo: 220 }] },
     deck: 'assets/demo/decks/lattice.pdf',
-    roadmap: [
-      { title: 'Netting program on devnet', due: -60, status: 'shipped', proof: 'https://github.com/lattice-seeddemo/netting' },
-      { title: 'Audit', due: -12, status: 'shipped', proof: 'https://lattice.example/audit.pdf' },
-      { title: 'Mainnet vaults', due: 14, status: 'planned' },
-      { title: 'Integration grants open', due: 40, status: 'planned' }
-    ],
     updates: [
       { title: 'Audit published', body: 'The netting program audit is out with no high or medium findings. Two low findings are fixed in the release linked on the roadmap.', daysAgo: 3, author: 'Priya Raman' },
       { title: 'Why JUP stakers first', body: 'Stakers already hold for the long term and DCA the most. Starting with them keeps the first vaults deep.', daysAgo: 9, author: 'Mei Chen' }
@@ -186,30 +119,6 @@ Small DCA orders pay the same fixed costs as large ones. Netting them first cuts
     watchers: 1720
   },
 
-  overclock: {
-    tagline: 'GPU rental credits you can trade.',
-    description: `**Overclock turns GPU rental hours into a token.**
-
-Buy credits now, burn them for GPU time later, or sell them to someone who needs compute.
-
-Huge partnerships coming. Stay tuned.`,
-    links: { website: null, x: 'https://x.com/overclock_seeddemo', telegram: 'https://t.me/overclock_seeddemo', discord: null, github: null },
-    minBuy: 0.05, maxBuy: 200,
-    tokenomics: { allocations: [alloc('Raise backers', 'presale', 30), alloc('Locked Meteora pool', 'lp', 30), alloc('Team', 'team', 25), alloc('Treasury', 'treasury', 15)],
-      useOfFunds: [{ label: 'Marketing', pct: 70 }, { label: 'Development', pct: 30 }] },
-    team: [],
-    founder: { name: 'overclock_dev', x: 'https://x.com/overclock_seeddemo', xAgeDays: 12, funding: { kind: 'bridge', label: 'deBridge', addr: 'src5qyZHqTqecJV4aY6Cb6zDZLMDzrDKKezs22MPHr4', hoursBeforeLaunch: 5 },
-      pastLaunches: [{ name: 'GPUFI', platform: 'pump.fun', outcome: 'dumped', daysAgo: 48 }, { name: 'RENTX', platform: 'pump.fun', outcome: 'dumped', daysAgo: 21 }] },
-    deck: null,
-    roadmap: [{ title: 'Partnerships', due: 7, status: 'planned' }],
-    updates: [],
-    crowd: { top10: 0.74, fresh: 0.58, bundle: { n: 6, from: 4 }, kols: 0, tracked: 0, repeat: 0 },
-    chat: [
-      { by: 'visitor:3', body: 'Is this the Render team?', mins: 50 },
-      { by: 'founder', body: 'Big announcement soon.', mins: 45, reply: -1 }
-    ],
-    watchers: 2950
-  },
 
   halfmoon: {
     tagline: 'Split a wallet’s staking yield with a friend.',
@@ -223,16 +132,12 @@ People who want to support someone every month without sending the same transfer
 ### What the raise pays for
 A review of the stake-routing program and a year of hosting.`,
     links: { website: 'https://halfmoon.example', x: 'https://x.com/halfmoon_seeddemo', telegram: null, discord: null, github: 'https://github.com/halfmoon-seeddemo' },
-    minBuy: 0.2, maxBuy: 20,
-    tokenomics: { allocations: [alloc('Raise backers', 'presale', 45), alloc('Locked Meteora pool', 'lp', 45), alloc('Team', 'team', 6, vest(90, 365)), alloc('Treasury', 'treasury', 4, vest(0, 365))],
-      useOfFunds: [{ label: 'Program review', pct: 60 }, { label: 'Hosting', pct: 20 }, { label: 'Design', pct: 20 }] },
     team: [
       { name: 'Sam Okafor', role: 'Founder', x: 'https://x.com/samok_seeddemo', github: 'https://github.com/samok-seeddemo', linkedin: null, verified: { x: true, github: true, domain: false } },
       { name: 'Noor Haddad', role: 'Design', x: null, github: null, linkedin: 'https://www.linkedin.com/in/noor-seeddemo', verified: { x: false, github: false, domain: false } }
     ],
     founder: { name: 'Sam Okafor', x: 'https://x.com/samok_seeddemo', xAgeDays: 210, funding: { kind: 'exchange', label: 'OKX', hoursBeforeLaunch: 24 * 30 }, pastLaunches: [] },
     deck: 'assets/demo/decks/halfmoon.pdf',
-    roadmap: [{ title: 'Stake routing on devnet', due: -8, status: 'shipped', proof: 'https://github.com/halfmoon-seeddemo/routing' }, { title: 'Mainnet', due: 30, status: 'planned' }],
     updates: [{ title: 'Devnet is live', body: 'Try a split on devnet from the site. Rewards route at each epoch boundary.', daysAgo: 1, author: 'Sam Okafor' }],
     crowd: { top10: 0.52, fresh: 0.2, bundle: null, kols: 0, tracked: 1, repeat: 0.08 },
     chat: [{ by: 'backer:1', body: 'Which validators does it support?', mins: 240 }, { by: 'founder', body: 'Any validator. You keep your own stake account.', mins: 230, reply: -1, pinned: true }],
@@ -251,10 +156,6 @@ The pool opened at the raise price on the day the raise filled. Tipping is live 
 ### Token use
 Writers who hold $QUILL pay no tipping fee. The fee on everyone else buys $QUILL from the pool each week.`,
     links: { website: 'https://quill.example', x: 'https://x.com/quill_seeddemo', telegram: 'https://t.me/quill_seeddemo', discord: 'https://discord.gg/quill-seeddemo', github: 'https://github.com/quill-seeddemo' },
-    minBuy: 25, maxBuy: 2500,
-    vault: STANDINS.vault, pool: STANDINS.pool,
-    tokenomics: { allocations: [alloc('Raise backers', 'presale', 42), alloc('Locked Meteora pool', 'lp', 42), alloc('Team', 'team', 10, vest(180, 720)), alloc('Treasury', 'treasury', 6, vest(30, 365))],
-      useOfFunds: [{ label: 'Engineering', pct: 50 }, { label: 'Writer onboarding', pct: 30 }, { label: 'Security review', pct: 20 }] },
     team: [
       { name: 'Hana Kim', role: 'Founder', x: 'https://x.com/hanakim_seeddemo', github: 'https://github.com/hanakim-seeddemo', linkedin: 'https://www.linkedin.com/in/hanakim-seeddemo', verified: { x: true, github: true, domain: true } },
       { name: 'Diego Ferraz', role: 'Engineering', x: 'https://x.com/dferraz_seeddemo', github: 'https://github.com/dferraz-seeddemo', linkedin: null, verified: { x: true, github: true, domain: false } },
@@ -262,13 +163,6 @@ Writers who hold $QUILL pay no tipping fee. The fee on everyone else buys $QUILL
     ],
     founder: { name: 'Hana Kim', x: 'https://x.com/hanakim_seeddemo', xAgeDays: 1800, funding: { kind: 'exchange', label: 'Coinbase', hoursBeforeLaunch: 24 * 300 }, pastLaunches: [] },
     deck: 'assets/demo/decks/quill.pdf',
-    roadmap: [
-      { title: 'Tip links for Substack and Beehiiv', due: -20, status: 'shipped', proof: 'https://quill.example/changelog#links' },
-      { title: 'Pool opens at the raise price', due: -2, status: 'shipped', proof: 'https://app.meteora.ag' },
-      { title: '100 writers tipping', due: -1, status: 'shipped', proof: 'https://quill.example/writers' },
-      { title: 'Weekly buy-back from fees', due: 10, status: 'planned' },
-      { title: 'Ghost integration', due: 30, status: 'planned' }
-    ],
     updates: [
       { title: '140 writers live', body: 'We passed 100 writers a day early. Tips so far average 2.40 USDC.', daysAgo: 0.5, author: 'Hana Kim' },
       { title: 'Seeded, pool open', body: 'The raise filled and the pool opened at the raise price. The LP position is locked. Claim your $QUILL from this page.', daysAgo: 2, author: 'Hana Kim' },
@@ -293,16 +187,12 @@ Friends join a bid room, each puts in what they want, and Ember bids as one wall
 ### What the raise would have paid for
 The shared vault program and a review of its withdrawal rules.`,
     links: { website: 'https://ember.example', x: 'https://x.com/ember_seeddemo', telegram: null, discord: 'https://discord.gg/ember-seeddemo', github: null },
-    minBuy: 1e6, maxBuy: 1.5e8,
-    tokenomics: { allocations: [alloc('Raise backers', 'presale', 45), alloc('Locked Meteora pool', 'lp', 45), alloc('Team', 'team', 10, vest(90, 365))],
-      useOfFunds: [{ label: 'Vault program', pct: 70 }, { label: 'Review', pct: 30 }] },
     team: [
       { name: 'Kai Mercer', role: 'Founder', x: 'https://x.com/kaimercer_seeddemo', github: null, linkedin: null, verified: { x: true, github: false, domain: false } },
       { name: 'Ada Novak', role: 'Engineering', x: null, github: 'https://github.com/adanovak-seeddemo', linkedin: null, verified: { x: false, github: true, domain: false } }
     ],
     founder: { name: 'Kai Mercer', x: 'https://x.com/kaimercer_seeddemo', xAgeDays: 400, funding: { kind: 'exchange', label: 'Bybit', hoursBeforeLaunch: 24 * 90 }, pastLaunches: [] },
     deck: 'assets/demo/decks/ember.pdf',
-    roadmap: [{ title: 'Bid rooms prototype', due: -10, status: 'shipped', proof: 'https://ember.example/prototype' }, { title: 'Shared vault program', due: -1, status: 'missed' }],
     updates: [{ title: 'Refunds are open', body: 'We did not reach the target. Every backer can claim a full refund on this page, fee included. Thank you for trying Ember with us.', daysAgo: 1, author: 'Kai Mercer' }],
     crowd: { top10: 0.46, fresh: 0.34, bundle: null, kols: 1, tracked: 0, repeat: 0.04 },
     chat: [
@@ -316,37 +206,22 @@ The shared vault program and a review of its withdrawal rules.`,
 /* the wider board: a lighter profile for each of these, built from a few lines into the same shape as the full ones */
 function lite(o) {
   const links = Object.assign({ website: null, x: null, telegram: null, discord: null, github: null }, o.links || {});
-  const teamPct = o.teamPct || 0, share = (100 - teamPct) / 2;
   const team = (o.members || []).map(m => ({ name: m[0], role: m[1], x: m[2] || null, github: null, linkedin: null, verified: { x: !!m[2], github: false, domain: false } }));
   return {
-    tagline: o.tagline, description: o.description || `**${o.tagline}**\n\n${o.about || ''}`, links, minBuy: o.minBuy || 0, maxBuy: o.maxBuy || 0,
-    tokenomics: { allocations: [alloc('Raise backers', 'presale', share), alloc('Locked Meteora pool', 'lp', share), ...(teamPct ? [alloc('Team', 'team', teamPct, vest(180, 540))] : [])], useOfFunds: o.uof || [{ label: 'Build', pct: 70 }, { label: 'Operations', pct: 30 }] },
+    tagline: o.tagline, description: o.description || `**${o.tagline}**\n\n${o.about || ''}`, links,
     team, founder: { name: team[0] ? team[0].name : 'Founder', x: links.x, xAgeDays: o.xAge == null ? 420 : o.xAge, funding: o.funding || { kind: 'exchange', label: 'Coinbase', hoursBeforeLaunch: 24 * 60 }, pastLaunches: [] },
-    deck: null, roadmap: o.roadmap || [], updates: o.updates || [],
+    deck: null, updates: o.updates || [],
     crowd: Object.assign({ top10: 0.33, fresh: 0.15, bundle: null, kols: 1, tracked: 2, repeat: 0.1 }, o.crowd || {}), chat: o.chat || [], watchers: o.watchers || 0
   };
 }
 const LITE = {
-  lumen: { tagline: 'Pay-as-you-go GPU minutes for indie game servers.', about: 'Lumen meters GPU time by the minute and bills in USDC, so a small studio only pays while players are on.', links: { website: 'https://lumen.example', x: 'https://x.com/lumen_seeddemo', github: 'https://github.com/lumen-seeddemo' }, members: [['Ada Reyes', 'Founder', 'https://x.com/lumen_seeddemo'], ['Tom Vance', 'Infra']], teamPct: 10, roadmap: [{ title: 'Metering on devnet', due: -4, status: 'shipped', proof: 'https://lumen.example/devnet' }, { title: 'First three studios', due: 14, status: 'planned' }], updates: [{ title: 'Devnet metering is live', body: 'Minutes are counted on devnet and billed to a test wallet. Mainnet after the audit.', daysAgo: 0.3, author: 'Ada Reyes' }], chat: [{ by: 'visitor:1', body: 'Does it work with Unity servers?', mins: 50 }, { by: 'founder', body: 'Anything that runs in a container.', mins: 40, reply: -1 }], watchers: 120 },
-  kiln: { tagline: 'Ceramics studios share a kiln schedule and split the firing.', about: 'Kiln books shared firings across studios in a city and settles the split in USDC after each firing.', links: { website: 'https://kiln.example', x: 'https://x.com/kiln_seeddemo', discord: 'https://discord.gg/kiln-seeddemo' }, members: [['Priya Nair', 'Founder', 'https://x.com/kiln_seeddemo']], roadmap: [{ title: 'Lisbon pilot', due: -10, status: 'shipped', proof: 'https://kiln.example/lisbon' }, { title: 'Berlin and Porto', due: 30, status: 'planned' }], crowd: { top10: 0.29, fresh: 0.11, kols: 0, tracked: 1, repeat: 0.14 }, watchers: 86 },
-  harbor: { tagline: 'Escrow for second-hand boat sales.', about: 'Harbor holds the buyer\'s SOL until the survey is signed off, then releases it.', links: { website: 'https://harbor.example', x: 'https://x.com/harbor_seeddemo' }, members: [['Jonas Lind', 'Founder', 'https://x.com/harbor_seeddemo']], xAge: 60, funding: { kind: 'wallet', label: 'Fresh wallet', hoursBeforeLaunch: 30 }, crowd: { top10: 0.48, fresh: 0.35, kols: 0, tracked: 0, repeat: 0 }, watchers: 24 },
-  satchel: { tagline: 'A courier network paid per parcel, settled hourly.', about: 'Satchel pays couriers in SOL the hour a parcel lands, with the fee split written on chain.', links: { website: 'https://satchel.example', x: 'https://x.com/satchel_seeddemo', telegram: 'https://t.me/satchel_seeddemo' }, members: [['Leo Okoro', 'Founder', 'https://x.com/satchel_seeddemo'], ['Nina Berg', 'Ops']], teamPct: 12, updates: [{ title: 'Two hundred parcels a day', body: 'The Lagos pilot crossed 200 parcels a day this week.', daysAgo: 1, author: 'Leo Okoro' }], crowd: { top10: 0.36, fresh: 0.22, kols: 1, tracked: 2, repeat: 0.09 }, watchers: 140 },
-  vellum: { tagline: 'Signed PDFs that settle a deposit when both sides sign.', about: 'Vellum attaches a USDC deposit to a contract and releases it on the second signature.', links: { website: 'https://vellum.example', github: 'https://github.com/vellum-seeddemo' }, members: [['Sara Holm', 'Founder'], ['Ivo Marek', 'Engineer']], roadmap: [{ title: 'Signing flow', due: -2, status: 'shipped', proof: 'https://vellum.example/sign' }], crowd: { top10: 0.31, fresh: 0.1, kols: 2, tracked: 3, repeat: 0.18 }, watchers: 210 },
-  pollen: { tagline: 'Tips for open-source maintainers, routed by commit.', about: 'Pollen splits a tip across the people who wrote the code you depend on, by commit share.', links: { website: 'https://pollen.example', x: 'https://x.com/pollen_seeddemo', github: 'https://github.com/pollen-seeddemo' }, members: [['Dev Patel', 'Founder', 'https://x.com/pollen_seeddemo']], chat: [{ by: 'backer:2', body: 'How do you weight a one-line fix against a rewrite?', mins: 200 }, { by: 'founder', body: 'By lines touched, capped per commit. The weights are public.', mins: 190, reply: -1 }], watchers: 95 },
-  cobalt: { tagline: 'Battery passports for second-life packs.', about: 'Cobalt records a pack\'s cycles and health on chain, so a used pack sells on its record, not a guess.', links: { website: 'https://cobalt.example', x: 'https://x.com/cobalt_seeddemo', discord: 'https://discord.gg/cobalt-seeddemo', github: 'https://github.com/cobalt-seeddemo' }, members: [['Ruth Adler', 'Founder', 'https://x.com/cobalt_seeddemo'], ['Kenji Mori', 'Hardware'], ['Ola Berg', 'Growth']], teamPct: 10, roadmap: [{ title: 'Reader firmware', due: -12, status: 'shipped', proof: 'https://cobalt.example/firmware' }, { title: 'First 1,000 packs', due: 20, status: 'planned' }], updates: [{ title: '400 packs logged', body: 'The Rotterdam yard has 400 packs on passports. Buyers are paying a premium for a full record.', daysAgo: 0.5, author: 'Ruth Adler' }, { title: 'Reader firmware shipped', body: 'The handheld reader writes a pack\'s health straight to its passport.', daysAgo: 6, author: 'Kenji Mori' }], chat: [{ by: 'backer:1', body: 'Who pays for the reader?', mins: 420 }, { by: 'team:1', body: 'The yard. It pays for itself in a week of sales.', mins: 400, reply: -1, pinned: true }], crowd: { top10: 0.27, fresh: 0.09, kols: 3, tracked: 5, repeat: 0.28 }, watchers: 480 },
-  marrow: { tagline: 'Bone-density screening vans, booked by neighbourhood.', about: 'Marrow runs a van with a scanner and books whole streets at once. The raise pays for the second van.', links: { website: 'https://marrow.example', x: 'https://x.com/marrow_seeddemo' }, members: [['Dr Hana Sato', 'Founder', 'https://x.com/marrow_seeddemo'], ['Ben Cole', 'Operations']], roadmap: [{ title: 'Van one, 2,000 scans', due: -30, status: 'shipped', proof: 'https://marrow.example/scans' }, { title: 'Van two on the road', due: 45, status: 'planned' }], updates: [{ title: 'Van two ordered', body: 'The second van is ordered. Delivery in six weeks.', daysAgo: 2, author: 'Ben Cole' }], crowd: { top10: 0.22, fresh: 0.07, kols: 2, tracked: 4, repeat: 0.35 }, watchers: 620 },
-  kite: { tagline: 'Wind forecasts sold to kite schools by the hour.', about: 'Drift Kite sells a one-hour wind window to schools on the beach, refunded if the wind misses.', links: { website: 'https://kite.example', x: 'https://x.com/kite_seeddemo', telegram: 'https://t.me/kite_seeddemo' }, members: [['Marco Silva', 'Founder', 'https://x.com/kite_seeddemo']], teamPct: 8, chat: [{ by: 'visitor:3', body: 'Tarifa?', mins: 30 }, { by: 'founder', body: 'Tarifa and Cumbuco first.', mins: 25, reply: -1 }], crowd: { top10: 0.4, fresh: 0.18, kols: 1, tracked: 1, repeat: 0.06 }, watchers: 260 },
-  ferrule: { tagline: 'Rebuilt bike frames with a chain of custody.', about: 'Ferrule rebuilds alloy frames and records every weld and inspection on the frame\'s own record.', links: { website: 'https://ferrule.example', github: 'https://github.com/ferrule-seeddemo' }, members: [['Anya Volkov', 'Founder'], ['Sam Reed', 'Welder']], roadmap: [{ title: 'First 50 frames', due: -20, status: 'shipped', proof: 'https://ferrule.example/frames' }], crowd: { top10: 0.45, fresh: 0.2, kols: 0, tracked: 2, repeat: 0.12 }, watchers: 75 },
-  oriel: { tagline: 'Window-box farms with a buyer for every harvest.', about: 'Oriel installs a window box, sells the harvest to a restaurant down the street, and splits the sale with the grower.', links: { website: 'https://oriel.example', x: 'https://x.com/oriel_seeddemo', discord: 'https://discord.gg/oriel-seeddemo' }, members: [['Grace Obi', 'Founder', 'https://x.com/oriel_seeddemo'], ['Luis Ortega', 'Growers']], teamPct: 10, roadmap: [{ title: '300 boxes installed', due: -8, status: 'shipped', proof: 'https://oriel.example/boxes' }, { title: 'Second city', due: 40, status: 'planned' }], updates: [{ title: 'Seeded, and the first harvest sold', body: 'The pool is open and the first 40 boxes sold their harvest to three restaurants on Monday.', daysAgo: 5, author: 'Grace Obi' }], chat: [{ by: 'backer:3', body: 'Claimed, thanks.', mins: 5000 }, { by: 'founder', body: 'Welcome aboard. Harvest reports come every Monday.', mins: 4900, reply: -1 }], crowd: { top10: 0.3, fresh: 0.1, kols: 2, tracked: 3, repeat: 0.2 }, watchers: 540 },
-  peat: { tagline: 'Rewetting drained peatland, paid per hectare held wet.', about: 'Peat pays landowners in USDC per hectare that stays wet, checked by satellite each month.', links: { website: 'https://peat.example', x: 'https://x.com/peat_seeddemo', github: 'https://github.com/peat-seeddemo' }, members: [['Fiona Walsh', 'Founder', 'https://x.com/peat_seeddemo'], ['Eoin Byrne', 'Science'], ['Maya Lin', 'Data']], roadmap: [{ title: '1,200 hectares under contract', due: -25, status: 'shipped', proof: 'https://peat.example/contracts' }, { title: 'First satellite audit', due: 10, status: 'planned' }], updates: [{ title: 'Pool open', body: 'Peat seeded at target. The first monthly audit runs on the 1st.', daysAgo: 8, author: 'Fiona Walsh' }], crowd: { top10: 0.25, fresh: 0.08, kols: 3, tracked: 6, repeat: 0.3 }, watchers: 910 },
-  nimbus: { tagline: 'Rain-day cover for street markets.', about: 'Nimbus pays a stall a fixed USDC sum on a washed-out day, triggered by the local rain gauge.', links: { website: 'https://nimbus.example', x: 'https://x.com/nimbus_seeddemo', telegram: 'https://t.me/nimbus_seeddemo' }, members: [['Omar Haddad', 'Founder', 'https://x.com/nimbus_seeddemo'], ['Lucy Grant', 'Actuary']], teamPct: 12, updates: [{ title: 'Seeded', body: 'Nimbus seeded with 445 backers. Cover goes on sale at the Borough market on Saturday.', daysAgo: 2, author: 'Omar Haddad' }], chat: [{ by: 'backer:5', body: 'Which gauge counts?', mins: 3000 }, { by: 'team:1', body: 'The nearest Met Office gauge, named on each policy.', mins: 2900, reply: -1 }], crowd: { top10: 0.34, fresh: 0.13, kols: 2, tracked: 2, repeat: 0.16 }, watchers: 700 },
+  cobalt: { tagline: 'Battery passports for second-life packs.', about: 'Cobalt records a pack\'s cycles and health on chain, so a used pack sells on its record, not a guess.', links: { website: 'https://cobalt.example', x: 'https://x.com/cobalt_seeddemo', discord: 'https://discord.gg/cobalt-seeddemo', github: 'https://github.com/cobalt-seeddemo' }, members: [['Ruth Adler', 'Founder', 'https://x.com/cobalt_seeddemo'], ['Kenji Mori', 'Hardware'], ['Ola Berg', 'Growth']], updates: [{ title: '400 packs logged', body: 'The Rotterdam yard has 400 packs on passports. Buyers are paying a premium for a full record.', daysAgo: 0.5, author: 'Ruth Adler' }, { title: 'Reader firmware shipped', body: 'The handheld reader writes a pack\'s health straight to its passport.', daysAgo: 6, author: 'Kenji Mori' }], chat: [{ by: 'backer:1', body: 'Who pays for the reader?', mins: 420 }, { by: 'team:1', body: 'The yard. It pays for itself in a week of sales.', mins: 400, reply: -1, pinned: true }], crowd: { top10: 0.27, fresh: 0.09, kols: 3, tracked: 5, repeat: 0.28 }, watchers: 480 },
   gully: { tagline: 'Storm-drain sensors that text the council.', about: 'Gully clips a level sensor into a drain and texts the council before it floods.', links: { website: 'https://gully.example' }, members: [['Pat Doyle', 'Founder']], xAge: 25, funding: { kind: 'wallet', label: 'Fresh wallet', hoursBeforeLaunch: 12 }, crowd: { top10: 0.6, fresh: 0.4, kols: 0, tracked: 0, repeat: 0.02 }, watchers: 18 }
 };
 Object.keys(LITE).forEach(id => { DEMO_PROFILES[id] = Object.assign(lite(LITE[id]), { demo: true }); });
-/* every demo profile gets a mint and a vault address (demo), deployer and team wallets (demo) */
+/* every demo profile gets a mint (demo), deployer and team wallets (demo) */
 Object.entries(DEMO_PROFILES).forEach(([id, pr]) => {
   pr.mint = pr.mint || fakeAddr('mint/' + id);
-  pr.vault = pr.vault || { address: fakeAddr('vault/' + id) };
   pr.founder.wallet = fakeAddr('founder/' + id);
   pr.team.forEach((m, i) => { m.wallet = i === 0 ? pr.founder.wallet : fakeAddr('team/' + id + i); });
   pr.banner = `assets/demo/${id}-banner.svg`; pr.art = `assets/demo/${id}-art.svg`;
@@ -354,8 +229,7 @@ Object.entries(DEMO_PROFILES).forEach(([id, pr]) => {
 });
 
 /* the profile for a presale: a demo profile, or the one a creator entered in the Launch form */
-const profileOf = p => (p && (p.profile || DEMO_PROFILES[p.id])) || { links: {}, team: [], tokenomics: { allocations: [], useOfFunds: [] }, founder: { pastLaunches: [] }, roadmap: [], updates: [], chat: [] };
-const presaleShare = p => { const a = profileOf(p).tokenomics.allocations.find(x => x.kind === 'presale'); return a ? a.pct / 100 : A; };
+const profileOf = p => (p && (p.profile || DEMO_PROFILES[p.id])) || { links: {}, team: [], founder: { pastLaunches: [] }, updates: [], chat: [] };
 
 /* ------------------------------------------------------------ the crowd
    Builds the backer set for a demo raise so that the numbers the risk checks read (top 10 share, bundles, fresh wallets)
@@ -402,7 +276,8 @@ function histFromBuys(p, buys, end) {
   return h;
 }
 
-/* the demo wallet starts with a position in the seeded and the refunded raise, so both claim flows can be tried */
+/* the demo wallet backed four raises, so every claim flow can be tried: tokens (Quill), a refund (Ember), a live
+   position (Osprey) and one waiting to seed (Cobalt) */
 const DEMO_WALLET_ID = 'demo:7xKp\u20269fQa';
 /* Daily realised PnL of the demo wallet in USD for the last 120 days: pool trades on about half the days, the Quill seed
    landing above cost two days ago, the Ember refund (money back, nothing gained) yesterday. Seeded, so it is the same in
@@ -417,46 +292,80 @@ function demoPnlDays(now) {
   }
   return out;
 }
-const DEMO_WALLET_BUYS = { quill: 500, ember: 400, oriel: 3, cobalt: 5 };
+const DEMO_WALLET_BUYS = { quill: 500, ember: 400, osprey: 2, cobalt: 5 };
+/* a roadmap milestone: `due` is days from now (negative: in the past); the states are planned, shipped and missed */
+const road = (title, due, status, proofUrl) => ({ title, due, status, proofUrl: proofUrl || null });
 function seedData() {
-  const n = Date.now();
-  const mk = (id, name, ticker, q, target, pct, backers, openedAgo, dur, status = 'live', resolvedAgo = 0) => {
-    const openedAt = n - openedAgo, endsAt = openedAt + dur, resolvedAt = status === 'live' ? null : n - resolvedAgo, pr = DEMO_PROFILES[id];
-    const p = { id, name, ticker, idea: pr.tagline, q, target, raised: r6(target * pct), backers, openedAt, endsAt, status, resolvedAt, mine: false, hist: [], buys: [] };
-    const end = resolvedAt || n;
+  const n = Date.now(), sol = SEED.demoSolUsd;
+  /* o: id, name, ticker, q, target (in q), pct filled, backers, openedAgo, dur, and the model's own fields:
+     status (live | filled | seeded | refunded), teamBps, teamSchedule, roadmap, tokenUseCase, xAccount, pastRaises,
+     payoutWallet, resolvedAgo, seededAgo, filledAgo, seedStep, refundReason, poolX (pool price as a multiple of the raise
+     price), volume (pool volume so far, in q), reports, blacklisted, takeover, pendingPayout */
+  const mk = o => {
+    const { id, name, ticker, q, target, pct, backers, openedAgo, dur, status = 'live' } = o, pr = DEMO_PROFILES[id];
+    const openedAt = n - openedAgo, endsAt = openedAt + dur;
+    const resolvedAt = status === 'live' ? null : n - (o.resolvedAgo != null ? o.resolvedAgo : o.seededAgo != null ? o.seededAgo : o.filledAgo || 0);
+    const p = { id, name, ticker, idea: pr.tagline, q, target, targetUsd: r6(q === 'USDC' ? target : target * sol), solUsdAtOpen: sol, raised: r6(target * pct), backers, openedAt, endsAt, status, resolvedAt,
+      feeBps: SEED.feeBps, creatorShareBps: SEED.creatorShareBps, teamBps: o.teamBps || 0, teamSchedule: o.teamBps ? o.teamSchedule : null,
+      roadmap: (o.roadmap || []).map(r => Object.assign({}, r, { dueAt: n + r.due * D })), tokenUseCase: o.tokenUseCase || 'none',
+      xAccount: Object.assign({ verified: true }, o.xAccount, { createdAt: n - (o.xAccount.ageDays || 400) * D }), pastRaises: o.pastRaises || [],
+      payoutWallet: o.payoutWallet || fakeAddr('payout/' + id), pendingPayoutWallet: null, payoutEffectiveAt: null,
+      reports: (o.reports || []).map((r, i) => Object.assign({ id: `${id}-r${i + 1}`, wallet: fakeAddr(`reporter/${id}/${i}`) }, r, { at: n - r.agoDays * D })),
+      blacklisted: !!o.blacklisted, flag: o.flag ? Object.assign({}, o.flag, { at: n - o.flag.agoDays * D }) : null, takeover: o.takeover ? Object.assign({ from: fakeAddr('payout/' + id), to: fakeAddr('takeover/' + id) }, o.takeover, { at: n - o.takeover.agoDays * D }) : null,
+      mine: false, hist: [], buys: [] };
+    if (p.takeover) p.payoutWallet = p.takeover.to;
+    if (o.pendingPayout) { p.pendingPayoutWallet = fakeAddr('pending/' + id); p.payoutEffectiveAt = n + o.pendingPayout * D; }
+    if (status === 'filled') { p.filledAt = n - (o.filledAgo || 0); p.seedStep = o.seedStep || 'filled'; }
+    if (status === 'seeded') { p.filledAt = n - (o.seededAgo || 0) - 40 * 60e3; p.seededAt = n - (o.seededAgo || 0); p.seedStep = 'seeded'; p.poolX = o.poolX || 1; p.fees = { volume: o.volume || 0, founderClaimed: o.founderClaimed || 0, seedClaimed: o.seedClaimed || 0 }; }
+    if (status === 'refunded') p.refundReason = o.refundReason || 'missed';
+    const end = p.seededAt || p.filledAt || resolvedAt || n;
     p.buys = genCrowd(p, pr.crowd, end);
     const mine = DEMO_WALLET_BUYS[id];
     if (mine) {   // the demo wallet backed this one: its buy is one of the backers, taken out of the last buy so the raise is unchanged
-      const net = r6(mine * NET), last = p.buys[p.buys.length - 1]; last.amount = r6(last.amount - net);
-      p.buys.push({ wallet: DEMO_WALLET_ID, amount: net, paid: mine, at: p.openedAt + (end - p.openedAt) * 0.4, fundedBy: { kind: 'exchange', label: 'Coinbase' }, isFresh: false, firstTxAt: p.openedAt - 400 * D, tags: [], you: true, refundClaimed: false });
+      const last = p.buys[p.buys.length - 1]; last.amount = r6(last.amount - mine);
+      p.buys.push({ wallet: DEMO_WALLET_ID, amount: mine, paid: paidFor(mine), at: p.openedAt + (end - p.openedAt) * 0.4, fundedBy: { kind: 'exchange', label: 'Coinbase' }, isFresh: false, firstTxAt: p.openedAt - 400 * D, tags: [], you: true, refundClaimed: false });
       p.buys.sort((a, b) => a.at - b.at); p.backers++;
     }
     p.hist = histFromBuys(p, p.buys, end);
     return p;
   };
+  const every = (cliffDays, intervalDays, bpsPerInterval) => ({ cliffDays, intervalDays, bpsPerInterval });
   return [
-    mk('osprey', 'Osprey', 'OSPR', 'SOL', 85, .96, 212, 1.75 * D, 3 * D),
-    mk('moss', 'Moss', 'MOSS', 'SOL', 150, .61, 97, D - 200e3, D),
-    mk('tidewater', 'Tidewater', 'TIDE', 'USDC', 60000, .85, 388, 3.9 * D, 7 * D),
-    mk('lattice', 'Lattice', 'LATT', 'USDC', 48000, .48, 176, 2.2 * D, 7 * D),
-    mk('overclock', 'Overclock', 'RENDER', 'SOL', 450, .57, 203, 2.9 * D, 7 * D),
-    mk('halfmoon', 'Halfmoon', 'HALF', 'SOL', 300, .20, 141, 1.6 * D, 7 * D),
-    mk('quill', 'Quill', 'QUILL', 'USDC', 25000, 1, 264, 3.6 * D, 3 * D, 'seeded', 2 * D),
-    mk('ember', 'Ember', 'EMBR', 'USDC', 30000, .41, 58, 4 * D, 3 * D, 'refunded', D),
-    /* the wider board */
-    mk('lumen', 'Lumen', 'LUMN', 'USDC', 30000, .12, 44, 6 * H, 3 * D),
-    mk('kiln', 'Kiln', 'KILN', 'USDC', 40000, .33, 120, 20 * H, 7 * D),
-    mk('harbor', 'Harbor', 'HRBR', 'SOL', 500, .08, 31, 3 * H, 7 * D),
-    mk('satchel', 'Satchel', 'SATCH', 'SOL', 180, .27, 73, 1.2 * D, 3 * D),
-    mk('vellum', 'Vellum', 'VELM', 'USDC', 55000, .41, 88, 2 * D, 7 * D),
-    mk('pollen', 'Pollen', 'POLN', 'SOL', 90, .19, 52, 9 * H, 3 * D),
-    mk('cobalt', 'Cobalt', 'CBLT', 'SOL', 220, .78, 301, 2.5 * D, 3 * D),
-    mk('marrow', 'Marrow', 'MARO', 'USDC', 90000, .66, 412, 3 * D, 7 * D),
-    mk('kite', 'Drift Kite', 'KITE', 'SOL', 140, .91, 240, 1.4 * D, 3 * D),
-    mk('ferrule', 'Ferrule', 'FERR', 'USDC', 20000, .55, 160, 4 * D, 7 * D),
-    mk('oriel', 'Oriel', 'ORIL', 'SOL', 200, 1, 330, 9 * D, 3 * D, 'seeded', 6 * D),
-    mk('peat', 'Peat', 'PEAT', 'USDC', 50000, 1, 510, 15 * D, 7 * D, 'seeded', 8 * D),
-    mk('nimbus', 'Nimbus', 'NMBS', 'USDC', 35000, 1, 445, 5 * D, 3 * D, 'seeded', 2.1 * D),
-    mk('gully', 'Gully', 'GULY', 'SOL', 400, .36, 64, 12 * D, 7 * D, 'refunded', 5 * D)
+    /* live: a SOL raise past halfway, 15% team on a 30-day cliff then 10% a month */
+    mk({ id: 'osprey', name: 'Osprey', ticker: 'OSPR', q: 'SOL', target: 85, pct: .62, backers: 212, openedAgo: 1.75 * D, dur: 3 * D, teamBps: 1500, teamSchedule: every(30, 30, 1000),
+      roadmap: [road('Drift position reader', -30, 'shipped', 'https://github.com/osprey-seeddemo/reader/releases'), road('SMS alerts, closed beta', -6, 'shipped', 'https://osprey.example/beta'), road('Jupiter Perps and Zeta', 21, 'planned'), road('Voice call escalation', 45, 'planned')],
+      tokenUseCase: 'Alerts are paid for in $OSPR. Holders get the first 50 alerts a month free.', xAccount: { handle: 'ines_seeddemo', followers: 4120, ageDays: 1460 } }),
+    /* filled, seeding: the target landed 40 minutes ago; the crank has minted and is opening the pool */
+    mk({ id: 'cobalt', name: 'Cobalt', ticker: 'CBLT', q: 'SOL', target: 220, pct: 1, backers: 301, openedAgo: 2.5 * D, dur: 3 * D, status: 'filled', filledAgo: 40 * 60e3, seedStep: 'minted', teamBps: 2000, teamSchedule: { tranches: [{ dayOffset: 90, bps: 2500 }, { dayOffset: 180, bps: 2500 }, { dayOffset: 365, bps: 5000 }] },
+      roadmap: [road('Reader firmware', -12, 'shipped', 'https://cobalt.example/firmware'), road('First 1,000 packs', 20, 'planned'), road('Second yard', 75, 'planned')],
+      tokenUseCase: 'A passport read costs 1 $CBLT, burned.', xAccount: { handle: 'cobalt_seeddemo', followers: 2630, ageDays: 900 } }),
+    /* refunded: missed the target at the deadline; 5% team, one unlock at the 90-day minimum */
+    mk({ id: 'ember', name: 'Ember', ticker: 'EMBR', q: 'USDC', target: 30000, pct: .41, backers: 58, openedAgo: 4 * D, dur: 3 * D, status: 'refunded', resolvedAgo: D, refundReason: 'missed', teamBps: 500, teamSchedule: every(90, 0, 10000),
+      roadmap: [road('Bid rooms prototype', -10, 'shipped', 'https://ember.example/prototype'), road('Shared bidding program', -1, 'missed')],
+      tokenUseCase: 'Bid rooms are opened with $EMBR.', xAccount: { handle: 'ember_seeddemo', followers: 880, ageDays: 400 } }),
+    /* seeded above its raise price: 10% team on quarterly unlocks over three years; a payout wallet change is pending */
+    mk({ id: 'quill', name: 'Quill', ticker: 'QUILL', q: 'USDC', target: 25000, pct: 1, backers: 264, openedAgo: 3.6 * D, dur: 3 * D, status: 'seeded', seededAgo: 2 * D, poolX: 1.9, volume: 212000, founderClaimed: 900, seedClaimed: 380, teamBps: 1000, teamSchedule: every(90, 90, 834), pendingPayout: 4,
+      roadmap: [road('Tip links for Substack and Beehiiv', -20, 'shipped', 'https://quill.example/changelog#links'), road('Pool opens at the raise price', -2, 'shipped', 'https://app.meteora.ag'), road('100 writers tipping', -1, 'shipped', 'https://quill.example/writers'), road('Weekly buy-back from fees', 10, 'planned'), road('Ghost integration', 30, 'planned')],
+      tokenUseCase: 'Tips are paid in $QUILL. Writers who hold 10,000 $QUILL skip the 2% tip fee.', xAccount: { handle: 'hanakim_seeddemo', followers: 18400, ageDays: 1800 }, pastRaises: [{ name: 'Inkwell', ticker: 'INK', outcome: 'seeded', at: n - 140 * D, note: 'Seeded in 2 days, pool still open' }] }),
+    /* seeded below its raise price: 40% team, the largest share here, unlocked in four steps over 180 days */
+    mk({ id: 'tidewater', name: 'Tidewater', ticker: 'TIDE', q: 'USDC', target: 60000, pct: 1, backers: 388, openedAgo: 12 * D, dur: 7 * D, status: 'seeded', seededAgo: 5 * D, poolX: .55, volume: 140000, founderClaimed: 0, seedClaimed: 0, teamBps: 4000, teamSchedule: every(30, 50, 2500),
+      roadmap: [road('Vault program on devnet', -40, 'shipped', 'https://github.com/tidewater-seeddemo/vaults'), road('First audit', -5, 'missed'), road('First audit, rescheduled', 12, 'planned'), road('Nasdaq top ten vault on mainnet', 35, 'planned')],
+      tokenUseCase: 'Index fees are rebated to $TIDE holders each month.', xAccount: { handle: 'aiko_seeddemo', followers: 7300, ageDays: 2200 } }),
+    /* flagged: seeded, then the founder sold the team unlock and vanished; an admin marked the report as fraud */
+    mk({ id: 'gully', name: 'Gully', ticker: 'GULY', q: 'SOL', target: 400, pct: 1, backers: 164, openedAgo: 20 * D, dur: 7 * D, status: 'seeded', seededAgo: 12 * D, poolX: .2, volume: 310, founderClaimed: 1.6, seedClaimed: .7, teamBps: 2500, teamSchedule: every(0, 7, 500),
+      roadmap: [road('Sensor prototype', -30, 'shipped', 'https://gully.example/proto'), road('First council contract', -4, 'missed')],
+      tokenUseCase: 'none', xAccount: { handle: 'gully_seeddemo', followers: 210, ageDays: 25 },
+      reports: [{ reason: 'The founder sold the whole first unlock the day it opened and the site is down.', agoDays: 4, status: 'fraud' }, { reason: 'Roadmap milestone missed with no update, X account deleted.', agoDays: 3.5, status: 'open' }, { reason: 'Telegram group closed.', agoDays: 3, status: 'open' }],
+      blacklisted: true, flag: { reportId: 'gully-r1', agoDays: 3, by: 'admin' } }),
+    /* community takeover: seeded, the founder went quiet, backers reported it, an admin moved the payout wallet to a backer multisig */
+    mk({ id: 'lattice', name: 'Lattice', ticker: 'LATT', q: 'USDC', target: 48000, pct: 1, backers: 176, openedAgo: 40 * D, dur: 7 * D, status: 'seeded', seededAgo: 32 * D, poolX: 1.1, volume: 96000, founderClaimed: 210, seedClaimed: 288, teamBps: 1200, teamSchedule: every(60, 60, 2000),
+      roadmap: [road('Netting program on devnet', -60, 'shipped', 'https://github.com/lattice-seeddemo/netting'), road('Audit', -12, 'shipped', 'https://lattice.example/audit.pdf'), road('Mainnet vaults', -14, 'missed'), road('Integration grants open', 40, 'planned')],
+      tokenUseCase: 'Netting fees are paid in $LATT.', xAccount: { handle: 'priya_seeddemo', followers: 5100, ageDays: 2400 },
+      reports: [{ reason: 'No update in 25 days and the mainnet milestone passed. Asking for a takeover to the backer multisig.', agoDays: 10, status: 'takeover' }, { reason: 'Founder has not replied in chat since the audit.', agoDays: 9, status: 'open' }],
+      takeover: { agoDays: 6, reportId: 'lattice-r1', by: 'admin', label: 'Backer multisig (3 of 5)' } }),
+    /* live, no team tokens and no token use case: a plain bet on the team */
+    mk({ id: 'halfmoon', name: 'Halfmoon', ticker: 'HALF', q: 'SOL', target: 300, pct: .20, backers: 141, openedAgo: 1.6 * D, dur: 7 * D, teamBps: 0, teamSchedule: null,
+      roadmap: [road('Stake routing on devnet', -8, 'shipped', 'https://github.com/halfmoon-seeddemo/routing'), road('Mainnet', 30, 'planned')],
+      tokenUseCase: 'none', xAccount: { handle: 'samok_seeddemo', followers: 1350, ageDays: 210 } })
   ];
 }
