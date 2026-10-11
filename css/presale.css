@@ -740,7 +740,8 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 /* ---------------------------------------------------------------- portfolio: the creator view */
 .pmode{margin-top:18px}
 .crows{display:flex;flex-direction:column}
-.crow{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:18px;padding:18px 0;border-top:1px solid var(--hair);align-items:start}
+.crow{display:grid;grid-template-columns:minmax(0,1.3fr) repeat(3,minmax(0,1fr));gap:18px;padding:18px 24px;border-top:1px solid var(--hair);align-items:start}
+.crows+.quiet{padding:16px 24px 22px;margin:0;border-top:1px solid var(--hair)}
 .crow:first-child{border-top:0}
 .crow .c-proj{display:flex;align-items:center;gap:12px;min-width:0}
 .c-cell{display:flex;flex-direction:column;gap:3px;min-width:0;font-size:13.5px;color:var(--muted)}
@@ -750,5 +751,9 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .c-pay{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px}.c-pay dt{width:100%}.c-pay .copy{padding:2px}.c-pay .copy svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5}
 .cpay-form{grid-column:1/-1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px;border-radius:14px;background:var(--tile)}
 .cpay-form .inp{flex:1 1 320px}.cpay-form .err{color:var(--bad-ink);font-size:13px}
-@media (max-width:900px){.crow{grid-template-columns:1fr 1fr}.crow .c-proj{grid-column:1/-1}}
+@media (max-width:900px){.crow{grid-template-columns:1fr 1fr;padding:16px 18px}.crow .c-proj{grid-column:1/-1}.crows+.quiet{padding:14px 18px 18px}}
 @media (max-width:560px){.crow{grid-template-columns:1fr}}
+
+/* ---------------------------------------------------------------- frosted glass on every translucent card and control, not only the panels */
+#pBacker,#pCreator{display:flex;flex-direction:column;gap:18px}
+.sum,.tile,.qb,.seg,.mini,.x,.chips button,.row-ed,.gate,.x-acct,.rep,.upd-form,.cpay-form,.adm,.link-card,.member,.derived .kv,#fUnlock,.pcard,.perf-sums div,.pp-notice,.rm-dot,.risk-chip,.pace-chip,.st-pill,.pair-pill,.tag,.btag{-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost)}
