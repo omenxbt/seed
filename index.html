@@ -907,10 +907,13 @@ a.ico:hover{color:var(--ink)}
       <aside class="ws-side">
         <section class="panel pagehead">
           <h1><i>Your</i>positions</h1>
-          <p>What you have in open raises, and what is ready to claim.</p>
+          <p>What you have in open raises, what is ready to claim, and, for raises you opened, your fees and unlocks.</p>
+          <div class="seg pmode" id="pmodeSeg" role="group" aria-label="Portfolio view"><span class="seg-ind" aria-hidden="true"></span><button data-v="backer" aria-pressed="true">Backer</button><button data-v="creator" aria-pressed="false">Creator</button></div>
         </section>
       </aside>
       <div class="ws-main">
+        <div id="pCreator" hidden></div>
+        <div id="pBacker">
         <dl class="sums" id="pstats"></dl>
         <section class="panel perf" id="perf" aria-labelledby="perfH">
           <div class="perf-head"><h3 class="card-h" id="perfH">Performance</h3>
@@ -919,6 +922,7 @@ a.ico:hover{color:var(--ink)}
           <div id="perfBody"></div>
         </section>
         <section class="panel"><h3 class="card-h">Positions</h3><div class="pcols" aria-hidden="true"><span>Raise</span><span>You paid</span><span>Status</span><span>Yours</span><span></span></div><div id="prows"></div></section>
+        </div>
       </div>
       <aside class="ws-rail" aria-label="Wallet">
         <section class="panel rail-card balances"><h3>Wallet</h3><div id="pbal"></div>
@@ -1936,9 +1940,60 @@ function renderPortfolio() {
         <span class="num">${a ? `${fmtAmt(a, p.q)} ${sym}` : '–'}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
     : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#">Buy into a raise from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
   $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` + xRow() : '<p class="rail-meta">No wallet connected.</p>';
-  renderPerf(); syncMove();
+  renderPerf(); syncMove(); renderCreator();
 }
 $('#prows').addEventListener('click', e => { const cl = e.target.closest('[data-claim]'); if (cl) claim(find(cl.dataset.claim), cl); });
+
+/* ------------------------------------------------- portfolio: the creator view
+   The raises this wallet opened: the pool fees its payout wallet has earned and can claim, the team tokens that have
+   unlocked and can be claimed, and the payout wallet with any change on the way. */
+ui.pmode = 'backer';
+const myRaises = () => !state.wallet ? [] : state.presales.filter(p => p.mine || (p.creator && (p.creator === walletId() || p.creator === state.wallet.pk)));
+const teamClaimable = p => { const u = unlockState(p); return Math.max(0, u.unlocked - (p.teamClaimed || 0)); };
+function renderCreator() {
+  const box = $('#pCreator'); $('#pBacker').hidden = ui.pmode !== 'backer'; box.hidden = ui.pmode !== 'creator'; if (box.hidden) return;
+  const list = myRaises();
+  if (!list.length) { box.innerHTML = `<div class="panel empty">${state.wallet ? 'You have not opened a raise with this wallet. <a href="#/launch">Start one</a> and its fees and unlocks show here.' : 'Connect a wallet to see the raises you opened.'}</div>`; return; }
+  let earned = 0, claimable = 0, unlocked = 0, teamNow = 0;
+  const rows = list.map(p => {
+    const f = feesOf(p), u = unlockState(p), sp = splitOf(p.teamBps), tc = teamClaimable(p), pc = payoutChange(p), sym = esc(Q(p).sym), seeded = p.status === 'seeded';
+    earned += usdOf(p, f.founder); claimable += usdOf(p, f.founderUnclaimed); unlocked += u.unlocked; teamNow += tc;
+    const fees = seeded ? `<b class="num">${fmtC(f.founder, p.q, true)} ${sym}</b><span>earned from ${fmtC(f.volume, p.q, true)} ${sym} traded</span><span class="num">${fmtC(f.founderUnclaimed, p.q, true)} ${sym} claimable</span>${f.founderUnclaimed > 0 ? `<button class="qb hot" data-cfees="${p.id}">Claim fees</button>` : ''}` : `<span>${p.status === 'live' ? 'Fees start when the pool opens' : p.status === 'filled' ? 'Seeding; fees start when the pool opens' : 'No pool: it refunded'}</span>`;
+    const team = !sp.team ? '<span>No team tokens</span>' : !seeded ? `<b class="num">${fmtTok(sp.team)} $${esc(p.ticker)}</b><span>${esc(fmtSchedule(p.teamSchedule))}, from seeding</span>` :
+      `<b class="num">${fmtTok(u.unlocked)} <em>/ ${fmtTok(sp.team)} $${esc(p.ticker)}</em></b><span>unlocked${u.next ? `, next ${(u.next.bps / 100).toFixed(u.next.bps % 100 ? 2 : 0)}% ${fmtDay(u.next.at)}` : ', all released'}</span><span class="num">${fmtTok(tc)} claimable</span>${tc > 0 ? `<button class="qb hot" data-cteam="${p.id}">Claim tokens</button>` : ''}`;
+    const payout = `<span class="num">${esc(shortMint(p.payoutWallet || ''))}</span>${p.payoutWallet ? `<button class="copy" data-copy="${esc(p.payoutWallet)}" aria-label="Copy payout wallet">${ICONS.copy}</button>` : ''}${p.takeover ? `<span class="tag">${esc(p.takeover.label || 'Community')}</span>` : ''}${pc ? `<span class="fee-pend">Moving to ${esc(shortMint(pc.to))} ${pc.due ? 'now' : fmtDate(pc.at)}</span>` : p.takeover ? '' : `<button class="linkbtn" data-cpayout="${p.id}">Change</button>`}`;
+    return `<div class="crow"><div class="c-proj"><a href="#/presale/${esc(p.id)}">${avatar(p)}</a><span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta"><span class="tag${p.status === 'live' ? ' in' : ''}">${p.blacklisted ? 'Flagged' : RAISE_STATE[p.status]}</span></span></span></div>
+      <div class="c-cell"><dt>Creator fees, your ${(p.creatorShareBps || SEED.creatorShareBps) / 100}%</dt>${fees}</div><div class="c-cell"><dt>Team tokens</dt>${team}</div><div class="c-cell c-pay"><dt>Payout wallet</dt>${payout}</div>
+      <form class="cpay-form" data-cpayform="${esc(p.id)}" hidden novalidate><div class="inp"><input class="num" name="to" placeholder="New payout wallet" spellcheck="false" autocomplete="off"></div><button class="btn btn-ink btn-sm">Request change</button><span class="quiet">Takes effect in ${SEED.payoutDelayDays} days and shows on the page while pending.</span><span class="err" data-cperr role="alert"></span></form></div>`;
+  }).join('');
+  box.innerHTML = `<dl class="sums"><div class="sum"><dt>Raises opened</dt><dd class="num">${list.length}</dd></div><div class="sum"><dt>Fees earned</dt><dd class="num">${fmtUsd(earned)}</dd></div><div class="sum"><dt>Fees claimable</dt><dd class="num">${fmtUsd(claimable)}</dd></div><div class="sum"><dt>Team tokens claimable</dt><dd class="num">${fmtTok(teamNow)}</dd></div></dl>
+    <section class="panel"><h3 class="card-h">Your raises</h3><div class="crows">${rows}</div><p class="quiet">Fee claims are permissionless and Seed runs them on a schedule too, so a claim here only brings the money sooner. Team tokens unlock on the schedule fixed at seeding and go to the payout wallet.</p></section>`;
+}
+$('#pCreator').addEventListener('click', async e => {
+  const cf = e.target.closest('[data-cfees]'); if (cf) { cf.disabled = true; cf.textContent = 'Claiming…'; await claimCreatorFees(find(cf.dataset.cfees)); return; }
+  const ct = e.target.closest('[data-cteam]'); if (ct) { ct.disabled = true; ct.textContent = 'Claiming…'; await claimTeamTokens(find(ct.dataset.cteam)); return; }
+  const cp = e.target.closest('[data-cpayout]'); if (cp) { const f = $(`[data-cpayform="${cp.dataset.cpayout}"]`); f.hidden = !f.hidden; if (!f.hidden) f.to.focus(); return; }
+  const c = e.target.closest('[data-copy]'); if (c) { try { navigator.clipboard.writeText(c.dataset.copy).catch(() => {}); } catch (x) {} toast('Payout wallet copied'); }
+});
+$('#pCreator').addEventListener('submit', async e => {
+  const f = e.target.closest('[data-cpayform]'); if (!f) return; e.preventDefault();
+  const to = f.to.value.trim(), err = $('[data-cperr]', f); if (!B58.test(to)) { err.textContent = 'That is not a Solana address.'; return; }
+  $('button', f).disabled = true; await requestPayoutChange(find(f.dataset.cpayform), to);
+});
+/* the founder's unlocked team tokens, to the payout wallet */
+async function claimTeamTokens(p) {
+  if (busy || p.status !== 'seeded') return false;
+  const n = teamClaimable(p); if (!(n > 0)) return false;
+  busy = true;
+  try { await adapter.claimVested(p); p.teamClaimed = (p.teamClaimed || 0) + n; toast(`${fmtTok(n)} $${p.ticker} sent to the payout wallet`); } catch (e) { toast(e.message); }
+  busy = false; save(); renderPortfolio(); if (detailBox) renderDetail(true); return true;
+}
+/* a payout wallet change: queued, shown on the page, and in force after the delay */
+async function requestPayoutChange(p, to) {
+  if (busy) return false; busy = true;
+  try { await adapter.requestPayoutChange(p, to); p.pendingPayoutWallet = to; p.payoutEffectiveAt = Date.now() + SEED.payoutDelayDays * D; toast(`Payout wallet change requested. It takes effect ${fmtDate(p.payoutEffectiveAt)}.`); } catch (e) { toast(e.message); }
+  busy = false; save(); renderPortfolio(); if (detailBox) renderDetail(true); return true;
+}
 
 /* ------------------------------------------------- portfolio: performance (PnL graph and calendar) */
 ui.perf = { mode: 'graph', m: 0 };   // m: months back from the current month, for the calendar
@@ -2170,6 +2225,7 @@ function tick(silent) {
     p.status = 'refunded'; p.refundReason = 'missed'; p.resolvedAt = p.endsAt; changed = true; const pos = state.positions[p.id];
     if (silent !== true) toast(pos ? `${p.name} missed its target. Your ${fmtAmt(paidFor(pos), p.q)} ${Q(p).sym} refund is ready to claim.` : `${p.name} missed its target. Backers can claim refunds.`);
   }
+  for (const p of state.presales) if (p.pendingPayoutWallet && now >= p.payoutEffectiveAt) { p.payoutWallet = p.pendingPayoutWallet; p.pendingPayoutWallet = null; p.payoutEffectiveAt = null; changed = true; }
   for (const p of state.presales) if (p.status === 'filled') {
     if (now >= seedDeadline(p)) { p.status = 'refunded'; p.refundReason = 'timeout'; p.resolvedAt = now; changed = true; if (silent !== true) toast(`${p.name} did not seed in time. Every backer can claim a refund.`); }
     else if (!profileOf(p).demo) { const last = p.crankAt || p.filledAt; if (now - last > 30e3 && !document.hidden && !busy) { p.crankAt = now; seedCrank(p); } }   // a demo raise waits for someone to run its steps
@@ -2211,6 +2267,7 @@ function boot() {
   seg.minUnit = initSeg($('#minUnit'), v => setLimUnit('min', v)); seg.maxUnit = initSeg($('#maxUnit'), v => setLimUnit('max', v));
   seg.pair = initSeg($('#pairSeg'), v => { draft.pair = v; $('#fErr').textContent = ''; renderPreview(); if (v === 'any') $('#fMint').focus(); });
   seg.time = initSeg($('#timeSeg'), v => { draft.hours = +v; renderPreview(); });
+  seg.pmode = initSeg($('#pmodeSeg'), v => { ui.pmode = v; renderCreator(); });
   $('#bq').addEventListener('input', e => { ui.bq = e.target.value; renderTerminal(); });
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();

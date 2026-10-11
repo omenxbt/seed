@@ -312,7 +312,7 @@ function seedData() {
       payoutWallet: o.payoutWallet || fakeAddr('payout/' + id), pendingPayoutWallet: null, payoutEffectiveAt: null,
       reports: (o.reports || []).map((r, i) => Object.assign({ id: `${id}-r${i + 1}`, wallet: fakeAddr(`reporter/${id}/${i}`) }, r, { at: n - r.agoDays * D })),
       blacklisted: !!o.blacklisted, flag: o.flag ? Object.assign({}, o.flag, { at: n - o.flag.agoDays * D }) : null, takeover: o.takeover ? Object.assign({ from: fakeAddr('payout/' + id), to: fakeAddr('takeover/' + id) }, o.takeover, { at: n - o.takeover.agoDays * D }) : null,
-      mine: false, hist: [], buys: [] };
+      mine: !!o.mine, creator: o.mine ? DEMO_WALLET_ID : null, teamClaimed: o.teamClaimed || 0, hist: [], buys: [] };
     if (p.takeover) p.payoutWallet = p.takeover.to;
     if (o.pendingPayout) { p.pendingPayoutWallet = fakeAddr('pending/' + id); p.payoutEffectiveAt = n + o.pendingPayout * D; }
     if (status === 'filled') { p.filledAt = n - (o.filledAgo || 0); p.seedStep = o.seedStep || 'filled'; }
@@ -348,7 +348,7 @@ function seedData() {
       roadmap: [road('Tip links for Substack and Beehiiv', -20, 'shipped', 'https://quill.example/changelog#links'), road('Pool opens at the raise price', -2, 'shipped', 'https://app.meteora.ag'), road('100 writers tipping', -1, 'shipped', 'https://quill.example/writers'), road('Weekly buy-back from fees', 10, 'planned'), road('Ghost integration', 30, 'planned')],
       tokenUseCase: 'Tips are paid in $QUILL. Writers who hold 10,000 $QUILL skip the 2% tip fee.', xAccount: { handle: 'hanakim_seeddemo', followers: 18400, ageDays: 1800 }, pastRaises: [{ name: 'Inkwell', ticker: 'INK', outcome: 'seeded', at: n - 140 * D, note: 'Seeded in 2 days, pool still open' }] }),
     /* seeded below its raise price: 40% team, the largest share here, unlocked in four steps over 180 days */
-    mk({ id: 'tidewater', name: 'Tidewater', ticker: 'TIDE', q: 'USDC', target: 60000, pct: 1, backers: 388, openedAgo: 12 * D, dur: 7 * D, status: 'seeded', seededAgo: 5 * D, poolX: .55, volume: 140000, founderClaimed: 0, seedClaimed: 0, teamBps: 4000, teamSchedule: every(30, 50, 2500),
+    mk({ id: 'tidewater', mine: true, name: 'Tidewater', ticker: 'TIDE', q: 'USDC', target: 60000, pct: 1, backers: 388, openedAgo: 12 * D, dur: 7 * D, status: 'seeded', seededAgo: 5 * D, poolX: .55, volume: 140000, founderClaimed: 0, seedClaimed: 0, teamBps: 4000, teamSchedule: every(30, 50, 2500),
       roadmap: [road('Vault program on devnet', -40, 'shipped', 'https://github.com/tidewater-seeddemo/vaults'), road('First audit', -5, 'missed'), road('First audit, rescheduled', 12, 'planned'), road('Nasdaq top ten vault on mainnet', 35, 'planned')],
       tokenUseCase: 'Index fees are rebated to $TIDE holders each month.', xAccount: { handle: 'aiko_seeddemo', followers: 7300, ageDays: 2200 } }),
     /* flagged: seeded, then the founder sold the team unlock and vanished; an admin marked the report as fraud */
