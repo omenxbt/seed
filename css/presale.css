@@ -687,7 +687,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .x-acct>svg{flex:none;width:18px;height:18px;fill:currentColor}.x-acct>span{display:flex;flex-direction:column;min-width:0}.x-acct b{font-weight:500}.x-acct .num{font-size:12.5px;color:var(--muted)}
 .x-acct .vbadge{margin-left:auto;flex:none;white-space:nowrap}
 /* overview: the token */
-.kv-wide div{display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px}.kv-wide dd{text-align:left;font-family:var(--sans);letter-spacing:0;color:var(--ink-2)}.kv-wide dd .num{font-family:var(--mono);color:var(--ink)}
+.kv.kv-wide div{display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px}.kv.kv-wide dd{text-align:left;font-family:var(--sans);letter-spacing:0;color:var(--ink-2)}.kv.kv-wide dd .num{font-family:var(--mono);color:var(--ink)}
 .use{font-size:15.5px;color:var(--ink-2);max-width:62ch}
 /* unlocks */
 .unlock-sums{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -708,3 +708,31 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .adm b{font-weight:500;color:var(--ink)}.adm.bad{background:var(--bad-bg);color:var(--bad-ink)}.adm.ok{background:var(--ok-bg);color:var(--ok-ink)}
 .rail-flag .bar-link{display:inline-block;margin-top:10px}.rail-flag .bar-link svg{width:12px;height:12px;vertical-align:-1px}
 @media (max-width:900px){.fee-grid,.unlock-sums{grid-template-columns:1fr 1fr}}
+
+/* ---------------------------------------------------------------- the launch form on the model */
+.risk-list .info svg{stroke:var(--navy-soft)}
+.info-h{font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin:16px 0 4px}
+/* the X sign-in gate */
+.xgate{padding:18px 28px 0}
+.gate{display:flex;align-items:center;gap:14px;padding:14px 18px;border-radius:16px;background:var(--tile);border:1px solid var(--navy-soft)}
+.gate.on{border-color:var(--ok-line)}
+.g-ico{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--navy-wash);color:var(--navy-deep)}.gate.on .g-ico{background:var(--ok-bg);color:var(--ok-ink)}
+.g-ico svg{width:17px;height:17px;fill:currentColor}
+.gate>div{min-width:0;display:flex;flex-direction:column;gap:2px}.gate b{font-weight:500}.gate>div span{font-size:13.5px;color:var(--ink-2);line-height:1.4}
+.gate>.btn,.gate>.linkbtn{flex:none;margin-left:auto}
+.fs-note.full,.form>.full{grid-column:1/-1}
+.hint.bad{color:var(--bad-ink)}
+/* the derived price */
+.derived .kv.kv-wide div{grid-template-columns:110px minmax(0,1fr)}.derived .kv{padding:14px 18px;border-radius:14px;background:var(--tile)}.derived .kv div{padding:9px 0}
+/* the split bar */
+.split{display:flex;height:12px;border-radius:999px;overflow:hidden;background:var(--chip);margin-top:12px}
+.split i,.split-leg i{display:inline-block}.split i{height:100%;transition:width var(--dur) var(--ease-out)}
+.s-b{background:#2E63E7}.s-p{background:#8FB4FF}.s-t{background:#D9DCE2}
+.split-leg{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:var(--muted)}.split-leg i{width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+/* the schedule */
+#schedWrap.off .seg,#schedWrap.off [data-sched]{display:none}
+.sched3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:4px}
+.tr-row{grid-template-columns:1fr 1fr}
+.sched-note{font-size:13.5px;color:var(--muted);margin-top:4px}.sched-note.bad{color:var(--bad-ink)}.sched-note.ok{color:var(--ink-2)}
+#fUnlock:empty{display:none}#fUnlock{margin-top:14px;padding:10px 12px 4px;border-radius:14px;background:var(--tile)}
+@media (max-width:700px){.sched3{grid-template-columns:1fr}.gate{flex-wrap:wrap}.gate>.btn{margin-left:0}.xgate{padding:18px 18px 0}}

@@ -797,13 +797,14 @@ a.ico:hover{color:var(--ink)}
       <aside class="ws-side" aria-label="About this form">
         <section class="panel pagehead">
           <h1><i>Start</i>a raise</h1>
-          <p>Everything backers see on your project page, and the risk checks they will read, before you open. The supply is fixed at 1B with mint authority revoked. Opening is free.</p>
-          <nav class="steps" aria-label="Form sections"><button type="button" data-step="1"><span class="num">01</span>Project</button><button type="button" data-step="2"><span class="num">02</span>Raise</button><button type="button" data-step="3"><span class="num">03</span>Links</button><span class="steps-h">Optional, add what you want to show</span><div class="step-opt"><button type="button" data-step="4"><span class="num">04</span>Tokenomics</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="tokenomics" aria-label="Add tokenomics"></button></div><div class="step-opt"><button type="button" data-step="5"><span class="num">05</span>Team</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></div><div class="step-opt"><button type="button" data-step="6"><span class="num">06</span>Roadmap</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="road" aria-label="Add roadmap"></button></div></nav>
+          <p>Everything backers see on your project page, before you open. The supply is 1B, minted at seeding with mint and freeze revoked; the raise opens a locked pool at a fixed price. Opening is free.</p>
+          <nav class="steps" aria-label="Form sections"><button type="button" data-step="1"><span class="num">01</span>Project</button><button type="button" data-step="2"><span class="num">02</span>Raise</button><button type="button" data-step="3"><span class="num">03</span>Team share and unlocks</button><button type="button" data-step="4"><span class="num">04</span>Roadmap</button><button type="button" data-step="5"><span class="num">05</span>Token and links</button><button type="button" data-step="6"><span class="num">06</span>Payout wallet</button><span class="steps-h">Optional</span><div class="step-opt"><button type="button" data-step="7"><span class="num">07</span>Team</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></div></nav>
         </section>
         <section class="panel"><h3 class="card-h">Your raises</h3><div id="mineList"></div></section>
       </aside>
       <div class="ws-main">
       <form class="panel lform" id="form" novalidate autocomplete="off">
+        <div class="xgate" id="xGate"></div>
         <fieldset><legend><span class="num">01</span>Project</legend><div class="form">
         <div class="f"><label for="fName">Project name</label><div class="inp"><input id="fName" maxlength="24" placeholder="Kiln"></div></div>
         <div class="f"><label for="fTicker">Ticker</label><div class="inp"><span class="suf" style="padding:0 0 0 14px">$</span><input id="fTicker" maxlength="6" placeholder="KILN" style="padding-left:4px;text-transform:uppercase" class="num"></div></div>
@@ -828,10 +829,11 @@ a.ico:hover{color:var(--ink)}
           <div class="chips stocks" style="margin-top:0"><button type="button" data-stock="NVDAx" aria-pressed="false" title="NVIDIA">NVDAx</button><button type="button" data-stock="AAPLx" aria-pressed="false" title="Apple">AAPLx</button><button type="button" data-stock="TSLAx" aria-pressed="false" title="Tesla">TSLAx</button><button type="button" data-stock="HOODx" aria-pressed="false" title="Robinhood">HOODx</button><button type="button" data-stock="COINx" aria-pressed="false" title="Coinbase">COINx</button><button type="button" data-stock="MSFTx" aria-pressed="false" title="Microsoft">MSFTx</button><button type="button" data-stock="SPYx" aria-pressed="false" title="S&amp;P 500 ETF">SPYx</button><button type="button" data-stock="GOOGLx" aria-pressed="false" title="Alphabet">GOOGLx</button><button type="button" data-stock="AMZNx" aria-pressed="false" title="Amazon">AMZNx</button><button type="button" data-stock="METAx" aria-pressed="false" title="Meta">METAx</button></div></div>
         <div class="f full" id="mintRow" hidden><label for="fMint">Token mint address<span class="hint" id="mintInfo"></span></label><div class="inp"><input id="fMint" class="num" placeholder="Paste an SPL mint address" autocomplete="off" spellcheck="false" style="font-size:13px"></div>
           <div class="chips" style="margin-top:2px"><button type="button" data-mint="JUP">JUP</button><button type="button" data-mint="BONK">BONK</button></div></div>
-        <div class="f"><label for="fTarget">Target</label><div class="inp"><input id="fTarget" inputmode="decimal" placeholder="200" autocomplete="off" class="num"><span class="suf num" id="fCur">SOL</span></div></div>
-        <div class="f"><span class="lab">Deadline</span>
-          <div><div class="seg" id="timeSeg" role="group" aria-label="Deadline"><span class="seg-ind" aria-hidden="true"></span><button data-v="24" aria-pressed="false">24h</button><button data-v="72" aria-pressed="true">3 days</button><button data-v="168" aria-pressed="false">7 days</button></div></div>
+        <div class="f"><label for="fTarget">Target<span class="hint" id="targetUsd">at most $100,000</span></label><div class="inp"><input id="fTarget" inputmode="decimal" placeholder="200" autocomplete="off" class="num"><span class="suf num" id="fCur">SOL</span></div></div>
+        <div class="f"><span class="lab">Deadline<i class="tip" tabindex="0" data-tip="How long the raise stays open. It closes the moment it fills; if it has not filled by the deadline, everyone is refunded, fee included.">?</i></span>
+          <div><div class="seg" id="timeSeg" role="group" aria-label="Deadline"><span class="seg-ind" aria-hidden="true"></span><button data-v="24" aria-pressed="false">24h</button><button data-v="72" aria-pressed="true">3 days</button><button data-v="168" aria-pressed="false">7 days</button><button data-v="336" aria-pressed="false">14 days</button></div></div>
         </div>
+        <div class="f full derived" id="derived"><span class="lab">What backers pay<i class="tip" tabindex="0" data-tip="The price is not set by you. It is the target divided by the backers' tokens, so the pool opens at exactly what backers paid.">?</i></span><dl class="kv kv-wide" id="derivedRows"></dl></div>
         <div class="f lim" data-lim="min"><span class="lab"><label for="fMin">Minimum buy</label><i class="tip" tabindex="0" data-tip="The smallest buy a wallet can make. Off, any amount above zero counts.">?</i><button type="button" class="switch" role="switch" aria-checked="false" data-lim-toggle="min" aria-label="Set a minimum buy"></button></span>
           <p class="lim-off" data-lim-off>Off. Any amount counts.</p>
           <div class="lim-body" data-lim-body hidden><div class="inp"><input id="fMin" inputmode="decimal" class="num" placeholder="0"><span class="suf num" data-lim-suf data-cur>SOL</span></div>
@@ -843,51 +845,58 @@ a.ico:hover{color:var(--ink)}
         <div class="f full"><label for="fWl">Whitelist<span class="hint">optional. One wallet address per line; leave empty to let anyone back it.</span></label><textarea id="fWl" class="ta num" rows="2" spellcheck="false"></textarea></div>
         </div></fieldset>
 
-        <fieldset><legend><span class="num">03</span>Links</legend><div class="form">
+        <fieldset><legend><span class="num">03</span>Team share and unlocks</legend><div class="form">
+          <p class="fs-note full">Backers and the pool each get half of what the team does not take. Team tokens unlock to the payout wallet on the schedule you set; the last unlock must be at least 90 days after seeding, the shares must add up to 100%, and the schedule is fixed at seeding. Backers see it as it is: a fact, not a warning.</p>
+          <div class="f"><label for="fTeam">Team share<i class="tip" tabindex="0" data-tip="The part of the 1B supply kept for the team. 0% means the whole supply goes to backers and the pool.">?</i></label><div class="inp"><input id="fTeam" inputmode="decimal" class="num" value="0" placeholder="0"><span class="suf">%</span></div></div>
+          <div class="f"><span class="lab">The split</span><div class="split" id="splitBar" aria-hidden="true"></div><p class="split-leg num" id="splitLeg"></p></div>
+          <div class="f full" id="schedWrap">
+            <span class="lab">Unlock schedule<span class="hint">for the team share</span></span>
+            <div><div class="seg seg-sm" id="schedSeg" role="group" aria-label="Schedule type"><span class="seg-ind" aria-hidden="true"></span><button data-v="every" aria-pressed="true">Cliff, then every N days</button><button data-v="tranches" aria-pressed="false">Dated tranches</button></div></div>
+            <div class="sched3" data-sched="every">
+              <div class="f"><label for="fCliff">Cliff, days<i class="tip" tabindex="0" data-tip="How long after seeding before the first unlock. Nothing moves until the cliff passes. 0 means the first slice unlocks at seeding.">?</i></label><div class="inp"><input id="fCliff" inputmode="numeric" class="num" value="90" placeholder="90"></div></div>
+              <div class="f"><label for="fEvery">Then every, days<i class="tip" tabindex="0" data-tip="How often a slice unlocks after the cliff. The first slice unlocks at the cliff, the next one this many days later, and so on until 100% is out.">?</i></label><div class="inp"><input id="fEvery" inputmode="numeric" class="num" value="30" placeholder="30"></div></div>
+              <div class="f"><label for="fPer">Each time<i class="tip" tabindex="0" data-tip="The share of the team tokens released at each unlock. 10% every 30 days takes ten unlocks, 300 days.">?</i></label><div class="inp"><input id="fPer" inputmode="decimal" class="num" value="10" placeholder="10"><span class="suf">%</span></div></div>
+            </div>
+            <div data-sched="tranches" hidden><div class="rows" id="trRows"></div><div class="rows-foot"><button type="button" class="qb" data-add="tr">Add a tranche</button><span class="sum-meter" id="trSum"></span></div></div>
+            <div class="pp-svg unlock" id="fUnlock"></div><p class="sched-note" id="schedNote"></p>
+          </div>
+        </div></fieldset>
+
+        <fieldset><legend><span class="num">04</span>Roadmap</legend><div class="form">
+          <p class="fs-note full">At least one milestone with a date. Backers see them as given; Seed does not enforce them, and a backer who sees one slip can report the raise.</p>
+          <div class="full"><div class="rows" id="roadRows"></div><div class="rows-foot"><button type="button" class="qb" data-add="road">Add a milestone</button></div></div>
+        </div></fieldset>
+
+        <fieldset><legend><span class="num">05</span>Token and links</legend><div class="form">
+          <div class="f full lim" data-lim="use"><span class="lab"><label for="fUse">What the token does</label><button type="button" class="switch" role="switch" aria-checked="false" data-lim-toggle="use" aria-label="The token has a use"></button></span>
+            <p class="lim-off" data-lim-off>None. Backers are told this is a bet on the team, not on a token that does something.</p>
+            <div class="lim-body" data-lim-body hidden><textarea id="fUse" class="ta" rows="2" maxlength="280" placeholder="What the token is for, in a line or two. Backers see this as you wrote it."></textarea></div></div>
           <div class="f"><label for="lWebsite">Website</label><div class="inp"><input id="lWebsite" placeholder="https://"></div></div>
           <div class="f"><label for="lX">X</label><div class="inp"><input id="lX" placeholder="https://x.com/project"></div></div>
           <div class="f"><label for="lTelegram">Telegram</label><div class="inp"><input id="lTelegram" placeholder="https://t.me/project"></div></div>
           <div class="f"><label for="lDiscord">Discord</label><div class="inp"><input id="lDiscord" placeholder="https://discord.gg/"></div></div>
           <div class="f full"><label for="lGithub">GitHub</label><div class="inp"><input id="lGithub" placeholder="https://github.com/"></div></div>
-          <div class="f"><label for="fFounderX">Founder X account</label><div class="inp"><input id="fFounderX" placeholder="https://x.com/you"></div></div>
-          <div class="f"><label for="fXSince">X account created<span class="hint">self-reported for now</span></label><div class="inp"><input id="fXSince" type="month"></div></div>
         </div></fieldset>
 
-        <fieldset class="opt" data-opt="tokenomics"><legend><span class="num">04</span>Tokenomics<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="tokenomics" aria-label="Add tokenomics"></button></legend>
-          <p class="fs-note" data-off>Left off, the supply splits evenly: 50% to raise backers and 50% to the locked Meteora pool, with nothing set aside for a team or treasury. Turn it on to set your own allocations, vesting and use of funds.</p>
-          <div data-body hidden>
-          <p class="fs-note">The raise share and the pool share are always equal, which is what opens the pool at the raise price. Everything must add up to 100%.</p>
-          <div class="alloc-fixed"><div class="f"><label for="fShare">Raise backers</label><div class="inp"><input id="fShare" inputmode="decimal" class="num" value="40"><span class="suf">%</span></div></div>
-            <div class="f"><span class="lab">Locked Meteora pool</span><div class="inp ro"><input id="fLp" class="num" readonly tabindex="-1" value="40"><span class="suf">%</span></div></div></div>
-          <div class="rows" id="allocRows"></div>
-          <div class="rows-foot"><button type="button" class="qb" data-add="alloc">Add allocation</button><span class="sum-meter" id="allocSum"></span></div>
-          <h4 class="fs-sub">Use of funds</h4>
-          <div class="rows" id="uofRows"></div>
-          <div class="rows-foot"><button type="button" class="qb" data-add="uof">Add a line</button><span class="sum-meter" id="uofSum"></span></div>
-          </div>
-        </fieldset>
+        <fieldset><legend><span class="num">06</span>Payout wallet</legend><div class="form">
+          <p class="fs-note full">Where your share of the pool's fees and your team's unlocks go. It starts as the wallet you open with; you can move it later, and a change takes effect after 7 days and shows on the page while pending. The raise itself never reaches this wallet: it all goes into the pool.</p>
+          <div class="f full"><label for="fPayout">Payout wallet</label><div class="inp"><input id="fPayout" class="num" placeholder="Your connected wallet" spellcheck="false" style="font-size:13px"></div></div>
+        </div></fieldset>
 
-        <fieldset class="opt" data-opt="team"><legend><span class="num">05</span>Team<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></legend>
-          <p class="fs-note" data-off>Left off, your page lists no team, and the risk checks tell backers so. Turn it on to list the people behind the project.</p>
+        <fieldset class="opt" data-opt="team"><legend><span class="num">07</span>Team<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></legend>
+          <p class="fs-note" data-off>Left off, your page lists no team beyond your X account. Turn it on to list the people behind the project.</p>
           <div data-body hidden>
-          <p class="fs-note">The connected wallet is the deployer and founder wallet. Its funding is read from Solana for the risk checks.</p>
+          <p class="fs-note">The connected wallet is the founder wallet. Its funding is read from Solana for the info panel.</p>
           <div class="rows" id="teamRows"></div><div class="rows-foot"><button type="button" class="qb" data-add="team">Add a team member</button></div>
-          </div>
-        </fieldset>
-
-        <fieldset class="opt" data-opt="road"><legend><span class="num">06</span>Roadmap<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="road" aria-label="Add roadmap"></button></legend>
-          <p class="fs-note" data-off>Left off, your page shows no roadmap. Turn it on to list milestones with due dates.</p>
-          <div data-body hidden>
-          <div class="rows" id="roadRows"></div><div class="rows-foot"><button type="button" class="qb" data-add="road">Add a milestone</button></div>
           </div>
         </fieldset>
 
         <div class="lsubmit"><div class="err" id="fErr" role="alert"></div><button class="btn btn-navy btn-lg btn-block" id="openBtn" type="button">Open raise</button><p class="rail-cap" id="upNote"></p></div>
       </form>
       </div>
-      <aside class="ws-rail" aria-label="Preview and risk checks">
+      <aside class="ws-rail" aria-label="Preview and info">
         <section class="panel rail-card"><h3>How backers will see it</h3><div class="pcard"><div id="pvCard"></div></div><dl class="facts" id="pvFacts"></dl></section>
-        <section class="panel rail-card" id="pvRisk"></section>
+        <section class="panel rail-card" id="pvInfo"></section>
       </aside>
     </div>
   </section>
@@ -2102,7 +2111,7 @@ function route() {
 addEventListener('hashchange', route);
 
 /* ---------------------------------------------------------------- render */
-function renderAll() { renderWallet(); syncQuickUI(); renderTerminal(); renderMine(); renderPortfolio(); }
+function renderAll() { renderWallet(); syncQuickUI(); renderTerminal(); renderMine(); renderPortfolio(); if (ui.tab === 'launch' && typeof renderPreview === 'function') { renderPreview(); syncOpenBtn(); } }
 
 /* ----------------------------------------------------------------- clock */
 /* the target landed: the raise closes to buys and seeding starts. Anyone may run the steps; the demo runs them itself. */

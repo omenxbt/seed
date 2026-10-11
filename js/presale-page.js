@@ -7,8 +7,8 @@
    ========================================================================== */
 /* charts draw at the width of their column, one unit to the pixel, so their labels keep their size however wide the window is */
 const chartW = () => { const b = detailBox && $('[data-dchart],[data-candles]', detailBox), w = b ? Math.floor(b.clientWidth) : 0; return w > 0 ? Math.max(320, w) : innerWidth < 720 ? 400 : 720; };
-const PTABS = ['overview', 'team', 'roadmap', 'backers', 'risk', 'reports', 'announcements', 'deck'];
-const PTAB_ALIAS = { updates: 'announcements', tokenomics: 'team' };   // the tabs' earlier names, so old links still open them
+const PTABS = ['overview', 'team', 'roadmap', 'backers', 'info', 'reports', 'announcements', 'deck'];
+const PTAB_ALIAS = { updates: 'announcements', tokenomics: 'team', risk: 'info' };   // the tabs' earlier names, so old links still open them
 const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'price', side: 'buy', allBackers: false, deck: null, deckPage: 1, walletKey: '' };
 
 const ICONS = {
@@ -71,7 +71,7 @@ function ppHeader(p) {
       <div class="pp-idrow">${artHTML(p, 'pp-art')}${statusPill(p)}</div>
       <div class="pp-name"><h1>${esc(p.name)}</h1><span class="pp-tk num">$${esc(p.ticker)}</span></div>
       <p class="pp-tagline">${esc(pr.tagline || p.idea)}</p>
-      <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/risk" data-jump-risk>${riskChip(risk)}</a>${p.mine ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}</div>
+      <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/info" data-jump-risk>${riskChip(risk)}</a>${p.mine ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}</div>
       ${pr.mint || socials ? `<div class="pp-meta">${pr.mint ? copyBtn(pr.mint, 'mint address', shortMint(pr.mint)) : ''}<span class="pp-socials">${socials}</span></div>` : ''}
       <dl class="pp-stats" data-pstats>${ppStats(p)}</dl>
     </section>`;
@@ -293,12 +293,13 @@ function positionPanel(p) {
   return `<section class="panel rail-card" data-position><h3>Your position</h3><dl class="kv">${row('Amount in', `${fmtAmt(pos, p.q)} ${sym}`)}${row(p.status === 'refunded' ? 'Tokens' : 'Tokens owed', p.status === 'refunded' ? 'None, it refunded' : `${fmtTok(tok)} $${esc(p.ticker)}`)}
     ${row('Share of raise', share.toFixed(share < 1 ? 3 : 2) + '%')}${p.status === 'live' ? row('If it refunds', `${fmtAmt(pos, p.q)} ${sym} back`) : ''}${holding}</dl>${act}</section>`;
 }
-/* the risk checks are a tab under the charts; two columns of checks where the tab is wide enough */
-function tabRisk(p) {
-  const checks = riskChecks(p), s = riskSummary(checks), demo = checks.some(c => c.from === 'demo');
-  return tabHead('Risk checks', '', riskChip(s)) +
-    `<ul class="risk-list risk-grid" data-risk>${checks.map(c => `<li class="${c.level}">${RISK_ICON[c.level]}<div><b>${esc(c.label)}</b><span>${esc(c.reason)}</span></div></li>`).join('')}</ul>
-    ${demo ? `<p class="quiet risk-note">${DEMO_PILL} Checks run on demo data where no live account exists. Thresholds are in js/config/risk.js.</p>` : ''}`;
+/* the info panel is a tab under the charts: what Seed checked, then the founder's choices as facts */
+function tabInfo(p) {
+  const checks = riskChecks(p), s = riskSummary(checks), demo = checks.some(c => c.from === 'demo'), li = c => `<li class="${c.level}">${RISK_ICON[c.level]}<div><b>${esc(c.label)}</b><span>${esc(c.reason)}</span></div></li>`;
+  return tabHead('Info', '', riskChip(s)) +
+    `<ul class="risk-list risk-grid" data-risk>${checks.filter(c => c.level !== 'info').map(li).join('')}</ul>
+    <p class="info-h">The founder's choices</p><ul class="risk-list risk-grid">${checks.filter(c => c.level === 'info').map(li).join('')}</ul>
+    <p class="quiet risk-note">Seed enforces the cap, the refunds, the locked pool and the 90-day unlock minimum in its program, and acts on fraud. Everything else here is for you to weigh.${demo ? ` ${DEMO_PILL} Checks run on demo data where no live account exists.` : ''}</p>`;
 }
 /* the chat sits under the project card, open beside every tab */
 function chatPanel(p) { return typeof chatCard === 'function' ? chatCard(p) : ''; }
@@ -327,7 +328,7 @@ function ppNotices(p) {
 /* ---------------------------------------------------------------- tabs */
 function tabLabel(p, t) {
   if (t === 'backers') return p.status === 'seeded' ? 'Holders' : 'Backers';
-  if (t === 'risk') return 'Risk checks';
+  if (t === 'info') return 'Info';
   if (t === 'team') return 'Team &amp; unlocks';
   if (t === 'reports') { const n = (p.reports || []).length; return `Reports${n ? ` <span class="ct num">${n}</span>` : ''}`; }
   if (t === 'announcements') { const n = updatesAdapter.list(p).length; return `Announcements${n ? ` <span class="ct num">${n}</span>` : ''}`; }
@@ -340,7 +341,7 @@ function ppTabs(p) {
 function renderTab(p) {
   const body = detailBox && $('[data-tabbody]', detailBox); if (!body) return;
   $$('[data-ptab]', detailBox).forEach(a => a.setAttribute('aria-selected', String(a.dataset.ptab === pg.tab))); placeTabInd();
-  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, roadmap: tabRoadmap, backers: tabBackers, risk: tabRisk, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
+  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, roadmap: tabRoadmap, backers: tabBackers, info: tabInfo, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
   body.innerHTML = fn(p); afterTab(p, body);
   const key = p.id + '/' + pg.tab;   // the tab's content eases in when the tab changes, not when it is redrawn in place
   if (pg.shown !== key) { pg.shown = key; body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap'); }
@@ -710,7 +711,7 @@ async function loadAsync(p) {
   /* announcements kept on the backend arrive after the page is up: the tab's count, the strip and the tab itself follow */
   if (supa.configured() && pg.updLoaded !== id) { pg.updLoaded = id; updatesAdapter.load(p).then(() => { if (pg.id !== id) return; refreshTabLabels(p); refreshAnnounce(p); if (pg.tab === 'announcements') renderTab(p); }); }
   if (p.status === 'seeded') loadTrading(p);
-  const again = () => { if (ui.sel !== id || !detailBox) return; const ch = $('.pp-pills .risk-chip', detailBox); if (ch) ch.outerHTML = riskChip(riskSummary(riskChecks(p))); if (pg.tab === 'backers' || pg.tab === 'risk') renderTab(p); };
+  const again = () => { if (ui.sel !== id || !detailBox) return; const ch = $('.pp-pills .risk-chip', detailBox); if (ch) ch.outerHTML = riskChip(riskSummary(riskChecks(p))); if (pg.tab === 'backers' || pg.tab === 'info') renderTab(p); };
   if (await founderAdapter.refresh(p)) again();
   if (await backersAdapter.enrich(p)) again();
 }

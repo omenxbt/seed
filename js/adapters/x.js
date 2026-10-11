@@ -101,7 +101,7 @@ function xRefresh() {
 function openXDialog() {
   const d = $('#xDlg'), body = $('#xDlgBody'), mode = xAdapter.mode(); if (mode === 'none') return connect();
   const head = '<div class="sh-head"><span class="nm"><b>Link an X account</b></span><button class="x" data-xx aria-label="Close">&times;</button></div>';
-  const why = '<p class="where x-why">Optional. A link shows your X handle beside your wallet in chat and on your portfolio. Seed works the same without one, and you can unlink at any time.</p>';
+  const why = '<p class="where x-why">Optional for backers: a link shows your X handle beside your wallet in chat and on your portfolio, and you can unlink at any time. Founders sign in with X to open a raise; the account shows on the raise page.</p>';
   body.innerHTML = head + why + (mode === 'demo' ? `<form data-xform novalidate><div class="f"><label for="xHandle">X handle</label><div class="inp"><span class="suf" style="padding:0 0 0 14px">@</span><input id="xHandle" maxlength="40" placeholder="yourhandle" autocomplete="off" autocapitalize="off" spellcheck="false" style="padding-left:4px"></div></div>
       <div class="err" data-xerr role="alert"></div><button class="btn btn-navy btn-lg btn-block">Link to the demo wallet</button></form>
       <p class="standin-note">Demo wallet: this is a stand-in. The handle is not checked with X, stays in this browser and is labelled Demo wherever it shows. A real wallet links by signing in on X.</p>`
