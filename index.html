@@ -204,6 +204,16 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .f.full{grid-column:1/-1}
 .f label,.f .lab{font-size:14px;font-weight:500;color:var(--ink-2)}
 .f .hint{font-size:13px;color:var(--faint);font-weight:400;margin-left:6px}
+/* a small "?" that explains a field on hover or focus */
+.tip{position:relative;display:inline-grid;place-items:center;width:16px;height:16px;margin-left:6px;border-radius:50%;border:1px solid var(--hair-2);font-style:normal;font-size:10.5px;font-weight:500;line-height:1;color:var(--muted);vertical-align:-2px;cursor:help;outline:none;transition:color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
+.tip:hover,.tip:focus-visible{color:var(--navy-deep);border-color:var(--navy)}
+.tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(-50%,4px);width:max-content;max-width:250px;padding:8px 11px;border-radius:10px;background:var(--raised);border:1px solid var(--hair-2);box-shadow:0 10px 30px rgba(0,0,0,.35);color:var(--ink);font-family:var(--sans);font-size:12.5px;font-weight:400;line-height:1.45;text-align:left;white-space:normal;letter-spacing:0;opacity:0;pointer-events:none;z-index:6;transition:opacity var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}
+.tip:hover::after,.tip:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+/* the optional limits: a switch in the label, a line while off, the field and its unit while on */
+.lim .lab{display:flex;align-items:center}.lim .lab label{font:inherit;color:inherit}.lim .lab .switch{margin-left:auto}
+.lim-off{font-size:13px;color:var(--faint);padding:9px 0}
+.lim-body{display:flex;flex-direction:column;gap:8px}
+.seg-sm{align-self:flex-start;padding:3px;border-radius:10px}.seg-sm .seg-ind{top:3px;bottom:3px;border-radius:7px}.seg-sm button{padding:4px 10px;font-size:12px}
 .inp{display:flex;align-items:center;border:1px solid var(--hair);border-radius:14px;background:var(--paper);transition:border-color var(--fast) var(--ease-out),box-shadow var(--fast) var(--ease-out)}
 .inp:focus-within{border-color:var(--navy);box-shadow:0 0 0 4px var(--ring)}
 .inp input{flex:1;min-width:0;border:0;outline:0;background:transparent;padding:9px 13px;font-size:14px}
@@ -427,7 +437,8 @@ a.ico:hover{color:var(--ink)}
 .trend-head h2{display:flex;align-items:center;gap:10px;font-size:20px;letter-spacing:-.035em;line-height:1.1;white-space:nowrap}
 .trend-head h2 svg{flex:none;width:22px;height:22px;stroke:var(--navy-deep);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .trend-nav{margin-left:auto;display:flex;gap:6px}
-.trend-nav .x{margin:0;width:30px;height:30px;font-size:20px;padding-bottom:2px}
+.trend-nav .x{margin:0;width:30px;height:30px;font-size:20px;padding-bottom:2px;background:var(--panel);backdrop-filter:var(--frost);-webkit-backdrop-filter:var(--frost);border-color:var(--hair-2)}
+.trend-nav .x:hover{transform:none;background:var(--pill);color:var(--ink)}   /* the arrows scroll; they do not turn like a close button */
 .trend-row{display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x proximity;scrollbar-width:none;padding:2px 2px 6px;scroll-behavior:smooth}
 .trend-row::-webkit-scrollbar{display:none}
 .trend-row:empty::after{content:"Nothing is moving right now.";font-size:14px;color:var(--muted);padding:8px 4px}
@@ -760,7 +771,7 @@ a.ico:hover{color:var(--ink)}
       <button type="button" class="mini fbtn" id="filterBtn" aria-haspopup="dialog"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12l-4.6 5.4V13l-2.8 1V8.9z"/></svg><span>Filters</span><span class="ct num" id="filterCt" hidden></span></button>
     </div>
     <section class="trend" aria-labelledby="h-trend">
-      <div class="trend-head"><h2 id="h-trend"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 3 4 4.5 4 8.5a4 4 0 0 1-8 0c0-1.4.5-2.5 1.2-3.4.3 1.2 1 2 1.8 2.4C11 8.5 11.3 5.5 12 3z"/><path d="M8.5 13.2c-1.3 1.2-2 2.6-2 4.3a5.5 5.5 0 0 0 11 0c0-1.3-.4-2.5-1.2-3.5"/></svg>Trending</h2><span class="col-note">Most active right now</span>
+      <div class="trend-head"><h2 id="h-trend"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Trending</h2><span class="col-note">Most active right now</span>
         <span class="trend-nav"><button type="button" class="x" data-tr="-1" aria-label="Scroll back">&#8249;</button><button type="button" class="x" data-tr="1" aria-label="Scroll forward">&#8250;</button></span></div>
       <div class="trend-row" id="trendRow"></div>
     </section>
@@ -821,8 +832,14 @@ a.ico:hover{color:var(--ink)}
         <div class="f"><span class="lab">Deadline</span>
           <div><div class="seg" id="timeSeg" role="group" aria-label="Deadline"><span class="seg-ind" aria-hidden="true"></span><button data-v="24" aria-pressed="false">24h</button><button data-v="72" aria-pressed="true">3 days</button><button data-v="168" aria-pressed="false">7 days</button></div></div>
         </div>
-        <div class="f"><label for="fMin">Minimum buy<span class="hint">optional</span></label><div class="inp"><input id="fMin" inputmode="decimal" class="num" placeholder="0"><span class="suf num" data-cur>SOL</span></div></div>
-        <div class="f"><label for="fMax">Maximum per wallet<span class="hint">optional</span></label><div class="inp"><input id="fMax" inputmode="decimal" class="num" placeholder="No limit"><span class="suf num" data-cur>SOL</span></div></div>
+        <div class="f lim" data-lim="min"><span class="lab"><label for="fMin">Minimum buy</label><i class="tip" tabindex="0" data-tip="The smallest buy a wallet can make. Off, any amount above zero counts.">?</i><button type="button" class="switch" role="switch" aria-checked="false" data-lim-toggle="min" aria-label="Set a minimum buy"></button></span>
+          <p class="lim-off" data-lim-off>Off. Any amount counts.</p>
+          <div class="lim-body" data-lim-body hidden><div class="inp"><input id="fMin" inputmode="decimal" class="num" placeholder="0"><span class="suf num" data-lim-suf data-cur>SOL</span></div>
+            <div class="seg seg-sm" id="minUnit" role="group" aria-label="Minimum buy unit"><span class="seg-ind" aria-hidden="true"></span><button data-v="q" aria-pressed="true" data-cur>SOL</button><button data-v="pct" aria-pressed="false">% of supply</button></div></div></div>
+        <div class="f lim" data-lim="max"><span class="lab"><label for="fMax">Maximum per wallet</label><i class="tip" tabindex="0" data-tip="The most one wallet can put in over the whole raise. Off, a single wallet may fill it.">?</i><button type="button" class="switch" role="switch" aria-checked="false" data-lim-toggle="max" aria-label="Set a maximum per wallet"></button></span>
+          <p class="lim-off" data-lim-off>Off. No limit per wallet.</p>
+          <div class="lim-body" data-lim-body hidden><div class="inp"><input id="fMax" inputmode="decimal" class="num" placeholder="0"><span class="suf num" data-lim-suf data-cur>SOL</span></div>
+            <div class="seg seg-sm" id="maxUnit" role="group" aria-label="Maximum per wallet unit"><span class="seg-ind" aria-hidden="true"></span><button data-v="q" aria-pressed="true" data-cur>SOL</button><button data-v="pct" aria-pressed="false">% of supply</button></div></div></div>
         <div class="f full"><label for="fWl">Whitelist<span class="hint">optional. One wallet address per line; leave empty to let anyone back it.</span></label><textarea id="fWl" class="ta num" rows="2" spellcheck="false"></textarea></div>
         </div></fieldset>
 
@@ -2144,6 +2161,7 @@ function boot() {
   seg.tabs = initSeg($('#tabSeg'), v => { location.hash = v === 'terminal' ? '#' : '#/' + v; });
   seg.perf = initSeg($('#perfSeg'), v => { ui.perf.mode = v; renderPerf(); });
   seg.assetF = initSeg($('#assetSeg'), v => { ui.fAsset = v; renderTerminal(); });
+  seg.minUnit = initSeg($('#minUnit'), v => setLimUnit('min', v)); seg.maxUnit = initSeg($('#maxUnit'), v => setLimUnit('max', v));
   seg.pair = initSeg($('#pairSeg'), v => { draft.pair = v; $('#fErr').textContent = ''; renderPreview(); if (v === 'any') $('#fMint').focus(); });
   seg.time = initSeg($('#timeSeg'), v => { draft.hours = +v; renderPreview(); });
   $('#bq').addEventListener('input', e => { ui.bq = e.target.value; renderTerminal(); });

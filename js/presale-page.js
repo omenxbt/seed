@@ -221,7 +221,7 @@ function depositPanel(p) {
     <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" value="${amt}" aria-label="Amount in ${sym}"><span class="suf">${sym}</span></div>
     <div class="chips">${chipsFor(p).map(c => `<button type="button" data-chip="${c}">${fmtC(c, p.q)}</button>`).join('')}<button type="button" data-chip="max">Max</button></div>
     <div class="recv"><span>You receive if it seeds</span><b class="num" data-recv></b></div>
-    <p class="rail-meta num">${pr.minBuy ? `Min ${fmtC(pr.minBuy, p.q)} ${sym}` : 'No minimum'} · ${pr.maxBuy ? `Max ${fmtC(pr.maxBuy, p.q)} ${sym} per wallet` : 'No maximum per wallet'}</p>
+    <p class="rail-meta num">${pr.minBuy ? `Min ${fmtC(pr.minBuy, p.q)} ${sym}${pr.minBuyPct ? ` (${pr.minBuyPct}% of supply)` : ''}` : 'No minimum'} · ${pr.maxBuy ? `Max ${fmtC(pr.maxBuy, p.q)} ${sym}${pr.maxBuyPct ? ` (${pr.maxBuyPct}% of supply)` : ''} per wallet` : 'No maximum per wallet'}</p>
     <p class="rail-err" data-buyerr role="alert"></p>
     <button type="button" class="btn btn-navy btn-block" data-go>Deposit</button>
     <p class="rail-meta">A raise only takes deposits: there is nothing to sell until it seeds. If it misses its target, you claim back everything you put in.</p>

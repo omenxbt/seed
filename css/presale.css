@@ -448,7 +448,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .lform fieldset:first-child{border-top:0}
 .lform legend{float:left;width:100%;display:flex;align-items:center;gap:10px;font-size:19px;font-weight:500;letter-spacing:-.03em;margin-bottom:18px}
 .lform legend .num{font-size:11px;font-weight:400;background:var(--navy-wash);color:var(--navy-deep);border-radius:6px;padding:4px 6px}
-.lform legend+*{clear:both}
+.lform legend~*{clear:both}   /* the legend floats; whatever follows it, including a body shown after the off-note hides, drops below it */
 /* an optional section: a switch in its heading, and a line on what backers see while it is off */
 .lform legend .switch{margin-left:auto}
 .opt-tag{font-size:12px;font-weight:400;letter-spacing:0;color:var(--muted);border:1px dashed var(--hair-2);border-radius:999px;padding:2px 9px}

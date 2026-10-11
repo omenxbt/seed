@@ -13,8 +13,24 @@ const lf = {
   team: [{ name: '', role: 'Founder', x: '', github: '', linkedin: '', wallet: '' }],
   road: [{ title: '', due: '', status: 'planned', proof: '' }],
   files: { banner: null, art: null, deck: null }, urls: { banner: '', art: '', deck: '' }, pos: { banner: [50, 50], art: [50, 50] }, descPv: false,
-  on: { tokenomics: false, team: false, road: false }   // the optional sections; off until the team switches one on
+  on: { tokenomics: false, team: false, road: false },   // the optional sections; off until the team switches one on
+  lim: { min: { on: false, unit: 'q' }, max: { on: false, unit: 'q' } }   // the buy limits, off by default; set in the pair asset or as a share of the supply
 };
+/* a limit as an amount of the pair asset: a share of the supply is worth that many tokens at the raise price */
+function limitQ(which, d) {
+  const l = lf.lim[which], v = numv($(which === 'min' ? '#fMin' : '#fMax').value);
+  if (!l.on || !(v > 0)) return 0;
+  if (l.unit === 'q') return v;
+  return d.target > 0 ? r6(v / 100 * SEED.supply * priceOf({ target: d.target, teamBps: 0 })) : 0;
+}
+function setLimUnit(which, unit) { lf.lim[which].unit = unit; $('#fErr').textContent = ''; syncLim(); renderPreview(); }
+function syncLim() {
+  for (const k of ['min', 'max']) { const l = lf.lim[k], box = $(`.lim[data-lim="${k}"]`);
+    $('[data-lim-toggle]', box).setAttribute('aria-checked', String(l.on)); $('[data-lim-off]', box).hidden = l.on; $('[data-lim-body]', box).hidden = !l.on;
+    const suf = $('[data-lim-suf]', box); if (l.unit === 'pct') { suf.removeAttribute('data-cur'); suf.textContent = '%'; } else { suf.setAttribute('data-cur', ''); suf.textContent = $('#fCur').textContent; }
+    $('input', box).placeholder = l.unit === 'pct' ? (k === 'min' ? '0.1' : '2') : (k === 'min' ? '0.5' : '20');
+    if (l.on) seg[k + 'Unit'].place(); }
+}
 /* with Tokenomics off the supply splits evenly between the backers and the pool */
 const EVEN_SHARE = 50;
 const shareNow = () => lf.on.tokenomics ? numv($('#fShare').value) : EVEN_SHARE;
@@ -35,8 +51,8 @@ const ROWS = {
       <label><span>Allocation</span><input data-k="label" value="${esc(r.label)}" placeholder="Team" maxlength="40"></label>
       <label><span>Kind</span><select data-k="kind">${['team', 'treasury', 'other'].map(k => `<option value="${k}"${r.kind === k ? ' selected' : ''}>${k[0].toUpperCase() + k.slice(1)}</option>`).join('')}</select></label>
       <label><span>Share %</span><input data-k="pct" class="num" inputmode="decimal" value="${esc(r.pct)}" placeholder="10"></label>
-      <label><span>Cliff, days</span><input data-k="cliff" class="num" inputmode="numeric" value="${esc(r.cliff)}" placeholder="0"></label>
-      <label><span>Vesting, days</span><input data-k="dur" class="num" inputmode="numeric" value="${esc(r.dur)}" placeholder="None"></label>
+      <label><span>Cliff, days<i class="tip" tabindex="0" data-tip="How long after seeding before the first of these tokens unlock. Nothing moves until the cliff passes.">?</i></span><input data-k="cliff" class="num" inputmode="numeric" value="${esc(r.cliff)}" placeholder="0"></label>
+      <label><span>Vesting, days<i class="tip" tabindex="0" data-tip="How long the tokens take to unlock after the cliff, released evenly over that time. Empty unlocks everything at the cliff.">?</i></span><input data-k="dur" class="num" inputmode="numeric" value="${esc(r.dur)}" placeholder="None"></label>
       <label class="wide"><span>Wallet, optional</span><input data-k="wallet" class="num" value="${esc(r.wallet)}" placeholder="Where these tokens sit" spellcheck="false"></label>
       <button type="button" class="x" data-del aria-label="Remove">&times;</button></div>` },
   uof: { box: '#uofRows', blank: () => ({ label: '', pct: '' }), html: (r, i) => `<div class="row-ed uof-row" data-i="${i}">
@@ -133,7 +149,7 @@ function draftProfile(d) {
   return {
     tagline: d.idea, description: $('#fDesc').value.trim(),
     links: { website: $('#lWebsite').value.trim() || null, x: $('#lX').value.trim() || null, telegram: $('#lTelegram').value.trim() || null, discord: $('#lDiscord').value.trim() || null, github: $('#lGithub').value.trim() || null },
-    minBuy: numv($('#fMin').value) || 0, maxBuy: numv($('#fMax').value) || 0,
+    minBuy: limitQ('min', d), maxBuy: limitQ('max', d), minBuyPct: lf.lim.min.on && lf.lim.min.unit === 'pct' ? numv($('#fMin').value) || 0 : 0, maxBuyPct: lf.lim.max.on && lf.lim.max.unit === 'pct' ? numv($('#fMax').value) || 0 : 0,
     whitelist: $('#fWl').value.split(/\s+/).map(x => x.trim()).filter(Boolean),
     team, founder: { name: team[0] ? team[0].name : 'Founder', x: $('#fFounderX').value.trim() || null, xAgeDays: since ? Math.max(0, (Date.now() - Date.parse(since + '-01')) / D) : null, wallet: founderWallet, pastLaunches: [] },
     deck: lf.urls.deck || null, deckKind: lf.files.deck ? deckInfo(lf.files.deck)[0] : null, deckName: lf.files.deck ? lf.files.deck.name : null, banner: lf.urls.banner || null, art: lf.urls.art || null, bannerPos: posTxt('banner'), artPos: posTxt('art'),
@@ -151,10 +167,15 @@ function draftPresale() {
 function validateFull() {
   const d = readDraft(), da = draftAsset(), base = validateDraft(d, da); if (base) return base;
   if ($('#fDesc').value.trim().length < 40) return 'Describe the project in at least 40 characters so backers know what they are funding.';
-  const mn = numv($('#fMin').value), mx = numv($('#fMax').value);
-  if ($('#fMin').value && !(mn >= 0)) return 'The minimum buy must be a number.';
-  if ($('#fMax').value && !(mx > 0)) return 'The maximum per wallet must be a number above zero.';
-  if (mn > 0 && mx > 0 && mn > mx) return 'The minimum buy is larger than the maximum per wallet.';
+  const mn = numv($('#fMin').value), mx = numv($('#fMax').value), L = lf.lim;
+  if (L.min.on && !(mn > 0)) return 'Set the minimum buy, or switch it off.';
+  if (L.max.on && !(mx > 0)) return 'Set the maximum per wallet, or switch it off.';
+  if (L.min.on && L.min.unit === 'pct' && mn >= 100) return 'The minimum buy must be under 100% of the supply.';
+  if (L.max.on && L.max.unit === 'pct' && mx > 100) return 'The maximum per wallet cannot be more than the whole supply.';
+  if (L.min.on && L.min.unit === 'q' && mn > d.target) return 'The minimum buy is larger than the target.';
+  if (L.max.on && L.max.unit === 'q' && mx > d.target) return 'The maximum per wallet is larger than the target; switch it off to let one wallet fill the raise.';
+  const mnQ = limitQ('min', d), mxQ = limitQ('max', d);
+  if (mnQ > 0 && mxQ > 0 && mnQ > mxQ) return 'The minimum buy is larger than the maximum per wallet.';
   const bad = $('#fWl').value.split(/\s+/).filter(Boolean).find(x => !B58.test(x)); if (bad) return `${bad.slice(0, 12)}… in the whitelist is not a Solana address.`;
   /* a section that is switched off is not on the page, so nothing in it is checked */
   const share = shareNow();
@@ -236,6 +257,7 @@ async function openPresale() {
     state.presales.unshift(p); save();
     ['#fName', '#fTicker', '#fIdea', '#fTarget', '#fMint', '#fDesc', '#fMin', '#fMax', '#fWl', '#fFounderX', '#fXSince', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
     if (!supa.configured()) lf.urls.deck = '';   // the page keeps showing the local deck, so its preview URL is not released
+    lf.lim.min = { on: false, unit: 'q' }; lf.lim.max = { on: false, unit: 'q' }; syncLim();
     ['banner', 'art', 'deck'].forEach(k => { if (lf.files[k]) clearFile(k); }); renderPreview();   // the cleared form, in the preview too
     ui.fAsset = da.key; seg.assetF.set(da.key); ui.sel = id;
     toast(`Opened ${p.name}. It is live until ${fmtDate(p.endsAt)}`);
@@ -271,6 +293,8 @@ function renderMine() {
   const syncOpt = () => Object.keys(lf.on).forEach(k => { const on = lf.on[k], fs = $(`fieldset[data-opt="${k}"]`, form);
     $$(`[data-toggle="${k}"]`).forEach(t => t.setAttribute('aria-checked', String(on)));
     fs.classList.toggle('off', !on); $('[data-off]', fs).hidden = on; $('[data-body]', fs).hidden = !on; $('.opt-tag', fs).hidden = on; });
+  form.addEventListener('click', e => { const t = e.target.closest('[data-lim-toggle]'); if (!t) return; const k = t.dataset.limToggle; lf.lim[k].on = !lf.lim[k].on; $('#fErr').textContent = ''; syncLim(); renderPreview(); if (lf.lim[k].on) $(k === 'min' ? '#fMin' : '#fMax').focus(); });
+  syncLim();
   $('#tab-launch').addEventListener('click', e => { const t = e.target.closest('[data-toggle]'); if (!t) return;
     const k = t.dataset.toggle; lf.on[k] = !lf.on[k]; $('#fErr').textContent = ''; syncOpt(); renderPreview();
     if (lf.on[k] && !t.closest('fieldset')) $(`fieldset[data-opt="${k}"]`, form).scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); });
