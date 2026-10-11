@@ -1,0 +1,132 @@
+use anchor_lang::prelude::*;
+
+pub const CONFIG_SEED: &[u8] = b"config";
+pub const RAISE_SEED: &[u8] = b"raise";
+pub const CONTRIB_SEED: &[u8] = b"contrib";
+pub const BLACKLIST_SEED: &[u8] = b"blacklist";
+
+pub const BPS: u64 = 10_000;
+pub const SUPPLY: u64 = 1_000_000_000;      // whole tokens
+pub const TOKEN_DECIMALS: u8 = 6;
+pub const SUPPLY_UNITS: u64 = SUPPLY * 1_000_000;   // base units at 6 decimals
+pub const MAX_TRANCHES: usize = 24;
+pub const MAX_NAME: usize = 32;
+pub const MAX_TICKER: usize = 8;
+pub const DAY: i64 = 86_400;
+
+/// The fixed terms. The site's js/config/seed.js carries the same numbers.
+#[account]
+#[derive(InitSpace)]
+pub struct Config {
+    pub admin: Pubkey,            // the multisig that can flag fraud and approve a takeover
+    pub attestor: Pubkey,         // signs the X attestations open_raise verifies
+    pub oracle: Pubkey,           // may set the SOL price
+    pub seed_treasury: Pubkey,    // where Seed's fees go (its share of pool fees and the 1% on buys)
+    pub fee_bps: u16,             // 100: Seed's fee on each buy, on top
+    pub creator_share_bps: u16,   // 7000: the founder's share of pool fees, snapshotted into each raise at opening
+    pub pool_fee_bps: u16,        // 100: the DAMM v2 pool's flat fee
+    pub cap_usd_cents: u64,       // 10_000_000: $100,000
+    pub min_deadline: i64,        // seconds, 24h
+    pub max_deadline: i64,        // seconds, 14d
+    pub seed_timeout: i64,        // seconds, 3d
+    pub min_unlock_days: u32,     // 90
+    pub payout_delay: i64,        // seconds, 7d
+    pub sol_usd_cents: u64,       // the SOL price the cap is checked against; set by the oracle
+    pub sol_price_at: i64,
+    pub bump: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
+pub struct Tranche {
+    pub day_offset: u32,   // days after seeding
+    pub bps: u16,          // share of the team tokens
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
+pub enum RaiseStatus { Live, Filled, Seeded, Refunded }
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
+pub enum SeedStep { Filled, Minted, Pooled, Seeded }
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
+pub enum RefundReason { Missed, Cancelled, Timeout }
+
+#[account]
+#[derive(InitSpace)]
+pub struct Raise {
+    pub founder: Pubkey,
+    pub nonce: u64,
+    pub x_handle_hash: [u8; 32],
+    pub pair_mint: Pubkey,
+    pub target: u64,                  // base units of the pair asset
+    pub target_usd_cents: u64,
+    pub sol_usd_cents: u64,           // the SOL price when it opened (0 for a USDC raise)
+    pub fee_bps: u16,
+    pub creator_share_bps: u16,
+    pub team_bps: u16,
+    #[max_len(MAX_TRANCHES)]
+    pub schedule: Vec<Tranche>,
+    pub payout_wallet: Pubkey,
+    pub pending_payout: Option<Pubkey>,
+    pub payout_effective_at: i64,
+    pub status: RaiseStatus,
+    pub seed_step: SeedStep,
+    pub refund_reason: Option<RefundReason>,
+    pub raised: u64,
+    pub fees_held: u64,
+    pub backers: u32,
+    pub opened_at: i64,
+    pub ends_at: i64,
+    pub filled_at: i64,
+    pub seeded_at: i64,
+    pub mint: Pubkey,                 // set at the Minted step
+    pub pool: Pubkey,                 // set at the Pooled step
+    pub position: Pubkey,
+    pub position_nft_mint: Pubkey,
+    pub team_claimed: u64,            // base units
+    pub blacklisted: bool,
+    pub flagged_at: i64,
+    pub takeover_to: Option<Pubkey>,
+    pub takeover_at: i64,
+    #[max_len(MAX_NAME)]
+    pub name: String,
+    #[max_len(MAX_TICKER)]
+    pub ticker: String,
+    pub bump: u8,
+}
+
+impl Raise {
+    /// the supply split: team, then backers and the pool get equal halves of the rest, in base units
+    pub fn team_units(&self) -> u64 { (SUPPLY_UNITS as u128 * self.team_bps as u128 / BPS as u128) as u64 }
+    pub fn half_units(&self) -> u64 { (SUPPLY_UNITS - self.team_units()) / 2 }
+    pub fn backers_units(&self) -> u64 { self.half_units() }
+    pub fn pool_units(&self) -> u64 { self.half_units() }
+    pub fn room(&self) -> u64 { self.target.saturating_sub(self.raised) }
+    /// what the schedule has released by `now`, in base units
+    pub fn unlocked_units(&self, now: i64) -> u64 {
+        if self.seeded_at == 0 { return 0; }
+        let days = (now - self.seeded_at) / DAY;
+        let bps: u64 = self.schedule.iter().filter(|t| (t.day_offset as i64) <= days).map(|t| t.bps as u64).sum();
+        (self.team_units() as u128 * bps as u128 / BPS as u128) as u64
+    }
+}
+
+#[account]
+#[derive(InitSpace)]
+pub struct Contribution {
+    pub raise: Pubkey,
+    pub wallet: Pubkey,
+    pub amount: u64,     // what went into the raise
+    pub fee: u64,        // the 1% on top, held beside it
+    pub bump: u8,
+}
+
+/// an X handle hash that can no longer open a raise; created by admin_flag_fraud
+#[account]
+#[derive(InitSpace)]
+pub struct Blacklist {
+    pub handle_hash: [u8; 32],
+    pub raise: Pubkey,
+    pub at: i64,
+    pub bump: u8,
+}

@@ -1,0 +1,22 @@
+[package]
+name = "seed"
+version = "0.1.0"
+description = "Seed: fixed-price raises on Solana that open a locked Meteora DAMM v2 pool"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "seed"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build", "anchor-spl/token_2022"]
+
+[dependencies]
+anchor-lang = "0.32.1"
+anchor-spl = { version = "0.32.1", default-features = false, features = ["token", "associated_token"] }
+uint = { version = "0.10", default-features = false }

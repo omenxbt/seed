@@ -11,11 +11,22 @@
 //   upload-url  { name, type, size }                  a signed upload URL for the public bucket (PDF, image or slide file, 10 MB)
 //   link-x      { token }                             ties the wallet to the X account behind a Supabase Auth sign-in
 //   unlink-x    {}                                    removes the wallet's X link
+//   x-attest    {}                                    signs an attestation (wallet, X handle hash, expiry) for open_raise
+//   raise-report   { raiseId, reason }                any signed-in wallet, once per raise; public
+//   admin-flag     { raiseId, reportId, tx }          an admin wallet, after the on-chain admin_flag_fraud landed
+//   admin-takeover { raiseId, reportId, to, label, tx } an admin wallet, after admin_approve_takeover landed
+//   admin-dismiss  { reportId }                       an admin wallet
 //
 // Secrets: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided by Supabase. SEED_ALLOWED_DOMAINS is a comma-separated
-// list of hosts a session may be signed for, for example "seed-nu-ten.vercel.app,127.0.0.1:8765".
+// list of hosts a session may be signed for, for example "seed-nu-ten.vercel.app,127.0.0.1:8765". SEED_ADMINS is the
+// comma-separated admin wallets (the multisig's signers). SEED_ATTESTOR_KEY is the attestor's 32-byte ed25519 seed in
+// base58; its public key is in the program's Config. X_BEARER_TOKEN, if set, lets x-attest read the account's age and
+// follower count from the X API.
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
-import { verifySession } from './verify.ts';
+import * as ed from 'npm:@noble/ed25519@2.1.0';
+import { sha512 } from 'npm:@noble/hashes@1.4.0/sha512';
+import { verifySession, base58Decode } from './verify.ts';
+ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 
 const ALLOWED = (Deno.env.get('SEED_ALLOWED_DOMAINS') ?? 'seed-nu-ten.vercel.app').split(',').map((s) => s.trim()).filter(Boolean);
 const AUTO_HIDE = 3;                 // matches RISK.chatAutoHideReports in js/config/risk.js
@@ -26,6 +37,38 @@ const TYPES: Record<string, string> = { 'application/pdf': 'pdf', 'image/png': '
   'application/vnd.apple.keynote': 'key', 'application/vnd.oasis.opendocument.presentation': 'odp' };
 const MAX_BYTES = 10 * 1024 * 1024;
 const X_PROVIDERS = ['twitter', 'x'];   // Supabase Auth's names for X sign-in
+const ADMINS = (Deno.env.get('SEED_ADMINS') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+const ATTEST_HOURS = 1;                 // how long an attestation is good for; open_raise checks the expiry on chain
+const ATTEST_PREFIX = new TextEncoder().encode('seed-x-attest:v1');
+const B58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function base58Encode(bytes: Uint8Array): string {
+  let n = 0n; for (const b of bytes) n = n * 256n + BigInt(b);
+  let out = ''; while (n > 0n) { out = B58_ALPHABET[Number(n % 58n)] + out; n /= 58n; }
+  for (const b of bytes) { if (b !== 0) break; out = '1' + out; }
+  return out;
+}
+const hex = (b: Uint8Array) => Array.from(b).map((x) => x.toString(16).padStart(2, '0')).join('');
+/* the attestation open_raise verifies through the ed25519 program: prefix || wallet (32) || sha256(lower-cased handle) (32) || expiry (u64 LE) */
+async function attest(wallet: string, handle: string) {
+  const seed = Deno.env.get('SEED_ATTESTOR_KEY'); if (!seed) throw new Refusal(503, 'X attestation is not switched on yet.');
+  const sk = base58Decode(seed); if (sk.length !== 32) throw new Refusal(500, 'The attestor key is not a 32-byte seed.');
+  const handleHash = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(handle.toLowerCase())));
+  const expiry = BigInt(Math.floor(Date.now() / 1000) + ATTEST_HOURS * 3600), exp = new Uint8Array(8); new DataView(exp.buffer).setBigUint64(0, expiry, true);
+  const msg = ed.etc.concatBytes(ATTEST_PREFIX, base58Decode(wallet), handleHash, exp);
+  const sig = ed.sign(msg, sk), pk = ed.getPublicKey(sk);
+  return { wallet, handleHash: hex(handleHash), expiry: Number(expiry), message: base58Encode(msg), signature: base58Encode(sig), attestor: base58Encode(pk) };
+}
+/* the account's age and follower count from the X API, when a bearer token is set; otherwise what the sign-in gave */
+async function xProfile(xId: string) {
+  const tok = Deno.env.get('X_BEARER_TOKEN'); if (!tok) return null;
+  try {
+    const r = await fetch(`https://api.x.com/2/users/${encodeURIComponent(xId)}?user.fields=created_at,public_metrics`, { headers: { Authorization: `Bearer ${tok}` } });
+    if (!r.ok) return null;
+    const d = (await r.json()).data;
+    return d ? { x_created_at: d.created_at ?? null, followers: d.public_metrics?.followers_count ?? null } : null;
+  } catch { return null; }
+}
+const isAdmin = (w: string) => ADMINS.includes(w);
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, apikey, content-type', 'Access-Control-Allow-Methods': 'POST, OPTIONS' };
@@ -121,6 +164,59 @@ Deno.serve(async (req) => {
       case 'unlink-x': {
         const { error } = await db.from('x_links').delete().eq('wallet', wallet);
         if (error) throw new Refusal(400, error.message);
+        return reply(200, { ok: true });
+      }
+      // The founder's X sign-in, as the program needs it. The wallet's link (made by link-x, which checked the X sign-in) is
+      // the proof; the function signs that pair with an expiry, and open_raise verifies the signature on chain.
+      case 'x-attest': {
+        const { data: l } = await db.from('x_links').select('x_id, handle, name, avatar').eq('wallet', wallet).maybeSingle();
+        if (!l) throw new Refusal(403, 'Sign in with X first.');
+        const { data: xa } = await db.from('x_accounts').select('blacklisted, blacklist_raise').eq('x_id', l.x_id).maybeSingle();
+        if (xa?.blacklisted) throw new Refusal(403, `@${l.handle} was flagged for fraud${xa.blacklist_raise ? ` on ${xa.blacklist_raise}` : ''} and cannot open another raise.`);
+        const { count: live } = await db.from('raises').select('*', { count: 'exact', head: true }).eq('x_id', l.x_id).eq('status', 'live');
+        if (live) throw new Refusal(409, `@${l.handle} already has a live raise. One at a time.`);
+        const prof = await xProfile(l.x_id);
+        await db.from('x_accounts').upsert({ x_id: l.x_id, handle: l.handle, name: l.name, avatar: l.avatar, ...(prof ?? {}), updated_at: new Date().toISOString() });
+        const a = await attest(wallet, l.handle);
+        await db.from('x_attestations').insert({ wallet, x_id: l.x_id, handle_hash: a.handleHash, expires_at: new Date(a.expiry * 1000).toISOString() });
+        return reply(200, { ...a, handle: l.handle, xId: l.x_id, followers: prof?.followers ?? null, xCreatedAt: prof?.x_created_at ?? null });
+      }
+      case 'raise-report': {
+        const raiseId = str(body.raiseId, 80), reason = str(body.reason, 600);
+        if (reason.length < 20) throw new Refusal(400, 'Say what happened, in at least 20 characters.');
+        const { data: r } = await db.from('raises').select('id').eq('id', raiseId).maybeSingle();
+        if (!r) throw new Refusal(404, 'That raise is not indexed yet.');
+        const { data, error } = await db.from('raise_reports').insert({ raise_id: raiseId, wallet, reason }).select('id').single();
+        if (error) throw new Refusal(/duplicate/i.test(error.message) ? 409 : 400, /duplicate/i.test(error.message) ? 'You have reported this raise already.' : error.message);
+        return reply(200, { id: data.id });
+      }
+      // The two admin actions mirror the program's two admin instructions. The chain is the source of truth: the webhook
+      // marks the raise when FraudFlagged or TakeoverApproved lands. These record the off-chain side: the report's state,
+      // the X account's blacklist and the takeover's label.
+      case 'admin-flag': {
+        if (!isAdmin(wallet)) throw new Refusal(403, 'Admins only.');
+        const raiseId = str(body.raiseId, 80), reportId = str(body.reportId, 40), tx = str(body.tx, 120);
+        const { data: r } = await db.from('raises').select('id, x_id').eq('id', raiseId).maybeSingle();
+        if (!r) throw new Refusal(404, 'No such raise.');
+        const at = new Date().toISOString();
+        await db.from('raises').update({ blacklisted: true, flag: { reportId, at, by: wallet, tx }, updated_at: at }).eq('id', raiseId);
+        if (r.x_id) await db.from('x_accounts').update({ blacklisted: true, blacklisted_at: at, blacklist_raise: raiseId, updated_at: at }).eq('x_id', r.x_id);
+        if (reportId) await db.from('raise_reports').update({ status: 'fraud', acted_by: wallet, acted_tx: tx || null }).eq('id', reportId);
+        return reply(200, { ok: true });
+      }
+      case 'admin-takeover': {
+        if (!isAdmin(wallet)) throw new Refusal(403, 'Admins only.');
+        const raiseId = str(body.raiseId, 80), reportId = str(body.reportId, 40), to = str(body.to, 50), label = str(body.label, 60) || 'Backers', tx = str(body.tx, 120);
+        const { data: r } = await db.from('raises').select('id, payout_wallet').eq('id', raiseId).maybeSingle();
+        if (!r) throw new Refusal(404, 'No such raise.');
+        const at = new Date().toISOString();
+        await db.from('raises').update({ takeover: { from: r.payout_wallet, to, at, reportId, by: wallet, label, tx }, payout_wallet: to, pending_payout: null, payout_effective_at: null, updated_at: at }).eq('id', raiseId);
+        if (reportId) await db.from('raise_reports').update({ status: 'takeover', acted_by: wallet, acted_tx: tx || null }).eq('id', reportId);
+        return reply(200, { ok: true });
+      }
+      case 'admin-dismiss': {
+        if (!isAdmin(wallet)) throw new Refusal(403, 'Admins only.');
+        await db.from('raise_reports').update({ status: 'dismissed', acted_by: wallet }).eq('id', str(body.reportId, 40));
         return reply(200, { ok: true });
       }
       default: throw new Refusal(400, 'Unknown action.');

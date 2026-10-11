@@ -44,6 +44,37 @@ The flow: the person signs in on X, comes back to the site, and their wallet sig
 checks the signature and the X sign-in together and writes the pair to `x_links`. Until this is set up, a real wallet is told
 that X sign-in is not switched on, and the demo wallet uses a typed handle that is labelled Demo and never leaves the browser.
 
+## The raise model: indexer, reports, attestations, crank
+
+- `migrations/20261011000000_raise_model.sql` creates `raises`, `contributions`, `fee_claims`, `payout_changes` (the
+  program's state, indexed), `raise_reports` (public, wallet-signed, one per wallet per raise), `x_accounts` (founders'
+  X accounts and the blacklist) and `x_attestations` (a log of what the attestor signed). Public read, function-only writes.
+- `functions/helius-webhook/` is the indexer. Create a Helius webhook of type **raw** for the program id with the
+  function's URL as the target and a secret as the authorization header; set that secret as `HELIUS_WEBHOOK_SECRET`.
+  Every Seed event in a transaction's logs becomes a row; redelivery is harmless. `_shared/events.ts` holds the event
+  layouts and must match `program/programs/seed/src/events.rs`.
+- `functions/seed/` gained `x-attest` (signs the attestation `open_raise` verifies; needs `SEED_ATTESTOR_KEY`, the
+  attestor's 32-byte ed25519 seed in base58, whose public key is in the program's Config), `raise-report`, and the admin
+  actions `admin-flag`, `admin-takeover`, `admin-dismiss` (wallets in `SEED_ADMINS`). The admin actions record the
+  off-chain side; the on-chain instructions are sent by the admin multisig and indexed by the webhook.
+- `functions/crank/` is the scheduler: settles live raises past their deadline, runs the seeding steps for filled raises,
+  times out the ones that stall, claims creator fees hourly and applies due payout changes. It runs with a crank wallet
+  (`SEED_CRANK_KEY`) that holds only SOL for fees; every instruction it sends is permissionless. Schedule it with pg_cron:
+
+  ```sql
+  select cron.schedule('seed-crank', '* * * * *', $$ select net.http_post(
+    url := 'https://<ref>.supabase.co/functions/v1/crank', headers := '{"authorization": "<CRANK_SECRET>"}'::jsonb) $$);
+  ```
+
+  Copy `js/idl/seed.json` to `functions/crank/seed.json` after every program build.
+
+```sh
+supabase secrets set SEED_ADMINS="<admin wallet>,<admin wallet>" SEED_ATTESTOR_KEY="<base58 seed>" X_BEARER_TOKEN="<optional>"
+supabase secrets set HELIUS_WEBHOOK_SECRET="<secret>" SEED_RPC_URL="https://api.devnet.solana.com" SEED_CRANK_KEY="<base58 secret key>" SEED_PROGRAM_ID="<program id>" CRANK_SECRET="<secret>"
+supabase functions deploy helius-webhook --no-verify-jwt
+supabase functions deploy crank --no-verify-jwt
+```
+
 ## Founder and team roles
 
 Pinning and posting updates need a row in `presale_roles`. A presale opened from the Launch form registers its creator as
