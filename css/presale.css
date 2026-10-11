@@ -19,7 +19,7 @@ body:has(#view-app.fit:not([hidden])) .toasts{bottom:calc(52px + env(safe-area-i
 .pp{display:flex;flex-direction:column;gap:18px;font-size:15px}
 .pp-side,.pp-main{display:contents}
 .pp-rail{display:flex;flex-direction:column;gap:18px;min-width:0}
-.pp-id,.pp-annw{order:1}.pp-fill{order:2}.pp-rail{order:3}.pp-chart{order:4}.pp-tabs{order:5}.pp-side>.rail-card{order:6}
+.pp-id,.pp-annw{order:1}.pp-fill{order:2}.pp-rail{order:3}.pp-fees,.pp-chart{order:4}.pp-tabs{order:5}.pp-side>.rail-card{order:6}
 .pp-pos:empty{display:none}
 @media (min-width:1024px) and (max-width:1439px){
   .pp{display:grid;grid-template-columns:minmax(0,1fr) 380px;align-items:start}
@@ -656,3 +656,55 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .seed-steps li .num{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11.5px;background:var(--chip);color:var(--muted)}
 .seed-steps li.done{color:var(--ink-2)}.seed-steps li.done .num{background:var(--ok-bg);color:var(--ok-ink)}
 .seed-steps li.now{color:var(--ink)}.seed-steps li.now .num{background:var(--pill);color:var(--navy-deep);animation:livePulse 1.6s ease-in-out infinite}
+
+/* ---------------------------------------------------------------- the final model: notices, fees, unlocks, reports, founder */
+.st-pill.flagged{background:var(--bad-bg);color:var(--bad-ink)}
+/* the strips at the top of the main column */
+.pp-notice{display:flex;align-items:center;gap:12px;padding:13px 18px;border-radius:16px;font-size:14.5px;line-height:1.4}
+.pp-notice+.pp-notice,.pp-notice+.pp-ann{margin-top:10px}
+.pp-notice .n-ico{flex:none;display:grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--navy-wash);color:var(--navy-deep)}
+.pp-notice .n-ico svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.pp-notice>div{min-width:0;display:flex;flex-direction:column;gap:2px}.pp-notice b{font-weight:500}.pp-notice>div span{color:var(--ink-2);font-size:13.5px}
+.pp-notice>a{flex:none;margin-left:auto;font-size:13.5px;font-weight:500;color:var(--navy-deep)}
+.pp-notice.bad{border-color:color-mix(in srgb,var(--bad) 40%,transparent);background:color-mix(in srgb,var(--bad-bg) 70%,var(--panel))}.pp-notice.bad .n-ico{background:var(--bad-bg);color:var(--bad-ink)}.pp-notice.bad>a{color:var(--bad-ink)}
+.pp-notice.navy{border-color:var(--navy-soft)}
+.pp-cancel{margin-left:auto;color:var(--muted)}.pp-cancel:hover{color:var(--bad-ink)}
+.qb-sm{padding:5px 11px;font-size:12.5px}
+.pool-lock{display:inline-flex;align-items:center;gap:5px;color:var(--ok-ink)}.pool-lock svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+/* creator fees */
+.pp-fees .col-note{font-size:13px;color:var(--muted)}
+.fee-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.fee-grid dt{font-size:13.5px;color:var(--muted)}.fee-grid dd{font-size:19px;margin-top:3px;letter-spacing:-.03em}.fee-grid span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+.fee-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid var(--hair);font-size:13.5px;color:var(--ink-2)}
+.fee-foot .btn{margin-left:auto}.fee-pend{color:var(--warn-ink)}
+.pp-fees>.quiet{margin-top:12px}
+/* the founder card */
+.pp-founder .kv dd{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;font-family:var(--sans);letter-spacing:0}
+.pp-founder .kv dd .num{font-family:var(--mono)}.pp-founder .past{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono)}
+.pp-founder .bad{color:var(--bad-ink)}.btag.ok{background:var(--ok-bg);color:var(--ok-ink)}.btag.bad{background:var(--bad-bg);color:var(--bad-ink)}
+.x-acct{display:flex;align-items:center;gap:12px;padding:12px 14px;margin-bottom:12px;border-radius:14px;background:var(--tile);color:var(--ink);transition:background var(--fast) var(--ease-out)}
+.x-acct:hover{background:var(--mist)}
+.x-acct>svg{flex:none;width:18px;height:18px;fill:currentColor}.x-acct>span{display:flex;flex-direction:column;min-width:0}.x-acct b{font-weight:500}.x-acct .num{font-size:12.5px;color:var(--muted)}
+.x-acct .vbadge{margin-left:auto;flex:none;white-space:nowrap}
+/* overview: the token */
+.kv-wide div{display:grid;grid-template-columns:130px minmax(0,1fr);gap:16px}.kv-wide dd{text-align:left;font-family:var(--sans);letter-spacing:0;color:var(--ink-2)}.kv-wide dd .num{font-family:var(--mono);color:var(--ink)}
+.use{font-size:15.5px;color:var(--ink-2);max-width:62ch}
+/* unlocks */
+.unlock-sums{grid-template-columns:repeat(4,minmax(0,1fr))}
+.pp-svg.unlock{margin:4px 0 18px}.pp-svg.unlock svg{display:block;width:100%;height:auto}
+.tranches tr.done td{color:var(--muted)}.tranches tr.next td{color:var(--ink)}
+.roadmap .late .rm-dot{border-color:var(--warn);background:var(--warn-bg)}.roadmap .late .rm-dot svg{stroke:var(--warn)}
+/* reports */
+.rep-form textarea{min-height:0}
+.reports{list-style:none;display:flex;flex-direction:column;gap:12px;max-width:900px}
+.rep{padding:16px 18px;border-radius:16px;background:var(--tile);border:1px solid transparent}
+.rep.fraud{border-color:color-mix(in srgb,var(--bad) 35%,transparent)}.rep.takeover{border-color:var(--ok-line)}.rep.dismissed{opacity:.6}
+.rep-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px;color:var(--muted);margin-bottom:8px}.rep-h .num{margin-left:auto}
+.rep p{font-size:15px;color:var(--ink)}
+.rep-act{display:flex;gap:8px;margin-top:12px}
+.adm-list{list-style:none;display:flex;flex-direction:column;gap:8px;margin-bottom:18px;max-width:900px}
+.adm{display:flex;gap:10px;align-items:flex-start;padding:12px 16px;border-radius:14px;font-size:14.5px;color:var(--ink-2)}
+.adm svg{flex:none;width:17px;height:17px;margin-top:2px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.adm b{font-weight:500;color:var(--ink)}.adm.bad{background:var(--bad-bg);color:var(--bad-ink)}.adm.ok{background:var(--ok-bg);color:var(--ok-ink)}
+.rail-flag .bar-link{display:inline-block;margin-top:10px}.rail-flag .bar-link svg{width:12px;height:12px;vertical-align:-1px}
+@media (max-width:900px){.fee-grid,.unlock-sums{grid-template-columns:1fr 1fr}}

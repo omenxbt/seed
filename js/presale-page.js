@@ -7,8 +7,8 @@
    ========================================================================== */
 /* charts draw at the width of their column, one unit to the pixel, so their labels keep their size however wide the window is */
 const chartW = () => { const b = detailBox && $('[data-dchart],[data-candles]', detailBox), w = b ? Math.floor(b.clientWidth) : 0; return w > 0 ? Math.max(320, w) : innerWidth < 720 ? 400 : 720; };
-const PTABS = ['overview', 'deck', 'team', 'tokenomics', 'backers', 'risk', 'announcements'];
-const PTAB_ALIAS = { updates: 'announcements' };   // the tab's earlier name, so old links still open it
+const PTABS = ['overview', 'team', 'roadmap', 'backers', 'risk', 'reports', 'announcements', 'deck'];
+const PTAB_ALIAS = { updates: 'announcements', tokenomics: 'team' };   // the tabs' earlier names, so old links still open them
 const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'price', side: 'buy', allBackers: false, deck: null, deckPage: 1, walletKey: '' };
 
 const ICONS = {
@@ -54,7 +54,12 @@ function roleOf(p, w) {
 }
 const artHTML = (p, cls) => { const pr = profileOf(p); return pr.art ? `<img class="${cls}" src="${esc(pr.art)}" alt="" style="object-position:${esc(pr.artPos || '50% 50%')}">` : `<span class="${cls} glyph-art" style="--h:${hashStr(p.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>`; };
 const copyBtn = (val, label, text) => `<button class="copy" data-copy="${esc(val)}" data-copy-label="${esc(label)}" aria-label="Copy ${esc(label)}">${text ? `<span class="num">${esc(text)}</span>` : ''}${ICONS.copy}</button>`;
-const statusPill = p => `<span class="st-pill ${p.status}">${p.blacklisted ? 'Flagged' : RAISE_STATE[p.status]}</span>`;
+const statusPill = p => `<span class="st-pill ${p.blacklisted ? 'flagged' : p.status}">${p.blacklisted ? 'Flagged' : RAISE_STATE[p.status]}</span>`;
+/* the milestones live on the raise; a draft keeps them on the profile until it opens */
+const roadmapOf = p => (p.roadmap && p.roadmap.length ? p.roadmap : profileOf(p).roadmap) || [];
+const isFounder = p => !!state.wallet && (p.mine || roleOf(p, walletId()) === 'founder' || roleOf(p, state.wallet.pk) === 'founder');
+const xUrl = h => 'https://x.com/' + encodeURIComponent(String(h || '').replace(/^@/, ''));
+const fmtDays = d => d < 1 ? 'today' : d < 60 ? `${Math.round(d)} days` : d < 730 ? `${Math.round(d / 30)} months` : `${(d / 365).toFixed(1).replace(/\.0$/, '')} years`;
 const initials = n => String(n || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase();
 
 /* ---------------------------------------------------------------- header */
@@ -82,24 +87,35 @@ function ppStats(p) {
   if (p.status === 'refunded') {
     const rows = backersAdapter.rows(p), claimed = rows.filter(r => r.refundClaimed).length;
     return st('Final raise', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${sym}</em>`) + st('Filled', Math.floor(pctOf(p) + 1e-7) + '%') + st('Backers', p.backers) +
-      st('Refunds claimed', `${claimed} <em>/ ${rows.length}</em>`) + st('Fixed price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Closed', fmtDay(p.resolvedAt || p.endsAt));
+      st('Refunds claimed', `${claimed} <em>/ ${rows.length}</em>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Closed', fmtDay(p.resolvedAt || p.endsAt));
   }
+  if (p.status === 'filled') return st('Raised', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${sym}</em>`) + st('Backers', p.backers) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) +
+    st('Filled', fmtAgo(Date.now() - p.filledAt)) + st('Seeding', `${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1} <em>/ ${SEED_STEPS.length}</em>`) + st('Refunds if not seeded by', fmtDate(seedDeadline(p)));
   return st('Raised', `<span data-sraised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${sym}</em>`) + st('Filled', `<span data-spct>${Math.floor(pctOf(p) + 1e-7)}%</span>`) +
-    st('Backers', `<span data-sbackers>${p.backers}</span>`) + st('Fixed price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Time left', `<span data-stime>${fmtLeft(p.endsAt - Date.now())}</span>`) +
-    st('Watchers', (pr.watchers || Math.round(p.backers * 2.6)).toLocaleString('en-US'));
+    st('Backers', `<span data-sbackers>${p.backers}</span>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Time left', `<span data-stime>${fmtLeft(p.endsAt - Date.now())}</span>`) +
+    st('Fee', `1% <em>on top, refunded on a miss</em>`);
 }
 
 /* ---------------------------------------------------------------- fill, pace and the raise chart */
 function ppFill(p) {
   const C = Q(p), pc = pctOf(p), pi = paceInfo(p);
   if (p.status === 'refunded') {
-    return `<section class="panel pp-card pp-fill pp-missed"><div class="pp-card-h"><h2>Missed target, refunded</h2></div>
+    const why = p.refundReason, title = why === 'cancelled' ? 'Cancelled by the founder, refunded' : why === 'timeout' ? 'Did not seed in time, refunded' : 'Missed target, refunded';
+    const when = why === 'cancelled' ? `Cancelled ${fmtDate(p.resolvedAt)}` : why === 'timeout' ? `Filled ${fmtDate(p.filledAt)}, timed out ${fmtDate(p.resolvedAt)}` : `Deadline passed ${fmtDate(p.resolvedAt || p.endsAt)}`;
+    return `<section class="panel pp-card pp-fill pp-missed"><div class="pp-card-h"><h2>${title}</h2></div>
       <div class="readout refunded"><div class="big"><b>${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num">${Math.floor(pc + 1e-7)}%</span></div>
-      <div class="bar"><i style="width:${pc}%"></i></div><div class="sub"><span>Deadline passed ${fmtDate(p.resolvedAt || p.endsAt)}</span><span>${p.backers} backers</span></div></div>
-      <p class="pp-note">No tokens were released and the supply was burned. Every backer can claim back what they paid in ${esc(C.sym)}, the 1% fee included. Refund status for each wallet is on the Backers tab.</p></section>`;
+      <div class="bar"><i style="width:${pc}%"></i></div><div class="sub"><span>${when}</span><span>${p.backers} backers</span></div></div>
+      <p class="pp-note">The raise ${refundReason(p)}. No token was minted and no pool was opened. Every backer claims back exactly what they paid in ${esc(C.sym)}, the 1% fee included. Refund status for each wallet is on the Backers tab.</p></section>`;
   }
   if (p.status === 'seeded') return ppTrading(p);
-  return `<section class="panel pp-card pp-fill" data-fill><div class="pp-card-h"><h2>The raise</h2>${paceChip(pi)}</div>
+  if (p.status === 'filled') {
+    const i = SEED_STEPS.indexOf(p.seedStep || 'filled');
+    return `<section class="panel pp-card pp-fill" data-fill><div class="pp-card-h"><h2>Filled, seeding</h2><span class="pace-chip on">${i + 1} of ${SEED_STEPS.length} steps</span></div>
+      <div class="readout live"><div class="big"><b>${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num">100%</span></div>
+      <div class="bar"><i style="width:100%"></i></div><div class="sub"><span>Filled ${fmtAgo(Date.now() - p.filledAt)}</span><span><span class="num">${p.backers}</span> backers</span></div></div>
+      <p class="pp-note">The raise is closed to buys. Seeding mints the 1,000,000,000 supply, revokes the mint and freeze authorities, opens the Meteora pool with the whole raise and locks it for good. Anyone can run the steps; if they are not all done by ${fmtDate(seedDeadline(p))}, every backer claims a refund instead.</p></section>`;
+  }
+  return `<section class="panel pp-card pp-fill" data-fill><div class="pp-card-h"><h2>The raise</h2>${paceChip(pi)}${isFounder(p) ? '<button type="button" class="qb qb-sm pp-cancel" data-cancel>Cancel the raise</button>' : ''}</div>
     <div class="readout live" data-dreadout><div class="big"><b><span data-draised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num" data-dpct>${Math.floor(pc + 1e-7)}%</span></div>
       <div class="bar"><i data-dbar style="width:${pc}%"></i></div>
       <div class="sub"><span>Ends in <span class="num" data-dtime>${fmtLeft(p.endsAt - Date.now())}</span></span><span><span class="num" data-dbackers>${p.backers}</span> backers</span></div></div>
@@ -140,6 +156,20 @@ function ppChart(p) {
 }
 
 /* ---------------------------------------------------------------- seeded: trading view */
+/* the raise price in the chart's quote: the pair asset, or USD at the SOL price the raise opened at */
+const raiseIn = (p, quote) => quote === 'USD' ? usdOf(p, priceOf(p)) : priceOf(p);
+/* Creator fees: the pool's 1% fee so far and how it has split. Anyone can push a claim; it pays the payout wallet and Seed. */
+function ppFees(p) {
+  const f = feesOf(p), C = Q(p), sym = esc(C.sym), q = n => `${fmtC(n, p.q, true)} ${sym}`, pc = payoutChange(p), share = (p.creatorShareBps || SEED.creatorShareBps) / 100;
+  return `<section class="panel pp-card pp-fees" data-fees><div class="pp-card-h"><h2>Creator fees</h2><span class="col-note">${share}% of the pool's 1% fee to the founder, ${100 - share}% to Seed, fixed at seeding</span></div>
+    <dl class="fee-grid"><div><dt>Volume traded</dt><dd class="num">${q(f.volume)}</dd></div><div><dt>Fees earned</dt><dd class="num">${q(f.earned)}</dd></div>
+      <div><dt>Founder's ${share}%</dt><dd class="num">${q(f.founder)}</dd><span>${f.founderClaimed ? `${q(f.founderClaimed)} claimed` : 'nothing claimed yet'}</span></div>
+      <div><dt>Claimable now</dt><dd class="num">${q(f.founderUnclaimed)}</dd><span>to the payout wallet</span></div></dl>
+    <div class="fee-foot"><span class="num">Payout wallet ${esc(shortMint(p.payoutWallet || ''))}</span>${p.payoutWallet ? copyBtn(p.payoutWallet, 'payout wallet') : ''}${p.takeover ? `<span class="tag">${esc(p.takeover.label || 'Community')}</span>` : ''}
+      ${pc ? `<span class="fee-pend">Moving to ${esc(shortMint(pc.to))} ${pc.due ? 'now' : fmtDate(pc.at)}</span>` : ''}
+      <button type="button" class="btn btn-ink btn-sm" data-claimfees${f.founderUnclaimed > 0 ? '' : ' disabled'}>Claim fees</button></div>
+    <p class="quiet">The claim is permissionless: whoever sends it pays the transaction and the fees still go to the payout wallet and Seed. Seed also claims on a schedule.</p></section>`;
+}
 function ppTrading(p) {
   return `<section class="panel pp-card pp-fill" data-trading><div class="pp-card-h"><h2>${pg.mode === 'mcap' ? 'Market cap' : 'Price'}</h2>
       <div class="pp-tools"><div class="seg mini-seg" data-mode>${['price', 'mcap'].map(m => `<button data-v="${m}" aria-pressed="${pg.mode === m}">${m === 'price' ? 'Price' : 'MCap'}</button>`).join('')}</div>
@@ -151,21 +181,24 @@ function ppTrading(p) {
 /* Candles, drawn at the column's width: price gridlines labelled on the right, the last price tagged on that axis, times along
    the foot, volume under the candles. pg.cg keeps the geometry so candleHover() can read any candle back. */
 const CANDLE_UP = '#2FBF7A', CANDLE_DN = '#F0554B';
-function candleSVG(series, mode, supply, quote) {
+function candleSVG(series, mode, supply, quote, raise) {
   pg.cg = null;
   if (!series.length) return '<div class="pp-loading">No trades in this window.</div>';
-  const W = chartW(), Hh = W < 720 ? 300 : 400, pr = 76, pt = 12, pb = 28, vH = 48, k = mode === 'mcap' ? supply : 1, n = series.length;
-  const hi = Math.max(...series.map(c => c[2] * k)), lo = Math.min(...series.map(c => c[3] * k)), span = (hi - lo) || hi * 0.01 || 1, priceH = Hh - pt - pb - vH;
+  const W = chartW(), Hh = W < 720 ? 300 : 400, pr = 76, pt = 12, pb = 28, vH = 48, k = mode === 'mcap' ? supply : 1, n = series.length, rv = raise ? raise * k : 0;
+  /* the raise price is always in view, so the chart reads as above or below what backers paid */
+  const hi0 = Math.max(rv, ...series.map(c => c[2] * k)), lo0 = Math.min(rv || Infinity, ...series.map(c => c[3] * k)), pad = (hi0 - lo0 || hi0 * 0.01 || 1) * 0.06;
+  const hi = hi0 + pad, lo = Math.max(0, lo0 - pad), span = (hi - lo) || 1, priceH = Hh - pt - pb - vH;
   const Y = v => pt + (1 - (v - lo) / span) * priceH, vmax = Math.max(...series.map(c => c[5])) || 1, cw = (W - pr) / n;
   const f = v => quote === 'USD' ? fmtUsd(v) : fmtPrice(v);
   const ticks = [0, 0.25, 0.5, 0.75, 1].map(q => lo + span * q), last = series[n - 1], lastV = last[4] * k, lastUp = last[4] >= last[1];
   const xt = W < 520 ? [0, n - 1] : [0, Math.round((n - 1) / 3), Math.round((n - 1) * 2 / 3), n - 1];
   pg.cg = { W, Hh, pr, pt, pb, vH, priceH, lo, span, k, cw, n, series, f };
   return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${mode === 'mcap' ? 'Market cap' : 'Price'} candles, last ${f(lastV)}">
-    ${ticks.map(v => `<path d="M0 ${Y(v).toFixed(1)}H${W - pr}" style="stroke:var(--hair)"/>${Math.abs(Y(v) - Y(lastV)) < 15 ? '' : `<text x="${W - pr + 8}" y="${(Y(v) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)">${f(v)}</text>`}`).join('')}
+    ${ticks.map(v => `<path d="M0 ${Y(v).toFixed(1)}H${W - pr}" style="stroke:var(--hair)"/>${Math.abs(Y(v) - Y(lastV)) < 15 || (rv && Math.abs(Y(v) - Y(rv)) < 15) ? '' : `<text x="${W - pr + 8}" y="${(Y(v) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)">${f(v)}</text>`}`).join('')}
     ${series.map((c, i) => { const x = i * cw + cw / 2, up = c[4] >= c[1], col = up ? CANDLE_UP : CANDLE_DN, yo = Y(c[1] * k), yc = Y(c[4] * k), vh = c[5] / vmax * (vH - 6);
       return `<path d="M${x.toFixed(1)} ${Y(c[2] * k).toFixed(1)}V${Y(c[3] * k).toFixed(1)}" stroke="${col}" stroke-width="1"/><rect x="${(x - cw * 0.35).toFixed(1)}" y="${Math.min(yo, yc).toFixed(1)}" width="${Math.max(1, cw * 0.7).toFixed(1)}" height="${Math.max(1, Math.abs(yc - yo)).toFixed(1)}" fill="${col}" rx=".5"/>
         <rect x="${(x - cw * 0.35).toFixed(1)}" y="${(Hh - pb - vh).toFixed(1)}" width="${Math.max(1, cw * 0.7).toFixed(1)}" height="${vh.toFixed(1)}" fill="${col}" opacity=".28"/>`; }).join('')}
+    ${rv ? `<path d="M0 ${Y(rv).toFixed(1)}H${W - pr}" style="stroke:var(--navy-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>${Math.abs(Y(rv) - Y(lastV)) < 15 ? '' : `<text x="${W - pr + 8}" y="${(Y(rv) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--navy-soft)">${f(rv)}</text><text x="${W - pr - 6}" y="${(Y(rv) - 5).toFixed(1)}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--navy-soft)">Raise price</text>`}` : ''}
     <path d="M0 ${Y(lastV).toFixed(1)}H${W - pr}" stroke="${lastUp ? CANDLE_UP : CANDLE_DN}" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>
     <rect x="${W - pr + 3}" y="${(Y(lastV) - 11).toFixed(1)}" width="${pr - 3}" height="22" rx="7" fill="${lastUp ? CANDLE_UP : CANDLE_DN}"/>
     <text x="${W - pr + 8}" y="${(Y(lastV) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" font-weight="500" fill="#10151A">${f(lastV)}</text>
@@ -189,12 +222,12 @@ async function loadTrading(p) {
   try {
     const pool = pg.pool = await presaleAdapter.pool(p), ser = await presaleAdapter.candles(p, pg.tf);
     if (ui.sel !== p.id) return;
-    pg.series = ser.value; box.innerHTML = candleSVG(ser.value, pg.mode, pool.value.supply, pool.value.quote);
-    const v = pool.value;
+    pg.series = ser.value; box.innerHTML = candleSVG(ser.value, pg.mode, pool.value.supply, pool.value.quote, raiseIn(p, pool.value.quote));
+    const v = pool.value, x = v.price / raiseIn(p, v.quote);
     card.innerHTML = `<div class="pool-grid"><div><dt>Pair</dt><dd>${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.liquidity) : `${fmtC(v.liquidity, p.q)} ${esc(v.quote)}`}</dd></div>
-      <div><dt>24h</dt><dd class="num ${v.change24h >= 0 ? 'up' : 'down'}">${v.change24h >= 0 ? '+' : ''}${v.change24h.toFixed(2)}%</dd></div><div><dt>24h volume</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.volume24h) : fmtC(v.volume24h, p.q)}</dd></div></div>
-      <div class="pool-foot"><span class="num">${esc(v.dex)} pool ${esc(shortMint(v.address))}</span>${copyBtn(v.address, 'pool address')}
-        <a class="bar-link" href="${esc(isRealAddr(v.address) ? solscan(v.address) : v.url)}" target="_blank" rel="noopener">Locked LP proof ${ICONS.out}</a>${srcPill(pool.from)}</div>
+      <div><dt>vs raise price</dt><dd class="num ${x >= 1 ? 'up' : 'down'}">${x.toFixed(2)}×</dd></div><div><dt>24h volume</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.volume24h) : fmtC(v.volume24h, p.q)}</dd></div></div>
+      <div class="pool-foot"><span class="num">${esc(v.dex)} pool ${esc(shortMint(v.address))}</span>${copyBtn(v.address, 'pool address')}<span class="pool-lock">${RISK_ICON.pass}Liquidity locked for good</span>
+        <a class="bar-link" href="${esc(isRealAddr(v.address) ? solscan(v.address) : v.url)}" target="_blank" rel="noopener">Position on chain ${ICONS.out}</a>${srcPill(pool.from)}</div>
       `;
     const ps = detailBox && $('[data-pstats]', detailBox); if (ps) ps.innerHTML = ppStats(p);
     if (pg.syncTrade) pg.syncTrade();
@@ -205,7 +238,13 @@ async function loadTrading(p) {
 /* The trade panel. A live raise only takes deposits: there is nothing to sell until it seeds, and a deposit comes back in full if
    the raise misses. A seeded token is bought and sold here against its pool. Both go through index.html (executeBuy, executeSwap),
    which simulate on the demo wallet and refuse a real one until the Seed program exists. bindRail() wires the panel. */
-function tradePanel(p) { return p.status === 'live' ? depositPanel(p) : p.status === 'seeded' ? swapPanel(p) : p.status === 'filled' ? seedingPanel(p) : ''; }
+function tradePanel(p) { return p.blacklisted ? flaggedPanel(p) : p.status === 'live' ? depositPanel(p) : p.status === 'seeded' ? swapPanel(p) : p.status === 'filled' ? seedingPanel(p) : ''; }
+/* a raise flagged for fraud takes no buys and gets no trade panel; the pool, if there is one, is still locked on Meteora */
+function flaggedPanel(p) {
+  return `<section class="panel rail-card rail-flag"><h3>${p.status === 'seeded' ? 'Trading here is off' : 'Buying is off'}</h3>
+    <p class="rail-meta">Seed admins flagged this raise for fraud${p.flag ? ` on ${fmtDate(p.flag.at)}` : ''}. ${p.status === 'seeded' ? 'The pool on Meteora is still locked and open, but Seed no longer routes trades to it.' : p.status === 'live' ? 'It takes no more buys.' : ''} The founder's X account cannot open another raise.</p>
+    <a class="bar-link" href="#/presale/${esc(p.id)}/reports">The reports ${ICONS.out}</a></section>`;
+}
 /* a filled raise: the steps of seeding, and the timeout that refunds everyone if they do not all land */
 function seedingPanel(p) {
   const i = SEED_STEPS.indexOf(p.seedStep || 'filled'), names = ['Target reached', 'Token minted, authorities revoked', 'Pool opened and locked', 'Seeded'];
@@ -265,11 +304,32 @@ function tabRisk(p) {
 function chatPanel(p) { return typeof chatCard === 'function' ? chatCard(p) : ''; }
 function mountChat(p) { const c = detailBox && $('[data-chat]', detailBox); if (c && typeof chatMount === 'function') { pg.chatW = walletId(); chatMount(p, c); } }
 function ppRail(p) { return tradePanel(p) + `<div class="pp-pos" data-poswrap>${positionPanel(p)}</div>`; }
+/* who is behind it: the X account the founder signed in with, their earlier raises on Seed and where their money goes */
+function ppFounder(p) {
+  const x = p.xAccount || {}, pr = profileOf(p), f = pr.founder || {}, now = Date.now(), age = x.createdAt ? (now - x.createdAt) / D : null, past = p.pastRaises || [];
+  const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+  const outcome = r => ({ seeded: '<span class="btag ok">Seeded</span>', refunded: '<span class="btag">Refunded</span>', flagged: '<span class="btag bad">Flagged</span>' })[r.outcome] || esc(r.outcome || '');
+  return `<section class="panel rail-card pp-founder"><div class="rail-h"><h3>Founder</h3>${pr.demo ? DEMO_PILL : ''}</div>
+    ${x.handle ? `<a class="x-acct" href="${esc(xUrl(x.handle))}" target="_blank" rel="noopener">${ICONS.x}<span><b>@${esc(x.handle)}</b><span class="num">${x.followers != null ? `${Number(x.followers).toLocaleString('en-US')} followers` : ''}${age != null ? ` · account ${fmtDays(age)} old` : ''}</span></span>${x.verified ? `<span class="vbadge" title="Signed in with X">${RISK_ICON.pass}X</span>` : ''}</a>` : `<p class="rail-meta">${esc(f.name || 'The founder')} opened this raise with a wallet only; no X account is linked.</p>`}
+    <dl class="kv">${p.blacklisted ? row('X account', '<span class="bad">Blacklisted</span>') : ''}${row('Raises on Seed', past.length ? past.map(r => `<span class="past">$${esc(r.ticker)} ${outcome(r)}</span>`).join('') : 'This is the first')}
+      ${row('Payout wallet', p.payoutWallet ? `<span class="num">${esc(shortMint(p.payoutWallet))}</span>${copyBtn(p.payoutWallet, 'payout wallet')}` : 'Set at opening')}${p.takeover ? row('Held by', esc(p.takeover.label || 'the community')) : ''}</dl>
+    ${past.some(r => r.note) ? `<p class="quiet">${past.filter(r => r.note).map(r => `$${esc(r.ticker)}: ${esc(r.note)}`).join(' ')}</p>` : ''}</section>`;
+}
+/* the strips at the top of the page: a fraud flag, a community takeover, a payout wallet on the move, the latest announcement */
+function ppNotices(p) {
+  const out = [], pc = payoutChange(p);
+  if (p.blacklisted) out.push(`<div class="panel pp-notice bad"><span class="n-ico">${RISK_ICON.fail}</span><div><b>Flagged for fraud</b><span>Seed admins flagged this raise${p.flag ? ` on ${fmtDate(p.flag.at)}` : ''} after a backer report. Buying is off and the founder's X account is blacklisted from opening another raise.</span></div><a href="#/presale/${esc(p.id)}/reports">Reports</a></div>`);
+  if (p.takeover) out.push(`<div class="panel pp-notice navy"><span class="n-ico">${RISK_ICON.pass}</span><div><b>Community takeover</b><span>Approved ${fmtDate(p.takeover.at)}: creator fees and the team's unlocks now go to ${esc(p.takeover.label || 'a backer wallet')} (${esc(shortMint(p.takeover.to))}), not the founder.</span></div><a href="#/presale/${esc(p.id)}/reports">Reports</a></div>`);
+  if (pc) out.push(`<div class="panel pp-notice"><span class="n-ico">${ICONS.out}</span><div><b>Payout wallet changing</b><span>The founder asked to move the payout wallet to ${esc(shortMint(pc.to))}. It takes effect ${pc.due ? 'with the next claim' : fmtDate(pc.at)}, ${SEED.payoutDelayDays} days after the request.</span></div></div>`);
+  return out.join('') + ppAnnounce(p);
+}
 
 /* ---------------------------------------------------------------- tabs */
 function tabLabel(p, t) {
   if (t === 'backers') return p.status === 'seeded' ? 'Holders' : 'Backers';
   if (t === 'risk') return 'Risk checks';
+  if (t === 'team') return 'Team &amp; unlocks';
+  if (t === 'reports') { const n = (p.reports || []).length; return `Reports${n ? ` <span class="ct num">${n}</span>` : ''}`; }
   if (t === 'announcements') { const n = updatesAdapter.list(p).length; return `Announcements${n ? ` <span class="ct num">${n}</span>` : ''}`; }
   return t[0].toUpperCase() + t.slice(1);
 }
@@ -280,7 +340,7 @@ function ppTabs(p) {
 function renderTab(p) {
   const body = detailBox && $('[data-tabbody]', detailBox); if (!body) return;
   $$('[data-ptab]', detailBox).forEach(a => a.setAttribute('aria-selected', String(a.dataset.ptab === pg.tab))); placeTabInd();
-  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, tokenomics: tabTokenomics, backers: tabBackers, risk: tabRisk, announcements: tabAnnouncements }[pg.tab] || tabOverview;
+  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, roadmap: tabRoadmap, backers: tabBackers, risk: tabRisk, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
   body.innerHTML = fn(p); afterTab(p, body);
   const key = p.id + '/' + pg.tab;   // the tab's content eases in when the tab changes, not when it is redrawn in place
   if (pg.shown !== key) { pg.shown = key; body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap'); }
@@ -289,13 +349,27 @@ const tabHead = (title, from, extra = '') => `<div class="tab-h"><h2>${title}</h
 const prFrom = p => profileOf(p).demo ? 'demo' : '';
 
 function tabOverview(p) {
-  const pr = profileOf(p), today = Date.now();
-  const road = (pr.roadmap || []).map(r => { const due = r.dueAt || today + (r.due || 0) * D; return `<li class="${r.status}"><span class="rm-dot">${r.status === 'shipped' ? RISK_ICON.pass : r.status === 'missed' ? RISK_ICON.fail : ''}</span>
-      <div><b>${esc(r.title)}</b><span class="num">${r.status === 'shipped' ? 'Shipped' : r.status === 'missed' ? 'Missed' : 'Due'} ${fmtDay(due)}</span>${r.status === 'shipped' && safeUrl(r.proof) ? ` <a href="${esc(safeUrl(r.proof))}" target="_blank" rel="noopener">Proof ${ICONS.out}</a>` : ''}</div></li>`; }).join('');
+  const pr = profileOf(p), C = Q(p), sym = esc(C.sym), sp = splitOf(p.teamBps), pct = n => `${(n / SUPPLY * 100).toFixed(n / SUPPLY * 100 % 1 ? 1 : 0)}%`, use = p.tokenUseCase && p.tokenUseCase !== 'none' ? p.tokenUseCase : '';
   const links = SOCIALS.filter(s => safeUrl(pr.links && pr.links[s[0]])).map(s => `<a class="link-card" href="${esc(safeUrl(pr.links[s[0]]))}" target="_blank" rel="noopener">${ICONS[s[2]]}<span><b>${s[1]}</b><span>${esc(hostOf(pr.links[s[0]]))}</span></span></a>`).join('');
-  return `<div class="ov"><div class="ov-a">${tabHead('About', prFrom(p))}<div class="md">${md(pr.description) || `<p>${esc(p.idea)}</p>`}</div></div>
-    <div class="ov-b"><div class="tab-h sub"><h2>Roadmap</h2></div>${road ? `<ol class="roadmap">${road}</ol>` : '<p class="quiet">No roadmap listed.</p>'}
+  const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+  return `<div class="ov"><div class="ov-a">${tabHead('About', prFrom(p))}<div class="md">${md(pr.description) || `<p>${esc(p.idea)}</p>`}</div>
+      <div class="tab-h sub"><h2>What the token does</h2></div><p class="use">${use ? esc(use) : 'None. The founder listed no use for the token: this is a bet on the team.'}</p></div>
+    <div class="ov-b"><div class="tab-h sub"><h2>The token</h2></div><dl class="kv kv-wide">
+      ${row('Supply', '<span class="num">1,000,000,000</span>, mint and freeze revoked at seeding')}${row('Backers', `<span class="num">${pct(sp.backers)}</span>, claimable at seeding`)}${row('Pool', `<span class="num">${pct(sp.pool)}</span> with the whole raise, locked for good`)}
+      ${row('Team', sp.team ? `<span class="num">${pct(sp.team)}</span>, ${esc(fmtSchedule(p.teamSchedule))}` : '<span class="num">0%</span>, no team tokens')}${row('Raise price', `<span class="num">${fmtPrice(priceOf(p))} ${sym}</span> fixed`)}${row('FDV at the raise', `<span class="num">${fmtC(fdvOf(p), p.q, true)} ${sym}</span> (${fmtUsd(fdvUsdOf(p))})`)}
+      ${row('Target', `<span class="num">${fmtC(p.target, p.q)} ${sym}</span> (${fmtUsd(p.targetUsd || usdOf(p, p.target))})`)}</dl>
     <div class="tab-h sub"><h2>Links</h2></div>${links ? `<div class="links">${links}</div>` : '<p class="quiet">No website or socials listed.</p>'}</div></div>`;
+}
+/* the roadmap: milestones the founder listed, shown as given; a planned one past its date reads as late */
+function tabRoadmap(p) {
+  const list = roadmapOf(p), now = Date.now();
+  if (!list.length) return tabHead('Roadmap', '') + quietEmpty('The founder listed no milestones.');
+  const items = list.slice().sort((a, b) => (a.dueAt || 0) - (b.dueAt || 0)).map(r => { const due = r.dueAt || now, late = r.status === 'planned' && due < now - D, proof = safeUrl(r.proofUrl || r.proof), st = r.status === 'shipped' ? 'shipped' : r.status === 'missed' ? 'missed' : late ? 'late' : 'planned';
+    return `<li class="${st}"><span class="rm-dot">${st === 'shipped' ? RISK_ICON.pass : st === 'missed' ? RISK_ICON.fail : st === 'late' ? RISK_ICON.warn : ''}</span>
+      <div><b>${esc(r.title)}</b><span class="num">${st === 'shipped' ? 'Shipped' : st === 'missed' ? 'Missed' : st === 'late' ? `Due ${fmtDay(due)}, ${fmtDays((now - due) / D)} late` : 'Due'}${st === 'late' ? '' : ' ' + fmtDay(due)}</span>${proof ? ` <a href="${esc(proof)}" target="_blank" rel="noopener">Proof ${ICONS.out}</a>` : ''}</div></li>`; }).join('');
+  const done = list.filter(r => r.status === 'shipped').length;
+  return tabHead('Roadmap', prFrom(p), ` <span class="quiet">${done} of ${list.length} shipped</span>`) + `<ol class="roadmap">${items}</ol>
+    <p class="quiet">Milestones are the founder's own list. Seed shows them as given and does not enforce them; backers who see them slip can report the raise.</p>`;
 }
 /* a deck is a PDF (paged through here), an image (shown) or a slide file such as PowerPoint or Keynote (downloaded) */
 function deckKindOf(pr) {
@@ -315,30 +389,53 @@ function tabDeck(p) {
 }
 const quietEmpty = t => `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${esc(t)}</div>`;
 function tabTeam(p) {
-  const pr = profileOf(p), team = pr.team || [];
-  if (!team.length) return tabHead('Team', '') + quietEmpty('No team is listed for this raise.');
+  const pr = profileOf(p), team = pr.team || [], sp = splitOf(p.teamBps), C = Q(p), u = unlockState(p), t = tranchesOf(p.teamSchedule), now = Date.now(), at = p.seededAt;
   const badge = (on, t) => on ? `<span class="vbadge">${RISK_ICON.pass}${t}</span>` : '';
-  return tabHead('Team', prFrom(p)) + `<div class="team">${team.map(m => { const v = m.verified || {};
+  const members = team.length ? `<div class="team">${team.map(m => { const v = m.verified || {};
     return `<article class="member"><span class="m-av" style="--h:${hashStr(m.name) % 360}">${m.avatar && safeUrl(m.avatar) ? `<img src="${esc(m.avatar)}" alt="">` : initials(m.name)}</span>
       <div class="m-main"><b>${esc(m.name)}</b><span class="m-role">${esc(m.role || '')}</span>
         <div class="m-links">${[['x', 'X'], ['github', 'GitHub'], ['linkedin', 'LinkedIn']].filter(([k]) => safeUrl(m[k])).map(([k, l]) => `<a href="${esc(safeUrl(m[k]))}" target="_blank" rel="noopener">${ICONS[k]}${l}</a>`).join('')}</div>
         <div class="m-badges">${badge(v.x, 'X verified')}${badge(v.github, 'GitHub verified')}${badge(v.domain, 'Domain verified')}</div>
-        ${m.wallet ? `<div class="m-wallet"><span class="num">${esc(shortMint(m.wallet))}</span>${copyBtn(m.wallet, 'wallet address')}</div>` : ''}</div></article>`; }).join('')}</div>
-    <p class="quiet">A badge appears only for a check that passed.${pr.demo ? ' On demo raises the check results are part of the demo data.' : ' Checks are self-reported until verification is wired up.'}</p>`;
+        ${m.wallet ? `<div class="m-wallet"><span class="num">${esc(shortMint(m.wallet))}</span>${copyBtn(m.wallet, 'wallet address')}</div>` : ''}</div></article>`; }).join('')}</div>` : quietEmpty('No team is listed for this raise.');
+  /* the unlocks: a summary, the step chart (drawn once the tab is in the page) and every tranche */
+  const al = [{ label: 'Raise backers', kind: 'presale', pct: sp.backers / SUPPLY * 100, tokens: sp.backers }, { label: 'Locked Meteora pool', kind: 'lp', pct: sp.pool / SUPPLY * 100, tokens: sp.pool }].concat(sp.team ? [{ label: 'Team', kind: 'team', pct: sp.team / SUPPLY * 100, tokens: sp.team }] : []);
+  const supply = `<div class="toke"><div>${donutSVG(al)}</div><table class="dtable alloc"><thead><tr><th>Share</th><th class="r">Of supply</th><th class="r">Tokens</th><th>Unlock</th></tr></thead><tbody>
+      ${al.map(a => `<tr><td><i class="sw" style="background:${KIND_COL[a.kind] || KIND_COL.other}"></i>${esc(a.label)}</td><td class="num">${a.pct.toFixed(a.pct % 1 ? 1 : 0)}%</td><td class="num">${fmtTok(a.tokens)}</td>
+        <td>${a.kind === 'lp' ? 'Locked for good' : a.kind === 'presale' ? 'Claimable at seeding' : esc(fmtSchedule(p.teamSchedule))}</td></tr>`).join('')}</tbody></table></div>`;
+  let unlocks = '';
+  if (sp.team && t.length) {
+    const row = (k, v, sub) => `<div><dt>${k}</dt><dd class="num">${v}</dd>${sub ? `<span>${sub}</span>` : ''}</div>`, days = at ? (now - at) / D : null;
+    const sums = `<dl class="sums unlock-sums">${row('Team tokens', fmtTok(sp.team), `${(p.teamBps / 100).toFixed(p.teamBps % 100 ? 2 : 0)}% of supply`)}${row('Unlocked', at ? `${(u.unlockedBps / 100).toFixed(u.unlockedBps % 100 ? 1 : 0)}%` : '0%', at ? `${fmtTok(u.unlocked)} since seeding` : 'the clock starts at seeding')}
+      ${row('Next unlock', u.next ? `${(u.next.bps / 100).toFixed(u.next.bps % 100 ? 2 : 0)}%` : 'Done', u.next ? (at ? fmtDay(u.next.at) : `day ${t.find(x => x.dayOffset > (days || -1)).dayOffset} after seeding`) : 'all released')}${row('Last unlock', `Day ${lastUnlockDay(p.teamSchedule)}`, at ? fmtDay(at + lastUnlockDay(p.teamSchedule) * D) : 'after seeding, 90 at least')}</dl>`;
+    const rows = t.map(x => { const when = at ? at + x.dayOffset * D : null, st = when && when <= now ? 'done' : (u.next && x.dayOffset === t.find(y => y.dayOffset > (days != null ? days : -1)).dayOffset) ? 'next' : '';
+      return `<tr class="${st}"><td class="num">Day ${x.dayOffset}</td><td class="num">${when ? fmtDay(when) : '—'}</td><td class="num">${(x.bps / 100).toFixed(x.bps % 100 ? 2 : 0)}%</td><td class="num">${fmtTok(Math.floor(sp.team * x.bps / BPS))}</td><td>${st === 'done' ? 'Unlocked' : st === 'next' ? '<b>Next</b>' : 'Later'}</td></tr>`; }).join('');
+    unlocks = `<div class="tab-h sub"><h2>Team unlocks</h2><span class="quiet">${esc(fmtSchedule(p.teamSchedule))}</span></div>${sums}<div class="pp-svg unlock" data-unlock></div>
+      <div class="tscroll"><table class="dtable tranches"><thead><tr><th>When</th><th>Date</th><th class="r">Share</th><th class="r">Tokens</th><th>State</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="quiet">Unlocked team tokens go to the payout wallet${p.takeover ? `, which the community takeover moved to ${esc(p.takeover.label || 'a backer wallet')}` : ''}. The schedule was fixed at seeding and cannot change.</p>`;
+  } else unlocks = `<div class="tab-h sub"><h2>Team unlocks</h2></div><p class="quiet">No team tokens. The founder set the team share to 0%, so the whole supply went to backers and the pool.</p>`;
+  return tabHead('Supply', '') + supply + `<p class="quiet">Backers and the pool get the same number of tokens, which is what opens the pool at the raise price: ${fmtPrice(priceOf(p))} ${esc(C.sym)}. The team share was set by the founder.</p>` + unlocks +
+    `<div class="tab-h sub"><h2>Team</h2>${prFrom(p) ? srcPill('demo') : ''}</div>` + members + (team.length ? `<p class="quiet">A badge appears only for a check that passed.${pr.demo ? ' On demo raises the check results are part of the demo data.' : ' Checks are self-reported until verification is wired up.'}</p>` : '');
+}
+/* the unlock chart: the team's tokens as a step line from seeding to the last tranche, with today marked */
+function unlockSVG(p, W) {
+  const sp = splitOf(p.teamBps), t = tranchesOf(p.teamSchedule), at = p.seededAt, now = Date.now(), Hh = 200, pl = 8, pr = 54, pt = 16, pb = 26, last = lastUnlockDay(p.teamSchedule) || 1;
+  const X = d => pl + d / last * (W - pl - pr), Y = b => pt + (1 - b / BPS) * (Hh - pt - pb);
+  let acc = 0, d = `M${X(0)} ${Y(0)}`; const dots = [];
+  for (const x of t) { d += ` H${X(x.dayOffset).toFixed(1)}`; acc += x.bps; d += ` V${Y(acc).toFixed(1)}`; dots.push([X(x.dayOffset), Y(acc), acc]); }
+  d += ` H${X(last).toFixed(1)}`;
+  const today = at ? Math.min(last, Math.max(0, (now - at) / D)) : null;
+  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Team unlocks over ${last} days">
+    ${[0, 25, 50, 75, 100].map(v => `<path d="M${pl} ${Y(v * 100).toFixed(1)}H${W - pr}" style="stroke:var(--hair)"/><text x="${W - pr + 8}" y="${(Y(v * 100) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--muted)">${v}%</text>`).join('')}
+    ${today != null ? `<path d="M${X(today).toFixed(1)} ${pt}V${Hh - pb}" style="stroke:var(--navy-soft)" stroke-dasharray="3 3"/><text x="${(X(today) + 5).toFixed(1)}" y="${pt + 10}" font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--navy-soft)">Today</text>` : ''}
+    <path d="${d}" fill="none" style="stroke:var(--navy)" stroke-width="2" stroke-linejoin="round"/>
+    ${dots.map(([x, y, b]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" style="fill:${today != null && x <= X(today) ? 'var(--navy)' : 'var(--panel-solid)'};stroke:var(--navy)" stroke-width="1.5"/>`).join('')}
+    <g font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--muted)"><text x="${pl}" y="${Hh - 8}">${at ? 'Seeded ' + fmtDay(at) : 'Seeding'}</text><text x="${W - pr}" y="${Hh - 8}" text-anchor="end">Day ${last}${at ? ', ' + fmtDay(at + last * D) : ''}</text></g></svg>`;
 }
 const KIND_COL = { presale: '#2E63E7', lp: '#8FB4FF', team: '#D9DCE2', other: '#565B66' };
 function donutSVG(allocs) {
   const R = 70, C = 2 * Math.PI * R; let acc = 0;
   return `<svg viewBox="0 0 180 180" class="donut" role="img" aria-label="Token allocation">${allocs.map((a, i) => { const len = a.pct / 100 * C, s = `<circle cx="90" cy="90" r="${R}" fill="none" stroke="${a.color || KIND_COL[a.kind] || KIND_COL.other}" stroke-width="26" stroke-dasharray="${Math.max(0, len - 1.5).toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}" transform="rotate(-90 90 90)"/>`; acc += len; return s; }).join('')}
     <text x="90" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" style="fill:var(--ink)">1B</text><text x="90" y="104" text-anchor="middle" font-size="11" style="fill:var(--muted)">supply</text></svg>`;
-}
-function tabTokenomics(p) {
-  const sp = splitOf(p.teamBps), C = Q(p), u = unlockState(p), al = [{ label: 'Raise backers', kind: 'presale', pct: sp.backers / SUPPLY * 100, tokens: sp.backers }, { label: 'Locked Meteora pool', kind: 'lp', pct: sp.pool / SUPPLY * 100, tokens: sp.pool }].concat(sp.team ? [{ label: 'Team', kind: 'team', pct: sp.team / SUPPLY * 100, tokens: sp.team }] : []);
-  return tabHead('Supply', '') +
-    `<div class="toke"><div>${donutSVG(al)}</div><table class="dtable alloc"><thead><tr><th>Share</th><th class="r">Of supply</th><th class="r">Tokens</th><th>Unlock</th></tr></thead><tbody>
-      ${al.map(a => `<tr><td><i class="sw" style="background:${KIND_COL[a.kind] || KIND_COL.other}"></i>${esc(a.label)}</td><td class="num">${a.pct.toFixed(a.pct % 1 ? 1 : 0)}%</td><td class="num">${fmtTok(a.tokens)}</td>
-        <td>${a.kind === 'lp' ? 'Locked for good' : a.kind === 'presale' ? 'Claimable at seeding' : esc(fmtSchedule(p.teamSchedule))}</td></tr>`).join('')}</tbody></table></div>
-    <p class="quiet">Backers and the pool get the same number of tokens, which is what opens the pool at the raise price: ${fmtPrice(priceOf(p))} ${esc(C.sym)}. The team share was set by the founder.${sp.team && p.status === 'seeded' ? ` ${fmtTok(u.unlocked)} of the team's ${fmtTok(sp.team)} tokens have unlocked so far.` : ''}</p>`;
 }
 function tabBackers(p) {
   if (p.status === 'seeded') return tabHead('Holders', '') + '<div data-holders><div class="pp-loading">Loading holders…</div></div>';
@@ -362,6 +459,25 @@ async function loadHolders(p) {
       <div class="tscroll"><table class="dtable backers"><thead><tr><th>Wallet</th><th class="r">$${esc(p.ticker)}</th><th class="r">Of supply</th><th>Label</th></tr></thead><tbody>
       ${h.value.map(x => `<tr><td class="mono">${esc(shortMint(x.wallet))}</td><td class="num">${fmtTok(x.amount)}</td><td class="num">${x.pct.toFixed(2)}%</td><td>${esc(x.label || '')}</td></tr>`).join('')}</tbody></table></div>`;
   } catch (e) { box.innerHTML = `<p class="quiet">Holders could not be loaded: ${esc(e.message)}</p>`; }
+}
+/* Reports: public, wallet-signed, kept off chain. Anyone with a wallet files one; Seed admins act on them: flag the raise for
+   fraud, or approve a community takeover that moves the payout wallet. Both are on-chain instructions, so each is shown here. */
+const REPORT_STATE = { open: 'Open', fraud: 'Fraud, flagged', takeover: 'Takeover approved', dismissed: 'Dismissed' };
+function tabReports(p) {
+  const list = (p.reports || []).slice().sort((a, b) => b.at - a.at), now = Date.now(), admin = isAdmin(), me = walletId();
+  const mine = list.some(r => r.wallet === me);
+  const form = !state.wallet ? '<p class="quiet">Connect a wallet to report this raise. Reports are signed by the wallet and shown here for everyone.</p>'
+    : mine ? '<p class="quiet">You have reported this raise. One report per wallet.</p>'
+    : `<form class="upd-form rep-form" data-repform novalidate><label class="upd-lab" for="repT">Report this raise</label><textarea id="repT" name="b" rows="3" maxlength="600" placeholder="What happened? Link proof where you can." required></textarea>
+      <div class="upd-foot"><span class="quiet">Signed by ${esc(state.wallet.addr)} and public. Seed acts on fraud; it does not referee disagreements. <span class="num" data-repct>0 / 600</span></span><button class="btn btn-ink btn-sm">Sign and send</button></div><div class="err" data-reperr role="alert"></div></form>`;
+  const act = r => !admin || r.status !== 'open' || p.blacklisted ? '' : `<div class="rep-act"><button type="button" class="qb qb-sm" data-flag="${esc(r.id)}">Flag fraud</button><button type="button" class="qb qb-sm" data-takeover="${esc(r.id)}">Approve takeover</button><button type="button" class="qb qb-sm" data-dismiss="${esc(r.id)}">Dismiss</button></div>`;
+  const items = list.map(r => `<li class="rep ${r.status}"><div class="rep-h"><span class="mono">${r.wallet === me ? 'You' : esc(walletLabel(r.wallet))}</span><span class="btag ${r.status === 'fraud' ? 'bad' : r.status === 'takeover' ? 'ok' : ''}">${REPORT_STATE[r.status] || esc(r.status)}</span><span class="num">${fmtAgo(now - r.at)} · ${fmtDate(r.at)}</span></div><p>${esc(r.reason)}</p>${act(r)}</li>`).join('');
+  const actions = [p.flag ? `<li class="adm bad">${RISK_ICON.fail}<div><b>Flagged for fraud</b> ${fmtDate(p.flag.at)}${p.flag.reportId ? `, on report ${esc(p.flag.reportId)}` : ''}. The founder's X account is blacklisted and buying is off.</div></li>` : '',
+    p.takeover ? `<li class="adm ok">${RISK_ICON.pass}<div><b>Community takeover approved</b> ${fmtDate(p.takeover.at)}: the payout wallet moved from ${esc(shortMint(p.takeover.from))} to ${esc(shortMint(p.takeover.to))} (${esc(p.takeover.label || 'backers')}).</div></li>` : ''].filter(Boolean).join('');
+  return tabHead('Reports', '', ` <span class="quiet">${list.length ? `${list.length} public` : ''}</span>`) + form +
+    (actions ? `<ul class="adm-list">${actions}</ul>` : '') +
+    (list.length ? `<ol class="reports">${items}</ol>` : quietEmpty('No reports on this raise.')) +
+    `<p class="quiet">Seed enforces its rules in the program: the cap, refunds, the locked pool and the unlock minimum. Admins (a multisig) can do two things on a report: flag fraud, which blacklists the founder's X account and disables buying, or approve a takeover, which moves creator fees and team unlocks to a wallet the backers chose.${admin ? ' Your wallet is an admin here.' : ''}</p>`;
 }
 /* Announcements: what the founder and team post for backers, newest first. Anyone can read them; only a founder or team
    wallet of this raise gets the form. */
@@ -389,7 +505,7 @@ function ppAnnounce(p) {
   if (!u || now - u.postedAt > ANN_STRIP) return '';
   return `<a class="panel pp-ann" href="#/presale/${esc(p.id)}/announcements" data-jump-ann><span class="ann-ico">${ANN_ICON}</span><span class="ann-k">Announcement</span><b>${esc(u.title)}</b><span class="ann-t num">${fmtAgo(now - u.postedAt)}</span><span class="ann-go">Read</span></a>`;
 }
-function refreshAnnounce(p) { const w = detailBox && $('[data-annwrap]', detailBox); if (w) w.innerHTML = ppAnnounce(p); }
+function refreshAnnounce(p) { const w = detailBox && $('[data-annwrap]', detailBox); if (w) w.innerHTML = ppNotices(p); }
 function afterTab(p, body) {
   if (pg.tab === 'deck' && profileOf(p).deck && deckKindOf(profileOf(p)) === 'pdf') loadDeck(p, body);
   if (pg.tab === 'backers' && p.status === 'seeded') loadHolders(p);
@@ -407,6 +523,20 @@ function afterTab(p, body) {
     };
   }
   const ab = $('[data-allbackers]', body); if (ab) ab.onclick = () => { pg.allBackers = true; renderTab(p); };
+  const un = $('[data-unlock]', body); if (un) un.innerHTML = unlockSVG(p, Math.max(320, Math.floor(un.clientWidth) || 640));
+  const rf = $('[data-repform]', body);
+  if (rf) {
+    const err = $('[data-reperr]', rf), ct = $('[data-repct]', rf);
+    rf.oninput = () => { err.textContent = ''; ct.textContent = `${rf.b.value.length} / 600`; };
+    rf.onsubmit = async e => { e.preventDefault(); const b = rf.b.value.trim(), btn = $('button', rf); if (b.length < 20) { err.textContent = 'Say what happened, in at least 20 characters.'; rf.b.focus(); return; }
+      btn.disabled = true; try { await fileReport(p, b); toast('Report sent'); renderTab(p); refreshTabLabels(p); } catch (x) { err.textContent = x.message || 'The report was not sent.'; btn.disabled = false; } };
+  }
+  body.onclick = async e => {
+    const fl = e.target.closest('[data-flag]'), tk = e.target.closest('[data-takeover]'), dm = e.target.closest('[data-dismiss]'); if (!fl && !tk && !dm) return;
+    if (fl) { if (!confirm(`Flag ${p.name} for fraud? Buying stops and the founder's X account is blacklisted. This is an on-chain instruction from the admin wallet.`)) return; await adminFlag(p, fl.dataset.flag); }
+    else if (tk) { const to = prompt('The wallet that takes over the payout: creator fees and team unlocks go there from now on.', ''); if (!to) return; if (!B58.test(to.trim())) return toast('That is not a Solana address.'); const label = prompt('A name for it, shown on the page (for example "Backer multisig, 3 of 5").', 'Backer multisig') || 'Backers'; await adminTakeover(p, tk.dataset.takeover, to.trim(), label); }
+    else await dismissReport(p, dm.dataset.dismiss);
+  };
 }
 function refreshTabLabels(p) { $$('[data-ptab]', detailBox).forEach(a => a.innerHTML = tabLabel(p, a.dataset.ptab)); placeTabInd(); }
 /* the underline under the open tab is one element that slides over; it appears in place the first time */
@@ -466,8 +596,8 @@ function renderDetail(force) {
   }
   const fresh = pg.id !== p.id;
   Object.assign(pg, { id: p.id, status: p.status, tab, walletKey: wkey, seen: p.raised, shown: null }); if (fresh) Object.assign(pg, { allBackers: false, deck: null, pool: null, series: null });
-  box.innerHTML = `<div class="pp ${p.status}"><aside class="pp-side" aria-label="Project and chat">${ppHeader(p)}${chatPanel(p)}</aside>
-    <div class="pp-main"><div class="pp-annw" data-annwrap>${ppAnnounce(p)}</div>${ppFill(p)}${ppChart(p)}${ppTabs(p)}</div><aside class="pp-rail" aria-label="Buy and your position">${ppRail(p)}</aside></div>`;
+  box.innerHTML = `<div class="pp ${p.status}${p.blacklisted ? ' flagged' : ''}"><aside class="pp-side" aria-label="Project and chat">${ppHeader(p)}${ppFounder(p)}${chatPanel(p)}</aside>
+    <div class="pp-main"><div class="pp-annw" data-annwrap>${ppNotices(p)}</div>${ppFill(p)}${p.status === 'seeded' ? ppFees(p) : ''}${ppChart(p)}${ppTabs(p)}</div><aside class="pp-rail" aria-label="Buy and your position">${ppRail(p)}</aside></div>`;
   bindPage(p); renderTab(p); mountChat(p); drawCharts(p); watchCharts(p); loadAsync(p);
   if (fresh && typeof playEnter === 'function') playEnter();   // the page's cards rise into place and the raise line draws itself
 }
@@ -523,6 +653,8 @@ function floatChip(p, amt) {
 }
 function bindRail(p) {
   const box = detailBox, dc = $('[data-dclaim]', box); if (dc) dc.onclick = () => claim(p, dc);
+  const cb = $('[data-cancel]', box); if (cb) cb.onclick = async () => { if (!confirm(`Cancel the ${p.name} raise? Every backer gets a refund, fee included, and the raise cannot reopen.`)) return; cb.disabled = true; await cancelRaise(find(p.id) || p); };
+  const cf = $('[data-claimfees]', box); if (cf) cf.onclick = async () => { cf.disabled = true; cf.textContent = 'Claiming…'; await claimCreatorFees(find(p.id) || p); };
   const ck = $('[data-crank]', box); if (ck) ck.onclick = async () => { ck.disabled = true; ck.textContent = 'Running…'; const cur = find(p.id) || p; cur.crankAt = Date.now(); const ok = await seedCrank(cur, true); if (!ok && detailBox) { const b = $('[data-crank]', detailBox); if (b) { b.disabled = false; b.textContent = 'Run the next step'; } } };
   const panel = $('[data-trade]', box), inp = panel && $('#ppAmt', panel); pg.syncTrade = null; if (!inp) return;
   const swap = panel.dataset.trade === 'swap', go = $('[data-go]', panel), err = $('[data-buyerr]', panel);

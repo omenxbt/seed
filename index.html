@@ -2107,6 +2107,44 @@ function renderAll() { renderWallet(); syncQuickUI(); renderTerminal(); renderMi
 /* ----------------------------------------------------------------- clock */
 /* the target landed: the raise closes to buys and seeding starts. Anyone may run the steps; the demo runs them itself. */
 function fillRaise(p) { p.raised = p.target; p.status = 'filled'; p.filledAt = Date.now(); p.seedStep = 'filled'; p.resolvedAt = null; }
+/* the founder closes a live raise early: it refunds like a miss, fee included */
+async function cancelRaise(p) {
+  if (busy || p.status !== 'live') return false;
+  busy = true;
+  try { await adapter.cancelRaise(p); p.status = 'refunded'; p.refundReason = 'cancelled'; p.resolvedAt = Date.now(); toast(`${p.name} cancelled. Every backer can claim a refund.`); }
+  catch (e) { toast(e.message); busy = false; if (detailBox) renderDetail(true); return false; }
+  busy = false; save(); renderAll(); if (detailBox) renderDetail(true); return true;
+}
+/* a permissionless claim of the pool's fees: the founder's share to the payout wallet, the rest to Seed */
+async function claimCreatorFees(p) {
+  if (busy || p.status !== 'seeded') return false;
+  const f = feesOf(p); if (!(f.founderUnclaimed > 0)) return false;
+  busy = true;
+  try { await adapter.claimFees(p); p.fees.founderClaimed = r6((p.fees.founderClaimed || 0) + f.founderUnclaimed); p.fees.seedClaimed = r6((p.fees.seedClaimed || 0) + f.seedUnclaimed); toast(`${fmtAmt(f.founderUnclaimed, p.q)} ${Q(p).sym} sent to the payout wallet`); }
+  catch (e) { toast(e.message); }
+  busy = false; save(); if (detailBox) renderDetail(true); renderPortfolio(); return true;
+}
+/* reports are public and signed by the wallet; Seed admins (the multisig in SEED.admins; the demo wallet here, so the flows can be tried) act on them */
+const isAdmin = () => !!state.wallet && (state.wallet.pk ? SEED.admins.includes(state.wallet.pk) : true);
+async function fileReport(p, reason) {
+  if (!(await ensureWallet())) throw new Error('Connect a wallet to report.');
+  await adapter.report(p, reason);
+  (p.reports = p.reports || []).push({ id: `${p.id}-r${Date.now().toString(36)}`, wallet: walletId(), reason, at: Date.now(), status: 'open' });
+  save(); renderTerminal();
+}
+async function adminFlag(p, reportId) {
+  if (!isAdmin() || busy) return; busy = true;
+  try { await adapter.report(p, 'flag'); p.blacklisted = true; p.flag = { reportId, at: Date.now(), by: walletId() }; const r = (p.reports || []).find(x => x.id === reportId); if (r) r.status = 'fraud'; toast(`${p.name} flagged for fraud`); }
+  catch (e) { toast(e.message); }
+  busy = false; save(); renderAll(); if (detailBox) renderDetail(true);
+}
+async function adminTakeover(p, reportId, to, label) {
+  if (!isAdmin() || busy) return; busy = true;
+  try { await adapter.report(p, 'takeover'); p.takeover = { from: p.payoutWallet, to, at: Date.now(), reportId, by: walletId(), label }; p.payoutWallet = to; p.pendingPayoutWallet = null; p.payoutEffectiveAt = null; const r = (p.reports || []).find(x => x.id === reportId); if (r) r.status = 'takeover'; toast(`Payout wallet moved to ${label}`); }
+  catch (e) { toast(e.message); }
+  busy = false; save(); renderAll(); if (detailBox) renderDetail(true);
+}
+async function dismissReport(p, reportId) { if (!isAdmin()) return; const r = (p.reports || []).find(x => x.id === reportId); if (r) { r.status = 'dismissed'; save(); if (detailBox) renderDetail(true); } }
 /* one idempotent step of seeding: filled -> minted -> pooled -> seeded. The demo takes a step every half minute. */
 async function seedCrank(p, by) {
   if (p.status !== 'filled') return false;
@@ -2125,7 +2163,7 @@ function tick(silent) {
   }
   for (const p of state.presales) if (p.status === 'filled') {
     if (now >= seedDeadline(p)) { p.status = 'refunded'; p.refundReason = 'timeout'; p.resolvedAt = now; changed = true; if (silent !== true) toast(`${p.name} did not seed in time. Every backer can claim a refund.`); }
-    else { const last = p.crankAt || p.filledAt; if (now - last > 30e3 && !document.hidden && !busy) { p.crankAt = now; seedCrank(p); } }
+    else if (!profileOf(p).demo) { const last = p.crankAt || p.filledAt; if (now - last > 30e3 && !document.hidden && !busy) { p.crankAt = now; seedCrank(p); } }   // a demo raise waits for someone to run its steps
   }
   if (changed) { save(); renderAll(); }
   $$('.live[data-row]').forEach(row => { const p = find(row.dataset.row); if (!p) return; const t = $('[data-time]', row); if (t) roll(t, fmtLeft(p.endsAt - now)); const pc = $('[data-pace]', row); if (pc) roll(pc, paceTxt(p)); });
