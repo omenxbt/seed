@@ -155,7 +155,6 @@ function draftProfile(d) {
     tagline: d.idea, description: $('#fDesc').value.trim(),
     links: { website: $('#lWebsite').value.trim() || null, x: $('#lX').value.trim() || null, telegram: $('#lTelegram').value.trim() || null, discord: $('#lDiscord').value.trim() || null, github: $('#lGithub').value.trim() || null },
     minBuy: limitQ('min', d), maxBuy: limitQ('max', d), minBuyPct: lf.lim.min.on && lf.lim.min.unit === 'pct' ? numv($('#fMin').value) || 0 : 0, maxBuyPct: lf.lim.max.on && lf.lim.max.unit === 'pct' ? numv($('#fMax').value) || 0 : 0,
-    whitelist: $('#fWl').value.split(/\s+/).map(x => x.trim()).filter(Boolean),
     team, founder: { name: team[0] ? team[0].name : xl ? '@' + xl.handle : 'Founder', x: xl ? xUrl(xl.handle) : null, xAgeDays: null, wallet: founderWallet, pastLaunches: [] },
     deck: lf.urls.deck || null, deckKind: lf.files.deck ? deckInfo(lf.files.deck)[0] : null, deckName: lf.files.deck ? lf.files.deck.name : null, banner: lf.urls.banner || null, art: lf.urls.art || null, bannerPos: posTxt('banner'), artPos: posTxt('art'),
     roadmap: [], updates: [], chat: [], watchers: 0
@@ -194,7 +193,6 @@ function validateFull() {
   if (L.max.on && L.max.unit === 'q' && mx > d.target) return 'The maximum per wallet is larger than the target; switch it off to let one wallet fill the raise.';
   const mnQ = limitQ('min', d), mxQ = limitQ('max', d);
   if (mnQ > 0 && mxQ > 0 && mnQ > mxQ) return 'The minimum buy is larger than the maximum per wallet.';
-  const bad = $('#fWl').value.split(/\s+/).filter(Boolean).find(x => !B58.test(x)); if (bad) return `${bad.slice(0, 12)}… in the whitelist is not a Solana address.`;
   if (d.target > 0 && usdOf({ q: da.key }, d.target) > SEED.capUsd + 1e-6) return `The target is ${fmtUsd(usdOf({ q: da.key }, d.target))} at today's SOL price. A raise can ask for at most $${SEED.capUsd.toLocaleString('en-US')}.`;
   const bps = teamBpsNow();
   if (!(bps >= 0 && bps < BPS)) return 'The team share must be from 0% to under 100%.';
@@ -288,7 +286,7 @@ async function openPresale() {
     await adapter.openPresale(p);
     if (supa.configured()) supa.call('register', { presaleId: id }).catch(() => {});
     state.presales.unshift(p); save();
-    ['#fName', '#fTicker', '#fIdea', '#fTarget', '#fMint', '#fDesc', '#fMin', '#fMax', '#fWl', '#fUse', '#fPayout', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
+    ['#fName', '#fTicker', '#fIdea', '#fTarget', '#fMint', '#fDesc', '#fMin', '#fMax', '#fUse', '#fPayout', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
     $('#fTeam').value = '0'; lf.road = [ROWS.road.blank()]; drawRows('road'); lf.lim.use = { on: false };
     if (!supa.configured()) lf.urls.deck = '';   // the page keeps showing the local deck, so its preview URL is not released
     lf.lim.min = { on: false, unit: 'q' }; lf.lim.max = { on: false, unit: 'q' }; syncLim();

@@ -323,10 +323,13 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 @media (prefers-reduced-motion:no-preference){
   .ws-main,.pp-main,.board{--ec:1}
   .ws-rail,.pp-rail{--ec:2}
-  :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>:nth-child(2){--en:1}
-  :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>:nth-child(3){--en:2}
-  :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>:nth-child(n+4){--en:3}
-  body.enter :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail)>*,body.enter .trend,body.enter .board,body.enter .toc,body.enter .doc-hero{
+  :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail,#pBacker,#pCreator)>:nth-child(2){--en:1}
+  :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail,#pBacker,#pCreator)>:nth-child(3){--en:2}
+  :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail,#pBacker,#pCreator)>:nth-child(n+4){--en:3}
+  /* the rise is on the frosted card itself, never on a wrapper around it: Chrome isolates whatever sits under an element
+     whose opacity is animating, and a backdrop-filter inside sees nothing to blur until the animation is gone. So the
+     Portfolio's Backer/Creator wrappers and the .sums grids are skipped and their children rise instead. */
+  body.enter :is(.ws-side,.ws-main,.ws-rail,.pp-side,.pp-main,.pp-rail,#pBacker,#pCreator)>:not(#pBacker,#pCreator,.sums),body.enter .sums>.sum,body.enter .trend,body.enter .board,body.enter .toc,body.enter .doc-hero{
     animation:rise .5s var(--ease-out) both;animation-delay:calc(var(--ec,0)*60ms + var(--en,0)*45ms)}
   body.enter :is(.xbar,.filters){animation:swapIn .4s var(--ease-out) both}
   body.enter :is(.pagehead h1,.pp-name h1,.doc-hero h1 span){animation:sharpen .6s var(--ease-out) .05s both}
@@ -842,7 +845,6 @@ a.ico:hover{color:var(--ink)}
           <p class="lim-off" data-lim-off>Off. No limit per wallet.</p>
           <div class="lim-body" data-lim-body hidden><div class="inp"><input id="fMax" inputmode="decimal" class="num" placeholder="0"><span class="suf num" data-lim-suf data-cur>SOL</span></div>
             <div class="seg seg-sm" id="maxUnit" role="group" aria-label="Maximum per wallet unit"><span class="seg-ind" aria-hidden="true"></span><button data-v="q" aria-pressed="true" data-cur>SOL</button><button data-v="pct" aria-pressed="false">% of supply</button></div></div></div>
-        <div class="f full"><label for="fWl">Whitelist<span class="hint">optional. One wallet address per line; leave empty to let anyone back it.</span></label><textarea id="fWl" class="ta num" rows="2" spellcheck="false"></textarea></div>
         </div></fieldset>
 
         <fieldset><legend><span class="num">03</span>Team share and unlocks</legend><div class="form">
