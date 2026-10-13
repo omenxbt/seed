@@ -30,7 +30,9 @@ admin, oracle, treasury and founder, derive the attestor key from it, and need a
 once with that attestor; another wallet's run against the same deployment must use the wallet that made the config.
 
 The devnet program id is in `Anchor.toml` and `declare_id!`; the keypair is `target/deploy/seed-keypair.json` (not
-committed). The SOL price the cap uses is set by `set_sol_price` from the oracle key; on mainnet that should read a
+committed). `Anchor.toml` deploys and tests from `keys/deployer.json`, a wallet made for this project and nothing else
+(`solana-keygen new -o keys/deployer.json`; the folder is git-ignored). It needs about 3 SOL of devnet SOL: the rent
+above plus the tests. The SOL price the cap uses is set by `set_sol_price` from the oracle key; on mainnet that should read a
 Pyth feed instead.
 
 ## Upgrade authority

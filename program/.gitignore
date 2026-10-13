@@ -3,3 +3,4 @@ target
 .anchor
 test-ledger
 *.log
+keys/
