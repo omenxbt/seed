@@ -25,6 +25,12 @@ undo those pins, so do not run it blindly. The program is built for size (`opt-l
 hand-written rather than generated, which keeps the binary under 500 KB: deploying it costs about 2.4 SOL of rent at
 `--max-len` equal to the binary size, more if you leave room for upgrades.
 
+Seeding, step 2, is the one place Seed depends on how Meteora is built: DAMM's `payer` both pays the pool's rent and
+signs the deposits into it, so Seed keeps a dataless PDA per raise (`["payer", raise]`) that owns the pool vault and a
+staging account for the pair asset, and the cranker fronts the rent (`POOL_RENT_FRONT`) and gets the change back in
+the same instruction. The raise PDA is the pool's creator and the position's owner. `scripts/inspect.ts` prints the
+latest seeded raise and its position's `permanent_locked_liquidity` straight from the cluster.
+
 The tests run on devnet because Meteora's DAMM v2 is deployed there and nowhere local. They use the provider wallet as
 admin, oracle, treasury and founder, derive the attestor key from it, and need about 0.4 SOL. The config PDA is made
 once with that attestor; another wallet's run against the same deployment must use the wallet that made the config.

@@ -30,6 +30,10 @@ use state::*;
 
 declare_id!("8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn");
 
+/// lamports the cranker fronts for the pool, position, vaults and NFT that DAMM creates (about 0.025 SOL of rent);
+/// what DAMM does not take comes straight back in the same instruction
+pub const POOL_RENT_FRONT: u64 = 50_000_000;
+
 // Meteora DAMM v2 (cp-amm), the same id on mainnet and devnet; the three CPIs Seed sends are in damm.rs
 pub const DAMM_PROGRAM: Pubkey = damm::PROGRAM;
 pub const DAMM_POOL_AUTHORITY: Pubkey = damm::POOL_AUTHORITY;
@@ -202,15 +206,21 @@ pub mod seed {
         let signer = &[seeds];
         let ai = &ctx.accounts; let tp = ai.token_program.to_account_info(); let sp = ai.system_program.to_account_info(); let payer = ai.cranker.to_account_info(); let rent = Rent::get()?;
         let raise_key = r.key(); let auth = r.to_account_info(); let mint = ai.mint.to_account_info();
+        let pool_payer = ai.pool_payer.to_account_info();
         // the mint
         anchor_lang::system_program::create_account(CpiContext::new(sp.clone(), anchor_lang::system_program::CreateAccount { from: payer.clone(), to: mint.clone() }), rent.minimum_balance(Mint::LEN), Mint::LEN as u64, &token::ID)?;
         token::initialize_mint2(CpiContext::new(tp.clone(), token::InitializeMint2 { mint: mint.clone() }), TOKEN_DECIMALS, &raise_key, None)?;
-        // the vaults: the backers' at the raise's ATA, the pool's and the team's at fixed PDAs
+        // the vaults: the backers' at the raise's ATA, the pool's and the team's at fixed PDAs. The pool vault and the pair
+        // stage belong to the pool payer PDA, because DAMM's `payer` both pays the pool's rent and signs the deposits into it
         anchor_spl::associated_token::create(CpiContext::new(ai.associated_token_program.to_account_info(), anchor_spl::associated_token::Create { payer: payer.clone(), associated_token: ai.backers_vault.to_account_info(), authority: auth.clone(), mint: mint.clone(), system_program: sp.clone(), token_program: tp.clone() }))?;
-        for (vault, seed, bump) in [(ai.pool_vault.to_account_info(), b"pool".as_ref(), ctx.bumps.pool_vault), (ai.team_vault.to_account_info(), b"team".as_ref(), ctx.bumps.team_vault)] {
+        for (vault, seed, bump, of, owner) in [
+            (ai.pool_vault.to_account_info(), b"pool".as_ref(), ctx.bumps.pool_vault, mint.clone(), pool_payer.clone()),
+            (ai.team_vault.to_account_info(), b"team".as_ref(), ctx.bumps.team_vault, mint.clone(), auth.clone()),
+            (ai.stage.to_account_info(), b"stage".as_ref(), ctx.bumps.stage, ai.pair_mint.to_account_info(), pool_payer),
+        ] {
             let vs: &[&[u8]] = &[seed, raise_key.as_ref(), &[bump]];
             anchor_lang::system_program::create_account(CpiContext::new_with_signer(sp.clone(), anchor_lang::system_program::CreateAccount { from: payer.clone(), to: vault.clone() }, &[vs]), rent.minimum_balance(TokenAccount::LEN), TokenAccount::LEN as u64, &token::ID)?;
-            token::initialize_account3(CpiContext::new(tp.clone(), token::InitializeAccount3 { account: vault, mint: mint.clone(), authority: auth.clone() }))?;
+            token::initialize_account3(CpiContext::new(tp.clone(), token::InitializeAccount3 { account: vault, mint: of, authority: owner }))?;
         }
         for (to, n) in [(ai.backers_vault.to_account_info(), r.backers_units()), (ai.pool_vault.to_account_info(), r.pool_units()), (ai.team_vault.to_account_info(), r.team_units())] {
             if n == 0 { continue; }
@@ -244,15 +254,30 @@ pub mod seed {
             activation_point: None,  // live at once
         };
         let ai = &ctx.accounts;
-        let (raise_ai, tp, prog, ev) = (ai.raise.to_account_info(), ai.token_program.to_account_info(), ai.cp_amm_program.to_account_info(), ai.damm_event_authority.to_account_info());
-        // the raise PDA opens the pool and is the position's owner: payer_token_a and payer_token_b are its accounts and it signs as the creator
+        let (raise_ai, tp, sp, prog, ev) = (ai.raise.to_account_info(), ai.token_program.to_account_info(), ai.system_program.to_account_info(), ai.cp_amm_program.to_account_info(), ai.damm_event_authority.to_account_info());
+        let (cranker, pool_payer, stage) = (ai.cranker.to_account_info(), ai.pool_payer.to_account_info(), ai.stage.to_account_info());
+        let raise_key = ai.raise.key();
+        let ps: &[&[u8]] = &[b"payer", raise_key.as_ref(), &[ctx.bumps.pool_payer]];
+        let both = &[seeds, ps];
+        // DAMM's payer pays the pool's rent and signs the deposits, so it is the pool payer PDA, which owns the pool vault and
+        // the stage: the raise is the pool's creator and the position's owner. The pair side moves from the escrow to the stage
+        // first; the cranker fronts the rent and gets the change back after
+        token::transfer(CpiContext::new_with_signer(tp.clone(), Transfer { from: ai.escrow.to_account_info(), to: stage.clone(), authority: raise_ai.clone() }, signer), b)?;
+        let fronted = POOL_RENT_FRONT;
+        anchor_lang::system_program::transfer(CpiContext::new(sp.clone(), anchor_lang::system_program::Transfer { from: cranker.clone(), to: pool_payer.clone() }), fronted)?;
         damm::initialize_customizable_pool(damm::InitPoolAccounts {
-            creator: &raise_ai, position_nft_mint: &ai.position_nft_mint.to_account_info(), position_nft_account: &ai.position_nft_account.to_account_info(), payer: &ai.cranker.to_account_info(),
+            creator: &raise_ai, position_nft_mint: &ai.position_nft_mint.to_account_info(), position_nft_account: &ai.position_nft_account.to_account_info(), payer: &pool_payer,
             pool_authority: &ai.pool_authority.to_account_info(), pool: &ai.pool.to_account_info(), position: &ai.position.to_account_info(), token_a_mint: &ai.mint.to_account_info(), token_b_mint: &ai.pair_mint.to_account_info(),
-            token_a_vault: &ai.token_a_vault.to_account_info(), token_b_vault: &ai.token_b_vault.to_account_info(), payer_token_a: &ai.pool_vault.to_account_info(), payer_token_b: &ai.escrow.to_account_info(),
-            token_a_program: &tp, token_b_program: &tp, token_2022_program: &ai.token_2022_program.to_account_info(), system_program: &ai.system_program.to_account_info(), event_authority: &ev, program: &prog,
-        }, params, signer)?;
+            token_a_vault: &ai.token_a_vault.to_account_info(), token_b_vault: &ai.token_b_vault.to_account_info(), payer_token_a: &ai.pool_vault.to_account_info(), payer_token_b: &stage,
+            token_a_program: &tp, token_b_program: &tp, token_2022_program: &ai.token_2022_program.to_account_info(), system_program: &sp, event_authority: &ev, program: &prog,
+        }, params, both)?;
         damm::permanent_lock_position(damm::LockAccounts { pool: &ai.pool.to_account_info(), position: &ai.position.to_account_info(), position_nft_account: &ai.position_nft_account.to_account_info(), signer: &raise_ai, event_authority: &ev, program: &prog }, liquidity, signer)?;
+        // the change: whatever rent DAMM did not take goes back to the cranker, and any pair dust the deposit rounded off goes back to the escrow
+        let left = pool_payer.lamports();
+        if left > 0 { anchor_lang::system_program::transfer(CpiContext::new_with_signer(sp.clone(), anchor_lang::system_program::Transfer { from: pool_payer.clone(), to: cranker.clone() }, &[ps]), left)?; }
+        ctx.accounts.stage.reload()?;
+        let dust = ctx.accounts.stage.amount;
+        if dust > 0 { token::transfer(CpiContext::new_with_signer(tp.clone(), Transfer { from: stage.clone(), to: ctx.accounts.escrow.to_account_info(), authority: pool_payer.clone() }, &[ps]), dust)?; }
         let r = &mut ctx.accounts.raise;
         r.pool = ctx.accounts.pool.key(); r.position = ctx.accounts.position.key(); r.position_nft_mint = ctx.accounts.position_nft_mint.key(); r.seed_step = SeedStep::Pooled;
         emit!(RaisePooled { raise: r.key(), pool: r.pool, position: r.position, at: now });
@@ -266,7 +291,9 @@ pub mod seed {
         require!(r.status == RaiseStatus::Filled, SeedError::NotFilled);
         require!(r.seed_step == SeedStep::Pooled, SeedError::WrongStep);
         let seeds: &[&[u8]] = &[RAISE_SEED, r.founder.as_ref(), &r.nonce.to_le_bytes(), &[r.bump]];
-        let fees = r.fees_held.min(ctx.accounts.escrow.amount);
+        // everything left in the escrow: the 1% fee, plus the few units of the pair asset the pool deposit rounded off
+        // (sent back from the stage at step 2); from here on the escrow holds trading fees only
+        let fees = ctx.accounts.escrow.amount;
         if fees > 0 { token::transfer(CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), Transfer { from: ctx.accounts.escrow.to_account_info(), to: ctx.accounts.treasury_token.to_account_info(), authority: r.to_account_info() }, &[seeds]), fees)?; }
         let r = &mut ctx.accounts.raise;
         r.fees_held = 0; r.status = RaiseStatus::Seeded; r.seed_step = SeedStep::Seeded; r.seeded_at = now;
@@ -448,10 +475,15 @@ pub struct CrankMint<'info> {
     #[account(mut)] pub mint: Signer<'info>,
     /// CHECK: the raise's associated token account for the mint; created here
     #[account(mut)] pub backers_vault: UncheckedAccount<'info>,
-    /// CHECK: the pool's tokens wait here; created here at seeds ["pool", raise]
+    /// CHECK: the pool's tokens wait here; created here at seeds ["pool", raise], owned by the pool payer
     #[account(mut, seeds = [b"pool", raise.key().as_ref()], bump)] pub pool_vault: UncheckedAccount<'info>,
     /// CHECK: the team's tokens; created here at seeds ["team", raise]
     #[account(mut, seeds = [b"team", raise.key().as_ref()], bump)] pub team_vault: UncheckedAccount<'info>,
+    #[account(address = raise.pair_mint @ SeedError::WrongAccount)] pub pair_mint: Account<'info, Mint>,
+    /// CHECK: the pair tokens going into the pool wait here; created at seeds ["stage", raise], owned by the pool payer
+    #[account(mut, seeds = [b"stage", raise.key().as_ref()], bump)] pub stage: UncheckedAccount<'info>,
+    /// CHECK: a PDA with no data that owns the pool vault and the stage and is DAMM's payer; seeds ["payer", raise]
+    #[account(seeds = [b"payer", raise.key().as_ref()], bump)] pub pool_payer: UncheckedAccount<'info>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
@@ -466,6 +498,9 @@ pub struct CrankPool<'info> {
     pub pair_mint: Box<Account<'info, Mint>>,
     #[account(mut, seeds = [b"pool", raise.key().as_ref()], bump)] pub pool_vault: Box<Account<'info, TokenAccount>>,
     #[account(mut, associated_token::mint = pair_mint, associated_token::authority = raise)] pub escrow: Box<Account<'info, TokenAccount>>,
+    #[account(mut, seeds = [b"stage", raise.key().as_ref()], bump)] pub stage: Box<Account<'info, TokenAccount>>,
+    /// CHECK: the dataless PDA that owns the pool vault and the stage and pays DAMM; seeds ["payer", raise]
+    #[account(mut, seeds = [b"payer", raise.key().as_ref()], bump)] pub pool_payer: UncheckedAccount<'info>,
     /// the position NFT's mint: a fresh keypair the cranker signs with
     #[account(mut)] pub position_nft_mint: Signer<'info>,
     /// CHECK: DAMM creates it at its PDA, owned by the raise

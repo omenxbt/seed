@@ -2,7 +2,7 @@
 // admin, the oracle, the treasury and the founder; the attestor key is derived from it. Run: anchor test --skip-local-validator --skip-deploy
 import * as anchor from '@coral-xyz/anchor';
 import { BN, web3 } from '@coral-xyz/anchor';
-import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, NATIVE_MINT, createAssociatedTokenAccountIdempotentInstruction, createSyncNativeInstruction, createTransferInstruction, getAccount, getAssociatedTokenAddressSync, getMint } from '@solana/spl-token';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, NATIVE_MINT, createAssociatedTokenAccountIdempotentInstruction, createSyncNativeInstruction, createTransferInstruction, getAccount, getAssociatedTokenAddressSync, getMint } from '@solana/spl-token';
 import { assert } from 'chai';
 import { createHash } from 'crypto';
 import { SeedClient, pda, handleHash, attestIx, WSOL } from '../client/seed';
@@ -22,7 +22,7 @@ describe('seed', () => {
   const nonce = Date.now();
   let raise: web3.PublicKey, mint: web3.Keypair, nft: web3.Keypair, r: any;
   const handle = 'seed_test_' + nonce.toString(36);
-  const expectFail = async (p: Promise<unknown>, code: string) => { try { await p; } catch (e: any) { assert.include(String(e.message || e), code, `expected ${code}`); return; } assert.fail(`expected ${code}`); };
+  const expectFail = async (p: Promise<unknown>, code: string) => { try { await p; } catch (e: any) { const m = String(e.message || e); assert.include(m, code, `expected ${code}, got: ${m.slice(0, 1600)}`); return; } assert.fail(`expected ${code}`); };
 
   before(async () => {
     // the config, once; the attestor is fixed by it, which is why the key derives from the wallet
@@ -75,7 +75,7 @@ describe('seed', () => {
 
   it('step 1: mints the supply into the vaults and revokes the authorities', async () => {
     mint = Keypair.generate();
-    await c.send([await c.crankMint(raise, mint.publicKey, me.publicKey)], [mint]);
+    await c.send([await c.crankMint(raise, mint.publicKey, WSOL, me.publicKey)], [mint]);
     const m = await getMint(provider.connection, mint.publicKey);
     assert.equal(m.mintAuthority, null); assert.equal(m.freezeAuthority, null); assert.equal(m.decimals, 6); assert.equal(m.supply, BigInt(SUPPLY_UNITS.toString()));
     const backers = await getAccount(provider.connection, getAssociatedTokenAddressSync(mint.publicKey, raise, true)), pool = await getAccount(provider.connection, pda.poolVault(program.programId, raise)), team = await getAccount(provider.connection, pda.teamVault(program.programId, raise));
@@ -91,14 +91,14 @@ describe('seed', () => {
     const pool = pda.dammPool(mint.publicKey, WSOL); assert.ok(r.pool.equals(pool));
     const vaultB = await getAccount(provider.connection, pda.dammVault(WSOL, pool)), vaultA = await getAccount(provider.connection, pda.dammVault(mint.publicKey, pool));
     assert.ok(Number(vaultB.amount) >= 0.2 * LAMPORTS_PER_SOL * 0.999999, 'the whole raise is in the pool'); assert.ok(Number(vaultA.amount) >= 450000000000000 * 0.999999);
-    const nftAcc = await getAccount(provider.connection, pda.dammPositionNftAccount(nft.publicKey));
+    const nftAcc = await getAccount(provider.connection, pda.dammPositionNftAccount(nft.publicKey), 'confirmed', TOKEN_2022_PROGRAM_ID);   // DAMM mints the position NFT with Token-2022
     assert.ok(nftAcc.owner.equals(raise), 'the position NFT is owned by the raise PDA'); assert.equal(nftAcc.amount, 1n);
     // the position's permanent lock: the Position account's permanent_locked_liquidity is non-zero (offset from the IDL layout is not needed: the raise's own record and DAMM's refusal to withdraw are the proof below)
   });
 
   it('nobody can move the position NFT: not the founder, not the admin, and no program instruction exists for it', async () => {
-    const from = pda.dammPositionNftAccount(nft.publicKey), to = getAssociatedTokenAddressSync(nft.publicKey, me.publicKey);
-    await expectFail(c.send([createAssociatedTokenAccountIdempotentInstruction(me.publicKey, to, me.publicKey, nft.publicKey), createTransferInstruction(from, to, me.publicKey, 1)]), 'owner does not match');
+    const from = pda.dammPositionNftAccount(nft.publicKey), to = getAssociatedTokenAddressSync(nft.publicKey, me.publicKey, false, TOKEN_2022_PROGRAM_ID);
+    await expectFail(c.send([createAssociatedTokenAccountIdempotentInstruction(me.publicKey, to, me.publicKey, nft.publicKey, TOKEN_2022_PROGRAM_ID), createTransferInstruction(from, to, me.publicKey, 1, [], TOKEN_2022_PROGRAM_ID)]), 'owner does not match');
     const names = (idl as any).instructions.map((i: any) => i.name);
     assert.notInclude(names.join(','), 'transfer'); assert.notInclude(names.join(','), 'withdraw'); assert.notInclude(names.join(','), 'remove');
     const writesNft = (idl as any).instructions.filter((i: any) => i.accounts.some((a: any) => a.name === 'position_nft_account' && a.writable));
@@ -109,7 +109,7 @@ describe('seed', () => {
     const tre = getAssociatedTokenAddressSync(NATIVE_MINT, me.publicKey), before = (await getAccount(provider.connection, tre)).amount;
     await c.send([await c.crankSeed(raise, WSOL, me.publicKey)]);
     r = await c.fetchRaise(raise); assert.deepEqual(Object.keys(r.status)[0], 'seeded'); assert.ok(r.seededAt.gtn(0));
-    assert.equal(Number((await getAccount(provider.connection, tre)).amount - before), 0.002 * LAMPORTS_PER_SOL, '1% of 0.2 SOL');
+    const got = Number((await getAccount(provider.connection, tre)).amount - before); assert.ok(got >= 0.002 * LAMPORTS_PER_SOL && got < 0.002 * LAMPORTS_PER_SOL + 1000, '1% of 0.2 SOL, plus the deposit rounding');
   });
 
   it('a backer claims their share of the backers tokens', async () => {

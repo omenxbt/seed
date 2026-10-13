@@ -12,6 +12,8 @@ const minKey = (a: web3.PublicKey, b: web3.PublicKey) => (Buffer.compare(a.toBuf
 const pda = {
   config: (pid: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('config')], pid)[0],
   poolVault: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('pool'), raise.toBuffer()], pid)[0],
+  stage: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('stage'), raise.toBuffer()], pid)[0],
+  poolPayer: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('payer'), raise.toBuffer()], pid)[0],
   dammPool: (a: web3.PublicKey, b: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('cpool'), maxKey(a, b), minKey(a, b)], DAMM)[0],
   dammPosition: (nft: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('position'), nft.toBuffer()], DAMM)[0],
   dammPositionNftAccount: (nft: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('position_nft_account'), nft.toBuffer()], DAMM)[0],
@@ -21,9 +23,20 @@ const pda = {
 
 export function seedClient(program: Program, conn: web3.Connection) {
   const pid = program.programId, config = pda.config(pid), me = program.provider.publicKey!;
+  // confirms by polling signature status, as program/client/seed.ts does: no websocket, so any RPC works
   const send = async (ixs: web3.TransactionInstruction[], signers: web3.Keypair[] = []) => {
-    const tx = new web3.Transaction().add(ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }), ...ixs);
-    return (program.provider as any).sendAndConfirm(tx, signers, { commitment: 'confirmed' });
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+    const tx = new web3.Transaction({ feePayer: me, blockhash, lastValidBlockHeight }).add(ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }), ...ixs);
+    const signed = await (program.provider as any).wallet.signTransaction(tx);
+    if (signers.length) signed.partialSign(...signers);
+    const sig = await conn.sendRawTransaction(signed.serialize(), { preflightCommitment: 'confirmed' });
+    for (;;) {
+      const st = (await conn.getSignatureStatuses([sig])).value[0];
+      if (st?.err) throw new Error(`Transaction ${sig} failed: ${JSON.stringify(st.err)}`);
+      if (st && (st.confirmationStatus === 'confirmed' || st.confirmationStatus === 'finalized')) return sig;
+      if ((await conn.getBlockHeight('confirmed')) > lastValidBlockHeight) throw new Error(`Transaction ${sig} expired before it was confirmed`);
+      await new Promise((r) => setTimeout(r, 1500));
+    }
   };
   const raiseOf = (k: web3.PublicKey) => (program.account as any).raise.fetch(k);
   const m = program.methods as any;
@@ -33,13 +46,13 @@ export function seedClient(program: Program, conn: web3.Connection) {
     timeoutRefund: (raise: web3.PublicKey) => m.timeoutRefund().accounts({ raise, config }).rpc(),
     applyPayoutChange: (raise: web3.PublicKey) => m.applyPayoutChange().accounts({ raise }).rpc(),
     async crankMint(raise: web3.PublicKey) {
-      const mint = Keypair.generate();
-      const ix = await m.crankMint().accounts({ raise, cranker: me, mint: mint.publicKey, backersVault: getAssociatedTokenAddressSync(mint.publicKey, raise, true), poolVault: pda.poolVault(pid, raise), teamVault: PublicKey.findProgramAddressSync([Buffer.from('team'), raise.toBuffer()], pid)[0], tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
+      const r = await raiseOf(raise), mint = Keypair.generate();
+      const ix = await m.crankMint().accounts({ raise, cranker: me, mint: mint.publicKey, backersVault: getAssociatedTokenAddressSync(mint.publicKey, raise, true), poolVault: pda.poolVault(pid, raise), teamVault: PublicKey.findProgramAddressSync([Buffer.from('team'), raise.toBuffer()], pid)[0], pairMint: r.pairMint, stage: pda.stage(pid, raise), poolPayer: pda.poolPayer(pid, raise), tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
       return send([ix], [mint]);
     },
     async crankPool(raise: web3.PublicKey) {
       const r = await raiseOf(raise), nft = Keypair.generate(), pool = pda.dammPool(r.mint, r.pairMint);
-      const ix = await m.crankPool().accounts({ raise, config, cranker: me, mint: r.mint, pairMint: r.pairMint, poolVault: pda.poolVault(pid, raise), escrow: getAssociatedTokenAddressSync(r.pairMint, raise, true),
+      const ix = await m.crankPool().accounts({ raise, config, cranker: me, mint: r.mint, pairMint: r.pairMint, poolVault: pda.poolVault(pid, raise), escrow: getAssociatedTokenAddressSync(r.pairMint, raise, true), stage: pda.stage(pid, raise), poolPayer: pda.poolPayer(pid, raise),
         positionNftMint: nft.publicKey, positionNftAccount: pda.dammPositionNftAccount(nft.publicKey), poolAuthority: DAMM_POOL_AUTHORITY, pool, position: pda.dammPosition(nft.publicKey), tokenAVault: pda.dammVault(r.mint, pool), tokenBVault: pda.dammVault(r.pairMint, pool),
         dammEventAuthority: pda.dammEventAuthority(), cpAmmProgram: DAMM, tokenProgram: TOKEN_PROGRAM_ID, token2022Program: TOKEN_2022, systemProgram: SystemProgram.programId }).instruction();
       return send([ix], [nft]);

@@ -24,6 +24,8 @@ export const pda = {
   blacklist: (pid: web3.PublicKey, handleHash: Buffer) => PublicKey.findProgramAddressSync([Buffer.from('blacklist'), handleHash], pid)[0],
   poolVault: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('pool'), raise.toBuffer()], pid)[0],
   teamVault: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('team'), raise.toBuffer()], pid)[0],
+  stage: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('stage'), raise.toBuffer()], pid)[0],
+  poolPayer: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('payer'), raise.toBuffer()], pid)[0],
   // DAMM v2
   dammPool: (a: web3.PublicKey, b: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('cpool'), maxKey(a, b), minKey(a, b)], DAMM)[0],
   dammPosition: (nftMint: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('position'), nftMint.toBuffer()], DAMM)[0],
@@ -78,13 +80,13 @@ export class SeedClient {
     return this.program.methods.claimRefund().accounts({ raise, contribution: pda.contribution(this.pid, raise, wallet), wallet, walletToken: getAssociatedTokenAddressSync(pairMint, wallet), escrow: getAssociatedTokenAddressSync(pairMint, raise, true), tokenProgram: TOKEN_PROGRAM_ID }).instruction();
   }
   /* seeding, step 1: the mint is a fresh keypair the cranker signs with */
-  crankMint(raise: web3.PublicKey, mint: web3.PublicKey, cranker: web3.PublicKey) {
-    return this.program.methods.crankMint().accounts({ raise, cranker, mint, backersVault: getAssociatedTokenAddressSync(mint, raise, true), poolVault: pda.poolVault(this.pid, raise), teamVault: pda.teamVault(this.pid, raise), tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
+  crankMint(raise: web3.PublicKey, mint: web3.PublicKey, pairMint: web3.PublicKey, cranker: web3.PublicKey) {
+    return this.program.methods.crankMint().accounts({ raise, cranker, mint, backersVault: getAssociatedTokenAddressSync(mint, raise, true), poolVault: pda.poolVault(this.pid, raise), teamVault: pda.teamVault(this.pid, raise), pairMint, stage: pda.stage(this.pid, raise), poolPayer: pda.poolPayer(this.pid, raise), tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
   }
   /* seeding, step 2: the position NFT mint is a fresh keypair the cranker signs with */
   crankPool(raise: web3.PublicKey, mint: web3.PublicKey, pairMint: web3.PublicKey, positionNftMint: web3.PublicKey, cranker: web3.PublicKey) {
     const pool = pda.dammPool(mint, pairMint);
-    return this.program.methods.crankPool().accounts({ raise, config: this.config, cranker, mint, pairMint, poolVault: pda.poolVault(this.pid, raise), escrow: getAssociatedTokenAddressSync(pairMint, raise, true),
+    return this.program.methods.crankPool().accounts({ raise, config: this.config, cranker, mint, pairMint, poolVault: pda.poolVault(this.pid, raise), escrow: getAssociatedTokenAddressSync(pairMint, raise, true), stage: pda.stage(this.pid, raise), poolPayer: pda.poolPayer(this.pid, raise),
       positionNftMint, positionNftAccount: pda.dammPositionNftAccount(positionNftMint), poolAuthority: DAMM_POOL_AUTHORITY, pool, position: pda.dammPosition(positionNftMint), tokenAVault: pda.dammVault(mint, pool), tokenBVault: pda.dammVault(pairMint, pool),
       dammEventAuthority: pda.dammEventAuthority(), cpAmmProgram: DAMM, tokenProgram: TOKEN_PROGRAM_ID, token2022Program: TOKEN_2022, systemProgram: SystemProgram.programId }).instruction();
   }
@@ -110,8 +112,21 @@ export class SeedClient {
 
   /* the idempotent ATA instruction the claims need before they run */
   ata(payer: web3.PublicKey, owner: web3.PublicKey, mint: web3.PublicKey) { return createAssociatedTokenAccountIdempotentInstruction(payer, getAssociatedTokenAddressSync(mint, owner, true), owner, mint); }
+  /* signs, sends and confirms by polling signature status: no websocket, so it works the same on the public RPC and
+     on providers whose subscriptions stall. A failed transaction throws with the program's logs in the message. */
   async send(ixs: web3.TransactionInstruction[], signers: web3.Keypair[] = []) {
-    const tx = new web3.Transaction().add(...ixs);
-    return this.provider.sendAndConfirm(tx, signers, { commitment: 'confirmed' });
+    const conn = this.provider.connection, payer = this.provider.publicKey!;
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('confirmed');
+    const tx = new web3.Transaction({ feePayer: payer, blockhash, lastValidBlockHeight }).add(...ixs);
+    const signed = await this.provider.wallet.signTransaction(tx);
+    if (signers.length) signed.partialSign(...signers);
+    const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false, preflightCommitment: 'confirmed' });
+    for (;;) {
+      const st = (await conn.getSignatureStatuses([sig])).value[0];
+      if (st?.err) { const t = await conn.getTransaction(sig, { commitment: 'confirmed', maxSupportedTransactionVersion: 0 }); throw new Error(`Transaction ${sig} failed: ${JSON.stringify(st.err)}\n${(t?.meta?.logMessages || []).join('\n')}`); }
+      if (st && (st.confirmationStatus === 'confirmed' || st.confirmationStatus === 'finalized')) return sig;
+      if ((await conn.getBlockHeight('confirmed')) > lastValidBlockHeight) throw new Error(`Transaction ${sig} expired before it was confirmed`);
+      await new Promise(r => setTimeout(r, 1500));
+    }
   }
 }
