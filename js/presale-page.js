@@ -70,7 +70,6 @@ function ppHeader(p) {
       <div class="pp-banner">${pr.banner ? `<img class="pp-bg" src="${esc(pr.banner)}" alt="" style="object-position:${esc(pr.bannerPos || '50% 50%')}">` : ''}<a class="back" href="#">&larr; All raises</a></div>
       <div class="pp-idrow">${artHTML(p, 'pp-art')}${statusPill(p)}</div>
       <div class="pp-name"><h1>${esc(p.name)}</h1><span class="pp-tk num">$${esc(p.ticker)}</span></div>
-      <p class="pp-tagline">${esc(pr.tagline || p.idea)}</p>
       <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/info" data-jump-risk>${riskChip(risk)}</a>${p.mine ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}</div>
       ${pr.mint || socials ? `<div class="pp-meta">${pr.mint ? copyBtn(pr.mint, 'mint address', shortMint(pr.mint)) : ''}<span class="pp-socials">${socials}</span></div>` : ''}
       <dl class="pp-stats" data-pstats>${ppStats(p)}</dl>
@@ -311,8 +310,9 @@ function ppFounder(p) {
   const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
   const outcome = r => ({ seeded: '<span class="btag ok">Seeded</span>', refunded: '<span class="btag">Refunded</span>', flagged: '<span class="btag bad">Flagged</span>' })[r.outcome] || esc(r.outcome || '');
   return `<section class="panel rail-card pp-founder"><div class="rail-h"><h3>Founder</h3>${pr.demo ? DEMO_PILL : ''}</div>
-    ${x.handle ? `<a class="x-acct" href="${esc(xUrl(x.handle))}" target="_blank" rel="noopener">${ICONS.x}<span><b>@${esc(x.handle)}</b><span class="num">${x.followers != null ? `${Number(x.followers).toLocaleString('en-US')} followers` : ''}${age != null ? ` · account ${fmtDays(age)} old` : ''}</span></span>${x.verified ? `<span class="vbadge x-ok" title="Signed in with X">${RISK_ICON.pass}</span>` : ''}</a>` : `<p class="rail-meta">${esc(f.name || 'The founder')} opened this raise with a wallet only; no X account is linked.</p>`}
-    <dl class="kv">${p.blacklisted ? row('X account', '<span class="bad">Blacklisted</span>') : ''}${row('Raises on Seed', past.length ? past.map(r => `<span class="past">$${esc(r.ticker)} ${outcome(r)}</span>`).join('') : 'This is the first')}
+    ${x.handle ? `<a class="x-acct" href="${esc(xUrl(x.handle))}" target="_blank" rel="noopener">${ICONS.x}<span><b>@${esc(x.handle)}</b><span class="num">${x.verified ? 'Verified X' : x.typed ? 'Typed on devnet' : 'Linked'}${x.followers != null ? ` · ${Number(x.followers).toLocaleString('en-US')} followers` : ''}${age != null ? ` · account ${fmtDays(age)} old` : ''}</span></span>${x.verified ? `<span class="vbadge x-ok" title="Verified: signed in with X">${RISK_ICON.pass}</span>` : ''}</a>`
+      : `<p class="rail-meta">Opened with a wallet. No X account linked.</p>${isFounder(p) && p.status !== 'refunded' && (p.live || !isReal()) ? `<button type="button" class="qb" data-linkx>Link your X</button><p class="quiet">Adds a verified badge to this raise. Optional.</p>` : ''}`}
+    <dl class="kv">${p.blacklisted ? row('Blacklisted', `<span class="bad">the founder wallet${x.handle ? ' and @' + esc(x.handle) : ''}</span>`) : ''}${row('Raises on Seed', past.length ? past.map(r => `<span class="past">$${esc(r.ticker)} ${outcome(r)}</span>`).join('') : 'This is the first')}
       ${row('Payout wallet', p.payoutWallet ? `<span class="num">${esc(shortMint(p.payoutWallet))}</span>${copyBtn(p.payoutWallet, 'payout wallet')}` : 'Set at opening')}${p.takeover ? row('Held by', esc(p.takeover.label || 'the community')) : ''}</dl>
     ${past.some(r => r.note) ? `<p class="quiet">${past.filter(r => r.note).map(r => `$${esc(r.ticker)}: ${esc(r.note)}`).join(' ')}</p>` : ''}</section>`;
 }
@@ -353,7 +353,7 @@ function tabOverview(p) {
   const pr = profileOf(p), C = Q(p), sym = esc(C.sym), sp = splitOf(p.teamBps), pct = n => `${(n / SUPPLY * 100).toFixed(n / SUPPLY * 100 % 1 ? 1 : 0)}%`, use = p.tokenUseCase && p.tokenUseCase !== 'none' ? p.tokenUseCase : '';
   const links = SOCIALS.filter(s => safeUrl(pr.links && pr.links[s[0]])).map(s => `<a class="link-card" href="${esc(safeUrl(pr.links[s[0]]))}" target="_blank" rel="noopener">${ICONS[s[2]]}<span><b>${s[1]}</b><span>${esc(hostOf(pr.links[s[0]]))}</span></span></a>`).join('');
   const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
-  return `<div class="ov"><div class="ov-a">${tabHead('About', prFrom(p))}<div class="md">${md(pr.description) || `<p>${esc(p.idea)}</p>`}</div>
+  return `<div class="ov"><div class="ov-a">${tabHead('About', prFrom(p))}<div class="md">${md(pr.description) || `<p class="quiet">The founder has not written a description yet.</p>`}</div>
       <div class="tab-h sub"><h2>What the token does</h2></div><p class="use">${use ? esc(use) : 'None. The founder listed no use for the token: this is a bet on the team.'}</p></div>
     <div class="ov-b"><div class="tab-h sub"><h2>The token</h2></div><dl class="kv kv-wide">
       ${row('Supply', '<span class="num">1,000,000,000</span>, mint and freeze revoked at seeding')}${row('Backers', `<span class="num">${pct(sp.backers)}</span>, claimable at seeding`)}${row('Pool', `<span class="num">${pct(sp.pool)}</span> with the whole raise, locked for good`)}
@@ -529,12 +529,12 @@ function afterTab(p, body) {
   if (rf) {
     const err = $('[data-reperr]', rf), ct = $('[data-repct]', rf);
     rf.oninput = () => { err.textContent = ''; ct.textContent = `${rf.b.value.length} / 600`; };
-    rf.onsubmit = async e => { e.preventDefault(); const b = rf.b.value.trim(), btn = $('button', rf); if (b.length < 20) { err.textContent = 'Say what happened, in at least 20 characters.'; rf.b.focus(); return; }
+    rf.onsubmit = async e => { e.preventDefault(); const b = rf.b.value.trim(), btn = $('button', rf); if (!b) { err.textContent = 'Say what happened, in at least 20 characters.'; rf.b.focus(); return; }
       btn.disabled = true; try { await fileReport(p, b); toast('Report sent'); renderTab(p); refreshTabLabels(p); } catch (x) { err.textContent = x.message || 'The report was not sent.'; btn.disabled = false; } };
   }
   body.onclick = async e => {
     const fl = e.target.closest('[data-flag]'), tk = e.target.closest('[data-takeover]'), dm = e.target.closest('[data-dismiss]'); if (!fl && !tk && !dm) return;
-    if (fl) { if (!confirm(`Flag ${p.name} for fraud? Buying stops and the founder's X account is blacklisted. This is an on-chain instruction from the admin wallet.`)) return; await adminFlag(p, fl.dataset.flag); }
+    if (fl) { if (!confirm(`Flag ${p.name} for fraud? Buying stops and the founder wallet is blacklisted, with the X account if one is linked. This is an on-chain instruction from the admin wallet.`)) return; await adminFlag(p, fl.dataset.flag); }
     else if (tk) { const to = prompt('The wallet that takes over the payout: creator fees and team unlocks go there from now on.', ''); if (!to) return; if (!B58.test(to.trim())) return toast('That is not a Solana address.'); const label = prompt('A name for it, shown on the page (for example "Backer multisig, 3 of 5").', 'Backer multisig') || 'Backers'; await adminTakeover(p, tk.dataset.takeover, to.trim(), label); }
     else await dismissReport(p, dm.dataset.dismiss);
   };
@@ -655,6 +655,13 @@ function floatChip(p, amt) {
 function bindRail(p) {
   const box = detailBox, dc = $('[data-dclaim]', box); if (dc) dc.onclick = () => claim(p, dc);
   const cb = $('[data-cancel]', box); if (cb) cb.onclick = async () => { if (!confirm(`Cancel the ${p.name} raise? Every backer gets a refund, fee included, and the raise cannot reopen.`)) return; cb.disabled = true; await cancelRaise(find(p.id) || p); };
+  const lx = $('[data-linkx]', box); if (lx) lx.onclick = async () => {   // the founder links an X account to a raise that is already open
+    const cur = find(p.id) || p, l = xAdapter.of();
+    if (!l) { openXDialog(); return; }
+    lx.disabled = true; lx.textContent = 'Confirm in wallet…';
+    try { await adapter.linkX(cur); cur.xAccount = Object.assign({ handle: l.handle, verified: !l.demo && !l.typed, typed: !!l.typed, createdAt: l.createdAt || null, followers: l.followers != null ? l.followers : null }); toast(`@${l.handle} is linked to ${cur.name}`); save(); renderDetail(true); }
+    catch (e) { toast(e.message); lx.disabled = false; lx.textContent = 'Link your X'; }
+  };
   const cf = $('[data-claimfees]', box); if (cf) cf.onclick = async () => { cf.disabled = true; cf.textContent = 'Claiming…'; await claimCreatorFees(find(p.id) || p); };
   const ck = $('[data-crank]', box); if (ck) ck.onclick = async () => { ck.disabled = true; ck.textContent = 'Running…'; const cur = find(p.id) || p; cur.crankAt = Date.now(); const ok = await seedCrank(cur, true); if (!ok && detailBox) { const b = $('[data-crank]', detailBox); if (b) { b.disabled = false; b.textContent = 'Run the next step'; } } };
   const panel = $('[data-trade]', box), inp = panel && $('#ppAmt', panel); pg.syncTrade = null; if (!inp) return;

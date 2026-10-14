@@ -63,9 +63,11 @@ pub struct OpenParams {
     pub team_bps: u16,
     pub schedule: Vec<Tranche>,
     pub payout_wallet: Pubkey,
-    pub x_handle_hash: [u8; 32],
-    pub attest_expiry: u64,   // unix seconds
+    pub x: Option<XAttest>,   // the X account, when the founder links one at opening
 }
+/// an X attestation: the attestor signed (founder ‖ handle hash ‖ expiry) in the ed25519 instruction just before
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct XAttest { pub handle_hash: [u8; 32], pub expiry: u64 }
 
 #[program]
 pub mod seed {
@@ -132,14 +134,25 @@ pub mod seed {
     }
 
     pub fn open_raise(ctx: Context<OpenRaise>, p: OpenParams) -> Result<()> {
-        let c = &ctx.accounts.config; let now = Clock::get()?.unix_timestamp;
-        // the X attestation: signed by the attestor for this founder and handle, not expired, verified just before
-        require!((p.attest_expiry as i64) > now, SeedError::AttestationExpired);
-        let msg = attest::expected_message(&ctx.accounts.founder.key(), &p.x_handle_hash, p.attest_expiry);
-        let ix_sysvar = ctx.accounts.instructions.to_account_info();
-        let ix_index = anchor_lang::solana_program::sysvar::instructions::load_current_index_checked(&ix_sysvar)?;
-        attest::verify(&ix_sysvar, ix_index, &c.attestor, &msg)?;
-        require!(ctx.accounts.blacklist.data_is_empty(), SeedError::Blacklisted);
+        let c = &ctx.accounts.config; let now = Clock::get()?.unix_timestamp; let founder = ctx.accounts.founder.key();
+        // the X account is optional. With one, the attestation is checked and the handle must not be blacklisted
+        if let Some(x) = &p.x {
+            check_attest(&ctx.accounts.instructions.to_account_info(), &c.attestor, &founder, x, now)?;
+            let bl = ctx.remaining_accounts.first().ok_or(SeedError::XBlacklistMissing)?;
+            require!(bl.key() == blacklist_key(&x.handle_hash) && bl.data_is_empty(), SeedError::Blacklisted);
+        }
+        require!(ctx.accounts.wallet_blacklist.data_is_empty(), SeedError::Blacklisted);
+        // one live raise per wallet: the founder's record names the last one, which must have left Live
+        {
+            let fs = &mut ctx.accounts.founder_state;
+            if fs.wallet == Pubkey::default() { fs.wallet = founder; fs.bump = ctx.bumps.founder_state; }
+            if fs.live_raise != Pubkey::default() {
+                let prev = ctx.accounts.prev_raise.as_ref().ok_or(SeedError::PrevRaiseMissing)?;
+                require!(prev.key() == fs.live_raise, SeedError::PrevRaiseMissing);
+                require!(prev.status != RaiseStatus::Live || now >= prev.ends_at, SeedError::OneLiveRaise);
+            }
+            fs.live_raise = ctx.accounts.raise.key();
+        }
         // the terms
         require!(!p.name.is_empty() && p.name.len() <= MAX_NAME && !p.ticker.is_empty() && p.ticker.len() <= MAX_TICKER, SeedError::BadName);
         require!(p.target > 0, SeedError::ZeroTarget);
@@ -162,7 +175,7 @@ pub mod seed {
 
         anchor_spl::associated_token::create(CpiContext::new(ctx.accounts.associated_token_program.to_account_info(), anchor_spl::associated_token::Create { payer: ctx.accounts.founder.to_account_info(), associated_token: ctx.accounts.escrow.to_account_info(), authority: ctx.accounts.raise.to_account_info(), mint: ctx.accounts.pair_mint.to_account_info(), system_program: ctx.accounts.system_program.to_account_info(), token_program: ctx.accounts.token_program.to_account_info() }))?;
         let r = &mut ctx.accounts.raise;
-        r.founder = ctx.accounts.founder.key(); r.nonce = p.nonce; r.x_handle_hash = p.x_handle_hash; r.pair_mint = pair;
+        r.founder = founder; r.nonce = p.nonce; r.x_handle_hash = p.x.as_ref().map(|x| x.handle_hash); r.pair_mint = pair;
         r.target = p.target; r.target_usd_cents = target_usd_cents; r.sol_usd_cents = sol_usd_cents; r.time_unit = c.unit();
         r.fee_bps = c.fee_bps; r.creator_share_bps = c.creator_share_bps; r.team_bps = p.team_bps; r.schedule = if p.team_bps > 0 { p.schedule.clone() } else { vec![] };
         r.payout_wallet = p.payout_wallet; r.pending_payout = None; r.payout_effective_at = 0;
@@ -171,12 +184,27 @@ pub mod seed {
         r.mint = Pubkey::default(); r.pool = Pubkey::default(); r.position = Pubkey::default(); r.position_nft_mint = Pubkey::default();
         r.team_claimed = 0; r.blacklisted = false; r.flagged_at = 0; r.takeover_to = None; r.takeover_at = 0;
         r.name = p.name.clone(); r.ticker = p.ticker.clone(); r.bump = ctx.bumps.raise;
-        emit!(RaiseOpened { raise: r.key(), founder: r.founder, x_handle_hash: p.x_handle_hash, pair_mint: pair, target: p.target, target_usd_cents, sol_usd_cents,
+        emit!(RaiseOpened { raise: r.key(), founder: r.founder, x_handle_hash: r.x_handle_hash, pair_mint: pair, target: p.target, target_usd_cents, sol_usd_cents,
             team_bps: p.team_bps, payout_wallet: p.payout_wallet, opened_at: now, ends_at: r.ends_at, name: p.name, ticker: p.ticker, schedule: r.schedule.clone() });
         Ok(())
     }
 
     /// a buy: `amount` goes into the raise, trimmed to what fits; the fee rides on top and is held beside it
+    /// the founder links an X account to a raise that is live, filled or seeded, with the same attestation open_raise takes
+    pub fn link_x(ctx: Context<LinkX>, x: XAttest) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp; let c = &ctx.accounts.config; let founder = ctx.accounts.founder.key();
+        let r = &ctx.accounts.raise;
+        require!(r.x_handle_hash.is_none(), SeedError::XAlreadyLinked);
+        require!(r.status != RaiseStatus::Refunded, SeedError::RaiseOver);
+        check_attest(&ctx.accounts.instructions.to_account_info(), &c.attestor, &founder, &x, now)?;
+        let bl = ctx.remaining_accounts.first().ok_or(SeedError::XBlacklistMissing)?;
+        require!(bl.key() == blacklist_key(&x.handle_hash) && bl.data_is_empty(), SeedError::Blacklisted);
+        let r = &mut ctx.accounts.raise;
+        r.x_handle_hash = Some(x.handle_hash);
+        emit!(XLinked { raise: r.key(), founder, x_handle_hash: x.handle_hash, at: now });
+        Ok(())
+    }
+
     pub fn contribute(ctx: Context<Contribute>, amount: u64) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
         let r = &mut ctx.accounts.raise;
@@ -414,12 +442,22 @@ pub mod seed {
         Ok(())
     }
 
-    /// admin: the raise is flagged, buying stops, and the founder's X handle is blacklisted from opening another
-    pub fn admin_flag_fraud(ctx: Context<AdminFlag>) -> Result<()> {
+    /// admin: the raise is flagged, buying stops, and the founder wallet is blacklisted from opening another, with the
+    /// X account too when one is linked (its blacklist account comes as the first remaining account)
+    pub fn admin_flag_fraud<'info>(ctx: Context<'_, '_, '_, 'info, AdminFlag<'info>>) -> Result<()> {
         let now = Clock::get()?.unix_timestamp; let r = &mut ctx.accounts.raise;
         r.blacklisted = true; r.flagged_at = now;
-        let b = &mut ctx.accounts.blacklist; b.handle_hash = r.x_handle_hash; b.raise = r.key(); b.at = now; b.bump = ctx.bumps.blacklist;
-        emit!(FraudFlagged { raise: r.key(), by: ctx.accounts.admin.key(), at: now });
+        let raise_key = r.key(); let founder = r.founder; let hash = r.x_handle_hash;
+        let payer = ctx.accounts.admin.to_account_info(); let sp = ctx.accounts.system_program.to_account_info();
+        let wb = ctx.accounts.wallet_blacklist.to_account_info();
+        if wb.data_is_empty() { make_blacklist(&wb, founder.to_bytes(), ctx.bumps.wallet_blacklist, raise_key, now, &payer, &sp)?; }
+        if let Some(h) = hash {
+            let xb = ctx.remaining_accounts.first().ok_or(SeedError::XBlacklistMissing)?;
+            let (key, bump) = Pubkey::find_program_address(&[BLACKLIST_SEED, &h], &crate::ID);
+            require!(xb.key() == key, SeedError::XBlacklistMissing);
+            if xb.data_is_empty() { make_blacklist(xb, h, bump, raise_key, now, &payer, &sp)?; }
+        }
+        emit!(FraudFlagged { raise: raise_key, founder, x_handle_hash: hash, by: ctx.accounts.admin.key(), at: now });
         Ok(())
     }
 
@@ -436,6 +474,23 @@ pub mod seed {
 fn refund(r: &mut Account<Raise>, reason: RefundReason, now: i64) -> Result<()> {
     r.status = RaiseStatus::Refunded; r.refund_reason = Some(reason);
     emit!(RaiseRefunded { raise: r.key(), reason: reason as u8, at: now });
+    Ok(())
+}
+
+// ---------------------------------------------------------------- helpers
+fn check_attest(ix_sysvar: &AccountInfo, attestor: &Pubkey, founder: &Pubkey, x: &XAttest, now: i64) -> Result<()> {
+    require!((x.expiry as i64) > now, SeedError::AttestationExpired);
+    let msg = attest::expected_message(founder, &x.handle_hash, x.expiry);
+    let ix_index = anchor_lang::solana_program::sysvar::instructions::load_current_index_checked(ix_sysvar)?;
+    attest::verify(ix_sysvar, ix_index, attestor, &msg)
+}
+fn blacklist_key(subject: &[u8; 32]) -> Pubkey { Pubkey::find_program_address(&[BLACKLIST_SEED, subject], &crate::ID).0 }
+/// a Blacklist account at its PDA, made by hand so the wallet's and the handle's can share one instruction
+fn make_blacklist<'info>(acc: &AccountInfo<'info>, subject: [u8; 32], bump: u8, raise: Pubkey, at: i64, payer: &AccountInfo<'info>, sp: &AccountInfo<'info>) -> Result<()> {
+    let seeds: &[&[u8]] = &[BLACKLIST_SEED, &subject, &[bump]];
+    let space = 8 + Blacklist::INIT_SPACE;
+    anchor_lang::system_program::create_account(CpiContext::new_with_signer(sp.clone(), anchor_lang::system_program::CreateAccount { from: payer.clone(), to: acc.clone() }, &[seeds]), Rent::get()?.minimum_balance(space), space as u64, &crate::ID)?;
+    Blacklist { subject, raise, at, bump }.try_serialize(&mut &mut acc.try_borrow_mut_data()?[..])?;
     Ok(())
 }
 
@@ -474,22 +529,35 @@ pub struct ResetConfig<'info> {
 #[derive(Accounts)]
 #[instruction(p: OpenParams)]
 pub struct OpenRaise<'info> {
-    #[account(seeds = [CONFIG_SEED], bump = config.bump)] pub config: Account<'info, Config>,
+    #[account(seeds = [CONFIG_SEED], bump = config.bump)] pub config: Box<Account<'info, Config>>,
     /// CHECK: the Pyth SOL/USD price account the config names; parsed and checked in pyth.rs (unused for a USDC raise)
     #[account(address = config.sol_feed @ SeedError::BadPriceAccount)] pub sol_feed: UncheckedAccount<'info>,
     #[account(init, payer = founder, space = 8 + Raise::INIT_SPACE, seeds = [RAISE_SEED, founder.key().as_ref(), &p.nonce.to_le_bytes()], bump)]
-    pub raise: Account<'info, Raise>,
+    pub raise: Box<Account<'info, Raise>>,
     #[account(mut)] pub founder: Signer<'info>,
-    pub pair_mint: Account<'info, Mint>,
+    pub pair_mint: Box<Account<'info, Mint>>,
     /// CHECK: the escrow for buys, the raise PDA's associated token account for the pair asset; created here
     #[account(mut)] pub escrow: UncheckedAccount<'info>,
-    /// CHECK: must not exist; admin_flag_fraud creates it for a blacklisted handle
-    #[account(seeds = [BLACKLIST_SEED, &p.x_handle_hash], bump)] pub blacklist: UncheckedAccount<'info>,
+    /// CHECK: must not exist; admin_flag_fraud creates it for a blacklisted founder wallet
+    #[account(seeds = [BLACKLIST_SEED, founder.key().as_ref()], bump)] pub wallet_blacklist: UncheckedAccount<'info>,
+    /// the founder's record of its live raise; made the first time
+    #[account(init_if_needed, payer = founder, space = 8 + FounderState::INIT_SPACE, seeds = [FOUNDER_SEED, founder.key().as_ref()], bump)] pub founder_state: Box<Account<'info, FounderState>>,
+    /// the raise the founder's record names as live, when it names one
+    pub prev_raise: Option<Box<Account<'info, Raise>>>,
     /// CHECK: the instructions sysvar, read for the ed25519 instruction before this one
     #[account(address = INSTRUCTIONS_ID)] pub instructions: UncheckedAccount<'info>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct LinkX<'info> {
+    #[account(mut, has_one = founder @ SeedError::NotFounder)] pub raise: Account<'info, Raise>,
+    pub founder: Signer<'info>,
+    #[account(seeds = [CONFIG_SEED], bump = config.bump)] pub config: Account<'info, Config>,
+    /// CHECK: the instructions sysvar, read for the ed25519 instruction before this one
+    #[account(address = INSTRUCTIONS_ID)] pub instructions: UncheckedAccount<'info>,
 }
 
 #[derive(Accounts)]
@@ -669,6 +737,7 @@ pub struct AdminFlag<'info> {
     #[account(mut)] pub raise: Account<'info, Raise>,
     #[account(seeds = [CONFIG_SEED], bump = config.bump, has_one = admin @ SeedError::NotAdmin)] pub config: Account<'info, Config>,
     #[account(mut)] pub admin: Signer<'info>,
-    #[account(init, payer = admin, space = 8 + Blacklist::INIT_SPACE, seeds = [BLACKLIST_SEED, &raise.x_handle_hash], bump)] pub blacklist: Account<'info, Blacklist>,
+    /// CHECK: the founder wallet's blacklist account at seeds ["blacklist", founder]; created here if it does not exist
+    #[account(mut, seeds = [BLACKLIST_SEED, raise.founder.as_ref()], bump)] pub wallet_blacklist: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
 }

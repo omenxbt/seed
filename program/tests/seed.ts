@@ -64,13 +64,30 @@ describe('seed', () => {
     await expectFail(bad([{ dayOffset: 90, bps: 5000 }]), 'ScheduleSum');
   });
 
-  it('opens a raise with a verified X attestation', async () => {
-    const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce, name: 'Kiln', ticker: 'KILN', target: sol(0.2), deadline: span(86400), teamBps: 1000, schedule: [{ dayOffset: 90, bps: 5000 }, { dayOffset: 180, bps: 5000 }], payoutWallet: me.publicKey });
+  it('opens a raise with a wallet alone, no X account', async () => {
+    const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce, name: 'Kiln', ticker: 'KILN', target: sol(0.2), deadline: span(86400), teamBps: 1000, schedule: [{ dayOffset: 90, bps: 5000 }, { dayOffset: 180, bps: 5000 }], payoutWallet: me.publicKey });
+    assert.equal(ixs.length, 1, 'no attestation instruction without an X account');
     await c.send(ixs); raise = rk; r = await c.fetchRaise(raise);
     assert.equal(r.teamBps, 1000); assert.ok(r.target.eq(sol(0.2))); assert.deepEqual(Object.keys(r.status)[0], 'live');
     // the SOL price came from Pyth's sponsored feed: the raise records it, and the USD target is 0.2 SOL at that price
     const px = Number(r.solUsdCents); assert.ok(px > 1000 && px < 100_000, `a SOL price from Pyth, got ${px} cents`);
     assert.ok(r.targetUsdCents.eq(new BN(Math.floor(0.2 * px))), 'a 0.2 SOL target at the Pyth price');
+    assert.equal(r.xHandleHash, null, 'no X account yet');
+  });
+
+  it('one live raise per wallet: a second open is refused until the first has left Live', async () => {
+    const { ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce: nonce + 9, name: 'Second', ticker: 'TWO', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
+    await expectFail(c.send(ixs), 'OneLiveRaise');
+  });
+
+  it('link_x: the founder links an X account to the live raise, once, with a valid attestation', async () => {
+    const fake = Keypair.generate(), hash = handleHash(handle), expiry = Math.floor(Date.now() / 1000) + 3600;
+    const bad = await c.linkX(raise, me.publicKey, attestor, handle); bad[0] = attestIx(fake, me.publicKey, hash, expiry);
+    await expectFail(c.send(bad), 'BadAttestation');
+    await expectFail(c.send(await c.linkX(raise, backer.publicKey, attestor, handle), [backer]), 'NotFounder');
+    await c.send(await c.linkX(raise, me.publicKey, attestor, handle));
+    r = await c.fetchRaise(raise); assert.deepEqual(Buffer.from(r.xHandleHash), hash);
+    await expectFail(c.send(await c.linkX(raise, me.publicKey, attestor, handle)), 'XAlreadyLinked');
   });
 
   it('takes buys with the fee on top, trims the last one, and fills', async () => {
@@ -172,25 +189,37 @@ describe('seed', () => {
     r = await c.fetchRaise(raise); assert.ok(r.payoutWallet.equals(to)); assert.equal(r.pendingPayout, null); assert.ok(r.takeoverTo.equals(to));
   }));
 
-  describe('a cancelled raise', () => {
-    let raise2: web3.PublicKey; const handle2 = handle + '_2';
+  describe('a cancelled raise, opened by a fresh founder wallet', () => {
+    let raise2: web3.PublicKey; const handle2 = handle + '_2', founder2 = Keypair.generate();
     it('refunds every backer exactly what they paid', async () => {
-      const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle2, { nonce: nonce + 3, name: 'Moss', ticker: 'MOSS', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
-      await c.send(ixs); raise2 = rk;
+      await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: founder2.publicKey, lamports: 0.05 * LAMPORTS_PER_SOL })]);
+      const { raise: rk, ixs } = await c.openRaise(founder2.publicKey, WSOL, attestor, handle2, { nonce: nonce + 3, name: 'Moss', ticker: 'MOSS', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: founder2.publicKey });
+      assert.equal(ixs.length, 2, 'the attestation rides in front when an X account is linked at opening');
+      await c.send(ixs, [founder2]); raise2 = rk;
+      const r2o = await c.fetchRaise(raise2); assert.deepEqual(Buffer.from(r2o.xHandleHash), handleHash(handle2));
       const ata = getAssociatedTokenAddressSync(NATIVE_MINT, backer.publicKey), before = (await getAccount(provider.connection, ata)).amount;
       await c.send([await c.contribute(raise2, WSOL, backer.publicKey, sol(0.02))], [backer]);
       await expectFail(c.send([await c.settle(raise2)]), 'DeadlineNotPassed');
       await expectFail(c.send([await c.cancelRaise(raise2, backer.publicKey)], [backer]), 'NotFounder');
-      await c.send([await c.cancelRaise(raise2, me.publicKey)]);
+      await c.send([await c.cancelRaise(raise2, founder2.publicKey)], [founder2]);
       const r2 = await c.fetchRaise(raise2); assert.deepEqual(Object.keys(r2.status)[0], 'refunded'); assert.deepEqual(Object.keys(r2.refundReason)[0], 'cancelled');
       await c.send([await c.claimRefund(raise2, WSOL, backer.publicKey)], [backer]);
       assert.equal((await getAccount(provider.connection, ata)).amount, before, 'the buy and its fee came back');
+      await expectFail(c.send(await c.linkX(raise2, founder2.publicKey, attestor, handle2 + 'x'), [founder2]), 'XAlreadyLinked');
     });
-    it('admin: flagging fraud blacklists the X handle', asAdmin(async () => {
-      await c.send([await c.adminFlagFraud(raise2, me.publicKey, handleHash(handle2))]);
+    it('admin: flagging fraud blacklists the founder wallet and its X handle; other wallets are untouched', asAdmin(async () => {
+      await c.send([await c.adminFlagFraud(raise2, me.publicKey, founder2.publicKey, handleHash(handle2))]);
       const r2 = await c.fetchRaise(raise2); assert.isTrue(r2.blacklisted);
-      const { ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle2, { nonce: nonce + 4, name: 'Again', ticker: 'AGN', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
-      await expectFail(c.send(ixs), 'Blacklisted');
+      // the wallet, with or without an X account
+      let o = await c.openRaise(founder2.publicKey, WSOL, null, null, { nonce: nonce + 4, name: 'Again', ticker: 'AGN', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: founder2.publicKey });
+      await expectFail(c.send(o.ixs, [founder2]), 'Blacklisted');
+      // the handle, from another wallet (the backer has no live raise and is not blacklisted)
+      o = await c.openRaise(backer.publicKey, WSOL, attestor, handle2, { nonce: nonce + 5, name: 'Again', ticker: 'AGN', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: backer.publicKey });
+      await expectFail(c.send(o.ixs, [backer]), 'Blacklisted');
+      // and the same wallet without the handle opens fine
+      o = await c.openRaise(backer.publicKey, WSOL, null, null, { nonce: nonce + 6, name: 'Clean', ticker: 'CLN', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: backer.publicKey });
+      await c.send(o.ixs, [backer]); assert.deepEqual(Object.keys((await c.fetchRaise(o.raise)).status)[0], 'live');
+      await c.send([await c.cancelRaise(o.raise, backer.publicKey)], [backer]);
     }));
   });
 });

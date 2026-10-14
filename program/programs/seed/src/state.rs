@@ -4,6 +4,7 @@ pub const CONFIG_SEED: &[u8] = b"config";
 pub const RAISE_SEED: &[u8] = b"raise";
 pub const CONTRIB_SEED: &[u8] = b"contrib";
 pub const BLACKLIST_SEED: &[u8] = b"blacklist";
+pub const FOUNDER_SEED: &[u8] = b"founder";
 
 pub const BPS: u64 = 10_000;
 pub const SUPPLY: u64 = 1_000_000_000;      // whole tokens
@@ -62,7 +63,7 @@ pub enum RefundReason { Missed, Cancelled, Timeout }
 pub struct Raise {
     pub founder: Pubkey,
     pub nonce: u64,
-    pub x_handle_hash: [u8; 32],
+    pub x_handle_hash: Option<[u8; 32]>,   // the linked X account, if any; sha256 of the lowercased handle
     pub pair_mint: Pubkey,
     pub target: u64,                  // base units of the pair asset
     pub target_usd_cents: u64,
@@ -132,8 +133,18 @@ pub struct Contribution {
 #[account]
 #[derive(InitSpace)]
 pub struct Blacklist {
-    pub handle_hash: [u8; 32],
-    pub raise: Pubkey,
+    pub subject: [u8; 32],   // a founder wallet, or the sha256 of an X handle
+    pub raise: Pubkey,       // the raise it was flagged on
     pub at: i64,
+    pub bump: u8,
+}
+
+/// one per founder wallet: the raise it has live, so a wallet opens one at a time. Checked and refreshed by open_raise;
+/// the raise named here is passed in and must have left Live (filled, refunded, cancelled, or past its deadline).
+#[account]
+#[derive(InitSpace)]
+pub struct FounderState {
+    pub wallet: Pubkey,
+    pub live_raise: Pubkey,
     pub bump: u8,
 }

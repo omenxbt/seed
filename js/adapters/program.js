@@ -40,7 +40,8 @@ var chain = {
     config() { return chain.find([enc('config')]); },
     raise(founder, nonce) { return chain.find([enc('raise'), founder.toBytes(), le8(nonce)]); },
     contribution(raise, wallet) { return chain.find([enc('contrib'), raise.toBytes(), wallet.toBytes()]); },
-    blacklist(hash) { return chain.find([enc('blacklist'), hash]); },
+    blacklist(subject) { return chain.find([enc('blacklist'), subject instanceof Uint8Array ? subject : subject.toBytes()]); },   // a wallet, or a handle's hash
+    founderState(founder) { return chain.find([enc('founder'), founder.toBytes()]); },
     poolVault(raise) { return chain.find([enc('pool'), raise.toBytes()]); },
     teamVault(raise) { return chain.find([enc('team'), raise.toBytes()]); },
     stage(raise) { return chain.find([enc('stage'), raise.toBytes()]); },
@@ -109,6 +110,7 @@ var chain = {
     p.payoutWallet = a.payoutWallet.toBase58(); p.pendingPayoutWallet = a.pendingPayout ? a.pendingPayout.toBase58() : null; p.payoutEffectiveAt = a.pendingPayout ? t(a.payoutEffectiveAt) : null;
     p.targetUsd = Number(a.targetUsdCents) / 100; p.solUsdAtOpen = Number(a.solUsdCents) ? Number(a.solUsdCents) / 100 : p.solUsdAtOpen;
     p.teamClaimed = Number(a.teamClaimed.toString()) / 1e6; p.blacklisted = !!a.blacklisted;
+    if (!a.xHandleHash && p.xAccount && p.xAccount.handle && p.live) p.xAccount = { handle: '', verified: false, createdAt: null, followers: null };
     p.mint = a.mint && !a.mint.equals(this.w.PublicKey.default) ? a.mint.toBase58() : null; p.pool = a.pool && !a.pool.equals(this.w.PublicKey.default) ? a.pool.toBase58() : null;
     p.position = a.position && !a.position.equals(this.w.PublicKey.default) ? a.position.toBase58() : null; p.positionNftMint = a.positionNftMint && !a.positionNftMint.equals(this.w.PublicKey.default) ? a.positionNftMint.toBase58() : null;
     if (p.status === 'seeded' && !p.fees) p.fees = { volume: 0, founderClaimed: 0, seedClaimed: 0 };
@@ -120,12 +122,12 @@ var chain = {
   /* an indexed row (Supabase) onto a raise object; the chain fills in the rest when the page is opened */
   fromRow(r, prof) {
     const q = r.pair_mint === SEED.pairMints.USDC ? 'USDC' : 'SOL', me = state.wallet && state.wallet.pk, pr = prof && prof.profile || {}, m = pr.model || {};
-    const p = { id: r.id, address: r.address, live: true, name: r.name, ticker: r.ticker, idea: m.idea || (pr.profile && pr.profile.tagline) || '', q, target: Number(r.target), targetUsd: Number(r.target_usd), solUsdAtOpen: r.sol_usd_at_open ? Number(r.sol_usd_at_open) : SEED.demoSolUsd,
+    const p = { id: r.id, address: r.address, live: true, name: r.name, ticker: r.ticker, q, target: Number(r.target), targetUsd: Number(r.target_usd), solUsdAtOpen: r.sol_usd_at_open ? Number(r.sol_usd_at_open) : SEED.demoSolUsd,
       raised: Number(r.raised), backers: r.backers, openedAt: Date.parse(r.opened_at), endsAt: Date.parse(r.ends_at), status: r.status, seedStep: r.seed_step, refundReason: r.refund_reason, filledAt: r.filled_at ? Date.parse(r.filled_at) : null, seededAt: r.seeded_at ? Date.parse(r.seeded_at) : null, resolvedAt: r.resolved_at ? Date.parse(r.resolved_at) : null,
-      feeBps: r.fee_bps, creatorShareBps: r.creator_share_bps, teamBps: r.team_bps, teamSchedule: r.team_schedule, roadmap: m.roadmap || [], tokenUseCase: m.tokenUseCase || 'none', xAccount: m.xAccount || { handle: r.x_id ? String(r.x_id).replace(/^dev:/, '') : '', verified: false, typed: true, createdAt: null, followers: null }, pastRaises: [],
+      feeBps: r.fee_bps, creatorShareBps: r.creator_share_bps, teamBps: r.team_bps, teamSchedule: r.team_schedule, roadmap: m.roadmap || [], tokenUseCase: m.tokenUseCase || 'none', xAccount: r.x_id ? (m.xAccount && m.xAccount.handle ? m.xAccount : { handle: String(r.x_id).replace(/^dev:/, ''), verified: !String(r.x_id).startsWith('dev:'), typed: String(r.x_id).startsWith('dev:'), createdAt: null, followers: null }) : { handle: '', verified: false, createdAt: null, followers: null }, pastRaises: [],
       payoutWallet: r.payout_wallet, pendingPayoutWallet: r.pending_payout, payoutEffectiveAt: r.payout_effective_at ? Date.parse(r.payout_effective_at) : null, reports: [], blacklisted: r.blacklisted, flag: r.flag, takeover: r.takeover,
       mint: r.mint, pool: r.pool, position: r.position, fees: r.status === 'seeded' ? { volume: Number(r.fees_volume), founderClaimed: Number(r.fees_founder_claimed), seedClaimed: Number(r.fees_seed_claimed) } : undefined, teamClaimed: Number(r.team_claimed),
-      founderWallet: r.founder, mine: !!me && r.founder === me, creator: r.founder, hist: [], buys: [], profile: pr.profile || { tagline: '', description: '', links: {}, team: [], founder: { name: 'Founder', wallet: r.founder, pastLaunches: [] }, updates: [], chat: [] }, dayMs: m.dayMs || D };
+      founderWallet: r.founder, mine: !!me && r.founder === me, creator: r.founder, hist: [], buys: [], profile: pr.profile || { description: '', links: {}, team: [], founder: { name: 'Founder', wallet: r.founder, pastLaunches: [] }, updates: [], chat: [] }, dayMs: m.dayMs || D };
     if (p.profile && !p.profile.founder) p.profile.founder = { name: 'Founder', wallet: r.founder, pastLaunches: [] };
     return p;
   },
@@ -171,23 +173,37 @@ var chain = {
   later(p) { setTimeout(() => this.sync(p).then(() => { save(); renderAll(); if (typeof renderDetail === 'function' && detailBox) renderDetail(true); }).catch(() => {}), 0); },
 
   /* ---- writes */
+  /* the attestation for the linked X account, from the backend: the ed25519 instruction and the program's argument */
+  async attestation() {
+    const x = xAdapter.of(); if (!x) return null;
+    const att = await supa.call('x-attest', { handle: x.handle }), bs58 = this.lib.utils.bytes.bs58, hash = hexBytes(att.handleHash);
+    const ix = this.w.Ed25519Program.createInstructionWithPublicKey({ publicKey: bs58.decode(att.attestor), message: bs58.decode(att.message), signature: bs58.decode(att.signature) });
+    return { ix, hash, arg: { handleHash: Array.from(hash), expiry: new this.lib.BN(att.expiry) }, remaining: [{ pubkey: this.pda.blacklist(hash), isSigner: false, isWritable: false }], handle: x.handle, typed: !!x.typed || !!x.demo };
+  },
   async openRaise(p) {
-    await this.init(); const me = this.me(), x = xAdapter.of();
-    const att = await supa.call('x-attest', { handle: x ? x.handle : '' });
-    const bs58 = this.lib.utils.bytes.bs58, hash = hexBytes(att.handleHash);
-    const attestIx = this.w.Ed25519Program.createInstructionWithPublicKey({ publicKey: bs58.decode(att.attestor), message: bs58.decode(att.message), signature: bs58.decode(att.signature) });
+    await this.init(); const me = this.me(), att = await this.attestation();
     const nonce = Date.now(), raise = this.pda.raise(me, nonce), pairMint = this.pairMint(p), scale = this.cfg.testMode ? 1440 : 1;
     const deadline = Math.max(1, Math.round((p.endsAt - Date.now()) / 1000 / scale));
     const schedule = p.teamBps ? tranchesOf(p.teamSchedule).map(t => ({ dayOffset: t.dayOffset, bps: t.bps })) : [];
-    const ix = await this.program.methods.openRaise({ nonce: new this.lib.BN(nonce), name: p.name, ticker: p.ticker, target: this.units(p, p.target), deadline: new this.lib.BN(deadline), teamBps: p.teamBps, schedule, payoutWallet: this.pk(p.payoutWallet), xHandleHash: Array.from(hash), attestExpiry: new this.lib.BN(att.expiry) })
-      .accounts({ config: this.pda.config(), solFeed: this.pk(PROG.SOL_FEED), raise, founder: me, pairMint, escrow: this.ata(raise, pairMint), blacklist: this.pda.blacklist(hash), instructions: this.pk(PROG.INSTRUCTIONS), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) }).instruction();
-    await this.send([attestIx, ix]); if (this.dry) return;
+    const fs = await this.program.account.founderState.fetchNullable(this.pda.founderState(me));   // the wallet's last live raise, which must have ended
+    const prevRaise = fs && !fs.liveRaise.equals(this.w.PublicKey.default) ? fs.liveRaise : null;
+    const ix = await this.program.methods.openRaise({ nonce: new this.lib.BN(nonce), name: p.name, ticker: p.ticker, target: this.units(p, p.target), deadline: new this.lib.BN(deadline), teamBps: p.teamBps, schedule, payoutWallet: this.pk(p.payoutWallet), x: att ? att.arg : null })
+      .accounts({ config: this.pda.config(), solFeed: this.pk(PROG.SOL_FEED), raise, founder: me, pairMint, escrow: this.ata(raise, pairMint), walletBlacklist: this.pda.blacklist(me), founderState: this.pda.founderState(me), prevRaise, instructions: this.pk(PROG.INSTRUCTIONS), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) })
+      .remainingAccounts(att ? att.remaining : []).instruction();
+    await this.send(att ? [att.ix, ix] : [ix]); if (this.dry) return;
     p.address = raise.toBase58(); p.live = true; p.id = `${p.ticker.toLowerCase()}-${p.address.slice(0, 8).toLowerCase()}`; p.founderWallet = state.wallet.pk; p.creator = state.wallet.pk;
-    if (x) p.xAccount = Object.assign({}, p.xAccount, { handle: x.handle, verified: false, typed: true });
+    p.xAccount = att ? Object.assign({}, p.xAccount, { handle: att.handle, verified: !att.typed, typed: att.typed }) : { handle: '', verified: false, createdAt: null, followers: null };
     // the page's own words go beside the chain's facts; the founder's wallet signs them
-    const model = { idea: p.idea, roadmap: p.roadmap, tokenUseCase: p.tokenUseCase, xAccount: p.xAccount, dayMs: this.cfg.testMode ? 60e3 : D };
+    const model = { roadmap: p.roadmap, tokenUseCase: p.tokenUseCase, xAccount: p.xAccount, dayMs: this.cfg.testMode ? 60e3 : D };
     try { await supa.call('raise-profile', { address: p.address, profile: { profile: p.profile, model } }); this.profiles[p.address] = { address: p.address, founder: state.wallet.pk, profile: { profile: p.profile, model } }; } catch (e) { console.warn('profile not saved:', e.message); }
     await this.sync(p);
+  },
+  /* link_x on a raise opened without an X account */
+  async linkX(p) {
+    await this.init(); const att = await this.attestation(); if (!att) throw new Error('Link an X handle first.');
+    const ix = await this.program.methods.linkX(att.arg).accounts({ raise: this.raiseKey(p), founder: this.me(), config: this.pda.config(), instructions: this.pk(PROG.INSTRUCTIONS) }).remainingAccounts(att.remaining).instruction();
+    await this.send([att.ix, ix]); if (this.dry) return;
+    const prof = this.profiles[p.address]; if (prof && prof.profile && prof.profile.model) { prof.profile.model.xAccount = { handle: att.handle, verified: !att.typed, typed: att.typed }; supa.call('raise-profile', { address: p.address, profile: prof.profile }).catch(() => {}); }
   },
   async contribute(p, pay) {
     await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), wt = this.ata(me, pairMint), amount = this.units(p, pay);
@@ -251,7 +267,8 @@ var chain = {
   },
   async adminFlag(p) {
     await this.init(); const raise = this.raiseKey(p), a = await this.program.account.raise.fetch(raise);
-    await this.send([await this.program.methods.adminFlagFraud().accounts({ raise, config: this.pda.config(), admin: this.me(), blacklist: this.pda.blacklist(Uint8Array.from(a.xHandleHash)), systemProgram: this.pk(PROG.SYSTEM) }).instruction()]); this.later(p);
+    const rem = a.xHandleHash ? [{ pubkey: this.pda.blacklist(Uint8Array.from(a.xHandleHash)), isSigner: false, isWritable: true }] : [];   // the handle's blacklist too, when one is linked
+    await this.send([await this.program.methods.adminFlagFraud().accounts({ raise, config: this.pda.config(), admin: this.me(), walletBlacklist: this.pda.blacklist(a.founder), systemProgram: this.pk(PROG.SYSTEM) }).remainingAccounts(rem).instruction()]); this.later(p);
   },
   async adminTakeover(p, to) {
     await this.init(); await this.send([await this.program.methods.adminApproveTakeover(this.pk(to)).accounts({ raise: this.raiseKey(p), config: this.pda.config(), admin: this.me() }).instruction()]); this.later(p);
@@ -280,6 +297,7 @@ function hexBytes(h) { const out = new Uint8Array(h.length / 2); for (let i = 0;
   live('claimFees', p => chain.claimFees(p));
   live('claimVested', p => chain.claimVested(p));
   live('requestPayoutChange', (p, to) => chain.requestPayoutChange(p, to));
+  live('linkX', p => chain.linkX(p));
   live('report', async (p, kind) => {   // a report is off-chain; the two admin actions are on-chain
     if (kind === 'flag') return chain.adminFlag(p);
     if (kind === 'takeover') return chain.adminTakeover(p, p._takeoverTo);
@@ -291,6 +309,7 @@ function hexBytes(h) { const out = new Uint8Array(h.length / 2); for (let i = 0;
 
 /* the admin handover's second step, offered on the Portfolio to the wallet the admin named; and a line for the admin */
 function renderAdminNote() {
+  renderFootNote();
   const box = $('#adminNote'); if (!box) return;
   if (chain.isPendingAdmin()) {
     box.hidden = false;
@@ -298,4 +317,12 @@ function renderAdminNote() {
     $('[data-accept-admin]', box).onclick = async e => { e.target.disabled = true; e.target.textContent = 'Confirm in wallet…'; try { await chain.acceptAdmin(); toast('This wallet is the Seed admin now.'); } catch (x) { toast(x.message); } renderAll(); };
   } else if (chain.isAdmin()) { box.hidden = false; box.innerHTML = `<p class="quiet" style="margin-top:12px">This wallet is the Seed admin on ${esc(SEED.network)}.</p>`; }
   else box.hidden = true;
+}
+
+/* the footer: a devnet notice while the site is live there; the prototype line only when no program is configured */
+function renderFootNote() {
+  const live = chain.on(), net = SEED.network === 'devnet' ? 'Solana devnet' : 'Solana';
+  $$('[data-foot]').forEach(el => { el.textContent = live
+    ? `Live on ${net}${SEED.network === 'devnet' ? ': real transactions, test SOL with no value, and a day counts as a minute. Demo raises are marked; a connected wallet signs its own transactions.' : '.'}`
+    : 'Prototype. Raise data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.'; });
 }

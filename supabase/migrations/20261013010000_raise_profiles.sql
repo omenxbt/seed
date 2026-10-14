@@ -1,4 +1,4 @@
--- What a raise says about itself and is not on chain: tagline, description, links, roadmap, token use case, team,
+-- What a raise says about itself and is not on chain: description, links, roadmap, token use case, team,
 -- art and deck URLs, limits. One row per raise, keyed by the Raise account's address; written only through the seed
 -- function by the wallet that opened the raise (the chain's founder), public to read.
 create table if not exists public.raise_profiles (

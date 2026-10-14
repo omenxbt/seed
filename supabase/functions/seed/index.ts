@@ -180,8 +180,6 @@ Deno.serve(async (req) => {
         if (!l) throw new Refusal(403, 'Sign in with X first.');
         const { data: xa } = await db.from('x_accounts').select('blacklisted, blacklist_raise').eq('x_id', l.x_id).maybeSingle();
         if (xa?.blacklisted) throw new Refusal(403, `@${l.handle} was flagged for fraud${xa.blacklist_raise ? ` on ${xa.blacklist_raise}` : ''} and cannot open another raise.`);
-        const { count: live } = await db.from('raises').select('*', { count: 'exact', head: true }).eq('x_id', l.x_id).eq('status', 'live');
-        if (live) throw new Refusal(409, `@${l.handle} already has a live raise. One at a time.`);
         const prof = await xProfile(l.x_id);
         await db.from('x_accounts').upsert({ x_id: l.x_id, handle: l.handle, name: l.name, avatar: l.avatar, ...(prof ?? {}), updated_at: new Date().toISOString() });
         const a = await attest(wallet, l.handle);
@@ -203,7 +201,7 @@ Deno.serve(async (req) => {
       }
       case 'raise-report': {
         const raiseId = str(body.raiseId, 80), reason = str(body.reason, 600);
-        if (reason.length < 20) throw new Refusal(400, 'Say what happened, in at least 20 characters.');
+        if (!reason) throw new Refusal(400, 'Say what happened.');
         const { data: r } = await db.from('raises').select('id').eq('id', raiseId).maybeSingle();
         if (!r) throw new Refusal(404, 'That raise is not indexed yet.');
         const { data, error } = await db.from('raise_reports').insert({ raise_id: raiseId, wallet, reason }).select('id').single();

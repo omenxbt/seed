@@ -18,8 +18,9 @@ function riskChecks(p, opts = {}) {
 
   // 1. the founder's X account: the one they signed in with, or the one on the profile
   const xAge = x.createdAt ? (now - x.createdAt) / D : f.xAgeDays;
-  if (!x.handle && !f.x) add('x-age', 'Founder X account', opts.draft ? 'pending' : 'warn', opts.draft ? 'Sign in with X to open; the account age shows here.' : 'No X account is linked to this raise.', fromPr);
-  else if (xAge == null) add('x-age', 'Founder X account', opts.draft ? 'pending' : 'warn', 'Account age is not known yet.', fromPr);
+  if (!x.handle && !f.x) add('x-age', 'Founder X account', 'info', opts.draft ? 'None linked. Optional: linking X adds a verified badge.' : 'None linked. The raise was opened with a wallet.', fromPr);
+  else if (x.typed) add('x-age', 'Founder X account', 'info', `@${x.handle}, typed on devnet and not checked with X.`, fromPr);
+  else if (xAge == null) add('x-age', 'Founder X account', 'info', `@${x.handle || f.x} is linked; the account's age is not known yet.`, fromPr);
   else add('x-age', 'Founder X account', xAge < RISK.xAgeFailDays ? 'fail' : xAge < RISK.xAgeWarnDays ? 'warn' : 'pass',
     `${x.handle ? '@' + x.handle : 'The founder’s X account'} is ${daysTxt(xAge)} old${xAge < RISK.xAgeWarnDays ? `, under ${xAge < RISK.xAgeFailDays ? RISK.xAgeFailDays : RISK.xAgeWarnDays} days` : ''}${x.followers != null ? `, ${Number(x.followers).toLocaleString('en-US')} followers` : ''}.`, x.handle ? fromPr : f.xFrom);
 

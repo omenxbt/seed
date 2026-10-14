@@ -15,7 +15,6 @@ const EXCHANGES = ['Binance', 'Coinbase', 'OKX', 'Kraken', 'Bybit', 'Backpack Ex
 
 const DEMO_PROFILES = {
   osprey: {
-    tagline: 'Text alerts before your perp position gets liquidated.',
     description: `**Osprey watches your perp positions and texts you before they are liquidated.**
 
 Connect a wallet read-only. Osprey reads your open positions on Drift, Jupiter Perps and Zeta every block and works out how far price can move before each one is liquidated. When that distance drops under the buffer you set, you get an SMS. If you don't open it within two minutes, Osprey calls.
@@ -51,7 +50,6 @@ The app is free while the raise is open. After seeding, alerts cost 20 $OSPR a m
 
 
   tidewater: {
-    tagline: 'Index vaults built from tokenized stocks.',
     description: `**Tidewater builds index vaults out of xStocks.**
 
 Deposit USDC and get one token that tracks a basket: the Nasdaq 100 top ten, a dividend basket, or an equal-weight chip basket. Each vault rebalances weekly against Jupiter quotes and holds the xStocks directly, so a holder can always redeem for the underlying tokens.
@@ -85,7 +83,6 @@ Anyone can check what a vault holds at any block. There is no manager discretion
   },
 
   lattice: {
-    tagline: 'Shared DCA vaults for JUP stakers.',
     description: `**Lattice pools JUP stakers into shared DCA vaults.**
 
 A staker picks a target token and a weekly amount. Lattice nets every order in a vault against each other before touching the market, so a thousand small orders become one fill. Stakers keep their voting power the whole time.
@@ -121,7 +118,6 @@ Small DCA orders pay the same fixed costs as large ones. Netting them first cuts
 
 
   halfmoon: {
-    tagline: 'Split a wallet’s staking yield with a friend.',
     description: `**Halfmoon splits staking yield between two wallets.**
 
 Stake SOL once and choose who gets the rewards: all to you, half to a friend, or a fixed amount to a cause each epoch. The principal never moves. Only the rewards are routed.
@@ -145,7 +141,6 @@ A review of the stake-routing program and a year of hosting.`,
   },
 
   quill: {
-    tagline: 'Pay-per-article tips for newsletter writers.',
     description: `**Quill lets readers tip a newsletter writer per article, in USDC, in one tap.**
 
 Writers add one line to their newsletter template. Readers tap the tip link at the end of an issue and pay from any Solana wallet. No account, no card, no minimum.
@@ -179,7 +174,6 @@ Writers who hold $QUILL pay no tipping fee. The fee on everyone else buys $QUILL
   },
 
   ember: {
-    tagline: 'Group bids on NFT auctions.',
     description: `**Ember lets a group pool funds to bid on one NFT auction together.**
 
 Friends join a bid room, each puts in what they want, and Ember bids as one wallet. If the room wins, the NFT sits in a shared vault and each member owns a share. If it loses, everyone is refunded.
@@ -208,15 +202,15 @@ function lite(o) {
   const links = Object.assign({ website: null, x: null, telegram: null, discord: null, github: null }, o.links || {});
   const team = (o.members || []).map(m => ({ name: m[0], role: m[1], x: m[2] || null, github: null, linkedin: null, verified: { x: !!m[2], github: false, domain: false } }));
   return {
-    tagline: o.tagline, description: o.description || `**${o.tagline}**\n\n${o.about || ''}`, links,
+    description: o.description || o.about || '', links,
     team, founder: { name: team[0] ? team[0].name : 'Founder', x: links.x, xAgeDays: o.xAge == null ? 420 : o.xAge, funding: o.funding || { kind: 'exchange', label: 'Coinbase', hoursBeforeLaunch: 24 * 60 }, pastLaunches: [] },
     deck: null, updates: o.updates || [],
     crowd: Object.assign({ top10: 0.33, fresh: 0.15, bundle: null, kols: 1, tracked: 2, repeat: 0.1 }, o.crowd || {}), chat: o.chat || [], watchers: o.watchers || 0
   };
 }
 const LITE = {
-  cobalt: { tagline: 'Battery passports for second-life packs.', about: 'Cobalt records a pack\'s cycles and health on chain, so a used pack sells on its record, not a guess.', links: { website: 'https://cobalt.example', x: 'https://x.com/cobalt_seeddemo', discord: 'https://discord.gg/cobalt-seeddemo', github: 'https://github.com/cobalt-seeddemo' }, members: [['Ruth Adler', 'Founder', 'https://x.com/cobalt_seeddemo'], ['Kenji Mori', 'Hardware'], ['Ola Berg', 'Growth']], updates: [{ title: '400 packs logged', body: 'The Rotterdam yard has 400 packs on passports. Buyers are paying a premium for a full record.', daysAgo: 0.5, author: 'Ruth Adler' }, { title: 'Reader firmware shipped', body: 'The handheld reader writes a pack\'s health straight to its passport.', daysAgo: 6, author: 'Kenji Mori' }], chat: [{ by: 'backer:1', body: 'Who pays for the reader?', mins: 420 }, { by: 'team:1', body: 'The yard. It pays for itself in a week of sales.', mins: 400, reply: -1, pinned: true }], crowd: { top10: 0.27, fresh: 0.09, kols: 3, tracked: 5, repeat: 0.28 }, watchers: 480 },
-  gully: { tagline: 'Storm-drain sensors that text the council.', about: 'Gully clips a level sensor into a drain and texts the council before it floods.', links: { website: 'https://gully.example' }, members: [['Pat Doyle', 'Founder']], xAge: 25, funding: { kind: 'wallet', label: 'Fresh wallet', hoursBeforeLaunch: 12 }, crowd: { top10: 0.6, fresh: 0.4, kols: 0, tracked: 0, repeat: 0.02 }, watchers: 18 }
+  cobalt: { about: 'Cobalt records a pack\'s cycles and health on chain, so a used pack sells on its record, not a guess.', links: { website: 'https://cobalt.example', x: 'https://x.com/cobalt_seeddemo', discord: 'https://discord.gg/cobalt-seeddemo', github: 'https://github.com/cobalt-seeddemo' }, members: [['Ruth Adler', 'Founder', 'https://x.com/cobalt_seeddemo'], ['Kenji Mori', 'Hardware'], ['Ola Berg', 'Growth']], updates: [{ title: '400 packs logged', body: 'The Rotterdam yard has 400 packs on passports. Buyers are paying a premium for a full record.', daysAgo: 0.5, author: 'Ruth Adler' }, { title: 'Reader firmware shipped', body: 'The handheld reader writes a pack\'s health straight to its passport.', daysAgo: 6, author: 'Kenji Mori' }], chat: [{ by: 'backer:1', body: 'Who pays for the reader?', mins: 420 }, { by: 'team:1', body: 'The yard. It pays for itself in a week of sales.', mins: 400, reply: -1, pinned: true }], crowd: { top10: 0.27, fresh: 0.09, kols: 3, tracked: 5, repeat: 0.28 }, watchers: 480 },
+  gully: { about: 'Gully clips a level sensor into a drain and texts the council before it floods.', links: { website: 'https://gully.example' }, members: [['Pat Doyle', 'Founder']], xAge: 25, funding: { kind: 'wallet', label: 'Fresh wallet', hoursBeforeLaunch: 12 }, crowd: { top10: 0.6, fresh: 0.4, kols: 0, tracked: 0, repeat: 0.02 }, watchers: 18 }
 };
 Object.keys(LITE).forEach(id => { DEMO_PROFILES[id] = Object.assign(lite(LITE[id]), { demo: true }); });
 /* every demo profile gets a mint (demo), deployer and team wallets (demo) */
@@ -305,7 +299,7 @@ function seedData() {
     const { id, name, ticker, q, target, pct, backers, openedAgo, dur, status = 'live' } = o, pr = DEMO_PROFILES[id];
     const openedAt = n - openedAgo, endsAt = openedAt + dur;
     const resolvedAt = status === 'live' ? null : n - (o.resolvedAgo != null ? o.resolvedAgo : o.seededAgo != null ? o.seededAgo : o.filledAgo || 0);
-    const p = { id, name, ticker, idea: pr.tagline, q, target, targetUsd: r6(q === 'USDC' ? target : target * sol), solUsdAtOpen: sol, raised: r6(target * pct), backers, openedAt, endsAt, status, resolvedAt,
+    const p = { id, name, ticker, q, target, targetUsd: r6(q === 'USDC' ? target : target * sol), solUsdAtOpen: sol, raised: r6(target * pct), backers, openedAt, endsAt, status, resolvedAt,
       feeBps: SEED.feeBps, creatorShareBps: SEED.creatorShareBps, teamBps: o.teamBps || 0, teamSchedule: o.teamBps ? o.teamSchedule : null,
       roadmap: (o.roadmap || []).map(r => Object.assign({}, r, { dueAt: n + r.due * D })), tokenUseCase: o.tokenUseCase || 'none',
       xAccount: Object.assign({ verified: true }, o.xAccount, { createdAt: n - (o.xAccount.ageDays || 400) * D }), pastRaises: o.pastRaises || [],

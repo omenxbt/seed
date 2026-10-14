@@ -31,6 +31,16 @@ staging account for the pair asset, and the cranker fronts the rent (`POOL_RENT_
 the same instruction. The raise PDA is the pool's creator and the position's owner. `scripts/inspect.ts` prints the
 latest seeded raise and its position's `permanent_locked_liquidity` straight from the cluster.
 
+**X is optional.** `open_raise` takes `x: Option<XAttest>`; with one, the attestation instruction rides in front and
+the handle's blacklist account is the first remaining account. `link_x` adds an X account to a live, filled or seeded
+raise later on the same terms. A wallet has one live raise at a time: its `FounderState` names the last one, which is
+passed in as `prev_raise` so the program can see it has left Live. `admin_flag_fraud` blacklists the founder wallet
+(`["blacklist", wallet]`) and, when linked, the handle (`["blacklist", sha256(handle)]`).
+
+**Local runs.** `scripts/localnet.sh` starts a validator with DAMM v2, the Pyth account and the devnet USDC mint
+cloned from devnet and the program loaded, so the whole suite, admin tests included, runs offline in under a minute
+(on devnet the admin tests skip unless the provider wallet is the config's admin).
+
 The tests run on devnet because Meteora's DAMM v2 is deployed there and nowhere local. They use the provider wallet as
 admin, oracle, treasury and founder, derive the attestor key from it, and need about 0.4 SOL. The config PDA is made
 once with that attestor; another wallet's run against the same deployment must use the wallet that made the config.

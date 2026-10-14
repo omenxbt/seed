@@ -34,10 +34,14 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
       team_bps: e.teamBps, team_schedule: tr.length ? { tranches: tr } : null, payout_wallet: e.payoutWallet,
       status: 'live', opened_at: ts(e.openedAt as bigint), ends_at: ts(e.endsAt as bigint), updated_at: now
     }, { onConflict: 'address', ignoreDuplicates: true });
-    // the X account behind the handle hash, from the attestation log
-    const { data: att } = await db.from('x_attestations').select('x_id').eq('wallet', e.founder as string).eq('handle_hash', e.xHandleHash as string).order('created_at', { ascending: false }).limit(1).maybeSingle();
-    if (att) await db.from('raises').update({ x_id: att.x_id }).eq('address', e.raise as string);
+    // the X account behind the handle hash, from the attestation log (a raise may open without one)
+    if (e.xHandleHash) await linkX(e.raise as string, e.founder as string, e.xHandleHash as string);
     return;
+  }
+  if (name === 'XLinked') { await linkX(e.raise as string, e.founder as string, e.xHandleHash as string); return; }
+  async function linkX(raise: string, founder: string, hash: string) {
+    const { data: att } = await db.from('x_attestations').select('x_id').eq('wallet', founder).eq('handle_hash', hash).order('created_at', { ascending: false }).limit(1).maybeSingle();
+    if (att) await db.from('raises').update({ x_id: att.x_id }).eq('address', raise);
   }
   const r = await raiseOf(e.raise as string); if (!r) return;   // an event for a raise this indexer has not seen open; the next backfill catches it
   const d = dec(r), up = (patch: Record<string, unknown>) => db.from('raises').update({ ...patch, updated_at: now }).eq('id', r.id);

@@ -22,7 +22,8 @@ export const pda = {
   config: (pid: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('config')], pid)[0],
   raise: (pid: web3.PublicKey, founder: web3.PublicKey, nonce: BN | number) => PublicKey.findProgramAddressSync([Buffer.from('raise'), founder.toBuffer(), le8(nonce)], pid)[0],
   contribution: (pid: web3.PublicKey, raise: web3.PublicKey, wallet: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('contrib'), raise.toBuffer(), wallet.toBuffer()], pid)[0],
-  blacklist: (pid: web3.PublicKey, handleHash: Buffer) => PublicKey.findProgramAddressSync([Buffer.from('blacklist'), handleHash], pid)[0],
+  blacklist: (pid: web3.PublicKey, subject: Buffer | web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('blacklist'), subject instanceof PublicKey ? subject.toBuffer() : subject], pid)[0],   // a wallet, or a handle's hash
+  founderState: (pid: web3.PublicKey, founder: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('founder'), founder.toBuffer()], pid)[0],
   poolVault: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('pool'), raise.toBuffer()], pid)[0],
   teamVault: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('team'), raise.toBuffer()], pid)[0],
   stage: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('stage'), raise.toBuffer()], pid)[0],
@@ -68,13 +69,24 @@ export class SeedClient {
   /* devnet builds only */
   resetConfig(admin: web3.PublicKey) { return this.program.methods.resetConfig().accounts({ config: this.config, admin }).instruction(); }
 
-  /* open_raise with its attestation; returns both instructions, in order */
-  async openRaise(founder: web3.PublicKey, pairMint: web3.PublicKey, attestor: web3.Keypair, handle: string, p: { nonce: BN | number; name: string; ticker: string; target: BN; deadline: number; teamBps: number; schedule: Tranche[]; payoutWallet: web3.PublicKey }) {
-    const hash = handleHash(handle), expiry = Math.floor(Date.now() / 1000) + 3600, raise = this.raiseKey(founder, p.nonce);
-    const open = await this.program.methods.openRaise({ nonce: new BN(p.nonce), name: p.name, ticker: p.ticker, target: p.target, deadline: new BN(p.deadline), teamBps: p.teamBps, schedule: p.schedule, payoutWallet: p.payoutWallet, xHandleHash: [...hash], attestExpiry: new BN(expiry) })
-      .accounts({ config: this.config, solFeed: SOL_FEED, raise, founder, pairMint, escrow: getAssociatedTokenAddressSync(pairMint, raise, true), blacklist: pda.blacklist(this.pid, hash), instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-        tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
-    return { raise, ixs: [attestIx(attestor, founder, hash, expiry), open] };
+  /* open_raise, with the attestation instruction first when an X handle is linked (attestor + handle), else alone.
+     The founder's record names its last live raise, which is passed in so the program can see it has ended. */
+  async openRaise(founder: web3.PublicKey, pairMint: web3.PublicKey, attestor: web3.Keypair | null, handle: string | null, p: { nonce: BN | number; name: string; ticker: string; target: BN; deadline: number; teamBps: number; schedule: Tranche[]; payoutWallet: web3.PublicKey }) {
+    const raise = this.raiseKey(founder, p.nonce), expiry = Math.floor(Date.now() / 1000) + 3600, hash = attestor && handle ? handleHash(handle) : null;
+    const fs = await (this.program.account as any).founderState.fetchNullable(pda.founderState(this.pid, founder));
+    const prevRaise = fs && !fs.liveRaise.equals(PublicKey.default) ? fs.liveRaise : null;
+    const open = await this.program.methods.openRaise({ nonce: new BN(p.nonce), name: p.name, ticker: p.ticker, target: p.target, deadline: new BN(p.deadline), teamBps: p.teamBps, schedule: p.schedule, payoutWallet: p.payoutWallet, x: hash ? { handleHash: [...hash], expiry: new BN(expiry) } : null })
+      .accounts({ config: this.config, solFeed: SOL_FEED, raise, founder, pairMint, escrow: getAssociatedTokenAddressSync(pairMint, raise, true), walletBlacklist: pda.blacklist(this.pid, founder), founderState: pda.founderState(this.pid, founder), prevRaise, instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+        tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId })
+      .remainingAccounts(hash ? [{ pubkey: pda.blacklist(this.pid, hash), isSigner: false, isWritable: false }] : []).instruction();
+    return { raise, ixs: hash ? [attestIx(attestor!, founder, hash, expiry), open] : [open] };
+  }
+  /* link_x: the attestation instruction, then link_x, for a raise opened without an X account */
+  async linkX(raise: web3.PublicKey, founder: web3.PublicKey, attestor: web3.Keypair, handle: string) {
+    const hash = handleHash(handle), expiry = Math.floor(Date.now() / 1000) + 3600;
+    const ix = await this.program.methods.linkX({ handleHash: [...hash], expiry: new BN(expiry) }).accounts({ raise, founder, config: this.config, instructions: SYSVAR_INSTRUCTIONS_PUBKEY })
+      .remainingAccounts([{ pubkey: pda.blacklist(this.pid, hash), isSigner: false, isWritable: false }]).instruction();
+    return [attestIx(attestor, founder, hash, expiry), ix];
   }
   async contribute(raise: web3.PublicKey, pairMint: web3.PublicKey, wallet: web3.PublicKey, amount: BN) {
     return this.program.methods.contribute(amount).accounts({ raise, contribution: pda.contribution(this.pid, raise, wallet), wallet, walletToken: getAssociatedTokenAddressSync(pairMint, wallet), escrow: getAssociatedTokenAddressSync(pairMint, raise, true), tokenProgram: TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
@@ -113,7 +125,11 @@ export class SeedClient {
   }
   requestPayoutChange(raise: web3.PublicKey, founder: web3.PublicKey, to: web3.PublicKey) { return this.program.methods.requestPayoutChange(to).accounts({ raise, founder, config: this.config }).instruction(); }
   applyPayoutChange(raise: web3.PublicKey) { return this.program.methods.applyPayoutChange().accounts({ raise }).instruction(); }
-  adminFlagFraud(raise: web3.PublicKey, admin: web3.PublicKey, handleHash: Buffer) { return this.program.methods.adminFlagFraud().accounts({ raise, config: this.config, admin, blacklist: pda.blacklist(this.pid, handleHash), systemProgram: SystemProgram.programId }).instruction(); }
+  /* admin_flag_fraud: the founder wallet's blacklist account, plus the handle's as a remaining account when the raise has one */
+  adminFlagFraud(raise: web3.PublicKey, admin: web3.PublicKey, founder: web3.PublicKey, handleHash: Buffer | null) {
+    return this.program.methods.adminFlagFraud().accounts({ raise, config: this.config, admin, walletBlacklist: pda.blacklist(this.pid, founder), systemProgram: SystemProgram.programId })
+      .remainingAccounts(handleHash ? [{ pubkey: pda.blacklist(this.pid, handleHash), isSigner: false, isWritable: true }] : []).instruction();
+  }
   adminApproveTakeover(raise: web3.PublicKey, admin: web3.PublicKey, to: web3.PublicKey) { return this.program.methods.adminApproveTakeover(to).accounts({ raise, config: this.config, admin }).instruction(); }
 
   /* the idempotent ATA instruction the claims need before they run */

@@ -152,7 +152,7 @@ function draftProfile(d) {
   const team = (on.team ? lf.team : []).filter(m => m.name.trim()).map(m => ({ name: m.name.trim(), role: m.role.trim(), x: m.x.trim() || null, github: m.github.trim() || null, linkedin: m.linkedin.trim() || null, wallet: B58.test(m.wallet.trim()) ? m.wallet.trim() : null, verified: { x: false, github: false, domain: false } }));
   if (team[0] && !team[0].wallet && founderWallet) team[0].wallet = founderWallet;
   return {
-    tagline: d.idea, description: $('#fDesc').value.trim(),
+    description: $('#fDesc').value.trim(),
     links: { website: $('#lWebsite').value.trim() || null, x: $('#lX').value.trim() || null, telegram: $('#lTelegram').value.trim() || null, discord: $('#lDiscord').value.trim() || null, github: $('#lGithub').value.trim() || null },
     minBuy: limitQ('min', d), maxBuy: limitQ('max', d), minBuyPct: lf.lim.min.on && lf.lim.min.unit === 'pct' ? numv($('#fMin').value) || 0 : 0, maxBuyPct: lf.lim.max.on && lf.lim.max.unit === 'pct' ? numv($('#fMax').value) || 0 : 0,
     team, founder: { name: team[0] ? team[0].name : xl ? '@' + xl.handle : 'Founder', x: xl ? xUrl(xl.handle) : null, xAgeDays: null, wallet: founderWallet, pastLaunches: [] },
@@ -164,7 +164,7 @@ const draftRoadmap = () => lf.road.filter(r => r.title.trim()).map(r => ({ title
 /* the X account the founder signed in with, as the raise keeps it; past raises are the ones this account opened on Seed */
 function draftX() {
   const l = xAdapter.of(); if (!l) return { handle: '', verified: false, createdAt: null, followers: 0 };
-  return { handle: l.handle, verified: !l.demo, createdAt: l.createdAt || null, followers: l.followers != null ? l.followers : null };
+  return { handle: l.handle, verified: !l.demo && !l.typed, typed: !!l.typed, createdAt: l.createdAt || null, followers: l.followers != null ? l.followers : null };
 }
 const pastRaisesOf = handle => !handle ? [] : state.presales.filter(p => p.xAccount && p.xAccount.handle === handle && p.status !== 'live').map(p => ({ name: p.name, ticker: p.ticker, outcome: p.blacklisted ? 'flagged' : p.status, at: p.resolvedAt || p.openedAt }));
 const payoutNow = () => $('#fPayout').value.trim() || (state.wallet && (state.wallet.pk || fakeAddr('wallet/demo'))) || '';   // the demo wallet stands in with a fixed address
@@ -176,44 +176,81 @@ function modelFields(d, da) {
 }
 function draftPresale() {
   const d = readDraft(), da = draftAsset(), now = Date.now();
-  return Object.assign({ id: 'draft', name: d.name || 'Your project', ticker: d.ticker || 'TICKER', idea: d.idea, q: da.key || 'SOL', target: isFinite(d.target) && d.target > 0 ? d.target : 0, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H,
+  return Object.assign({ id: 'draft', name: d.name || 'Your project', ticker: d.ticker || 'TICKER', q: da.key || 'SOL', target: isFinite(d.target) && d.target > 0 ? d.target : 0, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H,
     status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [], profile: draftProfile(d) }, modelFields(d, da));
 }
 
 /* ---------------------------------------------------------------- validation */
-function validateFull() {
-  const d = readDraft(), da = draftAsset(), base = validateDraft(d, da); if (base) return base;
-  if ($('#fDesc').value.trim().length < 40) return 'Describe the project in at least 40 characters so backers know what they are funding.';
+/* every problem at once, each with the field it belongs to. Required: name, ticker, target, deadline, pair. Nothing has a
+   minimum length. The rest is checked only when it is filled in or switched on. */
+function validateFields() {
+  const d = readDraft(), da = draftAsset(), out = [], err = (sel, msg) => out.push({ sel, msg });
+  if (!d.name) err('#fName', 'Give the project a name.');
+  if (!/^[A-Z0-9]{1,6}$/.test(d.ticker)) err('#fTicker', 'A ticker is 1 to 6 letters or digits.');
+  else if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) err('#fTicker', `$${d.ticker} is in use by a live raise. Pick another.`);
+  if (da.err) err('#fMint', da.err);
+  if (isNaN(d.target) || d.target <= 0) err('#fTarget', `Set a target in ${da.a ? da.a.sym : 'the pair asset'}.`);
+  else if (usdOf({ q: da.key }, d.target) > SEED.capUsd + 1e-6) err('#fTarget', `${fmtUsd(usdOf({ q: da.key }, d.target))} at today's SOL price. A raise can ask for at most $${SEED.capUsd.toLocaleString('en-US')}.`);
   const mn = numv($('#fMin').value), mx = numv($('#fMax').value), L = lf.lim;
-  if (L.min.on && !(mn > 0)) return 'Set the minimum buy, or switch it off.';
-  if (L.max.on && !(mx > 0)) return 'Set the maximum per wallet, or switch it off.';
-  if (L.min.on && L.min.unit === 'pct' && mn >= 100) return 'The minimum buy must be under 100% of the supply.';
-  if (L.max.on && L.max.unit === 'pct' && mx > 100) return 'The maximum per wallet cannot be more than the whole supply.';
-  if (L.min.on && L.min.unit === 'q' && mn > d.target) return 'The minimum buy is larger than the target.';
-  if (L.max.on && L.max.unit === 'q' && mx > d.target) return 'The maximum per wallet is larger than the target; switch it off to let one wallet fill the raise.';
+  if (L.min.on && !(mn > 0)) err('#fMin', 'Set the minimum buy, or switch it off.');
+  else if (L.min.on && L.min.unit === 'pct' && mn >= 100) err('#fMin', 'Under 100% of the supply.');
+  else if (L.min.on && L.min.unit === 'q' && mn > d.target) err('#fMin', 'Larger than the target.');
+  if (L.max.on && !(mx > 0)) err('#fMax', 'Set the maximum per wallet, or switch it off.');
+  else if (L.max.on && L.max.unit === 'pct' && mx > 100) err('#fMax', 'No more than the whole supply.');
+  else if (L.max.on && L.max.unit === 'q' && mx > d.target) err('#fMax', 'Larger than the target; switch it off to let one wallet fill the raise.');
   const mnQ = limitQ('min', d), mxQ = limitQ('max', d);
-  if (mnQ > 0 && mxQ > 0 && mnQ > mxQ) return 'The minimum buy is larger than the maximum per wallet.';
-  if (d.target > 0 && usdOf({ q: da.key }, d.target) > SEED.capUsd + 1e-6) return `The target is ${fmtUsd(usdOf({ q: da.key }, d.target))} at today's SOL price. A raise can ask for at most $${SEED.capUsd.toLocaleString('en-US')}.`;
+  if (mnQ > 0 && mxQ > 0 && mnQ > mxQ) err('#fMax', 'The maximum per wallet is below the minimum buy.');
   const bps = teamBpsNow();
-  if (!(bps >= 0 && bps < BPS)) return 'The team share must be from 0% to under 100%.';
-  if ($('#fTeam').value && !(numv($('#fTeam').value) >= 0)) return 'The team share must be a number.';
-  if (bps) { const sp = scheduleProblem(scheduleNow(), bps); if (sp) return sp; }
-  const road = draftRoadmap(); if (road.length < SEED.minRoadmap) return 'List at least one milestone with a date.';
-  if (lf.lim.use.on && $('#fUse').value.trim().length < 10) return 'Say what the token does in at least ten characters, or switch it off.';
-  if ($('#fPayout').value.trim() && !B58.test($('#fPayout').value.trim())) return 'The payout wallet is not a Solana address.';
-  if (!xAdapter.of()) return 'Sign in with X to open a raise.';
-  const bl = state.presales.find(p => p.blacklisted && p.xAccount && p.xAccount.handle === xAdapter.of().handle); if (bl) return `@${xAdapter.of().handle} was flagged for fraud on $${bl.ticker} and cannot open another raise.`;
-  const live = state.presales.find(p => p.status === 'live' && p.xAccount && p.xAccount.handle === xAdapter.of().handle && p.id !== 'draft'); if (live) return `@${xAdapter.of().handle} already has a live raise, ${live.name}. One at a time.`;
-  /* a section that is switched off is not on the page, so nothing in it is checked */
-  for (const m of lf.on.team ? lf.team : []) {
-    if (!Object.values(m).some(v => String(v).trim())) continue;
-    if (!m.name.trim()) return 'Every team member needs a name.';
-    if (![m.x, m.github, m.linkedin].every(isUrl)) return `${m.name}: links must start with https://.`;
-    if (m.wallet.trim() && !B58.test(m.wallet.trim())) return `${m.name}: the wallet is not a Solana address.`;
+  if ($('#fTeam').value && !(numv($('#fTeam').value) >= 0)) err('#fTeam', 'The team share must be a number.');
+  else if (!(bps >= 0 && bps < BPS)) err('#fTeam', 'From 0% to under 100%.');
+  else if (bps) { const sp = scheduleProblem(scheduleNow(), bps); if (sp) err('#schedWrap', sp); }
+  if (lf.lim.use.on && !$('#fUse').value.trim()) err('#fUse', 'Say what the token does, or switch it off.');
+  if ($('#fPayout').value.trim() && !B58.test($('#fPayout').value.trim())) err('#fPayout', 'Not a Solana address.');
+  const me = walletId();
+  if (me) {
+    const bl = state.presales.find(p => p.blacklisted && (p.creator === me || p.founderWallet === me)); if (bl) err('#fName', `This wallet was flagged for fraud on $${bl.ticker} and cannot open another raise.`);
+    const live = state.presales.find(p => p.status === 'live' && p.id !== 'draft' && (p.creator === me || p.founderWallet === me)); if (live) err('#fName', `This wallet already has a live raise, ${live.name}. One at a time.`);
   }
-  for (const r of lf.road) { if (!r.title.trim() && !r.due) continue; if (!r.title.trim()) return 'Every milestone needs a title.'; if (!r.due) return `${r.title}: add a due date.`; if (r.proof && !isUrl(r.proof)) return `${r.title}: the proof link must start with https://.`; }
-  if (!['#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].every(s => isUrl($(s).value.trim()))) return 'Links must start with https://.';
-  return '';
+  /* a section that is switched off is not on the page, so nothing in it is checked */
+  (lf.on.team ? lf.team : []).forEach((m, i) => {
+    if (!Object.values(m).some(v => String(v).trim())) return;
+    if (!m.name.trim()) return err(`#teamRows .row-ed:nth-child(${i + 1})`, 'Every team member needs a name.');
+    if (![m.x, m.github, m.linkedin].every(isUrl)) return err(`#teamRows .row-ed:nth-child(${i + 1})`, `${m.name}: links must start with https://.`);
+    if (m.wallet.trim() && !B58.test(m.wallet.trim())) err(`#teamRows .row-ed:nth-child(${i + 1})`, `${m.name}: the wallet is not a Solana address.`);
+  });
+  lf.road.forEach((r, i) => {
+    if (!r.title.trim() && !r.due) return;
+    if (!r.title.trim()) return err(`#roadRows .row-ed:nth-child(${i + 1})`, 'Every milestone needs a title.');
+    if (!r.due) return err(`#roadRows .row-ed:nth-child(${i + 1})`, `${r.title}: add a due date.`);
+    if (r.proof && !isUrl(r.proof)) err(`#roadRows .row-ed:nth-child(${i + 1})`, `${r.title}: the proof link must start with https://.`);
+  });
+  for (const sel of ['#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub']) if (!isUrl($(sel).value.trim())) err(sel, 'Links start with https://.');
+  return out;
+}
+const validateFull = () => { const e = validateFields(); return e.length ? e[0].msg : ''; };
+/* the problems go next to their fields; the first one is scrolled to */
+function showErrors(list) {
+  $$('.ferr', $('#form')).forEach(e => e.remove());
+  let first = null;
+  for (const { sel, msg } of list) {
+    const el = $(sel); if (!el) continue;
+    const box = el.closest('.f') || el.closest('.row-ed') || el; if ($('.ferr', box) && box.matches('.row-ed')) continue;
+    const n = document.createElement('div'); n.className = 'ferr'; n.setAttribute('role', 'alert'); n.textContent = msg; box.appendChild(n);
+    if (!first) first = box;
+  }
+  if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  return !!first;
+}
+
+/* a field's error goes as soon as it is edited */
+document.addEventListener('input', e => { const box = e.target.closest && e.target.closest('.f, .row-ed'); if (box) $$('.ferr', box).forEach(x => x.remove()); });
+/* a tooltip stays inside the viewport: the bubble is centred on the "?" unless that would clip it */
+document.addEventListener('pointerover', e => { const t = e.target.closest && e.target.closest('.tip'); if (t) clampTip(t); });
+document.addEventListener('focusin', e => { const t = e.target.closest && e.target.closest('.tip'); if (t) clampTip(t); });
+function clampTip(t) {
+  const r = t.getBoundingClientRect(), w = Math.min(250, innerWidth - 24), cx = r.left + r.width / 2; let tx = 0;
+  if (cx - w / 2 < 12) tx = 12 - (cx - w / 2); else if (cx + w / 2 > innerWidth - 12) tx = innerWidth - 12 - (cx + w / 2);
+  t.style.setProperty('--tx', tx + 'px');
 }
 
 /* ---------------------------------------------------------------- preview and live risk */
@@ -224,15 +261,13 @@ function renderPreview() {
   $$('#stockRow [data-stock]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.stock === draft.stock)));
   $('#mintInfo').textContent = draft.pair !== 'any' ? '' : da.wait ? 'Checking on Solana…' : da.bad ? 'Not a token mint.' : da.err ? '' : !da.custom ? `Recognised as ${C.sym}`
     : da.off ? 'Solana could not be reached to check this mint. It will be listed as unverified.' : C.verified ? `${C.name || C.sym} (${C.sym}), verified on Jupiter` : `A real SPL mint${da.a.name ? `, ${da.a.name}` : ''}, but not on Jupiter's verified list. Backers will see a warning.`;
-  $('#fCur').textContent = C.sym; $$('[data-cur]').forEach(e => e.textContent = C.sym); $('#ideaCt').textContent = `${$('#fIdea').value.length} / 80`;
-  $('#fTarget').placeholder = { SOL: '200', USDC: '50000' }[da.key] || (C.stock ? '300' : '100000');
+  $('#fCur').textContent = C.sym; $$('[data-cur]').forEach(e => e.textContent = C.sym); $('#fTarget').placeholder = { SOL: '200', USDC: '50000' }[da.key] || (C.stock ? '300' : '100000');
   const usd = ok ? usdOf({ q: da.key }, d.target) : 0, over = usd > SEED.capUsd + 1e-6;
   $('#targetUsd').textContent = ok ? `${fmtUsd(usd)}${da.key === 'SOL' ? ` at $${SEED.demoSolUsd} per SOL` : ''}${over ? `, over the $${SEED.capUsd.toLocaleString('en-US')} cap` : ''}` : `at most $${SEED.capUsd.toLocaleString('en-US')}${da.key === 'SOL' ? ', at the SOL price when it opens' : ''}`;
   $('#targetUsd').classList.toggle('bad', over);
   drawSplit(dp); drawDerived(dp, ok, sym);
   const art = pr.art ? `<img class="pv-art" src="${esc(pr.art)}" alt="" style="object-position:${pr.artPos}">` : `<span class="pv-art glyph-art" style="--h:${hashStr(dp.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(dp)}</svg></span>`;
-  $('#pvCard').innerHTML = `${pr.banner ? `<div class="pv-banner"><img src="${esc(pr.banner)}" alt="" style="object-position:${pr.bannerPos}"></div>` : ''}<div class="pv-id">${art}<span class="nm"><b>${esc(dp.name)}<span class="tk">$${esc(dp.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div>
-    ${d.idea ? `<p class="pv-tag">${esc(d.idea)}</p>` : ''}<div class="c-prog"><span class="bar"><i style="width:0%"></i></span><span class="pct num">0%</span></div>`;
+  $('#pvCard').innerHTML = `${pr.banner ? `<div class="pv-banner"><img src="${esc(pr.banner)}" alt="" style="object-position:${pr.bannerPos}"></div>` : ''}<div class="pv-id">${art}<span class="nm"><b>${esc(dp.name)}<span class="tk">$${esc(dp.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div><div class="c-prog"><span class="bar"><i style="width:0%"></i></span><span class="pct num">0%</span></div>`;
   const label = { 24: '24 hours', 72: '3 days', 168: '7 days', 336: '14 days' }[d.hours], split = splitOf(dp.teamBps), f = n => Number(n.toFixed(C.dp)).toLocaleString('en-US', { maximumFractionDigits: C.dp });
   const pc = n => (n / SEED.supply * 100).toFixed(n / SEED.supply * 100 % 1 ? 1 : 0) + '%', fees = v => fmtUsd(feeSplit(v).founder);
   $('#pvFacts').innerHTML = [
@@ -251,7 +286,7 @@ function renderPreview() {
   if (fw && isRealAddr(fw) && founderLooked !== fw) { founderLooked = fw; founderAdapter.refresh(dp).then(learned => { if (learned) renderPreview(); }); }
   $('#upNote').textContent = supa.configured() ? 'Uploads go to Seed’s storage when you open the raise.' : 'Uploads are previewed in this browser only until Supabase storage is configured.';
 }
-function syncOpenBtn() { const b = $('#openBtn'); if (b && !b.disabled) b.textContent = !state.wallet ? 'Connect wallet to open' : !xAdapter.of() ? 'Sign in with X to open' : 'Open raise'; }
+function syncOpenBtn() { const b = $('#openBtn'); if (b && !b.disabled) b.textContent = !state.wallet ? 'Connect wallet to open' : 'Open raise'; }
 /* what the raise shows as the price, and the pool it opens: read-only, derived from the target and the team share */
 function drawDerived(dp, ok, sym) {
   const sp = splitOf(dp.teamBps), row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
@@ -260,18 +295,19 @@ function drawDerived(dp, ok, sym) {
     row('At seeding', ok ? `<span class="num">${fmtC(dp.target, dp.q)} ${sym}</span> and <span class="num">${fmtTok(sp.pool)}</span> $${esc(dp.ticker)} open a Meteora pool at the raise price, locked for good` : 'The whole raise and the pool tokens open a Meteora pool at the raise price, locked for good');
 }
 /* the X sign-in gate at the top of the form */
+/* linking X is optional: it adds a verified badge to the raise, nothing more */
 function drawGate() {
   const g = $('#xGate'), l = xAdapter.of();
-  g.innerHTML = !state.wallet ? `<div class="gate"><span class="g-ico">${X_GLYPH}</span><div><b>Founders sign in with X</b><span>Connect a wallet, then sign in with X. The account shows on your page; one live raise per account, and an account flagged for fraud cannot open another. No KYC.</span></div><button type="button" class="btn btn-ink btn-sm" data-gate-connect>Connect wallet</button></div>`
-    : l ? `<div class="gate on"><span class="g-ico">${X_GLYPH}</span><div><b>@${esc(l.handle)}</b><span>Signed in${l.demo ? ' on the demo wallet (a stand-in, not checked with X)' : ''}. This account opens the raise and shows on its page.</span></div><button type="button" class="linkbtn" data-gate-x>Change</button></div>`
-    : `<div class="gate"><span class="g-ico">${X_GLYPH}</span><div><b>Sign in with X to open</b><span>The account shows on your page; one live raise per account, and an account flagged for fraud cannot open another. No KYC.</span></div><button type="button" class="btn btn-navy btn-sm" data-gate-x>Sign in with X</button></div>`;
+  g.innerHTML = !state.wallet ? `<div class="gate"><span class="g-ico">${X_GLYPH}</span><div><b>Link your X</b><span>Linking your X adds a verified badge to your raise. Optional. Connect a wallet first.</span></div><button type="button" class="qb" data-gate-connect>Connect wallet</button></div>`
+    : l ? `<div class="gate on"><span class="g-ico">${X_GLYPH}</span><div><b>@${esc(l.handle)}</b><span>${l.typed ? 'Typed on devnet, shown as typed on your raise.' : l.demo ? 'Linked on the demo wallet (a stand-in, not checked with X).' : 'Linked. Your raise shows a verified X badge.'}</span></div><button type="button" class="qb" data-gate-x>Change</button></div>`
+    : `<div class="gate"><span class="g-ico">${X_GLYPH}</span><div><b>Link your X</b><span>Linking your X adds a verified badge to your raise. Optional.</span></div><button type="button" class="qb" data-gate-x>Link X</button></div>`;
 }
 
 /* ---------------------------------------------------------------- open */
 async function openPresale() {
   if (busy) return;
   if (!(await ensureWallet())) return;
-  const err = validateFull(); $('#fErr').textContent = err; if (err) { $('#fErr').scrollIntoView({ block: 'center' }); return; }
+  $('#fErr').textContent = ''; if (showErrors(validateFields())) return;
   const d = readDraft(), da = draftAsset(), b = $('#openBtn'); busy = true; b.disabled = true;
   const id = d.ticker.toLowerCase() + '-' + Date.now().toString(36), now = Date.now(), profile = draftProfile(d);
   try {
@@ -282,11 +318,11 @@ async function openPresale() {
     b.textContent = 'Confirm in wallet…';
     if (da.custom) state.custom[da.key] = da.a;
     profile.mint = fakeAddr('mint/' + id);
-    const p = Object.assign({ id, name: d.name, ticker: d.ticker, idea: d.idea, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [], profile }, modelFields(d, da));
+    const p = Object.assign({ id, name: d.name, ticker: d.ticker, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [], profile }, modelFields(d, da));
     await adapter.openPresale(p);   // a real wallet's raise comes back with its chain address and id
     if (supa.configured()) supa.call('register', { presaleId: p.id }).catch(() => {});
     state.presales.unshift(p); save();
-    ['#fName', '#fTicker', '#fIdea', '#fTarget', '#fMint', '#fDesc', '#fMin', '#fMax', '#fUse', '#fPayout', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
+    ['#fName', '#fTicker', '#fTarget', '#fMint', '#fDesc', '#fMin', '#fMax', '#fUse', '#fPayout', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
     $('#fTeam').value = '0'; lf.road = [ROWS.road.blank()]; drawRows('road'); lf.lim.use = { on: false };
     if (!supa.configured()) lf.urls.deck = '';   // the page keeps showing the local deck, so its preview URL is not released
     lf.lim.min = { on: false, unit: 'q' }; lf.lim.max = { on: false, unit: 'q' }; syncLim();

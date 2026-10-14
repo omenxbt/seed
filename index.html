@@ -207,8 +207,8 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 /* a small "?" that explains a field on hover or focus */
 .tip{position:relative;display:inline-grid;place-items:center;width:16px;height:16px;margin-left:6px;border-radius:50%;border:1px solid var(--hair-2);font-style:normal;font-size:10.5px;font-weight:500;line-height:1;color:var(--muted);vertical-align:-2px;cursor:help;outline:none;transition:color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
 .tip:hover,.tip:focus-visible{color:var(--navy-deep);border-color:var(--navy)}
-.tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(-50%,4px);width:max-content;max-width:250px;padding:8px 11px;border-radius:10px;background:var(--raised);border:1px solid var(--hair-2);box-shadow:0 10px 30px rgba(0,0,0,.35);color:var(--ink);font-family:var(--sans);font-size:12.5px;font-weight:400;line-height:1.45;text-align:left;white-space:normal;letter-spacing:0;opacity:0;pointer-events:none;z-index:6;transition:opacity var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}
-.tip:hover::after,.tip:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+.tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(calc(-50% + var(--tx,0px)),4px);width:max-content;max-width:min(250px,calc(100vw - 24px));padding:8px 11px;border-radius:10px;background:var(--raised);border:1px solid var(--hair-2);box-shadow:0 10px 30px rgba(0,0,0,.35);color:var(--ink);font-family:var(--sans);font-size:12.5px;font-weight:400;line-height:1.45;text-align:left;white-space:normal;letter-spacing:0;opacity:0;pointer-events:none;z-index:6;transition:opacity var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}
+.tip:hover::after,.tip:focus-visible::after{opacity:1;transform:translate(calc(-50% + var(--tx,0px)),0)}
 /* the optional limits: a switch in the label, a line while off, the field and its unit while on */
 .lim .lab{display:flex;align-items:center}.lim .lab label{font:inherit;color:inherit}.lim .lab .switch{margin-left:auto}
 .lim-off{font-size:13px;color:var(--faint);padding:9px 0}
@@ -220,6 +220,8 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .inp input::placeholder{color:var(--faint)}
 .inp .suf{padding-right:16px;color:var(--muted);font-size:14px}
 .err{font-size:14px;color:var(--err);min-height:0}
+.ferr{margin-top:6px;font-size:13px;line-height:1.35;color:var(--err)}
+.row-ed .ferr{flex-basis:100%}
 .preview{padding:30px;display:flex;flex-direction:column;gap:18px}
 .preview .lab{font-size:13px;font-weight:500;color:var(--ink-2)}
 .pcard{position:relative;border:1px solid var(--hair);background:var(--tile);padding:18px}
@@ -245,7 +247,6 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 .x{margin-left:auto;flex:none;width:28px;height:28px;border-radius:9px;border:1px solid var(--hair);display:grid;place-items:center;font-size:18px;line-height:1;color:var(--muted)}
 .x{transition:transform var(--dur) var(--ease-out),background var(--fast) var(--ease-out),color var(--fast) var(--ease-out)}
 .x:hover{background:var(--mist);color:var(--ink);transform:rotate(90deg)}
-.idea{margin-top:16px;font-family:var(--serif);font-style:italic;font-size:21px;line-height:1.25;color:var(--ink-2)}
 .readout{position:relative;border:1px solid var(--hair);margin-top:20px;padding:16px 18px}
 .readout .big{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
 .readout .big b{font-family:var(--mono);font-weight:400;font-size:24px;letter-spacing:-.05em}
@@ -494,6 +495,7 @@ a.ico:hover{color:var(--ink)}
 .tr-chg.off{background:var(--chip);color:var(--muted)}
 .tile-meta,.tile-flags{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:0 2px;font-size:13px;color:var(--muted)}
 .tile-flags{gap:6px;position:relative;z-index:1;pointer-events:none}
+.xv-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 6px;border-radius:999px;font-size:11.5px;font-weight:500;color:var(--ok-ink);background:var(--ok-bg)}.xv-chip svg{width:11px;height:11px;fill:currentColor}
 .tile-flags .risk-chip,.tile-flags .pace-chip{font-size:11.5px;padding:2px 8px 2px 6px;gap:4px}
 .tile-flags .pace-chip{padding:2px 8px}
 .tile-flags .risk-chip svg{width:12px;height:12px}
@@ -564,7 +566,6 @@ a.ico:hover{color:var(--ink)}
 .back{display:inline-block;margin:4px 0 14px}
 .ppage{padding:30px 32px}
 .ppage .sh-head .nm b{font-size:26px}
-.ppage .idea{font-size:23px}
 .ppage .btn-block{margin-top:20px}
 @media (min-width:900px){
   .dcols{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);gap:0 40px;align-items:start}
@@ -787,7 +788,7 @@ a.ico:hover{color:var(--ink)}
     </section>
     <div class="board-foot">
       <p class="board-note" id="tryHint" hidden></p><p class="board-note" id="refundNote" hidden></p>
-      <span class="foot-note">Prototype. Raise data is simulated and no transactions are sent. A connected wallet is only read for its address and balances. <button data-reset>Reset demo</button></span>
+      <span class="foot-note"><span data-foot>Prototype. Raise data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.</span> <button data-reset>Reset demo</button></span>
     </div>
   </section>
 
@@ -811,7 +812,6 @@ a.ico:hover{color:var(--ink)}
         <fieldset><legend><span class="num">01</span>Project</legend><div class="form">
         <div class="f"><label for="fName">Project name</label><div class="inp"><input id="fName" maxlength="24" placeholder="Kiln"></div></div>
         <div class="f"><label for="fTicker">Ticker</label><div class="inp"><span class="suf" style="padding:0 0 0 14px">$</span><input id="fTicker" maxlength="6" placeholder="KILN" style="padding-left:4px;text-transform:uppercase" class="num"></div></div>
-        <div class="f full"><label for="fIdea">Tagline<span class="hint" id="ideaCt">0 / 80</span></label><div class="inp"><input id="fIdea" maxlength="80" placeholder="What are backers funding, in one line?"></div></div>
         <div class="f full"><label for="fDesc">Description<span class="hint">Markdown. Headings, lists, links and bold work.</span><button type="button" class="linkbtn" id="descToggle">Preview</button></label>
           <textarea id="fDesc" class="ta" rows="7" maxlength="6000" placeholder="What it is, who it is for, and what the raise pays for."></textarea><div class="md desc-pv" id="descPv" hidden></div></div>
         <div class="f full media">
@@ -885,7 +885,7 @@ a.ico:hover{color:var(--ink)}
           <div class="f full"><label for="fPayout">Payout wallet</label><div class="inp"><input id="fPayout" class="num" placeholder="Your connected wallet" spellcheck="false" style="font-size:13px"></div></div>
         </div></fieldset>
 
-        <fieldset class="opt" data-opt="team"><legend><span class="num">07</span>Team<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></legend>
+        <fieldset class="opt" data-opt="team"><legend><span class="num">07</span>Team members<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></legend>
           <p class="fs-note" data-off>Left off, your page lists no team beyond your X account. Turn it on to list the people behind the project.</p>
           <div data-body hidden>
           <p class="fs-note">The connected wallet is the founder wallet. Its funding is read from Solana for the info panel.</p>
@@ -946,7 +946,7 @@ a.ico:hover{color:var(--ink)}
     </div>
   </section>
 </main>
-<div class="appfoot"><span>Prototype. Raise data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.</span><button data-reset>Reset demo</button></div>
+<div class="appfoot"><span data-foot>Prototype. Raise data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.</span><button data-reset>Reset demo</button></div>
 </div>
 
 <!-- ######################################################################
@@ -970,7 +970,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-overview" data-t="Overview">
       <div class="prose">
         <h2>Overview</h2>
-        <p>A founder signs in with X, sets a target of up to $100,000, a deadline of one to fourteen days, the asset the raise is paired with, and how much of the supply the team keeps. Backers buy in with that asset at one fixed price, plus a 1% fee on top.</p>
+        <p>A founder connects a wallet, sets a target of up to $100,000, a deadline of one to fourteen days, the asset the raise is paired with, and how much of the supply the team keeps. Backers buy in with that asset at one fixed price, plus a 1% fee on top.</p>
         <p>If the target is met, Seed's program mints the 1,000,000,000 supply, revokes the mint and freeze authorities, puts the whole raise and the pool's half of the supply into a Meteora DAMM v2 pool at the raise price, and locks that liquidity permanently. Backers claim their tokens straight away. If the deadline passes first, nothing is minted and every backer takes back what they paid, fee included.</p>
         <p>There is no treasury, no vault and no reserve. The money raised goes into the pool and nowhere else, so there is nothing to rug. What a founder earns is a share of the pool's trading fees, paid to a payout wallet, and the team tokens they chose to keep, which unlock on a schedule everyone can see.</p>
         <p>Seed enforces a short list of hard rules in its program and acts on fraud. Everything else a founder decides, and the page shows those decisions as facts rather than warnings.</p>
@@ -1247,10 +1247,10 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-founders" data-t="Founders, reports and fraud">
       <div class="prose">
         <h2>Founders, reports and fraud</h2>
-        <p><b>Sign in with X.</b> A founder opens a raise with a wallet and an X account. There is no KYC. The account shows on the raise page with its age and follower count, one account can have one live raise at a time, and an account flagged for fraud cannot open another. The sign-in is checked by the program: Seed's backend signs a short-lived attestation that ties the wallet to the account, and the open instruction verifies that signature on chain.</p>
+        <p><b>A wallet is enough; X is optional.</b> A founder opens a raise with a connected wallet. There is no KYC. A wallet can have one live raise at a time, and a wallet flagged for fraud cannot open another. Linking an X account, at opening or later, adds a verified badge: the account shows on the raise page with its age and follower count. The link is checked by the program: Seed's backend signs a short-lived attestation that ties the wallet to the account, and the instruction verifies that signature on chain. A raise without one shows nothing more than that none is linked.</p>
         <p><b>The payout wallet.</b> Creator fees and team unlocks go to the payout wallet the founder set at opening. A founder can move it, and the change takes effect seven days after the request; the raise page shows the pending change for the whole week.</p>
         <p><b>Reports.</b> Anyone with a wallet can report a raise. Reports are signed by the wallet, kept off chain and shown publicly on the raise page. Seed acts on fraud; it does not referee disagreements about whether a roadmap is on time.</p>
-        <p><b>What admins can do.</b> Seed's admin multisig has exactly two instructions. <i>Flag fraud</i> marks the raise, blacklists the founder's X account from opening another, and disables buying through Seed. <i>Approve a takeover</i> moves the payout wallet to one the backers chose, so creator fees and the remaining unlocks go to the community instead of the founder. Neither touches the pool, which stays locked, or backers' tokens, which are already theirs.</p>
+        <p><b>What admins can do.</b> Seed's admin multisig has exactly two instructions. <i>Flag fraud</i> marks the raise, blacklists the founder wallet from opening another (and the X account, when one is linked), and disables buying through Seed. <i>Approve a takeover</i> moves the payout wallet to one the backers chose, so creator fees and the remaining unlocks go to the community instead of the founder. Neither touches the pool, which stays locked, or backers' tokens, which are already theirs.</p>
         <p><b>What admins cannot do.</b> Withdraw liquidity, mint tokens, change a fee split, change a schedule, or take a refund. None of those instructions exist.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
@@ -1388,7 +1388,7 @@ a.ico:hover{color:var(--ink)}
             <tr><td>Pool</td><td>DAMM v2, full range, pair asset as token B, flat 1% fee collected in token B, dynamic fee and scheduler off, locked at creation</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Pool fee split</td><td>70% to the payout wallet, 30% to Seed, snapshotted at seeding; claims permissionless and scheduled</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Position NFT</td><td>Held by a Seed program account; no instruction can move it</td><td class="num"><span class="st set">Set</span></td></tr>
-            <tr><td>Founder identity</td><td>Sign in with X, attested by Seed's backend and verified on chain; no KYC</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Founder identity</td><td>A wallet; an X account is optional, attested by Seed's backend and verified on chain; no KYC</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Payout wallet change</td><td>Takes effect 7 days after the request, shown while pending</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Reports</td><td>Wallet-signed, kept off chain, public</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Admin instructions</td><td>Flag fraud, approve takeover; a Squads multisig on mainnet</td><td class="num"><span class="st set">Set</span></td></tr>
@@ -1424,8 +1424,8 @@ const r6 = n => Math.round(n * 1e6) / 1e6;
    each buy and goes back with it if the raise refunds. The terms are in js/config/seed.js, the arithmetic in js/model.js. */
 const DEX = 'Meteora DAMM v2';
 const ASSETS = {
-  SOL:  { sym: 'SOL',  mint: 'So11111111111111111111111111111111111111112',  dp: 2, chips: [0.5, 2, 10],      min: 10,   max: 5000,    verified: true },
-  USDC: { sym: 'USDC', mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', dp: 2, chips: [50, 250, 1000],   min: 1000, max: 1000000, verified: true },
+  SOL:  { sym: 'SOL',  mint: 'So11111111111111111111111111111111111111112',  dp: 2, chips: [0.5, 2, 10],      min: 0,    max: 5000,    verified: true },   // no floor: any target above 0, under the $100K cap
+  USDC: { sym: 'USDC', mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', dp: 2, chips: [50, 250, 1000],   min: 0,    max: 1000000, verified: true },
   JUP:  { sym: 'JUP',  mint: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',  dp: 2, chips: [100, 500, 2500],  verified: true },
   BONK: { sym: 'BONK', mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', dp: 0, chips: [1e6, 5e6, 2.5e7], verified: true }
 };
@@ -1523,7 +1523,7 @@ const adapter = {
     return wallet;
   },
   contribute: sim(900), claimRefund: sim(800), claimTokens: sim(800), openPresale: sim(1000), swap: sim(900), deposit: sim(800), withdraw: sim(800),
-  cancelRaise: sim(900), seedStep: sim(700), claimFees: sim(800), claimVested: sim(800), requestPayoutChange: sim(800), report: sim(400), adminFlag: sim(500), adminTakeover: sim(500)
+  cancelRaise: sim(900), seedStep: sim(700), claimFees: sim(800), claimVested: sim(800), requestPayoutChange: sim(800), report: sim(400), adminFlag: sim(500), adminTakeover: sim(500), linkX: sim(600)
 };
 
 /* ------------------------------------------------------------ formatting */
@@ -1667,7 +1667,7 @@ function tile(p, i, trend, fresh = '') {
     <span class="tr-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${trend ? '' : `${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}`}</span>
     <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b>${doingChip(p)}</span>
     ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span>${rowAnn(p)}${rowLinks(p)}</span>
-    <span class="tile-flags">${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
+    <span class="tile-flags">${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
     <span class="t-act">${actCell(p)}</span>`}</div>`;
 }
 const FEED_NOTE = { all: 'Live and seeded', new: 'Under 50% filled', seeding: 'Past halfway, or filled and seeding', seeded: 'Pool open', refunded: 'Missed, cancelled or timed out' };
@@ -1987,12 +1987,11 @@ function lookupMint(mint) {
     if ($('#fMint').value.trim() === mint) renderPreview();
   }, 350);
 }
-const readDraft = () => ({ name: $('#fName').value.trim(), ticker: $('#fTicker').value.trim().toUpperCase(), idea: $('#fIdea').value.trim(), hours: draft.hours, target: parseFloat(($('#fTarget').value || '').replace(/,/g, '')) });
+const readDraft = () => ({ name: $('#fName').value.trim(), ticker: $('#fTicker').value.trim().toUpperCase(), hours: draft.hours, target: parseFloat(($('#fTarget').value || '').replace(/,/g, '')) });
 function validateDraft(d, da) {
-  if (d.name.length < 2) return 'Give the project a name of at least two characters.';
-  if (!/^[A-Z0-9]{2,6}$/.test(d.ticker)) return 'The ticker needs 2 to 6 letters or digits.';
+  if (!d.name) return 'Give the project a name.';
+  if (!/^[A-Z0-9]{1,6}$/.test(d.ticker)) return 'A ticker is 1 to 6 letters or digits.';
   if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) return `$${d.ticker} is already in use by a live raise. Pick another ticker.`;
-  if (d.idea.length < 10) return 'Describe the idea in at least ten characters so backers know what they are funding.';
   if (da.err) return da.err;
   if (isNaN(d.target) || d.target <= 0) return `Set a target in ${da.a.sym}.`;
   if (da.a.min && (d.target < da.a.min || d.target > da.a.max)) return `${da.a.sym} targets run from ${da.a.min.toLocaleString('en-US')} to ${da.a.max.toLocaleString('en-US')} ${da.a.sym}.`;

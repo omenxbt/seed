@@ -102,7 +102,8 @@
     {
       "name": "admin_flag_fraud",
       "docs": [
-        "admin: the raise is flagged, buying stops, and the founder's X handle is blacklisted from opening another"
+        "admin: the raise is flagged, buying stops, and the founder wallet is blacklisted from opening another, with the",
+        "X account too when one is linked (its blacklist account comes as the first remaining account)"
       ],
       "discriminator": [
         196,
@@ -146,8 +147,31 @@
           ]
         },
         {
-          "name": "blacklist",
-          "writable": true
+          "name": "wallet_blacklist",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  108,
+                  97,
+                  99,
+                  107,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "raise.founder",
+                "account": "Raise"
+              }
+            ]
+          }
         },
         {
           "name": "system_program",
@@ -1015,9 +1039,6 @@
     },
     {
       "name": "contribute",
-      "docs": [
-        "a buy: `amount` goes into the raise, trimmed to what fits; the fee rides on top and is held beside it"
-      ],
       "discriminator": [
         82,
         33,
@@ -1785,6 +1806,68 @@
       ]
     },
     {
+      "name": "link_x",
+      "docs": [
+        "a buy: `amount` goes into the raise, trimmed to what fits; the fee rides on top and is held beside it",
+        "the founder links an X account to a raise that is live, filled or seeded, with the same attestation open_raise takes"
+      ],
+      "discriminator": [
+        111,
+        125,
+        117,
+        65,
+        106,
+        131,
+        62,
+        21
+      ],
+      "accounts": [
+        {
+          "name": "raise",
+          "writable": true
+        },
+        {
+          "name": "founder",
+          "signer": true,
+          "relations": [
+            "raise"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "instructions",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "x",
+          "type": {
+            "defined": {
+              "name": "XAttest"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "open_raise",
       "discriminator": [
         131,
@@ -1857,7 +1940,60 @@
           "writable": true
         },
         {
-          "name": "blacklist"
+          "name": "wallet_blacklist",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  108,
+                  97,
+                  99,
+                  107,
+                  108,
+                  105,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "founder"
+              }
+            ]
+          }
+        },
+        {
+          "name": "founder_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  111,
+                  117,
+                  110,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "founder"
+              }
+            ]
+          }
+        },
+        {
+          "name": "prev_raise",
+          "docs": [
+            "the raise the founder's record names as live, when it names one"
+          ],
+          "optional": true
         },
         {
           "name": "instructions",
@@ -2153,19 +2289,6 @@
   ],
   "accounts": [
     {
-      "name": "Blacklist",
-      "discriminator": [
-        131,
-        9,
-        212,
-        250,
-        58,
-        186,
-        247,
-        3
-      ]
-    },
-    {
       "name": "Config",
       "discriminator": [
         155,
@@ -2400,6 +2523,19 @@
         89,
         46
       ]
+    },
+    {
+      "name": "XLinked",
+      "discriminator": [
+        142,
+        172,
+        70,
+        115,
+        146,
+        8,
+        112,
+        125
+      ]
     }
   ],
   "errors": [
@@ -2535,88 +2671,81 @@
     },
     {
       "code": 6026,
+      "name": "OneLiveRaise",
+      "msg": "This wallet already has a live raise. One at a time."
+    },
+    {
+      "code": 6027,
+      "name": "PrevRaiseMissing",
+      "msg": "The raise named as this wallet's live one was not passed in."
+    },
+    {
+      "code": 6028,
+      "name": "XAlreadyLinked",
+      "msg": "This raise already has an X account linked."
+    },
+    {
+      "code": 6029,
+      "name": "RaiseOver",
+      "msg": "A refunded raise cannot link an X account."
+    },
+    {
+      "code": 6030,
+      "name": "XBlacklistMissing",
+      "msg": "The X handle's blacklist account was not passed in."
+    },
+    {
+      "code": 6031,
       "name": "NotPendingAdmin",
       "msg": "Only the pending admin can accept the handover."
     },
     {
-      "code": 6027,
+      "code": 6032,
       "name": "TestModeNotAllowed",
       "msg": "Test mode exists only in devnet builds, and only with the devnet proof account."
     },
     {
-      "code": 6028,
+      "code": 6033,
       "name": "WrongStep",
       "msg": "That seeding step is not next."
     },
     {
-      "code": 6029,
+      "code": 6034,
       "name": "TimeoutNotPassed",
       "msg": "The seeding timeout has not passed."
     },
     {
-      "code": 6030,
+      "code": 6035,
       "name": "AlreadyClaimed",
       "msg": "Already claimed."
     },
     {
-      "code": 6031,
+      "code": 6036,
       "name": "NothingToClaim",
       "msg": "Nothing to claim."
     },
     {
-      "code": 6032,
+      "code": 6037,
       "name": "ChangeNotDue",
       "msg": "The payout wallet change is not due yet."
     },
     {
-      "code": 6033,
+      "code": 6038,
       "name": "NoChangePending",
       "msg": "No payout wallet change is pending."
     },
     {
-      "code": 6034,
+      "code": 6039,
       "name": "WrongAccount",
       "msg": "The account does not match the raise."
     },
     {
-      "code": 6035,
+      "code": 6040,
       "name": "Overflow",
       "msg": "Arithmetic overflow."
     }
   ],
   "types": [
-    {
-      "name": "Blacklist",
-      "docs": [
-        "an X handle hash that can no longer open a raise; created by admin_flag_fraud"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "handle_hash",
-            "type": {
-              "array": [
-                "u8",
-                32
-              ]
-            }
-          },
-          {
-            "name": "raise",
-            "type": "pubkey"
-          },
-          {
-            "name": "at",
-            "type": "i64"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
     {
       "name": "Config",
       "docs": [
@@ -2878,6 +3007,21 @@
             "type": "pubkey"
           },
           {
+            "name": "founder",
+            "type": "pubkey"
+          },
+          {
+            "name": "x_handle_hash",
+            "type": {
+              "option": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
+            }
+          },
+          {
             "name": "by",
             "type": "pubkey"
           },
@@ -2932,17 +3076,14 @@
             "type": "pubkey"
           },
           {
-            "name": "x_handle_hash",
+            "name": "x",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "option": {
+                "defined": {
+                  "name": "XAttest"
+                }
+              }
             }
-          },
-          {
-            "name": "attest_expiry",
-            "type": "u64"
           }
         ]
       }
@@ -3011,10 +3152,12 @@
           {
             "name": "x_handle_hash",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "option": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
             }
           },
           {
@@ -3232,10 +3375,12 @@
           {
             "name": "x_handle_hash",
             "type": {
-              "array": [
-                "u8",
-                32
-              ]
+              "option": {
+                "array": [
+                  "u8",
+                  32
+                ]
+              }
             }
           },
           {
@@ -3512,6 +3657,59 @@
           {
             "name": "tokens",
             "type": "u64"
+          },
+          {
+            "name": "at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "XAttest",
+      "docs": [
+        "an X attestation: the attestor signed (founder ‖ handle hash ‖ expiry) in the ed25519 instruction just before"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "handle_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "expiry",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "XLinked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "raise",
+            "type": "pubkey"
+          },
+          {
+            "name": "founder",
+            "type": "pubkey"
+          },
+          {
+            "name": "x_handle_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
           },
           {
             "name": "at",
