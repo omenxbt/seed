@@ -419,6 +419,7 @@ a.ico:hover{color:var(--ink)}
 #mineList .row{grid-template-columns:1fr auto;grid-template-areas:"proj act" "prog prog" "raised time";row-gap:12px;padding:16px 24px;border-top:1px solid var(--hair);border-bottom:0}
 #mineList .c-proj{grid-area:proj}#mineList .c-act{grid-area:act}#mineList .c-prog{grid-area:prog}#mineList .c-raised{grid-area:raised;text-align:left}#mineList .c-time{grid-area:time}
 #mineList .empty{padding:4px 24px 26px;text-align:left}
+#mineList .nm b{white-space:normal;line-height:1.2}#mineList .nm b .tk{display:inline-block}
 
 /* toolbar */
 .mini{display:flex;align-items:center;border:1px solid var(--hair);border-radius:12px;background:var(--paper);height:32px;padding:0 11px;gap:7px;transition:border-color var(--fast) var(--ease-out),box-shadow var(--fast) var(--ease-out)}
@@ -486,7 +487,7 @@ a.ico:hover{color:var(--ink)}
 .tr-name b{font-size:15px;letter-spacing:-.02em}
 .tr-name .pick span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
 .tr-name .tag{flex:none;font-size:11px;padding:1px 7px}
-.tr-fig{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 2px;min-width:0}
+.tr-fig{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;padding:0 2px;min-width:0}
 .tr-fig b{font-size:15px;font-weight:400;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .tr-fig em{font-style:normal;font-size:12px;color:var(--faint)}
 .tr-chg{flex:none;font-size:12px;font-weight:500;border-radius:999px;padding:2px 8px;background:var(--chip);color:var(--muted);white-space:nowrap}
@@ -528,7 +529,7 @@ a.ico:hover{color:var(--ink)}
 .board-note{font-size:13px}
 .board-note a{color:var(--navy-deep);font-weight:500;border-bottom:1px solid var(--hair-2)}
 @media (max-width:1000px){.board{min-height:0}.col-list{overflow:visible}}
-@media (max-width:560px){.col-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tile{padding:8px 8px 10px}.tile .tr-fig em{display:none}}
+@media (max-width:560px){.col-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.tile{padding:8px 8px 10px}.tile .tr-fig b{flex:1 1 auto}.tile .tr-fig em{display:none}}
 /* on a wide window the board fills the window: header, toolbar, columns, then the foot line, with no page scroll. The columns take
    whatever height is left, so the foot line always sits at the bottom edge. Under 1000px the columns stack and the page scrolls. */
 @media (min-width:1001px){
@@ -802,7 +803,7 @@ a.ico:hover{color:var(--ink)}
         <section class="panel pagehead">
           <h1><i>Start</i>a raise</h1>
           <p>Everything backers see on your project page, before you open. The supply is 1B, minted at seeding with mint and freeze revoked; the raise opens a locked pool at a fixed price. Opening is free.</p>
-          <nav class="steps" aria-label="Form sections"><button type="button" data-step="1"><span class="num">01</span>Project</button><button type="button" data-step="2"><span class="num">02</span>Raise</button><button type="button" data-step="3"><span class="num">03</span>Team share and unlocks</button><button type="button" data-step="4"><span class="num">04</span>Roadmap</button><button type="button" data-step="5"><span class="num">05</span>Token and links</button><button type="button" data-step="6"><span class="num">06</span>Payout wallet</button><span class="steps-h">Optional</span><div class="step-opt"><button type="button" data-step="7"><span class="num">07</span>Team</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></div></nav>
+          <nav class="steps" aria-label="Form sections"><button type="button" data-step="1"><span class="num">01</span>Project</button><button type="button" data-step="2"><span class="num">02</span>Raise</button><button type="button" data-step="3"><span class="num">03</span>Team share and unlocks</button><button type="button" data-step="4"><span class="num">04</span>Roadmap</button><button type="button" data-step="5"><span class="num">05</span>Token and links</button><button type="button" data-step="6"><span class="num">06</span>Payout wallet</button><span class="steps-h">Optional</span><div class="step-opt"><button type="button" data-step="7"><span class="num">07</span>Team members</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></div></nav>
         </section>
         <section class="panel"><h3 class="card-h">Your raises</h3><div id="mineList"></div></section>
       </aside>
@@ -865,7 +866,7 @@ a.ico:hover{color:var(--ink)}
         </div></fieldset>
 
         <fieldset><legend><span class="num">04</span>Roadmap</legend><div class="form">
-          <p class="fs-note full">At least one milestone with a date. Backers see them as given; Seed does not enforce them, and a backer who sees one slip can report the raise.</p>
+          <p class="fs-note full">Optional. Milestones with dates; backers see them as given, Seed does not enforce them, and a backer who sees one slip can report the raise.</p>
           <div class="full"><div class="rows" id="roadRows"></div><div class="rows-foot"><button type="button" class="qb" data-add="road">Add a milestone</button></div></div>
         </div></fieldset>
 
@@ -886,7 +887,7 @@ a.ico:hover{color:var(--ink)}
         </div></fieldset>
 
         <fieldset class="opt" data-opt="team"><legend><span class="num">07</span>Team members<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></legend>
-          <p class="fs-note" data-off>Left off, your page lists no team beyond your X account. Turn it on to list the people behind the project.</p>
+          <p class="fs-note" data-off>Left off, your page lists no team beyond the founder. Turn it on to list the people behind the project.</p>
           <div data-body hidden>
           <p class="fs-note">The connected wallet is the founder wallet. Its funding is read from Solana for the info panel.</p>
           <div class="rows" id="teamRows"></div><div class="rows-foot"><button type="button" class="qb" data-add="team">Add a team member</button></div>
@@ -1270,7 +1271,7 @@ a.ico:hover{color:var(--ink)}
           <div><dt>Team share</dt><dd class="t">0% to under 100%</dd></div>
           <div><dt>Unlock schedule</dt><dd class="t">Within the two rules</dd></div>
           <div><dt>What the token does</dt><dd class="t">Or none: a bet on the team</dd></div>
-          <div><dt>Roadmap</dt><dd class="t">At least one milestone, not enforced</dd></div>
+          <div><dt>Roadmap</dt><dd class="t">Optional milestones, not enforced</dd></div>
           <div><dt>Buy limits</dt><dd class="t">Optional minimum and maximum</dd></div>
         </dl>
       </div>
@@ -1286,7 +1287,7 @@ a.ico:hover{color:var(--ink)}
           <li><b>Seeding</b> shows a filled raise's step count and the time left before it would refund.</li>
           <li><b>Quick deposit</b> sends your preset amount in one click, fee on top. Presets are kept per asset. Like any buy, it is trimmed to what fits.</li>
         </ul>
-        <p>Clicking a raise opens its own page in a new tab, with the fill chart, the team's unlocks, the founder's X account, the info panel and the reports. The terminal stays open where you left it, and the two tabs keep each other up to date.</p>
+        <p>Clicking a raise opens its own page in a new tab, with the fill chart, the team's unlocks, the founder (and the X account, when one is linked), the info panel and the reports. The terminal stays open where you left it, and the two tabs keep each other up to date.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
         <h3>The two numbers</h3>
@@ -1459,12 +1460,17 @@ function addr(seed) {
 const QUICK0 = () => ({ SOL: 2, USDC: 250, JUP: 500, BONK: 5000000, NVDAx: 1 });
 let state = { wallet: null, presales: [], positions: {}, claimed: {}, tokens: {}, quick: QUICK0(), custom: {} };
 const ui = { view: '', tab: 'terminal', sel: null, fAsset: 'SOL', bq: '', feed: 'all', sort: { all: 'trend', new: 'new', seeding: 'filled', seeded: 'ending', refunded: 'ending' }, qbAsset: 'SOL' };
-function fresh() { return { wallet: null, presales: seedData(), positions: Object.assign({}, DEMO_WALLET_BUYS), claimed: {}, tokens: {}, quick: QUICK0(), custom: {} }; }
+function fresh() { return { at: Date.now(), wallet: null, presales: seedData(), positions: Object.assign({}, DEMO_WALLET_BUYS), claimed: {}, tokens: {}, quick: QUICK0(), custom: {} }; }
 function load() {
-  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q && s.presales[0].buys) { state = Object.assign(fresh(), s); return; } } catch (e) {}
+  try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q && s.presales[0].buys) {
+    if (!s.at || Date.now() - s.at > 36 * H) {   // the demo raises are dated relative to now; after a day and a half they are made fresh so none has quietly expired
+      const demoIds = new Set(seedData().map(p => p.id)), keep = s.presales.filter(p => !demoIds.has(p.id) && (p.live || p.mine));
+      s.presales = seedData().concat(keep); s.at = Date.now();
+    }
+    state = Object.assign(fresh(), s); return; } } catch (e) {}
   state = fresh();
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+function save() { try { state.at = state.at || Date.now(); localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
 
 /* ---- chain reads (live), on the endpoint in SEED.rpc (js/config/seed.js), with a keyless public one behind it for mainnet
    token lookups. Calls are spaced and retried because public endpoints rate limit; api.mainnet-beta.solana.com refuses browser origins. */
@@ -1893,13 +1899,20 @@ async function refreshBalances(force) {
   save(); renderWallet(); renderPortfolio(); if (detailBox) renderDetail();
 }
 const watched = new WeakSet();
+/* once a real wallet is in: its positions and claims are read back from the chain, and on devnet a wallet with no test
+   SOL is told where to get some and how to switch the wallet app over */
+function afterRealConnect(w) {
+  if (typeof chain === 'undefined' || !chain.on()) return;
+  chain.init().then(ok => ok && chain.loadLive()).then(got => { if (got) { save(); renderAll(); if (detailBox) renderDetail(true); } });
+  if (SEED.network === 'devnet' && !w.stale && !((w.bal && w.bal.SOL) > 0)) setTimeout(() => toast('This site runs on Solana devnet and this wallet holds no devnet SOL. In Phantom: Settings → Developer settings → Testnet mode, then get test SOL at faucet.solana.com.'), 900);
+}
 function watch(prov) {
   if (!prov || !prov.on || watched.has(prov)) return; watched.add(prov);
   prov.on('disconnect', () => { if (isReal() && providerOf(state.wallet.kind) === prov) dropWallet('Wallet disconnected'); });
   prov.on('accountChanged', k => {
     if (!isReal() || providerOf(state.wallet.kind) !== prov) return;
     if (!k) return dropWallet('Wallet disconnected');
-    state.wallet.pk = String(k); state.wallet.addr = shortMint(state.wallet.pk); state.wallet.bal = {}; save(); renderAll(); refreshBalances(true);
+    state.wallet.pk = String(k); state.wallet.addr = shortMint(state.wallet.pk); state.wallet.bal = {}; state.positions = {}; state.claimed = {}; state.tokens = {}; save(); renderAll(); refreshBalances(true); afterRealConnect(state.wallet);
   });
 }
 async function connectWith(id) {
@@ -1908,6 +1921,7 @@ async function connectWith(id) {
     const w = await adapter.connect(id);
     if (w.pk) { enterReal(); watch(providerOf(id)); balAt = Date.now(); } else leaveReal();
     state.wallet = w; toast(w.stale ? `${w.name} connected. Balances could not be loaded.` : `${w.name} connected`);
+    if (w.pk) { afterRealConnect(w); }
   } catch (e) { toast(e && e.code === 4001 ? 'Connection cancelled in the wallet.' : (e && e.message) || 'The wallet did not connect.'); }
   b.disabled = false; save(); renderAll(); if (detailBox) renderDetail();
 }
@@ -2013,7 +2027,7 @@ function renderPortfolio() {
       return `<div class="prow"><span class="c-proj">${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta">${pairTag(p)}</span></span></span>
         <span class="num">${a ? `${fmtAmt(a, p.q)} ${sym}` : '–'}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
     : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#">Buy into a raise from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
-  $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` + xRow() : '<p class="rail-meta">No wallet connected.</p>';
+  $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` + xRow() + (isReal() && SEED.network === 'devnet' && !state.wallet.stale && !(balOf('SOL') > 0) ? '<p class="rail-meta">No devnet SOL. Switch the wallet app to Devnet (Phantom: Settings → Developer settings → Testnet mode) and get test SOL at <a href="https://faucet.solana.com" target="_blank" rel="noopener">faucet.solana.com</a>.</p>' : '') : '<p class="rail-meta">No wallet connected.</p>';
   renderPerf(); syncMove(); renderCreator();
 }
 $('#prows').addEventListener('click', e => { const cl = e.target.closest('[data-claim]'); if (cl) claim(find(cl.dataset.claim), cl); });

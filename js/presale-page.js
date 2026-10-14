@@ -241,7 +241,7 @@ function tradePanel(p) { return p.blacklisted ? flaggedPanel(p) : p.status === '
 /* a raise flagged for fraud takes no buys and gets no trade panel; the pool, if there is one, is still locked on Meteora */
 function flaggedPanel(p) {
   return `<section class="panel rail-card rail-flag"><h3>${p.status === 'seeded' ? 'Trading here is off' : 'Buying is off'}</h3>
-    <p class="rail-meta">Seed admins flagged this raise for fraud${p.flag ? ` on ${fmtDate(p.flag.at)}` : ''}. ${p.status === 'seeded' ? 'The pool on Meteora is still locked and open, but Seed no longer routes trades to it.' : p.status === 'live' ? 'It takes no more buys.' : ''} The founder's X account cannot open another raise.</p>
+    <p class="rail-meta">Seed admins flagged this raise for fraud${p.flag ? ` on ${fmtDate(p.flag.at)}` : ''}. ${p.status === 'seeded' ? 'The pool on Meteora is still locked and open, but Seed no longer routes trades to it.' : p.status === 'live' ? 'It takes no more buys.' : ''} The founder wallet, and its X account if one is linked, cannot open another raise.</p>
     <a class="bar-link" href="#/presale/${esc(p.id)}/reports">The reports ${ICONS.out}</a></section>`;
 }
 /* a filled raise: the steps of seeding, and the timeout that refunds everyone if they do not all land */
@@ -319,7 +319,7 @@ function ppFounder(p) {
 /* the strips at the top of the page: a fraud flag, a community takeover, a payout wallet on the move, the latest announcement */
 function ppNotices(p) {
   const out = [], pc = payoutChange(p);
-  if (p.blacklisted) out.push(`<div class="panel pp-notice bad"><span class="n-ico">${RISK_ICON.fail}</span><div><b>Flagged for fraud</b><span>Seed admins flagged this raise${p.flag ? ` on ${fmtDate(p.flag.at)}` : ''} after a backer report. Buying is off and the founder's X account is blacklisted from opening another raise.</span></div><a href="#/presale/${esc(p.id)}/reports">Reports</a></div>`);
+  if (p.blacklisted) out.push(`<div class="panel pp-notice bad"><span class="n-ico">${RISK_ICON.fail}</span><div><b>Flagged for fraud</b><span>Seed admins flagged this raise${p.flag ? ` on ${fmtDate(p.flag.at)}` : ''} after a backer report. Buying is off and the founder wallet is blacklisted from opening another raise, with its X account if one is linked.</span></div><a href="#/presale/${esc(p.id)}/reports">Reports</a></div>`);
   if (p.takeover) out.push(`<div class="panel pp-notice navy"><span class="n-ico">${RISK_ICON.pass}</span><div><b>Community takeover</b><span>Approved ${fmtDate(p.takeover.at)}: creator fees and the team's unlocks now go to ${esc(p.takeover.label || 'a backer wallet')} (${esc(shortMint(p.takeover.to))}), not the founder.</span></div><a href="#/presale/${esc(p.id)}/reports">Reports</a></div>`);
   if (pc) out.push(`<div class="panel pp-notice"><span class="n-ico">${ICONS.out}</span><div><b>Payout wallet changing</b><span>The founder asked to move the payout wallet to ${esc(shortMint(pc.to))}. It takes effect ${pc.due ? 'with the next claim' : fmtDate(pc.at)}, ${SEED.payoutDelayDays} days after the request.</span></div></div>`);
   return out.join('') + ppAnnounce(p);
@@ -473,12 +473,12 @@ function tabReports(p) {
       <div class="upd-foot"><span class="quiet">Signed by ${esc(state.wallet.addr)} and public. Seed acts on fraud; it does not referee disagreements. <span class="num" data-repct>0 / 600</span></span><button class="btn btn-ink btn-sm">Sign and send</button></div><div class="err" data-reperr role="alert"></div></form>`;
   const act = r => !admin || r.status !== 'open' || p.blacklisted ? '' : `<div class="rep-act"><button type="button" class="qb qb-sm" data-flag="${esc(r.id)}">Flag fraud</button><button type="button" class="qb qb-sm" data-takeover="${esc(r.id)}">Approve takeover</button><button type="button" class="qb qb-sm" data-dismiss="${esc(r.id)}">Dismiss</button></div>`;
   const items = list.map(r => `<li class="rep ${r.status}"><div class="rep-h"><span class="mono">${r.wallet === me ? 'You' : esc(walletLabel(r.wallet))}</span><span class="btag ${r.status === 'fraud' ? 'bad' : r.status === 'takeover' ? 'ok' : ''}">${REPORT_STATE[r.status] || esc(r.status)}</span><span class="num">${fmtAgo(now - r.at)} · ${fmtDate(r.at)}</span></div><p>${esc(r.reason)}</p>${act(r)}</li>`).join('');
-  const actions = [p.flag ? `<li class="adm bad">${RISK_ICON.fail}<div><b>Flagged for fraud</b> ${fmtDate(p.flag.at)}${p.flag.reportId ? `, on report ${esc(p.flag.reportId)}` : ''}. The founder's X account is blacklisted and buying is off.</div></li>` : '',
+  const actions = [p.flag ? `<li class="adm bad">${RISK_ICON.fail}<div><b>Flagged for fraud</b> ${fmtDate(p.flag.at)}${p.flag.reportId ? `, on report ${esc(p.flag.reportId)}` : ''}. The founder wallet is blacklisted, with its X account if one is linked, and buying is off.</div></li>` : '',
     p.takeover ? `<li class="adm ok">${RISK_ICON.pass}<div><b>Community takeover approved</b> ${fmtDate(p.takeover.at)}: the payout wallet moved from ${esc(shortMint(p.takeover.from))} to ${esc(shortMint(p.takeover.to))} (${esc(p.takeover.label || 'backers')}).</div></li>` : ''].filter(Boolean).join('');
   return tabHead('Reports', '', ` <span class="quiet">${list.length ? `${list.length} public` : ''}</span>`) + form +
     (actions ? `<ul class="adm-list">${actions}</ul>` : '') +
     (list.length ? `<ol class="reports">${items}</ol>` : quietEmpty('No reports on this raise.')) +
-    `<p class="quiet">Seed enforces its rules in the program: the cap, refunds, the locked pool and the unlock minimum. Admins (a multisig) can do two things on a report: flag fraud, which blacklists the founder's X account and disables buying, or approve a takeover, which moves creator fees and team unlocks to a wallet the backers chose.${admin ? ' Your wallet is an admin here.' : ''}</p>`;
+    `<p class="quiet">Seed enforces its rules in the program: the cap, refunds, the locked pool and the unlock minimum. Admins (a multisig) can do two things on a report: flag fraud, which blacklists the founder wallet (and its X account, when linked) and disables buying, or approve a takeover, which moves creator fees and team unlocks to a wallet the backers chose.${admin ? ' Your wallet is an admin here.' : ''}</p>`;
 }
 /* Announcements: what the founder and team post for backers, newest first. Anyone can read them; only a founder or team
    wallet of this raise gets the form. */

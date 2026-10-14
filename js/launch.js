@@ -276,7 +276,7 @@ function renderPreview() {
     ['FDV at the raise', ok ? `<span class="num">${f(fdvOf(dp))} ${sym}</span> (${fmtUsd(fdvUsdOf(dp))})` : 'Set a target'],
     ['Pool at seeding', ok ? `<span class="num">${f(d.target)} ${sym}</span> + <span class="num">${fmtTok(split.pool)}</span> $${esc(dp.ticker)}, locked for good` : 'The whole raise, locked for good'],
     ['Your fee income', `<span class="num">${fees(5000)}</span>, <span class="num">${fees(25000)}</span> or <span class="num">${fees(100000)}</span> a day at $5K, $25K or $100K of daily volume`],
-    ['Closes', `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
+    ['Closes', typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode && isReal() ? `in ${Math.round(d.hours * 60 / 24)} min on devnet (test mode: a day is a minute), or the moment it fills` : `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
     ['If it misses', `Every buy and its fee go back to backers after ${label}. Nothing is minted`]
   ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
   const checks = riskChecks(dp, { draft: true }), s = riskSummary(checks);

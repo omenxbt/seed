@@ -54,7 +54,7 @@ function riskChecks(p, opts = {}) {
 
   // 7 and 8. what a backer can check for themselves
   const road = (typeof roadmapOf === 'function' ? roadmapOf(p) : p.roadmap || pr.roadmap || []);
-  add('roadmap', 'Roadmap', road.length ? 'pass' : 'warn', road.length ? `${road.length} milestone${road.length > 1 ? 's' : ''} listed, ${road.filter(r => r.status === 'shipped').length} shipped.` : 'No roadmap is listed.', fromPr);
+  add('roadmap', 'Roadmap', road.length ? 'pass' : 'info', road.length ? `${road.length} milestone${road.length > 1 ? 's' : ''} listed, ${road.filter(r => r.status === 'shipped').length} shipped.` : 'None listed. Optional.', fromPr);
   add('website', 'Website', pr.links && pr.links.website ? 'pass' : 'warn', pr.links && pr.links.website ? 'A website is listed.' : 'No website is listed.', fromPr);
 
   // the founder's choices, as facts
