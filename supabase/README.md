@@ -75,6 +75,16 @@ supabase functions deploy helius-webhook --no-verify-jwt
 supabase functions deploy crank --no-verify-jwt
 ```
 
+## Where Seed runs today (2026-10-13)
+
+Project `xwokejftvhcwrwxxcykh`, linked from this repo (`supabase/config.toml`; the CLI runs as `npx supabase`). All
+four migrations are applied and `seed`, `helius-webhook` and `crank` are deployed with every secret above set for
+**devnet**: the attestor is the key the program tests derive from the deployer wallet (it is what the on-chain Config
+holds), the crank wallet is `program/keys/crank.json` (`3YYcjx21rw2wyQRPjawRNr2QCwUFs1nDbtJucmJq8CQc`, funded with
+devnet SOL), and pg_cron calls the crank every minute. `program/scripts/secrets.mjs` regenerates the crank and
+webhook secrets if they are ever rotated; `program/scripts/config.mjs` prints the on-chain Config. Still to create by
+hand: the Helius webhook (devnet, raw, program id, secret `HELIUS_WEBHOOK_SECRET`) and the X developer app.
+
 ## Founder and team roles
 
 Pinning and posting updates need a row in `presale_roles`. A presale opened from the Launch form registers its creator as

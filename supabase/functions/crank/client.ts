@@ -1,5 +1,6 @@
 // The crank's view of the Seed program: the same addresses and instructions as program/client/seed.ts, written for
 // Deno's npm: imports. Keep the two in step when an instruction changes.
+import { Buffer } from 'node:buffer';
 import { BN, Program, web3 } from 'npm:@coral-xyz/anchor@0.30.1';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, createAssociatedTokenAccountIdempotentInstruction, getAccount } from 'npm:@solana/spl-token@0.4.9';
 
@@ -62,10 +63,6 @@ export function seedClient(program: Program, conn: web3.Connection) {
       const ix = await m.crankSeed().accounts({ raise, config, escrow: getAssociatedTokenAddressSync(r.pairMint, raise, true), treasuryToken: tre, tokenProgram: TOKEN_PROGRAM_ID }).instruction();
       return send([createAssociatedTokenAccountIdempotentInstruction(me, tre, cfg.seedTreasury, r.pairMint), ix]);
     },
-    /* the pair-asset fees the position has accrued but not paid out: DAMM's Position account keeps fee_b_pending at a fixed
-       offset; rather than parse it, the crank asks DAMM to claim and reads the escrow before and after (a claim with
-       nothing waiting is refused by the program, so it costs only a failed-transaction fee once an hour) */
-    async feesWaiting(_raise: web3.PublicKey) { return 1n; },
     async claimCreatorFees(raise: web3.PublicKey) {
       const r = await raiseOf(raise), cfg = await (program.account as any).config.fetch(config), pool = r.pool as web3.PublicKey;
       const payoutToken = getAssociatedTokenAddressSync(r.pairMint, r.payoutWallet, true), tre = getAssociatedTokenAddressSync(r.pairMint, cfg.seedTreasury, true);

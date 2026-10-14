@@ -46,8 +46,8 @@ Deno.serve(async (req) => {
         if (a.pendingPayout && Number(a.payoutEffectiveAt) * 1000 <= now) { await client.applyPayoutChange(r.publicKey); note(`payout ${id}`); }
         const { data: last } = await db.from('fee_claims').select('at').eq('raise_id', (await db.from('raises').select('id').eq('address', id).maybeSingle()).data?.id ?? '').order('at', { ascending: false }).limit(1).maybeSingle();
         if (!last || now - Date.parse(last.at) > FEE_CLAIM_EVERY) {
-          const waiting = await client.feesWaiting(r.publicKey);
-          if (waiting > 0n) { await client.claimCreatorFees(r.publicKey); note(`fees ${id}`); }
+          // the program refuses a claim with nothing waiting at preflight, which costs nothing; that is the quiet case
+          try { await client.claimCreatorFees(r.publicKey); note(`fees ${id}`); } catch (e) { if (!String((e as Error).message).includes('NothingToClaim')) throw e; }
         }
       }
     } catch (e) { fail(id, e); }
