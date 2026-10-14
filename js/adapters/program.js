@@ -22,7 +22,7 @@ var chain = {
   /* Anchor, the IDL, a read-only program and the config; once */
   init() {
     if (!this.on()) return Promise.resolve(false);
-    if (this.program) return Promise.resolve(true);
+    if (this.ready) return Promise.resolve(true);
     return this.loading || (this.loading = (async () => {
       try {
         const [lib, idl] = await Promise.all([import(ANCHOR_URL), fetch('js/idl/seed.json').then(r => r.json())]);
@@ -31,7 +31,7 @@ var chain = {
         this.pid = this.program.programId;
         this.cfg = await this.program.account.config.fetch(this.pda.config());
         this.ready = true; return true;
-      } catch (e) { console.warn('Seed program unavailable:', e.message); this.loading = null; return false; }
+      } catch (e) { console.warn('Seed program unavailable:', e.message); this.program = null; this.loading = null; return false; }
     })());
   },
   pk(s) { return new this.w.PublicKey(s); },
