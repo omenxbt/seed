@@ -1465,9 +1465,9 @@ function load() {
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
 
-/* ---- chain reads (live). Keyless public RPCs, tried in order. They are rate limited, so calls are spaced and retried;
-   production wants a keyed endpoint with this domain allow-listed. api.mainnet-beta.solana.com refuses browser origins. */
-const RPCS = ['https://public.rpc.solanavibestation.com'];
+/* ---- chain reads (live), on the endpoint in SEED.rpc (js/config/seed.js), with a keyless public one behind it for mainnet
+   token lookups. Calls are spaced and retried because public endpoints rate limit; api.mainnet-beta.solana.com refuses browser origins. */
+const RPCS = [SEED.rpc, 'https://public.rpc.solanavibestation.com'];
 const JUP_SEARCH = 'https://lite-api.jup.ag/tokens/v2/search?query=';
 const TOKEN_PROGRAMS = ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'];
 async function rpc(method, params) {
