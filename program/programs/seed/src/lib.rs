@@ -19,6 +19,7 @@ use anchor_spl::token::spl_token::instruction::AuthorityType;
 
 pub mod attest;
 pub mod damm;
+mod pyth;
 pub mod errors;
 pub mod events;
 pub mod math;
@@ -41,14 +42,16 @@ pub const TOKEN_2022: Pubkey = pubkey!("TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPx
 pub const WSOL: Pubkey = pubkey!("So11111111111111111111111111111111111111112");
 pub const USDC: Pubkey = pubkey!("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 pub const USDC_DEVNET: Pubkey = pubkey!("4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU");
-pub const MAX_PRICE_AGE: i64 = 6 * 3600;   // a SOL price older than this cannot open a SOL raise
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct ConfigParams {
-    pub admin: Pubkey, pub attestor: Pubkey, pub oracle: Pubkey, pub seed_treasury: Pubkey,
+    pub admin: Pubkey, pub attestor: Pubkey, pub seed_treasury: Pubkey, pub sol_feed: Pubkey,
     pub fee_bps: u16, pub creator_share_bps: u16, pub pool_fee_bps: u16, pub cap_usd_cents: u64,
     pub min_deadline: i64, pub max_deadline: i64, pub seed_timeout: i64, pub min_unlock_days: u32, pub payout_delay: i64,
+    pub test_mode: bool,
 }
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct ConfigUpdate { pub seed_treasury: Option<Pubkey>, pub attestor: Option<Pubkey> }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct OpenParams {
@@ -68,20 +71,63 @@ pub struct OpenParams {
 pub mod seed {
     use super::*;
 
+    /// once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks; it is
+    /// compiled only into devnet builds (`--features devnet`) and, even there, needs the devnet USDC mint as a witness,
+    /// an account that exists on no other cluster. A mainnet build has no code path that sets it.
     pub fn init_config(ctx: Context<InitConfig>, p: ConfigParams) -> Result<()> {
+        if p.test_mode {
+            #[cfg(not(feature = "devnet"))]
+            return Err(SeedError::TestModeNotAllowed.into());
+            #[cfg(feature = "devnet")]
+            {
+                let w = ctx.accounts.devnet_witness.as_ref().ok_or(SeedError::TestModeNotAllowed)?;
+                require!(w.key() == USDC_DEVNET && w.decimals == 6, SeedError::TestModeNotAllowed);   // Account<Mint> already checks the owner
+            }
+        }
+        require!(p.fee_bps < 1000 && p.creator_share_bps <= 10_000 && p.pool_fee_bps <= 1000, SeedError::BadConfig);
         let c = &mut ctx.accounts.config;
-        c.admin = p.admin; c.attestor = p.attestor; c.oracle = p.oracle; c.seed_treasury = p.seed_treasury;
+        c.admin = p.admin; c.pending_admin = Pubkey::default(); c.attestor = p.attestor; c.seed_treasury = p.seed_treasury; c.sol_feed = p.sol_feed;
         c.fee_bps = p.fee_bps; c.creator_share_bps = p.creator_share_bps; c.pool_fee_bps = p.pool_fee_bps; c.cap_usd_cents = p.cap_usd_cents;
         c.min_deadline = p.min_deadline; c.max_deadline = p.max_deadline; c.seed_timeout = p.seed_timeout; c.min_unlock_days = p.min_unlock_days; c.payout_delay = p.payout_delay;
-        c.sol_usd_cents = 0; c.sol_price_at = 0; c.bump = ctx.bumps.config;
+        c.test_mode = p.test_mode; c.bump = ctx.bumps.config;
         Ok(())
     }
 
-    /// the SOL price the cap is checked against; the oracle (or the admin) keeps it fresh
-    pub fn set_sol_price(ctx: Context<SetSolPrice>, cents: u64) -> Result<()> {
+    /// the admin may change where Seed's fees go and who signs attestations, nothing else: the fee, the split, the
+    /// deadlines and every open raise's terms are out of reach
+    pub fn update_config(ctx: Context<AdminConfig>, u: ConfigUpdate) -> Result<()> {
         let c = &mut ctx.accounts.config;
-        require!(ctx.accounts.signer.key() == c.oracle || ctx.accounts.signer.key() == c.admin, SeedError::NotOracle);
-        c.sol_usd_cents = cents; c.sol_price_at = Clock::get()?.unix_timestamp;
+        if let Some(t) = u.seed_treasury { c.seed_treasury = t; }
+        if let Some(a) = u.attestor { c.attestor = a; }
+        Ok(())
+    }
+
+    /// an admin handover in two steps: the admin names the successor, the successor accepts
+    pub fn propose_admin(ctx: Context<AdminConfig>, new_admin: Pubkey) -> Result<()> {
+        ctx.accounts.config.pending_admin = new_admin;
+        Ok(())
+    }
+    pub fn accept_admin(ctx: Context<AcceptAdmin>) -> Result<()> {
+        let c = &mut ctx.accounts.config;
+        require!(c.pending_admin != Pubkey::default() && ctx.accounts.new_admin.key() == c.pending_admin, SeedError::NotPendingAdmin);
+        c.admin = c.pending_admin; c.pending_admin = Pubkey::default();
+        Ok(())
+    }
+
+    /// devnet builds only: the admin closes the config so it can be made again with new terms. Reads the admin from
+    /// the raw bytes so a config of an older layout can be closed too.
+    #[cfg(feature = "devnet")]
+    pub fn reset_config(ctx: Context<ResetConfig>) -> Result<()> {
+        let cfg = ctx.accounts.config.to_account_info();
+        {
+            let d = cfg.try_borrow_data()?;
+            require!(d.len() >= 40 && Pubkey::try_from(&d[8..40]).unwrap() == ctx.accounts.admin.key(), SeedError::NotAdmin);
+        }
+        let lamports = cfg.lamports();
+        **cfg.try_borrow_mut_lamports()? = 0;
+        **ctx.accounts.admin.to_account_info().try_borrow_mut_lamports()? += lamports;
+        cfg.assign(&anchor_lang::system_program::ID);
+        cfg.resize(0)?;
         Ok(())
     }
 
@@ -97,13 +143,13 @@ pub mod seed {
         // the terms
         require!(!p.name.is_empty() && p.name.len() <= MAX_NAME && !p.ticker.is_empty() && p.ticker.len() <= MAX_TICKER, SeedError::BadName);
         require!(p.target > 0, SeedError::ZeroTarget);
-        require!(p.deadline >= c.min_deadline && p.deadline <= c.max_deadline, SeedError::BadDeadline);
+        require!(p.deadline >= c.span(c.min_deadline) && p.deadline <= c.span(c.max_deadline), SeedError::BadDeadline);
         require!((p.team_bps as u64) < BPS, SeedError::BadTeamShare);
         let pair = ctx.accounts.pair_mint.key();
         require!(pair == WSOL || pair == USDC || pair == USDC_DEVNET, SeedError::BadPair);
         let (target_usd_cents, sol_usd_cents) = if pair == WSOL {
-            require!(c.sol_usd_cents > 0 && now - c.sol_price_at <= MAX_PRICE_AGE, SeedError::StalePrice);
-            (math::mul_div(p.target, c.sol_usd_cents, 1_000_000_000).ok_or(SeedError::Overflow)?, c.sol_usd_cents)   // lamports to cents
+            let cents = pyth::sol_usd_cents(&ctx.accounts.sol_feed.to_account_info(), now)?;
+            (math::mul_div(p.target, cents, 1_000_000_000).ok_or(SeedError::Overflow)?, cents)   // lamports to cents
         } else { (p.target / 10_000, 0) };                                                                          // USDC base units (6 dp) to cents
         require!(target_usd_cents <= c.cap_usd_cents, SeedError::OverCap);
         if p.team_bps > 0 {
@@ -117,7 +163,7 @@ pub mod seed {
         anchor_spl::associated_token::create(CpiContext::new(ctx.accounts.associated_token_program.to_account_info(), anchor_spl::associated_token::Create { payer: ctx.accounts.founder.to_account_info(), associated_token: ctx.accounts.escrow.to_account_info(), authority: ctx.accounts.raise.to_account_info(), mint: ctx.accounts.pair_mint.to_account_info(), system_program: ctx.accounts.system_program.to_account_info(), token_program: ctx.accounts.token_program.to_account_info() }))?;
         let r = &mut ctx.accounts.raise;
         r.founder = ctx.accounts.founder.key(); r.nonce = p.nonce; r.x_handle_hash = p.x_handle_hash; r.pair_mint = pair;
-        r.target = p.target; r.target_usd_cents = target_usd_cents; r.sol_usd_cents = sol_usd_cents;
+        r.target = p.target; r.target_usd_cents = target_usd_cents; r.sol_usd_cents = sol_usd_cents; r.time_unit = c.unit();
         r.fee_bps = c.fee_bps; r.creator_share_bps = c.creator_share_bps; r.team_bps = p.team_bps; r.schedule = if p.team_bps > 0 { p.schedule.clone() } else { vec![] };
         r.payout_wallet = p.payout_wallet; r.pending_payout = None; r.payout_effective_at = 0;
         r.status = RaiseStatus::Live; r.seed_step = SeedStep::Filled; r.refund_reason = None;
@@ -180,7 +226,7 @@ pub mod seed {
     pub fn timeout_refund(ctx: Context<RaiseAndConfig>) -> Result<()> {
         let now = Clock::get()?.unix_timestamp; let r = &mut ctx.accounts.raise;
         require!(r.status == RaiseStatus::Filled, SeedError::NotFilled);
-        require!(now >= r.filled_at + ctx.accounts.config.seed_timeout, SeedError::TimeoutNotPassed);
+        require!(now >= r.filled_at + ctx.accounts.config.span(ctx.accounts.config.seed_timeout), SeedError::TimeoutNotPassed);
         refund(r, RefundReason::Timeout, now)
     }
 
@@ -352,7 +398,7 @@ pub mod seed {
     }
 
     pub fn request_payout_change(ctx: Context<FounderOnly>, to: Pubkey) -> Result<()> {
-        let now = Clock::get()?.unix_timestamp; let delay = ctx.accounts.config.payout_delay; let r = &mut ctx.accounts.raise;
+        let now = Clock::get()?.unix_timestamp; let delay = ctx.accounts.config.span(ctx.accounts.config.payout_delay); let r = &mut ctx.accounts.raise;
         require!(r.takeover_to.is_none(), SeedError::NotFounder);   // after a takeover the founder no longer controls the payout
         r.pending_payout = Some(to); r.payout_effective_at = now + delay;
         emit!(PayoutChangeRequested { raise: r.key(), from: r.payout_wallet, to, effective_at: r.payout_effective_at, at: now });
@@ -401,18 +447,36 @@ pub struct InitConfig<'info> {
     pub config: Account<'info, Config>,
     #[account(mut)] pub payer: Signer<'info>,
     pub system_program: Program<'info, System>,
+    /// the devnet USDC mint, required for test mode and checked by address: it exists on devnet and nowhere else
+    pub devnet_witness: Option<Account<'info, Mint>>,
 }
 
 #[derive(Accounts)]
-pub struct SetSolPrice<'info> {
+pub struct AdminConfig<'info> {
+    #[account(mut, seeds = [CONFIG_SEED], bump = config.bump, has_one = admin @ SeedError::NotAdmin)] pub config: Account<'info, Config>,
+    pub admin: Signer<'info>,
+}
+
+#[derive(Accounts)]
+pub struct AcceptAdmin<'info> {
     #[account(mut, seeds = [CONFIG_SEED], bump = config.bump)] pub config: Account<'info, Config>,
-    pub signer: Signer<'info>,
+    pub new_admin: Signer<'info>,
+}
+
+#[cfg(feature = "devnet")]
+#[derive(Accounts)]
+pub struct ResetConfig<'info> {
+    /// CHECK: the config PDA, closed by hand so an older layout can go too; the admin is read from its bytes
+    #[account(mut, seeds = [CONFIG_SEED], bump)] pub config: UncheckedAccount<'info>,
+    #[account(mut)] pub admin: Signer<'info>,
 }
 
 #[derive(Accounts)]
 #[instruction(p: OpenParams)]
 pub struct OpenRaise<'info> {
     #[account(seeds = [CONFIG_SEED], bump = config.bump)] pub config: Account<'info, Config>,
+    /// CHECK: the Pyth SOL/USD price account the config names; parsed and checked in pyth.rs (unused for a USDC raise)
+    #[account(address = config.sol_feed @ SeedError::BadPriceAccount)] pub sol_feed: UncheckedAccount<'info>,
     #[account(init, payer = founder, space = 8 + Raise::INIT_SPACE, seeds = [RAISE_SEED, founder.key().as_ref(), &p.nonce.to_le_bytes()], bump)]
     pub raise: Account<'info, Raise>,
     #[account(mut)] pub founder: Signer<'info>,

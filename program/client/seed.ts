@@ -10,6 +10,7 @@ const { PublicKey, Keypair, SystemProgram, SYSVAR_INSTRUCTIONS_PUBKEY, Ed25519Pr
 export const DAMM = new PublicKey('cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG');
 export const DAMM_POOL_AUTHORITY = new PublicKey('HLnpSz9h2S4hiLQ43rnSD9XkcUThA7B8hQMKmDaiTLcC');
 export const TOKEN_2022 = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+export const SOL_FEED = new PublicKey('7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE');   // Pyth's sponsored SOL/USD price account, the same on mainnet and devnet
 export const WSOL = new PublicKey('So11111111111111111111111111111111111111112');
 export const ATTEST_PREFIX = Buffer.from('seed-x-attest:v1');
 
@@ -57,16 +58,21 @@ export class SeedClient {
   async allRaises() { return (this.program.account as any).raise.all(); }
   raiseKey(founder: web3.PublicKey, nonce: BN | number) { return pda.raise(this.pid, founder, nonce); }
 
-  initConfig(p: any, payer: web3.PublicKey) {
-    return this.program.methods.initConfig(p).accounts({ config: this.config, payer, systemProgram: SystemProgram.programId }).instruction();
+  /* the config, once; `devnetWitness` is the devnet USDC mint and is only needed for test mode (devnet builds) */
+  initConfig(p: any, payer: web3.PublicKey, devnetWitness: web3.PublicKey | null = null) {
+    return this.program.methods.initConfig(p).accounts({ config: this.config, payer, systemProgram: SystemProgram.programId, devnetWitness }).instruction();
   }
-  setSolPrice(cents: number, signer: web3.PublicKey) { return this.program.methods.setSolPrice(new BN(cents)).accounts({ config: this.config, signer }).instruction(); }
+  updateConfig(u: { seedTreasury?: web3.PublicKey | null; attestor?: web3.PublicKey | null }, admin: web3.PublicKey) { return this.program.methods.updateConfig({ seedTreasury: u.seedTreasury ?? null, attestor: u.attestor ?? null }).accounts({ config: this.config, admin }).instruction(); }
+  proposeAdmin(newAdmin: web3.PublicKey, admin: web3.PublicKey) { return this.program.methods.proposeAdmin(newAdmin).accounts({ config: this.config, admin }).instruction(); }
+  acceptAdmin(newAdmin: web3.PublicKey) { return this.program.methods.acceptAdmin().accounts({ config: this.config, newAdmin }).instruction(); }
+  /* devnet builds only */
+  resetConfig(admin: web3.PublicKey) { return this.program.methods.resetConfig().accounts({ config: this.config, admin }).instruction(); }
 
   /* open_raise with its attestation; returns both instructions, in order */
   async openRaise(founder: web3.PublicKey, pairMint: web3.PublicKey, attestor: web3.Keypair, handle: string, p: { nonce: BN | number; name: string; ticker: string; target: BN; deadline: number; teamBps: number; schedule: Tranche[]; payoutWallet: web3.PublicKey }) {
     const hash = handleHash(handle), expiry = Math.floor(Date.now() / 1000) + 3600, raise = this.raiseKey(founder, p.nonce);
     const open = await this.program.methods.openRaise({ nonce: new BN(p.nonce), name: p.name, ticker: p.ticker, target: p.target, deadline: new BN(p.deadline), teamBps: p.teamBps, schedule: p.schedule, payoutWallet: p.payoutWallet, xHandleHash: [...hash], attestExpiry: new BN(expiry) })
-      .accounts({ config: this.config, raise, founder, pairMint, escrow: getAssociatedTokenAddressSync(pairMint, raise, true), blacklist: pda.blacklist(this.pid, hash), instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+      .accounts({ config: this.config, solFeed: SOL_FEED, raise, founder, pairMint, escrow: getAssociatedTokenAddressSync(pairMint, raise, true), blacklist: pda.blacklist(this.pid, hash), instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
         tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
     return { raise, ixs: [attestIx(attestor, founder, hash, expiry), open] };
   }

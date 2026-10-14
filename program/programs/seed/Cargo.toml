@@ -10,6 +10,7 @@ name = "seed"
 
 [features]
 default = []
+devnet = []   # test mode (a day is a minute) and reset_config; never for a mainnet build
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []

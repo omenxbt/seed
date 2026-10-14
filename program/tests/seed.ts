@@ -5,7 +5,7 @@ import { BN, web3 } from '@coral-xyz/anchor';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, NATIVE_MINT, createAssociatedTokenAccountIdempotentInstruction, createSyncNativeInstruction, createTransferInstruction, getAccount, getAssociatedTokenAddressSync, getMint } from '@solana/spl-token';
 import { assert } from 'chai';
 import { createHash } from 'crypto';
-import { SeedClient, pda, handleHash, attestIx, WSOL } from '../client/seed';
+import { SeedClient, pda, handleHash, attestIx, WSOL, SOL_FEED } from '../client/seed';
 import idl from '../target/idl/seed.json';
 
 const { Keypair, PublicKey, SystemProgram, LAMPORTS_PER_SOL } = web3;
@@ -24,42 +24,53 @@ describe('seed', () => {
   const handle = 'seed_test_' + nonce.toString(36);
   const expectFail = async (p: Promise<unknown>, code: string) => { try { await p; } catch (e: any) { const m = String(e.message || e); assert.include(m, code, `expected ${code}, got: ${m.slice(0, 1600)}`); return; } assert.fail(`expected ${code}`); };
 
+  const USDC_DEVNET = new PublicKey('4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU');
+  let cfg: any, day: number;   // one unlock "day" in seconds: 60 in test mode
+  const span = (secs: number) => cfg.testMode ? Math.floor(secs / 1440) : secs;
+  const asAdmin = (fn: () => Promise<void>) => async function (this: any) { if (!cfg.admin.equals(me.publicKey)) return this.skip(); await fn(); };
+
   before(async () => {
-    // the config, once; the attestor is fixed by it, which is why the key derives from the wallet
-    try { await c.fetchConfig(); } catch {
-      await c.send([await c.initConfig({ admin: me.publicKey, attestor: attestor.publicKey, oracle: me.publicKey, seedTreasury: me.publicKey, feeBps: 100, creatorShareBps: 7000, poolFeeBps: 100, capUsdCents: new BN(10_000_000),
-        minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90, payoutDelay: new BN(7 * 86400) }, me.publicKey)]);
+    // the config, once; the attestor is fixed by it, which is why the key derives from the wallet. A config that cannot
+    // be read (an older layout) or that names another attestor is closed and made again when this wallet is its admin.
+    const make = async () => c.send([await c.initConfig({ admin: me.publicKey, attestor: attestor.publicKey, seedTreasury: me.publicKey, solFeed: SOL_FEED, feeBps: 100, creatorShareBps: 7000, poolFeeBps: 100, capUsdCents: new BN(10_000_000),
+      minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90, payoutDelay: new BN(7 * 86400), testMode: true }, me.publicKey, USDC_DEVNET)]);
+    try { cfg = await c.fetchConfig(); } catch { cfg = null; }
+    if (!cfg) {
+      const raw = await provider.connection.getAccountInfo(c.config);
+      if (raw) { await c.send([await c.resetConfig(me.publicKey)]); }
+      await make(); cfg = await c.fetchConfig();
     }
-    const cfg = await c.fetchConfig();
-    assert.ok(cfg.attestor.equals(attestor.publicKey), 'the config was made with another attestor; close it or use that wallet');
-    await c.send([await c.setSolPrice(15000, me.publicKey)]);   // $150
+    assert.ok(cfg.attestor.equals(attestor.publicKey), 'the config was made with another attestor; reset it with its admin or use that wallet');
+    day = cfg.testMode ? 60 : 86400;
     // a backer with a little SOL, and wrapped SOL for both
     await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: backer.publicKey, lamports: 0.25 * LAMPORTS_PER_SOL })]);
     for (const [w, n] of [[me, 0.2], [backer, 0.15]] as [web3.Keypair, number][]) {
       const ata = getAssociatedTokenAddressSync(NATIVE_MINT, w.publicKey);
       await c.send([createAssociatedTokenAccountIdempotentInstruction(w.publicKey, ata, w.publicKey, NATIVE_MINT), SystemProgram.transfer({ fromPubkey: w.publicKey, toPubkey: ata, lamports: n * LAMPORTS_PER_SOL }), createSyncNativeInstruction(ata)], [w]);
     }
-    await c.send([c.ata(me.publicKey, me.publicKey, NATIVE_MINT)]);   // the treasury's pair account
+    await c.send([c.ata(me.publicKey, cfg.seedTreasury, NATIVE_MINT)]);   // the treasury's pair account (the treasury may be another wallet)
   });
 
   it('refuses an attestation that is not from the attestor', async () => {
     const fake = Keypair.generate(), hash = handleHash(handle), expiry = Math.floor(Date.now() / 1000) + 3600;
-    const { ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 1, name: 'Fake', ticker: 'FAKE', target: sol(0.2), deadline: 86400, teamBps: 0, schedule: [], payoutWallet: me.publicKey });
+    const { ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 1, name: 'Fake', ticker: 'FAKE', target: sol(0.2), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
     ixs[0] = attestIx(fake, me.publicKey, hash, expiry);
     await expectFail(c.send(ixs), 'BadAttestation');
   });
 
   it('refuses a schedule that ends before 90 days or does not add up', async () => {
-    const bad = (schedule: any[], teamBps = 1000) => c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 2, name: 'Bad', ticker: 'BAD', target: sol(0.2), deadline: 86400, teamBps, schedule, payoutWallet: me.publicKey }).then(x => c.send(x.ixs));
+    const bad = (schedule: any[], teamBps = 1000) => c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 2, name: 'Bad', ticker: 'BAD', target: sol(0.2), deadline: span(86400), teamBps, schedule, payoutWallet: me.publicKey }).then(x => c.send(x.ixs));
     await expectFail(bad([{ dayOffset: 30, bps: 10000 }]), 'ScheduleTooShort');
     await expectFail(bad([{ dayOffset: 90, bps: 5000 }]), 'ScheduleSum');
   });
 
   it('opens a raise with a verified X attestation', async () => {
-    const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce, name: 'Kiln', ticker: 'KILN', target: sol(0.2), deadline: 86400, teamBps: 1000, schedule: [{ dayOffset: 90, bps: 5000 }, { dayOffset: 180, bps: 5000 }], payoutWallet: me.publicKey });
+    const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce, name: 'Kiln', ticker: 'KILN', target: sol(0.2), deadline: span(86400), teamBps: 1000, schedule: [{ dayOffset: 90, bps: 5000 }, { dayOffset: 180, bps: 5000 }], payoutWallet: me.publicKey });
     await c.send(ixs); raise = rk; r = await c.fetchRaise(raise);
     assert.equal(r.teamBps, 1000); assert.ok(r.target.eq(sol(0.2))); assert.deepEqual(Object.keys(r.status)[0], 'live');
-    assert.ok(r.targetUsdCents.eq(new BN(3000)), 'a 0.2 SOL target at $150 is $30');
+    // the SOL price came from Pyth's sponsored feed: the raise records it, and the USD target is 0.2 SOL at that price
+    const px = Number(r.solUsdCents); assert.ok(px > 1000 && px < 100_000, `a SOL price from Pyth, got ${px} cents`);
+    assert.ok(r.targetUsdCents.eq(new BN(Math.floor(0.2 * px))), 'a 0.2 SOL target at the Pyth price');
   });
 
   it('takes buys with the fee on top, trims the last one, and fills', async () => {
@@ -106,8 +117,8 @@ describe('seed', () => {
   });
 
   it('step 3: seeds; the held fees go to Seed', async () => {
-    const tre = getAssociatedTokenAddressSync(NATIVE_MINT, me.publicKey), before = (await getAccount(provider.connection, tre)).amount;
-    await c.send([await c.crankSeed(raise, WSOL, me.publicKey)]);
+    const tre = getAssociatedTokenAddressSync(NATIVE_MINT, cfg.seedTreasury, true), before = (await getAccount(provider.connection, tre)).amount;
+    await c.send([await c.crankSeed(raise, WSOL, cfg.seedTreasury)]);
     r = await c.fetchRaise(raise); assert.deepEqual(Object.keys(r.status)[0], 'seeded'); assert.ok(r.seededAt.gtn(0));
     const got = Number((await getAccount(provider.connection, tre)).amount - before); assert.ok(got >= 0.002 * LAMPORTS_PER_SOL && got < 0.002 * LAMPORTS_PER_SOL + 1000, '1% of 0.2 SOL, plus the deposit rounding');
   });
@@ -121,13 +132,30 @@ describe('seed', () => {
 
   it('creator fees: claimable by anyone, nothing yet since nobody traded', async () => {
     await c.send([c.ata(me.publicKey, me.publicKey, NATIVE_MINT)]);
-    await expectFail(c.send([await c.claimCreatorFees(raise, { mint: mint.publicKey, pairMint: WSOL, pool: r.pool, position: r.position, positionNftMint: nft.publicKey, payoutWallet: r.payoutWallet }, me.publicKey, me.publicKey)]), 'NothingToClaim');
+    await expectFail(c.send([await c.claimCreatorFees(raise, { mint: mint.publicKey, pairMint: WSOL, pool: r.pool, position: r.position, positionNftMint: nft.publicKey, payoutWallet: r.payoutWallet }, cfg.seedTreasury, me.publicKey)]), 'NothingToClaim');
   });
 
   it('team tokens: nothing before the cliff', async () => {
     await c.send([c.ata(me.publicKey, me.publicKey, mint.publicKey)]);
     await expectFail(c.send([await c.claimVested(raise, mint.publicKey, r.payoutWallet, me.publicKey)]), 'NothingToClaim');
   });
+
+  it('test mode: this devnet config counts a day as a minute, and the raise carries that unit', async () => {
+    assert.isTrue(cfg.testMode); assert.equal(Number(r.timeUnit), 60);
+  });
+
+  it('config: the admin can move the treasury and hand admin over in two steps, and nobody else can', asAdmin(async () => {
+    const tmp = Keypair.generate();
+    await expectFail(c.send([await c.updateConfig({ seedTreasury: tmp.publicKey }, backer.publicKey)], [backer]), 'NotAdmin');
+    await c.send([await c.updateConfig({ seedTreasury: tmp.publicKey }, me.publicKey)]); assert.ok((await c.fetchConfig()).seedTreasury.equals(tmp.publicKey));
+    await c.send([await c.updateConfig({ seedTreasury: me.publicKey }, me.publicKey)]);
+    await c.send([await c.proposeAdmin(tmp.publicKey, me.publicKey)]);
+    await expectFail(c.send([await c.acceptAdmin(backer.publicKey)], [backer]), 'NotPendingAdmin');
+    await c.send([await c.acceptAdmin(tmp.publicKey)], [tmp]); assert.ok((await c.fetchConfig()).admin.equals(tmp.publicKey));
+    await expectFail(c.send([await c.updateConfig({ seedTreasury: tmp.publicKey }, me.publicKey)]), 'NotAdmin');   // the old admin is out
+    await c.send([await c.proposeAdmin(me.publicKey, tmp.publicKey)], [tmp]); await c.send([await c.acceptAdmin(me.publicKey)]);
+    cfg = await c.fetchConfig(); assert.ok(cfg.admin.equals(me.publicKey)); assert.ok(cfg.pendingAdmin.equals(PublicKey.default));
+  }));
 
   it('a payout wallet change waits seven days', async () => {
     const to = Keypair.generate().publicKey;
@@ -136,17 +164,17 @@ describe('seed', () => {
     await expectFail(c.send([await c.applyPayoutChange(raise)]), 'ChangeNotDue');
   });
 
-  it('admin: a takeover moves the payout wallet', async () => {
+  it('admin: a takeover moves the payout wallet', asAdmin(async () => {
     const to = Keypair.generate().publicKey;
     await expectFail(c.send([await c.adminApproveTakeover(raise, backer.publicKey, to)], [backer]), 'NotAdmin');
     await c.send([await c.adminApproveTakeover(raise, me.publicKey, to)]);
     r = await c.fetchRaise(raise); assert.ok(r.payoutWallet.equals(to)); assert.equal(r.pendingPayout, null); assert.ok(r.takeoverTo.equals(to));
-  });
+  }));
 
   describe('a cancelled raise', () => {
     let raise2: web3.PublicKey; const handle2 = handle + '_2';
     it('refunds every backer exactly what they paid', async () => {
-      const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle2, { nonce: nonce + 3, name: 'Moss', ticker: 'MOSS', target: sol(0.1), deadline: 86400, teamBps: 0, schedule: [], payoutWallet: me.publicKey });
+      const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle2, { nonce: nonce + 3, name: 'Moss', ticker: 'MOSS', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
       await c.send(ixs); raise2 = rk;
       const ata = getAssociatedTokenAddressSync(NATIVE_MINT, backer.publicKey), before = (await getAccount(provider.connection, ata)).amount;
       await c.send([await c.contribute(raise2, WSOL, backer.publicKey, sol(0.02))], [backer]);
@@ -157,11 +185,11 @@ describe('seed', () => {
       await c.send([await c.claimRefund(raise2, WSOL, backer.publicKey)], [backer]);
       assert.equal((await getAccount(provider.connection, ata)).amount, before, 'the buy and its fee came back');
     });
-    it('admin: flagging fraud blacklists the X handle', async () => {
+    it('admin: flagging fraud blacklists the X handle', asAdmin(async () => {
       await c.send([await c.adminFlagFraud(raise2, me.publicKey, handleHash(handle2))]);
       const r2 = await c.fetchRaise(raise2); assert.isTrue(r2.blacklisted);
-      const { ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle2, { nonce: nonce + 4, name: 'Again', ticker: 'AGN', target: sol(0.1), deadline: 86400, teamBps: 0, schedule: [], payoutWallet: me.publicKey });
+      const { ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle2, { nonce: nonce + 4, name: 'Again', ticker: 'AGN', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
       await expectFail(c.send(ixs), 'Blacklisted');
-    });
+    }));
   });
 });

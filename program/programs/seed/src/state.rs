@@ -19,9 +19,10 @@ pub const DAY: i64 = 86_400;
 #[derive(InitSpace)]
 pub struct Config {
     pub admin: Pubkey,            // the multisig that can flag fraud and approve a takeover
+    pub pending_admin: Pubkey,    // an admin handover waits here until the new admin accepts it (zero when none)
     pub attestor: Pubkey,         // signs the X attestations open_raise verifies
-    pub oracle: Pubkey,           // may set the SOL price
     pub seed_treasury: Pubkey,    // where Seed's fees go (its share of pool fees and the 1% on buys)
+    pub sol_feed: Pubkey,         // the Pyth SOL/USD price account open_raise reads for the cap
     pub fee_bps: u16,             // 100: Seed's fee on each buy, on top
     pub creator_share_bps: u16,   // 7000: the founder's share of pool fees, snapshotted into each raise at opening
     pub pool_fee_bps: u16,        // 100: the DAMM v2 pool's flat fee
@@ -31,9 +32,14 @@ pub struct Config {
     pub seed_timeout: i64,        // seconds, 3d
     pub min_unlock_days: u32,     // 90
     pub payout_delay: i64,        // seconds, 7d
-    pub sol_usd_cents: u64,       // the SOL price the cap is checked against; set by the oracle
-    pub sol_price_at: i64,
+    pub test_mode: bool,          // devnet only: a day is a minute (see init_config)
     pub bump: u8,
+}
+impl Config {
+    /// one "day" in seconds: 86 400, or 60 in test mode
+    pub fn unit(&self) -> i64 { if self.test_mode { 60 } else { DAY } }
+    /// a span the terms give in seconds, in this config's time: a day's worth becomes a minute's worth in test mode
+    pub fn span(&self, secs: i64) -> i64 { if self.test_mode { secs / (DAY / 60) } else { secs } }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
@@ -61,6 +67,7 @@ pub struct Raise {
     pub target: u64,                  // base units of the pair asset
     pub target_usd_cents: u64,
     pub sol_usd_cents: u64,           // the SOL price when it opened (0 for a USDC raise)
+    pub time_unit: i64,               // seconds in one unlock "day": 86 400, or 60 for a raise opened in test mode
     pub fee_bps: u16,
     pub creator_share_bps: u16,
     pub team_bps: u16,
@@ -105,7 +112,7 @@ impl Raise {
     /// what the schedule has released by `now`, in base units
     pub fn unlocked_units(&self, now: i64) -> u64 {
         if self.seeded_at == 0 { return 0; }
-        let days = (now - self.seeded_at) / DAY;
+        let days = (now - self.seeded_at) / self.time_unit.max(1);
         let bps: u64 = self.schedule.iter().filter(|t| (t.day_offset as i64) <= days).map(|t| t.bps as u64).sum();
         (self.team_units() as u128 * bps as u128 / BPS as u128) as u64
     }

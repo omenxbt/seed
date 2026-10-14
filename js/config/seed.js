@@ -12,10 +12,10 @@ const SEED = {
   payoutDelayDays: 7,          // a payout wallet change takes effect after this long and shows while pending
   minRoadmap: 1,               // milestones a raise must list; shown, not enforced
   admins: ['6GTuondHNLSJkYemhVw8GYFTK3ANHPFXdVYUM5JP5zyf'],   // Seed admin wallets (a Squads multisig on mainnet); only they can flag fraud or approve a takeover
-  /* the chain the site talks to. The RPC key is public by design (a browser sends it); it is restricted to this site's
-     domains in the Helius dashboard. On mainnet these become the mainnet endpoint, the mainnet program id and the pair mints there. */
+  /* the chain the site talks to. The browser RPC key is a public one locked to this site's domains in the Helius
+     dashboard (the server-side key never leaves Supabase); a local copy of the site uses the public devnet endpoint. */
   network: 'devnet',
-  rpc: 'https://devnet.helius-rpc.com/?api-key=ce918492-7bdc-4155-9018-f4eac5c64cae',
+  rpc: /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) ? 'https://api.devnet.solana.com' : 'https://devnet.helius-rpc.com/?api-key=21304aca-337b-4fcc-b4e4-3de9902f661d',
   programId: '8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn',
   pairMints: { SOL: 'So11111111111111111111111111111111111111112', USDC: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU' },   // USDC here is the devnet test mint
   demoSolUsd: 148.2            // the SOL price the demo converts targets at; the live site reads the market when a raise opens

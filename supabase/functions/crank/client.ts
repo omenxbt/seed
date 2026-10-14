@@ -42,7 +42,8 @@ export function seedClient(program: Program, conn: web3.Connection) {
   const raiseOf = (k: web3.PublicKey) => (program.account as any).raise.fetch(k);
   const m = program.methods as any;
   return {
-    allRaises: () => (program.account as any).raise.all() as Promise<{ publicKey: web3.PublicKey; account: any }[]>,
+    // only raises of the current layout: one from before a layout change would fail to decode and stop the whole pass
+    allRaises: () => (program.account as any).raise.all([{ dataSize: (program.account as any).raise.size }]) as Promise<{ publicKey: web3.PublicKey; account: any }[]>,
     settle: (raise: web3.PublicKey) => m.settle().accounts({ raise }).rpc(),
     timeoutRefund: (raise: web3.PublicKey) => m.timeoutRefund().accounts({ raise, config }).rpc(),
     applyPayoutChange: (raise: web3.PublicKey) => m.applyPayoutChange().accounts({ raise }).rpc(),

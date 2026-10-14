@@ -8,6 +8,45 @@
   },
   "instructions": [
     {
+      "name": "accept_admin",
+      "discriminator": [
+        112,
+        42,
+        45,
+        90,
+        116,
+        181,
+        13,
+        170
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "new_admin",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "admin_approve_takeover",
       "docs": [
         "admin: creator fees and the remaining unlocks go to a wallet the backers chose"
@@ -1682,6 +1721,11 @@
     },
     {
       "name": "init_config",
+      "docs": [
+        "once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks; it is",
+        "compiled only into devnet builds (`--features devnet`) and, even there, needs the devnet USDC mint as a witness,",
+        "an account that exists on no other cluster. A mainnet build has no code path that sets it."
+      ],
       "discriminator": [
         23,
         235,
@@ -1720,6 +1764,13 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "devnet_witness",
+          "docs": [
+            "the devnet USDC mint, required for test mode and checked by address: it exists on devnet and nowhere else"
+          ],
+          "optional": true
         }
       ],
       "args": [
@@ -1763,6 +1814,9 @@
               }
             ]
           }
+        },
+        {
+          "name": "sol_feed"
         },
         {
           "name": "raise",
@@ -1834,6 +1888,56 @@
       ]
     },
     {
+      "name": "propose_admin",
+      "docs": [
+        "an admin handover in two steps: the admin names the successor, the successor accepts"
+      ],
+      "discriminator": [
+        121,
+        214,
+        199,
+        212,
+        87,
+        39,
+        117,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "new_admin",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
       "name": "request_payout_change",
       "discriminator": [
         108,
@@ -1884,19 +1988,20 @@
       ]
     },
     {
-      "name": "set_sol_price",
+      "name": "reset_config",
       "docs": [
-        "the SOL price the cap is checked against; the oracle (or the admin) keeps it fresh"
+        "devnet builds only: the admin closes the config so it can be made again with new terms. Reads the admin from",
+        "the raw bytes so a config of an older layout can be closed too."
       ],
       "discriminator": [
-        151,
-        237,
-        70,
-        191,
-        232,
         81,
-        138,
-        214
+        97,
+        49,
+        46,
+        19,
+        200,
+        8,
+        99
       ],
       "accounts": [
         {
@@ -1919,16 +2024,12 @@
           }
         },
         {
-          "name": "signer",
+          "name": "admin",
+          "writable": true,
           "signer": true
         }
       ],
-      "args": [
-        {
-          "name": "cents",
-          "type": "u64"
-        }
-      ]
+      "args": []
     },
     {
       "name": "settle",
@@ -1993,6 +2094,61 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "update_config",
+      "docs": [
+        "the admin may change where Seed's fees go and who signs attestations, nothing else: the fee, the split, the",
+        "deadlines and every open raise's terms are out of reach"
+      ],
+      "discriminator": [
+        29,
+        158,
+        252,
+        191,
+        10,
+        83,
+        219,
+        99
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "u",
+          "type": {
+            "defined": {
+              "name": "ConfigUpdate"
+            }
+          }
+        }
+      ]
     }
   ],
   "accounts": [
@@ -2295,7 +2451,7 @@
     {
       "code": 6009,
       "name": "StalePrice",
-      "msg": "The SOL price is stale; the oracle has not set it recently."
+      "msg": "The SOL price is stale: the Pyth feed has not updated recently."
     },
     {
       "code": 6010,
@@ -2369,46 +2525,61 @@
     },
     {
       "code": 6024,
-      "name": "NotOracle",
-      "msg": "Only the oracle can do that."
+      "name": "BadPriceAccount",
+      "msg": "That is not the Pyth SOL/USD price account, or it is not fully verified."
     },
     {
       "code": 6025,
+      "name": "BadConfig",
+      "msg": "Those terms are out of range."
+    },
+    {
+      "code": 6026,
+      "name": "NotPendingAdmin",
+      "msg": "Only the pending admin can accept the handover."
+    },
+    {
+      "code": 6027,
+      "name": "TestModeNotAllowed",
+      "msg": "Test mode exists only in devnet builds, and only with the devnet proof account."
+    },
+    {
+      "code": 6028,
       "name": "WrongStep",
       "msg": "That seeding step is not next."
     },
     {
-      "code": 6026,
+      "code": 6029,
       "name": "TimeoutNotPassed",
       "msg": "The seeding timeout has not passed."
     },
     {
-      "code": 6027,
+      "code": 6030,
       "name": "AlreadyClaimed",
       "msg": "Already claimed."
     },
     {
-      "code": 6028,
+      "code": 6031,
       "name": "NothingToClaim",
       "msg": "Nothing to claim."
     },
     {
-      "code": 6029,
+      "code": 6032,
       "name": "ChangeNotDue",
       "msg": "The payout wallet change is not due yet."
     },
     {
-      "code": 6030,
+      "code": 6033,
       "name": "NoChangePending",
       "msg": "No payout wallet change is pending."
     },
     {
-      "code": 6031,
+      "code": 6034,
       "name": "WrongAccount",
       "msg": "The account does not match the raise."
     },
     {
-      "code": 6032,
+      "code": 6035,
       "name": "Overflow",
       "msg": "Arithmetic overflow."
     }
@@ -2459,15 +2630,19 @@
             "type": "pubkey"
           },
           {
+            "name": "pending_admin",
+            "type": "pubkey"
+          },
+          {
             "name": "attestor",
             "type": "pubkey"
           },
           {
-            "name": "oracle",
+            "name": "seed_treasury",
             "type": "pubkey"
           },
           {
-            "name": "seed_treasury",
+            "name": "sol_feed",
             "type": "pubkey"
           },
           {
@@ -2507,12 +2682,8 @@
             "type": "i64"
           },
           {
-            "name": "sol_usd_cents",
-            "type": "u64"
-          },
-          {
-            "name": "sol_price_at",
-            "type": "i64"
+            "name": "test_mode",
+            "type": "bool"
           },
           {
             "name": "bump",
@@ -2535,11 +2706,11 @@
             "type": "pubkey"
           },
           {
-            "name": "oracle",
+            "name": "seed_treasury",
             "type": "pubkey"
           },
           {
-            "name": "seed_treasury",
+            "name": "sol_feed",
             "type": "pubkey"
           },
           {
@@ -2577,6 +2748,30 @@
           {
             "name": "payout_delay",
             "type": "i64"
+          },
+          {
+            "name": "test_mode",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ConfigUpdate",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "seed_treasury",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "attestor",
+            "type": {
+              "option": "pubkey"
+            }
           }
         ]
       }
@@ -2837,6 +3032,10 @@
           {
             "name": "sol_usd_cents",
             "type": "u64"
+          },
+          {
+            "name": "time_unit",
+            "type": "i64"
           },
           {
             "name": "fee_bps",

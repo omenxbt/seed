@@ -35,6 +35,20 @@ The tests run on devnet because Meteora's DAMM v2 is deployed there and nowhere 
 admin, oracle, treasury and founder, derive the attestor key from it, and need about 0.4 SOL. The config PDA is made
 once with that attestor; another wallet's run against the same deployment must use the wallet that made the config.
 
+**Builds.** `anchor build` is the mainnet build. `anchor build -- --features devnet` adds two things that must never
+reach mainnet: `reset_config` (the admin closes the config so it can be made again) and test mode, in which a day is a
+minute for deadlines, the seeding timeout, payout changes and unlocks. Test mode is set once, at `init_config`, and
+even in a devnet build it needs the devnet USDC mint passed as a witness, an account that exists on no other cluster; a
+mainnet build has no code path that sets it. Each raise records its time unit at opening (`time_unit`).
+
+**The SOL price** comes from Pyth's sponsored SOL/USD price account (`7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE`,
+the same on mainnet and devnet, kept fresh by Pyth), parsed in `pyth.rs` and refused when older than fifteen minutes.
+Nobody posts prices.
+
+**Admin.** The config's admin can move `seed_treasury` and `attestor` (`update_config`) and hand admin over in two
+steps (`propose_admin`, then `accept_admin` by the successor). Nothing else in the config, and nothing in any raise,
+can be changed. `scripts/admin.ts` runs these from the provider wallet.
+
 The devnet program id is in `Anchor.toml` and `declare_id!`; the keypair is `target/deploy/seed-keypair.json` (not
 committed). `Anchor.toml` deploys and tests from `keys/deployer.json`, a wallet made for this project and nothing else
 (`solana-keygen new -o keys/deployer.json`; the folder is git-ignored). It needs about 3 SOL of devnet SOL: the rent
