@@ -14,11 +14,13 @@ const xAdapter = {
   client: null,
   remote: {},   // wallet -> the link read from Supabase, or null when that wallet has none
   /* demo: a stand-in in this browser. live: X sign-in through the backend. off: a real wallet with no backend to check it. */
-  mode() { return !state.wallet ? 'none' : !isReal() ? 'demo' : supa.configured() ? 'live' : 'off'; },
+  /* typed: on devnet, while the X app is not set up, a real wallet types its handle too (SEED.xTyped); the backend
+     attests it on the same terms and it is labelled as typed wherever it shows */
+  mode() { return !state.wallet ? 'none' : !isReal() ? 'demo' : SEED.xTyped ? 'demo' : supa.configured() ? 'live' : 'off'; },
   of(w = walletId()) { return !w ? null : (state.x && state.x[w]) || this.remote[w] || null; },
   linkDemo(handle) {
-    if (isReal()) throw new Error('A real wallet links by signing in on X.');
-    (state.x = state.x || {})[walletId()] = { handle, demo: true, at: Date.now() }; save();
+    if (isReal() && !SEED.xTyped) throw new Error('A real wallet links by signing in on X.');
+    (state.x = state.x || {})[walletId()] = { handle, demo: !isReal(), typed: isReal(), at: Date.now() }; save();
   },
   /* a second Supabase client, only for the X sign-in: it keeps the sign-in across the trip to X and back */
   async auth() {
@@ -77,7 +79,7 @@ const X_GLYPH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.
 /* a checked link opens the account; a demo one is plain text with its label, since nobody checked it */
 function xChip(l) {
   if (!l) return '';
-  return l.demo ? `<span class="x-chip demo" title="Demo link. The handle was typed, not checked with X.">${X_GLYPH}@${esc(l.handle)}<em>Demo</em></span>`
+  return l.typed ? `<span class="x-chip demo" title="Typed on devnet, not checked with X.">${X_GLYPH}@${esc(l.handle)}<em>Typed</em></span>` : l.demo ? `<span class="x-chip demo" title="Demo link. The handle was typed, not checked with X.">${X_GLYPH}@${esc(l.handle)}<em>Demo</em></span>`
     : `<a class="x-chip" href="https://x.com/${esc(l.handle)}" target="_blank" rel="noopener" title="Linked X account">${X_GLYPH}@${esc(l.handle)}</a>`;
 }
 /* the wallet menu's X block, and the X row of the Portfolio wallet card */
@@ -103,8 +105,8 @@ function openXDialog() {
   const head = '<div class="sh-head"><span class="nm"><b>Link an X account</b></span><button class="x" data-xx aria-label="Close">&times;</button></div>';
   const why = '<p class="where x-why">Optional for backers: a link shows your X handle beside your wallet in chat and on your portfolio, and you can unlink at any time. Founders sign in with X to open a raise; the account shows on the raise page.</p>';
   body.innerHTML = head + why + (mode === 'demo' ? `<form data-xform novalidate><div class="f"><label for="xHandle">X handle</label><div class="inp"><span class="suf" style="padding:0 0 0 14px">@</span><input id="xHandle" maxlength="40" placeholder="yourhandle" autocomplete="off" autocapitalize="off" spellcheck="false" style="padding-left:4px"></div></div>
-      <div class="err" data-xerr role="alert"></div><button class="btn btn-navy btn-lg btn-block">Link to the demo wallet</button></form>
-      <p class="standin-note">Demo wallet: this is a stand-in. The handle is not checked with X, stays in this browser and is labelled Demo wherever it shows. A real wallet links by signing in on X.</p>`
+      <div class="err" data-xerr role="alert"></div><button class="btn btn-navy btn-lg btn-block">${isReal() ? 'Use this handle' : 'Link to the demo wallet'}</button></form>
+      <p class="standin-note">${isReal() ? 'Devnet: the X app is not connected yet, so the handle is typed and labelled Typed wherever it shows. On mainnet founders sign in on X.' : 'Demo wallet: this is a stand-in. The handle is not checked with X, stays in this browser and is labelled Demo wherever it shows. A real wallet links by signing in on X.'}</p>`
     : mode === 'live' ? `<ol class="x-steps"><li><b>Sign in on X.</b> Seed receives your handle, name and picture. It cannot post for you or read your messages.</li><li><b>Sign one message with ${esc(state.wallet.name || 'your wallet')}.</b> It ties ${esc(state.wallet.addr)} to the X account. It is not a transaction and costs nothing.</li></ol>
       <div class="err" data-xerr role="alert"></div><button type="button" class="btn btn-navy btn-lg btn-block" data-xgo>Continue on X</button>`
     : `<p class="standin-note">X sign-in runs through Seed’s backend, which is not switched on yet, so nothing can be linked to ${esc(state.wallet.name || 'a real wallet')} today. Your wallet works without it. To see how linking looks, switch to the demo wallet.</p>

@@ -169,7 +169,14 @@ Deno.serve(async (req) => {
       // The founder's X sign-in, as the program needs it. The wallet's link (made by link-x, which checked the X sign-in) is
       // the proof; the function signs that pair with an expiry, and open_raise verifies the signature on chain.
       case 'x-attest': {
-        const { data: l } = await db.from('x_links').select('x_id, handle, name, avatar').eq('wallet', wallet).maybeSingle();
+        let { data: l } = await db.from('x_links').select('x_id, handle, name, avatar').eq('wallet', wallet).maybeSingle();
+        // devnet only, while the X app is not set up: a typed handle stands in for the sign-in. Switched on by the
+        // SEED_DEV_X_HANDLES secret, which must never be set on the mainnet project.
+        if (!l && Deno.env.get('SEED_DEV_X_HANDLES') === '1' && /devnet/.test(Deno.env.get('SEED_RPC_URL') ?? '')) {
+          const h = str(body.handle, 15).replace(/^@/, '');
+          if (!/^[A-Za-z0-9_]{1,15}$/.test(h)) throw new Refusal(400, 'Type an X handle.');
+          l = { x_id: 'dev:' + h.toLowerCase(), handle: h, name: h, avatar: null };
+        }
         if (!l) throw new Refusal(403, 'Sign in with X first.');
         const { data: xa } = await db.from('x_accounts').select('blacklisted, blacklist_raise').eq('x_id', l.x_id).maybeSingle();
         if (xa?.blacklisted) throw new Refusal(403, `@${l.handle} was flagged for fraud${xa.blacklist_raise ? ` on ${xa.blacklist_raise}` : ''} and cannot open another raise.`);
@@ -180,6 +187,19 @@ Deno.serve(async (req) => {
         const a = await attest(wallet, l.handle);
         await db.from('x_attestations').insert({ wallet, x_id: l.x_id, handle_hash: a.handleHash, expires_at: new Date(a.expiry * 1000).toISOString() });
         return reply(200, { ...a, handle: l.handle, xId: l.x_id, followers: prof?.followers ?? null, xCreatedAt: prof?.x_created_at ?? null });
+      }
+      // the raise's own words, keyed by its Raise account; only the wallet that opened it may write them
+      case 'raise-profile': {
+        const address = str(body.address, 64), profile = body.profile;
+        if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address) || !profile || typeof profile !== 'object') throw new Refusal(400, 'A raise address and a profile are needed.');
+        if (JSON.stringify(profile).length > 60_000) throw new Refusal(413, 'That profile is too large.');
+        const { data: have } = await db.from('raise_profiles').select('founder').eq('address', address).maybeSingle();
+        if (have && have.founder !== wallet) throw new Refusal(403, 'Only the wallet that opened the raise can change its page.');
+        const { data: r } = await db.from('raises').select('founder').eq('address', address).maybeSingle();
+        if (r && r.founder !== wallet) throw new Refusal(403, 'Only the wallet that opened the raise can change its page.');
+        const { error } = await db.from('raise_profiles').upsert({ address, founder: wallet, profile, updated_at: new Date().toISOString() });
+        if (error) throw new Refusal(400, error.message);
+        return reply(200, { ok: true });
       }
       case 'raise-report': {
         const raiseId = str(body.raiseId, 80), reason = str(body.reason, 600);

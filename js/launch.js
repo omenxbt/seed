@@ -283,17 +283,17 @@ async function openPresale() {
     if (da.custom) state.custom[da.key] = da.a;
     profile.mint = fakeAddr('mint/' + id);
     const p = Object.assign({ id, name: d.name, ticker: d.ticker, idea: d.idea, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [], profile }, modelFields(d, da));
-    await adapter.openPresale(p);
-    if (supa.configured()) supa.call('register', { presaleId: id }).catch(() => {});
+    await adapter.openPresale(p);   // a real wallet's raise comes back with its chain address and id
+    if (supa.configured()) supa.call('register', { presaleId: p.id }).catch(() => {});
     state.presales.unshift(p); save();
     ['#fName', '#fTicker', '#fIdea', '#fTarget', '#fMint', '#fDesc', '#fMin', '#fMax', '#fUse', '#fPayout', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
     $('#fTeam').value = '0'; lf.road = [ROWS.road.blank()]; drawRows('road'); lf.lim.use = { on: false };
     if (!supa.configured()) lf.urls.deck = '';   // the page keeps showing the local deck, so its preview URL is not released
     lf.lim.min = { on: false, unit: 'q' }; lf.lim.max = { on: false, unit: 'q' }; syncLim();
     ['banner', 'art', 'deck'].forEach(k => { if (lf.files[k]) clearFile(k); }); renderPreview();   // the cleared form, in the preview too
-    ui.fAsset = da.key; seg.assetF.set(da.key); ui.sel = id;
+    ui.fAsset = da.key; seg.assetF.set(da.key); ui.sel = p.id;
     toast(`Opened ${p.name}. It is live until ${fmtDate(p.endsAt)}`);
-    location.hash = '#/presale/' + id;
+    location.hash = '#/presale/' + p.id;
   } catch (e) { $('#fErr').textContent = e.message; if (da.custom && !state.presales.some(x => x.q === da.key)) delete state.custom[da.key]; }
   busy = false; b.disabled = false; syncOpenBtn();
 }

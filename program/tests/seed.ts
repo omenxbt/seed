@@ -145,16 +145,17 @@ describe('seed', () => {
   });
 
   it('config: the admin can move the treasury and hand admin over in two steps, and nobody else can', asAdmin(async () => {
-    const tmp = Keypair.generate();
+    const tmp = Keypair.generate(), was = await c.fetchConfig();   // the treasury and any pending handover are put back at the end
     await expectFail(c.send([await c.updateConfig({ seedTreasury: tmp.publicKey }, backer.publicKey)], [backer]), 'NotAdmin');
     await c.send([await c.updateConfig({ seedTreasury: tmp.publicKey }, me.publicKey)]); assert.ok((await c.fetchConfig()).seedTreasury.equals(tmp.publicKey));
-    await c.send([await c.updateConfig({ seedTreasury: me.publicKey }, me.publicKey)]);
+    await c.send([await c.updateConfig({ seedTreasury: was.seedTreasury }, me.publicKey)]);
     await c.send([await c.proposeAdmin(tmp.publicKey, me.publicKey)]);
     await expectFail(c.send([await c.acceptAdmin(backer.publicKey)], [backer]), 'NotPendingAdmin');
     await c.send([await c.acceptAdmin(tmp.publicKey)], [tmp]); assert.ok((await c.fetchConfig()).admin.equals(tmp.publicKey));
     await expectFail(c.send([await c.updateConfig({ seedTreasury: tmp.publicKey }, me.publicKey)]), 'NotAdmin');   // the old admin is out
     await c.send([await c.proposeAdmin(me.publicKey, tmp.publicKey)], [tmp]); await c.send([await c.acceptAdmin(me.publicKey)]);
     cfg = await c.fetchConfig(); assert.ok(cfg.admin.equals(me.publicKey)); assert.ok(cfg.pendingAdmin.equals(PublicKey.default));
+    if (!was.pendingAdmin.equals(PublicKey.default)) { await c.send([await c.proposeAdmin(was.pendingAdmin, me.publicKey)]); cfg = await c.fetchConfig(); }
   }));
 
   it('a payout wallet change waits seven days', async () => {

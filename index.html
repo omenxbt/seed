@@ -911,6 +911,7 @@ a.ico:hover{color:var(--ink)}
           <h1><i>Your</i>positions</h1>
           <p>What you have in open raises, what is ready to claim, and, for raises you opened, your fees and unlocks.</p>
           <div class="seg pmode" id="pmodeSeg" role="group" aria-label="Portfolio view"><span class="seg-ind" aria-hidden="true"></span><button data-v="backer" aria-pressed="true">Backer</button><button data-v="creator" aria-pressed="false">Creator</button></div>
+          <div id="adminNote" hidden></div>
         </section>
       </aside>
       <div class="ws-main">
@@ -1506,9 +1507,9 @@ const WALLETS = [
 const providerOf = id => { const w = WALLETS.find(x => x.id === id); return w ? w.get() : null; };
 const isReal = () => !!(state.wallet && state.wallet.pk);
 
-/* ---- adapter. connect() is live. The raise calls are still simulated and only run for the demo wallet: with a real
-   wallet they refuse rather than pretend, until there is a Seed program to call. */
-const NOT_LIVE = 'The Seed program is not deployed yet, so nothing was sent. Switch to the demo wallet to try this.';
+/* ---- adapter. connect() is live. The raise calls below are the demo wallet's simulation; js/adapters/program.js wraps
+   each one so a real wallet goes to the Seed program instead (and refuses rather than pretends when none is configured). */
+const NOT_LIVE = 'The Seed program is not configured for this site, so nothing was sent. Switch to the demo wallet to try this.';
 const sim = ms => async () => { if (isReal()) throw new Error(NOT_LIVE); await wait(ms); };
 const adapter = {
   async connect(id) {
@@ -1522,7 +1523,7 @@ const adapter = {
     return wallet;
   },
   contribute: sim(900), claimRefund: sim(800), claimTokens: sim(800), openPresale: sim(1000), swap: sim(900), deposit: sim(800), withdraw: sim(800),
-  cancelRaise: sim(900), seedStep: sim(700), claimFees: sim(800), claimVested: sim(800), requestPayoutChange: sim(800), report: sim(400)
+  cancelRaise: sim(900), seedStep: sim(700), claimFees: sim(800), claimVested: sim(800), requestPayoutChange: sim(800), report: sim(400), adminFlag: sim(500), adminTakeover: sim(500)
 };
 
 /* ------------------------------------------------------------ formatting */
@@ -2065,7 +2066,7 @@ async function claimTeamTokens(p) {
 /* a payout wallet change: queued, shown on the page, and in force after the delay */
 async function requestPayoutChange(p, to) {
   if (busy) return false; busy = true;
-  try { await adapter.requestPayoutChange(p, to); p.pendingPayoutWallet = to; p.payoutEffectiveAt = Date.now() + SEED.payoutDelayDays * D; toast(`Payout wallet change requested. It takes effect ${fmtDate(p.payoutEffectiveAt)}.`); } catch (e) { toast(e.message); }
+  try { await adapter.requestPayoutChange(p, to); p.pendingPayoutWallet = to; p.payoutEffectiveAt = Date.now() + SEED.payoutDelayDays * dayOf(p); toast(`Payout wallet change requested. It takes effect ${fmtDate(p.payoutEffectiveAt)}.`); } catch (e) { toast(e.message); }
   busy = false; save(); renderPortfolio(); if (detailBox) renderDetail(true); return true;
 }
 
@@ -2240,7 +2241,7 @@ function route() {
 addEventListener('hashchange', route);
 
 /* ---------------------------------------------------------------- render */
-function renderAll() { renderWallet(); syncQuickUI(); renderTerminal(); renderMine(); renderPortfolio(); if (ui.tab === 'launch' && typeof renderPreview === 'function') { renderPreview(); syncOpenBtn(); } }
+function renderAll() { renderWallet(); syncQuickUI(); renderAdminNote(); renderTerminal(); renderMine(); renderPortfolio(); if (ui.tab === 'launch' && typeof renderPreview === 'function') { renderPreview(); syncOpenBtn(); } }
 
 /* ----------------------------------------------------------------- clock */
 /* the target landed: the raise closes to buys and seeding starts. Anyone may run the steps; the demo runs them itself. */
@@ -2263,7 +2264,7 @@ async function claimCreatorFees(p) {
   busy = false; save(); if (detailBox) renderDetail(true); renderPortfolio(); return true;
 }
 /* reports are public and signed by the wallet; Seed admins (the multisig in SEED.admins; the demo wallet here, so the flows can be tried) act on them */
-const isAdmin = () => !!state.wallet && (state.wallet.pk ? SEED.admins.includes(state.wallet.pk) : true);
+const isAdmin = () => !!state.wallet && (state.wallet.pk ? (SEED.admins.includes(state.wallet.pk) || (typeof chain !== 'undefined' && chain.isAdmin())) : true);
 async function fileReport(p, reason) {
   if (!(await ensureWallet())) throw new Error('Connect a wallet to report.');
   await adapter.report(p, reason);
@@ -2272,13 +2273,13 @@ async function fileReport(p, reason) {
 }
 async function adminFlag(p, reportId) {
   if (!isAdmin() || busy) return; busy = true;
-  try { await adapter.report(p, 'flag'); p.blacklisted = true; p.flag = { reportId, at: Date.now(), by: walletId() }; const r = (p.reports || []).find(x => x.id === reportId); if (r) r.status = 'fraud'; toast(`${p.name} flagged for fraud`); }
+  try { await adapter.adminFlag(p); p.blacklisted = true; p.flag = { reportId, at: Date.now(), by: walletId() }; const r = (p.reports || []).find(x => x.id === reportId); if (r) r.status = 'fraud'; toast(`${p.name} flagged for fraud`); }
   catch (e) { toast(e.message); }
   busy = false; save(); renderAll(); if (detailBox) renderDetail(true);
 }
 async function adminTakeover(p, reportId, to, label) {
   if (!isAdmin() || busy) return; busy = true;
-  try { await adapter.report(p, 'takeover'); p.takeover = { from: p.payoutWallet, to, at: Date.now(), reportId, by: walletId(), label }; p.payoutWallet = to; p.pendingPayoutWallet = null; p.payoutEffectiveAt = null; const r = (p.reports || []).find(x => x.id === reportId); if (r) r.status = 'takeover'; toast(`Payout wallet moved to ${label}`); }
+  try { await adapter.adminTakeover(p, to); p.takeover = { from: p.payoutWallet, to, at: Date.now(), reportId, by: walletId(), label }; p.payoutWallet = to; p.pendingPayoutWallet = null; p.payoutEffectiveAt = null; const r = (p.reports || []).find(x => x.id === reportId); if (r) r.status = 'takeover'; toast(`Payout wallet moved to ${label}`); }
   catch (e) { toast(e.message); }
   busy = false; save(); renderAll(); if (detailBox) renderDetail(true);
 }
@@ -2302,7 +2303,11 @@ function tick(silent) {
   for (const p of state.presales) if (p.pendingPayoutWallet && now >= p.payoutEffectiveAt) { p.payoutWallet = p.pendingPayoutWallet; p.pendingPayoutWallet = null; p.payoutEffectiveAt = null; changed = true; }
   for (const p of state.presales) if (p.status === 'filled') {
     if (now >= seedDeadline(p)) { p.status = 'refunded'; p.refundReason = 'timeout'; p.resolvedAt = now; changed = true; if (silent !== true) toast(`${p.name} did not seed in time. Every backer can claim a refund.`); }
-    else if (!profileOf(p).demo) { const last = p.crankAt || p.filledAt; if (now - last > 30e3 && !document.hidden && !busy) { p.crankAt = now; seedCrank(p); } }   // a demo raise waits for someone to run its steps
+    else if (!p.live && !profileOf(p).demo) { const last = p.crankAt || p.filledAt; if (now - last > 30e3 && !document.hidden && !busy) { p.crankAt = now; seedCrank(p); } }   // a demo raise waits for someone to run its steps; a live one is cranked on chain
+  }
+  if (chain.ready && !busy && !document.hidden && now - (chain.syncedAt || 0) > 20e3) {   // live raises that can still change are re-read from the chain
+    chain.syncedAt = now; const open = state.presales.filter(p => p.live && (p.status === 'live' || p.status === 'filled' || p.pendingPayoutWallet)).slice(0, 6);
+    if (open.length) Promise.all(open.map(p => chain.sync(p))).then(() => { save(); renderAll(); if (detailBox) renderDetail(true); }).catch(() => {});
   }
   if (changed) { save(); renderAll(); }
   $$('.live[data-row]').forEach(row => { const p = find(row.dataset.row); if (!p) return; const t = $('[data-time]', row); if (t) roll(t, fmtLeft(p.endsAt - now)); const pc = $('[data-pace]', row); if (pc) roll(pc, paceTxt(p)); });
@@ -2311,7 +2316,7 @@ function tick(silent) {
 /* simulated buys arriving; never completes a raise, so the last step is yours */
 function simulate() {
   if (document.hidden || busy) return;
-  const pool = state.presales.filter(p => p.status === 'live' && pctOf(p) < 95 && p.endsAt - Date.now() > 20e3 && !(p.mine && p.raised === 0 && Date.now() - p.openedAt < 15e3));
+  const pool = state.presales.filter(p => !p.live && p.status === 'live' && pctOf(p) < 95 && p.endsAt - Date.now() > 20e3 && !(p.mine && p.raised === 0 && Date.now() - p.openedAt < 15e3));
   if (!pool.length) return;
   const p = pool[Math.floor(Math.random() * pool.length)], amt = r6(Math.min(p.target * .95 - p.raised, p.target * (0.0008 + Math.random() * 0.004)));
   if (!(amt > 0)) return;
@@ -2345,7 +2350,8 @@ function boot() {
   $('#bq').addEventListener('input', e => { ui.bq = e.target.value; renderTerminal(); });
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();
-  initDocs(); renderPreview(); tick(true); renderAll(); route(); resume().then(() => xAdapter.finish());   // back from an X sign-in, the link is made once the wallet is back
+  initDocs(); renderPreview(); tick(true); renderAll(); route();
+  resume().then(() => xAdapter.finish()).then(() => chain.init()).then(ok => ok && chain.loadLive()).then(got => { if (got) { save(); renderAll(); if (detailBox) renderDetail(true); } });   // back from an X sign-in, the link is made once the wallet is back; then the live raises
   setInterval(() => tick(), 1000); setInterval(simulate, 3600);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeSegs);
 }
@@ -2375,6 +2381,7 @@ addEventListener('storage', e => {
 <script src="js/adapters/updates.js"></script>
 <script src="js/adapters/chat.js"></script>
 <script src="js/adapters/x.js"></script>
+<script src="js/adapters/program.js"></script>
 <script src="js/risk.js"></script>
 <script src="js/presale-page.js"></script>
 <script src="js/launch.js"></script>

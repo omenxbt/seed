@@ -85,6 +85,14 @@ devnet SOL), and pg_cron calls the crank every minute. `program/scripts/secrets.
 webhook secrets if they are ever rotated; `program/scripts/config.mjs` prints the on-chain Config. Still to create by
 hand: the Helius webhook (devnet, raw, program id, secret `HELIUS_WEBHOOK_SECRET`) and the X developer app.
 
+## The site on devnet
+
+`js/adapters/program.js` sends a real wallet's actions to the program (open, back, refund, claim, cancel, the seeding
+steps, fees, unlocks, payout changes, the admin's two actions and the admin handover) and reads raises back from the
+chain and from these tables. `raise_profiles` holds what a raise says about itself, written by its founder through
+`raise-profile`. While the X app is not connected, `SEED_DEV_X_HANDLES=1` lets `x-attest` attest a typed handle;
+unset it (and `xTyped` in js/config/seed.js) once X sign-in is live, and never set it on the mainnet project.
+
 ## Founder and team roles
 
 Pinning and posting updates need a row in `presale_roles`. A presale opened from the Launch form registers its creator as

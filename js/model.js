@@ -10,6 +10,7 @@
    ========================================================================== */
 const BPS = 10000;
 const solUsd = p => (p && p.solUsdAtOpen) || SEED.demoSolUsd;
+const dayOf = p => (p && p.dayMs) || D;                                  // one unlock "day" in ms: a minute for a devnet raise opened in test mode
 const usdOf = (p, q) => p.q === 'USDC' ? q : q * solUsd(p);           // a pair-asset amount in USD at the raise's own SOL price
 const qOf = (p, usd) => p.q === 'USDC' ? usd : usd / solUsd(p);
 
@@ -43,9 +44,9 @@ const lastUnlockDay = s => { const t = tranchesOf(s); return t.length ? t[t.leng
 function unlockState(p, now = Date.now()) {
   const team = splitOf(p.teamBps).team, t = tranchesOf(p.teamSchedule), at = p.seededAt;
   if (!team || !t.length) return { team, unlockedBps: 0, unlocked: 0, claimable: 0, next: null, done: !team };
-  const days = at ? (now - at) / D : -Infinity, doneT = t.filter(x => x.dayOffset <= days), unlockedBps = doneT.reduce((a, x) => a + x.bps, 0);
+  const days = at ? (now - at) / dayOf(p) : -Infinity, doneT = t.filter(x => x.dayOffset <= days), unlockedBps = doneT.reduce((a, x) => a + x.bps, 0);
   const next = t.find(x => x.dayOffset > days) || null;
-  return { team, unlockedBps, unlocked: Math.floor(team * unlockedBps / BPS), next: next && { at: (at || now) + next.dayOffset * D, tokens: Math.floor(team * next.bps / BPS), bps: next.bps }, done: !next };
+  return { team, unlockedBps, unlocked: Math.floor(team * unlockedBps / BPS), next: next && { at: (at || now) + next.dayOffset * dayOf(p), tokens: Math.floor(team * next.bps / BPS), bps: next.bps }, done: !next };
 }
 /* the rules a schedule must meet before a raise opens */
 function scheduleProblem(s, teamBps) {
@@ -74,7 +75,7 @@ function feesOf(p) {
 /* ---------------------------------------------------------------- raise states */
 const RAISE_STATE = { live: 'Live', filled: 'Filled, seeding', seeded: 'Seeded', refunded: 'Refunded' };
 const refundReason = p => ({ missed: 'missed its target', cancelled: 'was cancelled by the founder', timeout: 'did not seed within three days of filling' })[p.refundReason] || 'did not seed';
-const seedDeadline = p => (p.filledAt || 0) + SEED.seedTimeoutDays * D;   // when a filled raise refunds if it has not seeded
+const seedDeadline = p => (p.filledAt || 0) + SEED.seedTimeoutDays * dayOf(p);   // when a filled raise refunds if it has not seeded
 const SEED_STEPS = ['filled', 'minted', 'pooled', 'seeded'];
 /* the pending payout wallet change, if any, and whether it is due */
 const payoutChange = p => p.pendingPayoutWallet ? { to: p.pendingPayoutWallet, at: p.payoutEffectiveAt, due: Date.now() >= p.payoutEffectiveAt } : null;

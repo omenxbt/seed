@@ -8,6 +8,8 @@ const { PublicKey, Keypair, SystemProgram, ComputeBudgetProgram } = web3;
 export const DAMM = new PublicKey('cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG');
 export const DAMM_POOL_AUTHORITY = new PublicKey('HLnpSz9h2S4hiLQ43rnSD9XkcUThA7B8hQMKmDaiTLcC');
 export const TOKEN_2022 = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+const B58A = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+function bs58(b: Uint8Array) { let n = 0n; for (const x of b) n = n * 256n + BigInt(x); let s = ''; while (n > 0n) { s = B58A[Number(n % 58n)] + s; n /= 58n; } for (const x of b) { if (x !== 0) break; s = '1' + s; } return s; }
 const maxKey = (a: web3.PublicKey, b: web3.PublicKey) => (Buffer.compare(a.toBuffer(), b.toBuffer()) === 1 ? a : b).toBuffer();
 const minKey = (a: web3.PublicKey, b: web3.PublicKey) => (Buffer.compare(a.toBuffer(), b.toBuffer()) === 1 ? b : a).toBuffer();
 const pda = {
@@ -42,8 +44,14 @@ export function seedClient(program: Program, conn: web3.Connection) {
   const raiseOf = (k: web3.PublicKey) => (program.account as any).raise.fetch(k);
   const m = program.methods as any;
   return {
-    // only raises of the current layout: one from before a layout change would fail to decode and stop the whole pass
-    allRaises: () => (program.account as any).raise.all([{ dataSize: (program.account as any).raise.size }]) as Promise<{ publicKey: web3.PublicKey; account: any }[]>,
+    // every Raise account, decoded one by one: one from before a layout change fails to decode and is skipped, not fatal
+    async allRaises() {
+      const disc = (program.coder.accounts as any).accountDiscriminator ? (program.coder.accounts as any).accountDiscriminator('raise') : (program.idl as any).accounts.find((a: any) => a.name === 'Raise').discriminator;
+      const raw = await conn.getProgramAccounts(pid, { filters: [{ memcmp: { offset: 0, bytes: bs58(Uint8Array.from(disc)) } }] });
+      const out: { publicKey: web3.PublicKey; account: any }[] = [];
+      for (const { pubkey, account } of raw) { try { out.push({ publicKey: pubkey, account: program.coder.accounts.decode('raise', account.data as Buffer) }); } catch { /* an older layout */ } }
+      return out;
+    },
     settle: (raise: web3.PublicKey) => m.settle().accounts({ raise }).rpc(),
     timeoutRefund: (raise: web3.PublicKey) => m.timeoutRefund().accounts({ raise, config }).rpc(),
     applyPayoutChange: (raise: web3.PublicKey) => m.applyPayoutChange().accounts({ raise }).rpc(),

@@ -30,6 +30,10 @@ const presaleAdapter = {
       return withSrc({ address: pool.address, pair: pool.pair, dex: pool.dex, price, quote: 'USD', mcap: Number(a.market_cap_usd || a.fdv_usd), fdv: Number(a.fdv_usd), liquidity: Number(a.reserve_in_usd),
         change24h: Number((a.price_change_percentage || {}).h24 || 0), volume24h: Number((a.volume_usd || {}).h24 || 0), supply: Number(a.fdv_usd) / price, url: `https://app.meteora.ag/dammv2/${pool.address}` }, 'standin');
     }
+    if (p.live && p.pool) {   // a raise seeded on chain: the pool is DAMM's, at the raise price until someone trades (the page does not read DAMM's reserves yet)
+      const price = priceOf(p), supply = SUPPLY, sol = SEED.network === 'devnet' ? '?cluster=devnet' : '';
+      return withSrc({ address: p.pool, pair: `${p.ticker}/${Q(p).sym}`, dex: DEX, price, quote: Q(p).sym, mcap: price * supply, fdv: price * supply, raisePrice: price, liquidity: p.target * 2, change24h: 0, volume24h: 0, supply, url: `https://app.meteora.ag/dammv2/${p.pool}${sol}` }, 'chain');
+    }
     const s = demoSeries(p, '1h', 48), amm = ammOf(p), last = amm.x / amm.y, supply = SUPPLY;   // the price is the in-app pool's, so a trade made here moves it
     return withSrc({ address: fakeAddr('pool/' + p.id), pair: `${p.ticker}/${Q(p).sym}`, dex: DEX, price: last, quote: Q(p).sym, mcap: last * supply, fdv: last * supply, raisePrice: priceOf(p),
       liquidity: amm.x * 2, change24h: (last / s[Math.max(0, s.length - 25)][4] - 1) * 100, volume24h: ((p.fees || {}).volume || 0) / Math.max(1, (Date.now() - (p.seededAt || Date.now())) / D), supply, url: 'https://app.meteora.ag' }, 'demo');
