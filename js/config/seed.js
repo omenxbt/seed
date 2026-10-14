@@ -12,6 +12,7 @@ const SEED = {
   payoutDelayDays: 7,          // a payout wallet change takes effect after this long and shows while pending
   minRoadmap: 0,               // milestones a raise must list (none; the roadmap is optional and shown as given)
   admins: ['6xFrba28fk6RyiLREzLPHBP4xPXutDs69Ju69hCixAFZ', '6GTuondHNLSJkYemhVw8GYFTK3ANHPFXdVYUM5JP5zyf'],   // Seed admin wallets (a Squads multisig on mainnet); only they can flag fraud or approve a takeover
+  hiddenFounders: ['6GTuondHNLSJkYemhVw8GYFTK3ANHPFXdVYUM5JP5zyf'],   // raises these wallets open never show on the site (the deployer's test runs)
   /* the chain the site talks to. The browser RPC key is a public one locked to this site's domains in the Helius
      dashboard (the server-side key never leaves Supabase); a local copy of the site uses the public devnet endpoint. */
   network: 'devnet',

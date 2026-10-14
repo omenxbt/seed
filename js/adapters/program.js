@@ -139,7 +139,8 @@ var chain = {
     (ps.data || []).forEach(x => this.profiles[x.address] = x);
     const me = state.wallet && state.wallet.pk, byRaise = {};
     (cs.data || []).forEach(c => (byRaise[c.raise_id] = byRaise[c.raise_id] || []).push(c));
-    const list = (rs.data || []).map(r => {
+    const hidden = SEED.hiddenFounders || [];
+    const list = (rs.data || []).filter(r => !hidden.includes(r.founder) || r.founder === me).map(r => {
       const prof = this.profiles[r.address], p = this.fromRow(r, prof && prof.founder === r.founder ? prof : null);
       p.buys = (byRaise[r.id] || []).map(c => ({ wallet: c.wallet, amount: Number(c.amount), paid: Number(c.amount) + Number(c.fee), at: Date.parse(c.at), fundedBy: null, isFresh: false, tags: [], you: !!me && c.wallet === me, refundClaimed: !!c.refunded_at }));
       p.hist = [[p.openedAt, 0]]; let v = 0; for (const b of p.buys) { v = r6(v + b.amount); p.hist.push([b.at, Math.min(v, p.target)]); }
