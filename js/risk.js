@@ -45,17 +45,23 @@ function riskChecks(p, opts = {}) {
     }
   }
 
+  // the token on chain, once it is there: read by chainChecks() and kept on the raise
+  if (p.live && p.status === 'seeded') {
+    if (p.chainChecks) p.chainChecks.forEach(c => add(c.id, c.label, c.level, c.reason, 'chain'));
+    else ['Mint authority', 'Freeze authority', 'Liquidity lock', 'Token metadata', 'Top 10 holders'].forEach((l, i) => add(['mint-auth', 'freeze-auth', 'lp-lock', 'metadata', 'top10h'][i], l, 'pending', 'Reading the chain…'));
+  }
+
   // 6. name or ticker clash
   const tk = String(p.ticker || '').toUpperCase(), nm = normName(p.name);
   const seedHit = state.presales.find(e => e.id !== p.id && e.status === 'live' && (e.ticker === tk || (nm && normName(e.name) === nm)));
   const topHit = TOP_TOKENS.find(t => t[0] === tk || (nm && normName(t[1]) === nm));
-  add('clash', 'Name and ticker', seedHit || topHit ? 'warn' : 'pass',
+  add('clash', 'Name and ticker', 'info',
     seedHit ? `${seedHit.ticker === tk ? '$' + tk : p.name} is already used by ${seedHit.name}, a live Seed raise.` : topHit ? `${topHit[0] === tk ? '$' + tk : p.name} matches ${topHit[1]} ($${topHit[0]}), one of the 500 largest Solana tokens.` : 'No clash with a live Seed raise or a top-500 Solana token.');
 
   // 7 and 8. what a backer can check for themselves
   const road = (typeof roadmapOf === 'function' ? roadmapOf(p) : p.roadmap || pr.roadmap || []);
   add('roadmap', 'Roadmap', road.length ? 'pass' : 'info', road.length ? `${road.length} milestone${road.length > 1 ? 's' : ''} listed, ${road.filter(r => r.status === 'shipped').length} shipped.` : 'None listed. Optional.', fromPr);
-  add('website', 'Website', pr.links && pr.links.website ? 'pass' : 'warn', pr.links && pr.links.website ? 'A website is listed.' : 'No website is listed.', fromPr);
+  add('website', 'Website', 'info', pr.links && pr.links.website ? `${hostOf(pr.links.website)}` : 'None listed. Optional.', fromPr);
 
   // the founder's choices, as facts
   const sp = splitOf(p.teamBps || 0), teamPct = (p.teamBps || 0) / 100;

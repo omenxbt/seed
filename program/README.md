@@ -77,6 +77,28 @@ ticker and that URI, `is_mutable = false`, update authority the raise PDA (which
 only then revokes the mint authority. The token is a standard SPL token with six decimals. `scripts/e2e-raise.ts` runs
 the whole path on devnet with the test wallets and prints what Helius DAS (what Phantom reads) resolves for the token.
 
+## Mainnet launch checklist
+
+Before the first public raise on mainnet, one small real raise (a few dollars, a one-day deadline, a wallet that is
+not the admin) run end to end, then checked where traders look:
+
+1. **Build and deploy the mainnet program** (`anchor build`, no `devnet` feature: no test mode, no `reset_config`,
+   metadata URIs must be Arweave). Upgrade authority and Config admin to the Squads multisig. `js/config/seed.js`:
+   `network: 'mainnet'`, the mainnet program id, the mainnet USDC mint, `xTyped: false`. Supabase: a mainnet Helius
+   webhook (raw, the program id; pools join it as raises seed), `SEED_RPC_URL` mainnet, `SEED_DEV_X_HANDLES` unset,
+   the Irys wallet for metadata uploads.
+2. **Open, fill, seed** the test raise from the site with a browser wallet. The crank or the page runs the three steps.
+3. **Phantom** shows the token's name, symbol and image (immutable Metaplex metadata; DAS `getAsset` agrees).
+4. **The pool appears** on DEXScreener (`dexscreener.com/solana/<mint>`), Birdeye (`birdeye.so/solana/token/<mint>`)
+   and Jupiter (`jup.ag/tokens/<mint>`, and a quote routes through the Meteora pool).
+5. **Pasting the CA** into Axiom (`axiom.trade/t/<mint>`) and GMGN (`gmgn.ai/sol/token/<mint>`) shows the pool and
+   allows a trade; the Seed page's "Trade on" links (mainnet only) open those pages.
+6. **A buy and a sell** from the Seed page, each landing at the quote; the Trades tab and the chart update; the holders
+   list matches the chain; a fee claim pays the payout wallet 70% and the treasury 30% of the position's fees
+   (Meteora keeps 20% of the pool fee first).
+7. Report which sites did not pick the token up and why (most index a pool once it has a trade and some liquidity;
+   DEXScreener and Birdeye usually within minutes, Jupiter's strict list is separate from routing).
+
 ## Upgrade authority
 
 On devnet the upgrade authority is the developer keypair that deployed it. **On mainnet the upgrade authority must be a

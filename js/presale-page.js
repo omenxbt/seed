@@ -8,7 +8,8 @@
 /* charts draw at the width of their column, one unit to the pixel, so their labels keep their size however wide the window is */
 const chartW = () => { const b = detailBox && $('[data-dchart],[data-candles]', detailBox), w = b ? Math.floor(b.clientWidth) : 0; return w > 0 ? Math.max(320, w) : innerWidth < 720 ? 400 : 720; };
 const PTABS = ['overview', 'team', 'roadmap', 'holders', 'backers', 'info', 'reports', 'announcements', 'deck'];
-const tabsOf = p => p.status === 'seeded' ? PTABS : PTABS.filter(t => t !== 'holders');   // holders exist once the token does
+const PTABS_LIVE = ['overview', 'trades', 'holders', 'team', 'roadmap', 'backers', 'info', 'reports', 'announcements', 'deck'];
+const tabsOf = p => p.status !== 'seeded' ? PTABS.filter(t => t !== 'holders') : p.live ? PTABS_LIVE : PTABS;   // holders exist once the token does; trades once a pool is indexed
 const PTAB_ALIAS = { updates: 'announcements', tokenomics: 'team', risk: 'info' };   // the tabs' earlier names, so old links still open them
 const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'price', side: 'buy', quoteSeq: 0, shownQuote: null, allBackers: false, deck: null, deckPage: 1, walletKey: '' };
 
@@ -166,14 +167,14 @@ function ppChart(p) {
 const raiseIn = (p, quote) => quote === 'USD' ? usdOf(p, priceOf(p)) : priceOf(p);
 /* Creator fees: the pool's 1% fee so far and how it has split. Anyone can push a claim; it pays the payout wallet and Seed. */
 function ppFees(p) {
-  const f = feesOf(p), C = Q(p), sym = esc(C.sym), q = n => `${fmtC(n, p.q, true)} ${sym}`, pc = payoutChange(p), share = (p.creatorShareBps || SEED.creatorShareBps) / 100;
-  return `<section class="panel pp-card pp-fees" data-fees><div class="pp-card-h"><h2>Creator fees</h2><span class="col-note">${share}% of the pool's 1% fee to the founder, ${100 - share}% to Seed, fixed at seeding</span></div>
+  const f = feesOf(p), C = Q(p), sym = esc(C.sym), q = n => `${n > 0 && n < 100 ? fmtExact(n, p.q) : fmtC(n, p.q, true)} ${sym}`, pc = payoutChange(p), share = (p.creatorShareBps || SEED.creatorShareBps) / 100;
+  return `<section class="panel pp-card pp-fees" data-fees><div class="pp-card-h"><h2>Creator fees</h2><span class="col-note">${share}% of the position's fees to the founder, ${100 - share}% to Seed, fixed at seeding. The pool charges 1%; Meteora keeps ${SEED.dammProtocolPct}% of that.</span></div>
     <dl class="fee-grid"><div><dt>Volume traded</dt><dd class="num">${q(f.volume)}</dd></div><div><dt>Fees earned</dt><dd class="num">${q(f.earned)}</dd></div>
       <div><dt>Founder's ${share}%</dt><dd class="num">${q(f.founder)}</dd><span>${f.founderClaimed ? `${q(f.founderClaimed)} claimed` : 'nothing claimed yet'}</span></div>
-      <div><dt>Claimable now</dt><dd class="num">${q(f.founderUnclaimed)}</dd><span>to the payout wallet</span></div></dl>
+      <div><dt>Claimable now</dt><dd class="num">${f.reading ? '…' : q(f.founderUnclaimed)}</dd><span>${f.reading ? 'reading the position' : 'to the payout wallet'}</span></div></dl>
     <div class="fee-foot"><span class="num">Payout wallet ${esc(shortMint(p.payoutWallet || ''))}</span>${p.payoutWallet ? copyBtn(p.payoutWallet, 'payout wallet') : ''}${p.takeover ? `<span class="tag">${esc(p.takeover.label || 'Community')}</span>` : ''}
       ${pc ? `<span class="fee-pend">Moving to ${esc(shortMint(pc.to))} ${pc.due ? 'now' : fmtDate(pc.at)}</span>` : ''}
-      <button type="button" class="btn btn-ink btn-sm" data-claimfees${f.founderUnclaimed > 0 ? '' : ' disabled'}>Claim fees</button></div>
+      <button type="button" class="btn btn-ink btn-sm" data-claimfees${f.founderUnclaimed > 0 && !f.reading ? '' : ' disabled'}>Claim fees</button></div>
     <p class="quiet">The claim is permissionless: whoever sends it pays the transaction and the fees still go to the payout wallet and Seed. Seed also claims on a schedule.</p></section>`;
 }
 function ppTrading(p) {
@@ -223,8 +224,62 @@ function candleHover(plot, e) {
   read.innerHTML = `<b>${esc(fmtDate(c[0]))}</b> O <i>${g.f(c[1] * g.k)}</i> H <i>${g.f(c[2] * g.k)}</i> L <i>${g.f(c[3] * g.k)}</i> C <i class="${up ? 'up' : 'down'}">${g.f(c[4] * g.k)}</i> <span class="${up ? 'up' : 'down'}">${c[1] ? ((c[4] / c[1] - 1) * 100 >= 0 ? '+' : '') + ((c[4] / c[1] - 1) * 100).toFixed(2) + '%' : ''}</span>`;
   cx.classList.add('on');
 }
+/* TradingView's Lightweight Charts, loaded on the first live raise */
+const LW_SRC = 'https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.3/dist/lightweight-charts.standalone.production.js';
+let lwReady = null;
+function loadLw() {
+  if (window.LightweightCharts) return Promise.resolve();
+  return lwReady || (lwReady = new Promise((ok, no) => { const s = document.createElement('script'); s.src = LW_SRC; s.onload = ok; s.onerror = () => { lwReady = null; no(new Error('the chart library did not load')); }; document.head.appendChild(s); }));
+}
+const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+/* the chart for a pool on chain: candles and volume from the indexed trades, the raise price as a line, Price or MCap */
+function lwMount(box, p) {
+  if (pg.lw && pg.lw.box === box && pg.lw.el.isConnected) return pg.lw;
+  if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (e) {} }
+  box.innerHTML = '<div class="lw"></div>'; const el = box.firstElementChild, LW = window.LightweightCharts, k = () => pg.mode === 'mcap' ? SUPPLY : 1;
+  const f = v => (pg.mode === 'mcap' ? fmtC(v, p.q, true) : fmtPrice(v));
+  const chart = LW.createChart(el, { width: el.clientWidth || 600, height: innerWidth < 720 ? 300 : 400, layout: { background: { color: 'transparent' }, textColor: cssVar('--muted') || '#8a8f98', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 },
+    grid: { vertLines: { color: cssVar('--hair') || '#1f232b' }, horzLines: { color: cssVar('--hair') || '#1f232b' } }, rightPriceScale: { borderColor: cssVar('--hair-2') || '#2a2f38', scaleMargins: { top: 0.08, bottom: 0.22 } },
+    timeScale: { borderColor: cssVar('--hair-2') || '#2a2f38', timeVisible: true, secondsVisible: false }, crosshair: { mode: LW.CrosshairMode.Normal }, localization: { priceFormatter: f }, handleScale: { axisPressedMouseMove: true }, handleScroll: true });
+  const candles = chart.addCandlestickSeries({ upColor: CANDLE_UP, downColor: CANDLE_DN, borderVisible: false, wickUpColor: CANDLE_UP, wickDownColor: CANDLE_DN, priceFormat: { type: 'custom', formatter: f, minMove: 1e-12 } });
+  const vol = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: '', color: cssVar('--navy-soft') || '#5B8CFF' });
+  vol.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
+  const lw = pg.lw = { box, el, chart, candles, vol, raiseLine: null, k };
+  const ro = new ResizeObserver(() => { if (!el.isConnected) return ro.disconnect(); chart.applyOptions({ width: el.clientWidth, height: innerWidth < 720 ? 300 : 400 }); });
+  ro.observe(el); lw.ro = ro;
+  return lw;
+}
+function lwData(lw, series, p) {
+  const k = lw.k(), rows = series.map(c => ({ time: Math.floor(c[0] / 1000), open: c[1] * k, high: c[2] * k, low: c[3] * k, close: c[4] * k }));
+  lw.candles.setData(rows); lw.vol.setData(series.map(c => ({ time: Math.floor(c[0] / 1000), value: c[5], color: c[4] >= c[1] ? 'rgba(47,191,122,.45)' : 'rgba(240,85,75,.45)' })));
+  if (lw.raiseLine) lw.candles.removePriceLine(lw.raiseLine);
+  lw.raiseLine = lw.candles.createPriceLine({ price: priceOf(p) * k, color: cssVar('--navy-soft') || '#5B8CFF', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'Raise price' });
+  lw.chart.timeScale().fitContent();
+}
+function lwSet(lw, c, p) { const k = lw.k(); lw.candles.update({ time: Math.floor(c[0] / 1000), open: c[1] * k, high: c[2] * k, low: c[3] * k, close: c[4] * k }); lw.vol.update({ time: Math.floor(c[0] / 1000), value: c[5], color: c[4] >= c[1] ? 'rgba(47,191,122,.45)' : 'rgba(240,85,75,.45)' }); }
+/* the figures beside the chart: pool reserves, the last day's volume and trades, the holder count, the price against the raise */
+async function refreshPoolCard(p) {
+  const card = detailBox && $('[data-poolcard]', detailBox); if (!card || !pg.pool) return;
+  const v = pg.pool.value, C = Q(p), q = n => `${n > 0 && n < 100 ? fmtExact(n, p.q) : fmtC(n, p.q, true)} ${esc(C.sym)}`;
+  if (p.live) {
+    if (Date.now() - (pg.statsAt || 0) > 15e3) { pg.statsAt = Date.now(); try { pg.stats = await tradesAdapter.stats(p); } catch (e) {} if (pg.holdersAt == null || Date.now() - pg.holdersAt > 60e3) { pg.holdersAt = Date.now(); backersAdapter.holderCount(p).then(n => { pg.holderCount = n; if (pg.id === p.id) refreshPoolCard(p); }).catch(() => {}); } }
+    const st = pg.stats || { volume24h: 0, trades24h: 0 }, price = p.spot || v.price, x = price / priceOf(p);
+    card.innerHTML = `<div class="pool-grid"><div><dt>Pair</dt><dd>${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${q(v.liquidity)}</dd></div>
+      <div><dt>vs raise price</dt><dd class="num ${x >= 1 ? 'up' : 'down'}">${x.toFixed(2)}×</dd></div><div><dt>24h volume</dt><dd class="num">${q(st.volume24h)}</dd></div>
+      <div><dt>24h trades</dt><dd class="num">${st.trades24h}</dd></div><div><dt>Holders</dt><dd class="num">${pg.holderCount != null ? pg.holderCount : '—'}</dd></div></div>
+      <div class="pool-foot"><span class="num">${esc(v.dex)} pool ${esc(shortMint(v.address))}</span>${copyBtn(v.address, 'pool address')}<span class="pool-lock">${RISK_ICON.pass}Liquidity locked for good</span>
+        <a class="bar-link" href="${esc(v.url)}" target="_blank" rel="noopener">Pool on Meteora ${ICONS.out}</a>${srcPill(pg.pool.from)}</div>`;
+    return;
+  }
+  const x = v.price / raiseIn(p, v.quote);
+  card.innerHTML = `<div class="pool-grid"><div><dt>Pair</dt><dd>${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.liquidity) : `${fmtC(v.liquidity, p.q)} ${esc(v.quote)}`}</dd></div>
+      <div><dt>vs raise price</dt><dd class="num ${x >= 1 ? 'up' : 'down'}">${x.toFixed(2)}×</dd></div><div><dt>24h volume</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.volume24h) : fmtC(v.volume24h, p.q)}</dd></div></div>
+      <div class="pool-foot"><span class="num">${esc(v.dex)} pool ${esc(shortMint(v.address))}</span>${copyBtn(v.address, 'pool address')}<span class="pool-lock">${RISK_ICON.pass}Liquidity locked for good</span>
+        <a class="bar-link" href="${esc(isRealAddr(v.address) ? explorer(v.address) : v.url)}" target="_blank" rel="noopener">Position on chain ${ICONS.out}</a>${srcPill(pg.pool.from)}</div>`;
+}
 async function loadTrading(p) {
   const box = detailBox && $('[data-candles]', detailBox), card = detailBox && $('[data-poolcard]', detailBox); if (!box) return;
+  if (p.live) return loadLiveTrading(p, box);
   try {
     const pool = pg.pool = await presaleAdapter.pool(p), ser = await presaleAdapter.candles(p, pg.tf);
     if (ui.sel !== p.id) return;
@@ -233,13 +288,31 @@ async function loadTrading(p) {
     card.innerHTML = `<div class="pool-grid"><div><dt>Pair</dt><dd>${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.liquidity) : `${fmtC(v.liquidity, p.q)} ${esc(v.quote)}`}</dd></div>
       <div><dt>vs raise price</dt><dd class="num ${x >= 1 ? 'up' : 'down'}">${x.toFixed(2)}×</dd></div><div><dt>24h volume</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.volume24h) : fmtC(v.volume24h, p.q)}</dd></div></div>
       <div class="pool-foot"><span class="num">${esc(v.dex)} pool ${esc(shortMint(v.address))}</span>${copyBtn(v.address, 'pool address')}<span class="pool-lock">${RISK_ICON.pass}Liquidity locked for good</span>
-        <a class="bar-link" href="${esc(isRealAddr(v.address) ? solscan(v.address) : v.url)}" target="_blank" rel="noopener">Position on chain ${ICONS.out}</a>${srcPill(pool.from)}</div>
+        <a class="bar-link" href="${esc(isRealAddr(v.address) ? explorer(v.address) : v.url)}" target="_blank" rel="noopener">Position on chain ${ICONS.out}</a>${srcPill(pool.from)}</div>
       `;
     const ps = detailBox && $('[data-pstats]', detailBox); if (ps) ps.innerHTML = ppStats(p);
     if (pg.syncTrade) pg.syncTrade();
   } catch (e) { box.innerHTML = `<div class="pp-loading">The pool could not be loaded (${esc(e.message)}). It retries in a minute.</div>`; }
 }
 
+/* a pool on chain: the indexed trades as candles in Lightweight Charts, the pool's figures, the position's fees */
+async function loadLiveTrading(p, box) {
+  if (!pg.unwatch) pg.unwatch = tradesAdapter.watch(p, t => onLiveTrade(p, t));   // first, so nothing lands between the fetch and the watch
+  try {
+    await loadLw(); pg.pool = await presaleAdapter.pool(p); pg.series = null; const ser = await tradesAdapter.candles(p, pg.tf);
+    if (ui.sel !== p.id || !box.isConnected) return;
+    (pg.pendingTrades || []).forEach(t => { if (!(pg.trades || []).some(x => x.signature === t.signature)) foldTrade(ser, pg.tf, t); }); pg.pendingTrades = null;   // what landed while the series loaded
+    pg.series = ser; const lw = lwMount(box, p); lwData(lw, ser, p);
+    pg.statsAt = 0; await refreshPoolCard(p);
+    const ps = detailBox && $('[data-pstats]', detailBox); if (ps) ps.innerHTML = ppStats(p);
+    if (pg.syncTrade) pg.syncTrade();
+    loadLiveFees(p);
+  } catch (e) { if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (x) {} pg.lw = null; } box.innerHTML = `<div class="pp-loading">The chart could not be loaded (${esc(e.message)}).</div>`; }
+}
+async function loadLiveFees(p) {
+  try { const f = await damm.fees(p); if (!f || pg.id !== p.id) return; (chain.feesLive = chain.feesLive || {})[p.id] = f; const card = detailBox && $('[data-fees]', detailBox); if (card) { card.outerHTML = ppFees(p); bindRail(p); } }
+  catch (e) { console.warn('position fees:', e.message); }
+}
 /* ---------------------------------------------------------------- right rail */
 /* The trade panel. A live raise only takes deposits: there is nothing to sell until it seeds, and a deposit comes back in full if
    the raise misses. A seeded token is bought and sold here against its pool. Both go through index.html (executeBuy, executeSwap),
@@ -292,6 +365,7 @@ function swapPanel(p) {
 function liveTradePanel(p, side) {
   const C = Q(p), sym = esc(C.sym);
   return `<section class="panel rail-card" data-trade="live" data-now="${side}"><div class="rail-h"><h3>Trade $${esc(p.ticker)}</h3><span class="slip num" title="Slippage: the most the price may move against you before the swap fails"><span class="quiet">Slippage</span><input data-slip inputmode="decimal" value="${damm.slippage}" aria-label="Slippage in percent"><span class="quiet">%</span></span></div>
+    <div class="pri" data-pri><span class="quiet">Priority fee</span><div class="seg mini-seg"><button type="button" data-pv="auto" aria-pressed="${damm.priority === 'auto'}">Auto</button><button type="button" data-pv="custom" aria-pressed="${damm.priority !== 'auto'}">Custom</button></div><span class="slip num"${damm.priority === 'auto' ? ' hidden' : ''}><input data-prival inputmode="decimal" value="${damm.priority === 'auto' ? '0.0001' : damm.priority}" aria-label="Priority fee in SOL"><span class="quiet">SOL</span></span></div>
     <div class="seg mini-seg side-seg" data-side role="group" aria-label="Buy or sell">${['buy', 'sell'].map(v => `<button type="button" data-v="${v}" aria-pressed="${side === v}">${v === 'buy' ? 'Buy' : 'Sell'}</button>`).join('')}</div>
     <div class="trade-top"><label class="rail-lab" for="ppAmt">You pay</label><span class="rail-bal num" data-bal></span></div>
     <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Amount to pay"><span class="suf" data-paysym>${side === 'sell' ? '$' + esc(p.ticker) : sym}</span></div>
@@ -300,7 +374,14 @@ function liveTradePanel(p, side) {
     <dl class="kv"><div><dt>Price</dt><dd data-tprice>—</dd></div><div><dt>Price impact</dt><dd data-timpact>—</dd></div><div><dt>Minimum received</dt><dd data-tmin>—</dd></div><div><dt>Pool fee</dt><dd data-tfee>1%</dd></div></dl>
     <p class="rail-err" data-buyerr role="alert"></p>
     <button type="button" class="btn btn-navy btn-block" data-go>${side === 'sell' ? 'Sell' : 'Buy'} $${esc(p.ticker)}</button>
-    <p class="rail-cap">A swap on the raise's Meteora DAMM v2 pool, signed in your wallet. The pool's 1% fee pays the founder and Seed.</p></section>`;
+    <p class="rail-cap">A swap on the raise's Meteora DAMM v2 pool, signed in your wallet. The pool's 1% fee, less Meteora's ${SEED.dammProtocolPct}%, pays the founder and Seed 70/30.</p>${tradeOn(p)}</section>`;
+}
+/* where else the token trades, with the mint filled in. Mainnet only: none of these index devnet. Each URL form was checked
+   against the live site (Axiom /t/<mint> forwards to the pool page; Birdeye's canonical path is /solana/token/<mint>). */
+const TRADE_ON = [['Axiom', m => `https://axiom.trade/t/${m}`], ['GMGN', m => `https://gmgn.ai/sol/token/${m}`], ['DEXScreener', m => `https://dexscreener.com/solana/${m}`], ['Birdeye', m => `https://birdeye.so/solana/token/${m}`], ['Jupiter', m => `https://jup.ag/tokens/${m}`]];
+function tradeOn(p) {
+  if (SEED.network !== 'mainnet' || !p.mint) return '';
+  return `<div class="trade-on"><span class="quiet">Trade on</span>${TRADE_ON.map(([n, f]) => `<a href="${esc(f(p.mint))}" target="_blank" rel="noopener">${n} ${ICONS.out}</a>`).join('')}</div>`;
 }
 /* an amount of the pair asset with the small ones kept: 0.0227 SOL, not 0.02 */
 const fmtExact = (n, q) => n >= 100 ? fmtAmt(n, q) : String(Number(n.toFixed(n >= 1 ? 4 : 6)));
@@ -376,7 +457,7 @@ function ppTabs(p) {
 function renderTab(p) {
   const body = detailBox && $('[data-tabbody]', detailBox); if (!body) return;
   $$('[data-ptab]', detailBox).forEach(a => a.setAttribute('aria-selected', String(a.dataset.ptab === pg.tab))); placeTabInd();
-  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, roadmap: tabRoadmap, holders: tabHolders, backers: tabBackers, info: tabInfo, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
+  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, roadmap: tabRoadmap, holders: tabHolders, trades: tabTrades, backers: tabBackers, info: tabInfo, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
   body.innerHTML = fn(p); afterTab(p, body);
   const key = p.id + '/' + pg.tab;   // the tab's content eases in when the tab changes, not when it is redrawn in place
   if (pg.shown !== key) { pg.shown = key; body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap'); }
@@ -474,6 +555,37 @@ function donutSVG(allocs) {
     <text x="90" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" style="fill:var(--ink)">1B</text><text x="90" y="104" text-anchor="middle" font-size="11" style="fill:var(--muted)">supply</text></svg>`;
 }
 function tabHolders(p) { return tabHead('Holders', '') + '<div data-holders><div class="pp-loading">Loading holders…</div></div>'; }
+function tabTrades(p) { return tabHead('Trades', '') + '<div data-trades><div class="pp-loading">Loading trades…</div></div>'; }
+/* the latest swaps on the pool, newest first; a new one slides in at the top as the indexer sees it */
+async function loadTrades(p) {
+  const box = detailBox && $('[data-trades]', detailBox); if (!box) return;
+  try { const list = await tradesAdapter.list(p, 50); if (!box.isConnected) return; pg.trades = list; box.innerHTML = tradesTable(p, list); }
+  catch (e) { box.innerHTML = `<p class="quiet">Trades could not be loaded: ${esc(e.message)}</p>`; }
+}
+function tradeRow(p, t) {
+  const C = Q(p), me = state.wallet && state.wallet.pk;
+  return `<tr class="${t.side}${t.trader === me ? ' you' : ''}" data-sig="${esc(t.signature)}"><td><span class="btag ${t.side === 'buy' ? 'ok' : 'bad'}">${t.side === 'buy' ? 'Buy' : 'Sell'}</span></td><td class="num">${fmtExact(t.pair, p.q)} ${esc(C.sym)}</td><td class="num">${fmtTok(t.tokens)}</td><td class="num">${fmtPrice(t.price)} ${esc(C.sym)}</td>
+    <td class="mono">${t.trader === me ? 'You' : esc(shortMint(t.trader))}</td><td class="num" title="${esc(fmtDate(t.at))}">${fmtAgo(Date.now() - t.at)}</td><td><a href="${esc(explorer(t.signature, 'tx'))}" target="_blank" rel="noopener" aria-label="View transaction">${ICONS.out}</a></td></tr>`;
+}
+function tradesTable(p, list) {
+  if (!list.length) return quietEmpty('No trades on the pool yet. The first swap shows here within seconds of landing.');
+  return `<div class="tab-h"><span class="quiet">${plural(list.length, 'latest trade')}, newest first</span>${LIVE_PILL}</div>
+    <div class="tscroll"><table class="dtable trades"><thead><tr><th>Side</th><th class="r">${esc(Q(p).sym)}</th><th class="r">$${esc(p.ticker)}</th><th class="r">Price</th><th>Wallet</th><th class="r">When</th><th></th></tr></thead><tbody data-tradesbody>${list.map(t => tradeRow(p, t)).join('')}</tbody></table></div>`;
+}
+/* a trade the indexer just saw: the table, the chart's newest candle, the pool figures */
+function onLiveTrade(p, t) {
+  const cur = find(p.id) || p; if (pg.id !== cur.id) return;
+  if (pg.trades && !pg.trades.some(x => x.signature === t.signature)) {
+    pg.trades.unshift(t); const body = detailBox && $('[data-tradesbody]', detailBox);
+    if (body) { body.insertAdjacentHTML('afterbegin', tradeRow(cur, t)); body.firstElementChild.classList.add('flash'); const h = detailBox && $('[data-trades] .tab-h .quiet', detailBox); if (h) h.textContent = `${plural(pg.trades.length, 'latest trade')}, newest first`; }
+    else if (pg.tab === 'trades') renderTab(cur);
+  }
+  cur.spot = t.price;
+  if (pg.lw && pg.series) { const { c, redraw } = foldTrade(pg.series, pg.tf, t); if (redraw) lwData(pg.lw, pg.series, cur); else lwSet(pg.lw, c, cur); }
+  else (pg.pendingTrades = pg.pendingTrades || []).push(t);   // the series is still loading: folded in once it is
+  const fees = cur.fees || (cur.fees = { volume: 0, founderClaimed: 0, seedClaimed: 0 }); fees.volume = r6((fees.volume || 0) + t.pair);
+  pg.statsAt = 0; refreshPoolCard(cur);
+}
 function tabBackers(p) {
   const rows = backersAdapter.rows(p), s = backersAdapter.summary(p, rows), C = Q(p), shown = pg.allBackers ? rows : rows.slice(0, 50), refund = p.status === 'refunded', seeded = p.status === 'seeded';
   const card = (k, v, lvl, sub) => `<div class="sum ${lvl || ''}"><dt>${k}</dt><dd class="num">${v}</dd>${sub ? `<span>${sub}</span>` : ''}</div>`;
@@ -494,7 +606,7 @@ async function loadHolders(p) {
     const h = await backersAdapter.holders(p); if (!box.isConnected) return;
     const all = pg.allHolders || h.value.length <= 100, shown = all ? h.value : h.value.slice(0, 100), wallets = h.value.filter(x => !x.label).length;
     box.innerHTML = `<div class="tab-h"><span class="quiet">${plural(h.count || h.value.length, 'holder')}${h.from === 'chain' ? `: ${plural(wallets, 'wallet')} and ${plural(h.value.length - wallets, 'pool or vault account')}` : `, top ${h.value.length} shown`}</span>${srcPill(h.from)}</div>
-      <div class="tscroll"><table class="dtable backers"><thead><tr><th>Holder</th><th class="r">$${esc(p.ticker)}</th><th class="r">Of supply</th><th class="h-label">Label</th></tr></thead><tbody>
+      <div class="tscroll"><table class="dtable backers holders"><thead><tr><th>Holder</th><th class="r">$${esc(p.ticker)}</th><th class="r">Of supply</th><th class="h-label">Label</th></tr></thead><tbody>
       ${shown.map(x => `<tr class="${x.you ? 'you' : ''}"><td class="mono">${x.you ? 'You' : h.from === 'chain' ? `<a href="${esc(explorer(x.account || x.wallet))}" target="_blank" rel="noopener">${esc(shortMint(x.wallet))}</a>` : esc(shortMint(x.wallet))}${x.label ? `<span class="h-sub">${esc(x.label)}</span>` : ''}</td><td class="num">${x.amount > 0 && x.amount < 1 ? '<1' : fmtTok(x.amount)}</td><td class="num">${x.pct < 0.01 && x.pct > 0 ? '<0.01' : x.pct.toFixed(2)}%</td><td class="h-label">${esc(x.label || '')}</td></tr>`).join('')}</tbody></table></div>
       ${h.value.length > shown.length ? `<button class="qb more" data-allholders>Show all ${h.value.length}</button>` : ''}`;
     const ah = $('[data-allholders]', box); if (ah) ah.onclick = () => { pg.allHolders = true; loadHolders(p); };
@@ -549,6 +661,7 @@ function refreshAnnounce(p) { const w = detailBox && $('[data-annwrap]', detailB
 function afterTab(p, body) {
   if (pg.tab === 'deck' && profileOf(p).deck && deckKindOf(profileOf(p)) === 'pdf') loadDeck(p, body);
   if (pg.tab === 'holders') loadHolders(p);
+  if (pg.tab === 'trades') loadTrades(p);
   const f = $('[data-updform]', body);
   if (f) {
     const err = $('[data-annerr]', f), ct = $('[data-annct]', f);
@@ -626,7 +739,7 @@ let detailBox = null;
 function renderDetail(force) {
   const box = $('#presalePage'); detailBox = box;
   if (typeof renderFootNote === 'function') renderFootNote();   // the footer follows the page: no demo reset on a live raise
-  if (ui.tab !== 'presale') { if (pg.id) { box.innerHTML = ''; pg.id = null; if (typeof chatOff !== 'undefined' && chatOff) { chatOff(); chatOff = null; } } return; }
+  if (ui.tab !== 'presale') { if (pg.id) { box.innerHTML = ''; pg.id = null; leaveLive(); if (typeof chatOff !== 'undefined' && chatOff) { chatOff(); chatOff = null; } } return; }
   const p = find(ui.sel);
   if (!p) { box.innerHTML = '<div class="panel empty">That raise is not in this demo any more. It may have been reset.<br><a href="#">Back to all raises</a></div>'; pg.id = null; return; }
   const want = PTAB_ALIAS[ui.ptab] || ui.ptab, tab = tabsOf(p).includes(want) ? want : 'overview', wkey = (state.wallet ? walletId() : '') + '/' + (state.positions[p.id] || 0) + '/' + !!state.claimed[p.id] + '/' + (p.status === 'seeded' ? heldOf(p) : 0) + '/' + balOf(p.q);
@@ -636,17 +749,20 @@ function renderDetail(force) {
     patchDetail(p); return;
   }
   const fresh = pg.id !== p.id;
-  Object.assign(pg, { id: p.id, status: p.status, tab, walletKey: wkey, seen: p.raised, shown: null }); if (fresh) Object.assign(pg, { allBackers: false, deck: null, pool: null, series: null });
+  if (fresh) { leaveLive(); if (p.live && p.status === 'seeded') pg.tf = '1m'; }   // a new pool reads better minute by minute
+  Object.assign(pg, { id: p.id, status: p.status, tab, walletKey: wkey, seen: p.raised, shown: null }); if (fresh) Object.assign(pg, { allBackers: false, allHolders: false, deck: null, pool: null, series: null, trades: null, stats: null, holderCount: null, holdersAt: null });
+  else if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (e) {} pg.lw = null; }   // the page is drawn again: the chart mounts on the new box
   box.innerHTML = `<div class="pp ${p.status}${p.blacklisted ? ' flagged' : ''}"><aside class="pp-side" aria-label="Project and chat">${ppHeader(p)}${ppFounder(p)}${chatPanel(p)}</aside>
     <div class="pp-main"><div class="pp-annw" data-annwrap>${ppNotices(p)}</div>${ppFill(p)}${p.status === 'seeded' ? ppFees(p) : ''}${ppChart(p)}${ppTabs(p)}</div><aside class="pp-rail" aria-label="Buy and your position">${ppRail(p)}</aside></div>`;
   bindPage(p); renderTab(p); mountChat(p); drawCharts(p); watchCharts(p); loadAsync(p);
   if (fresh && typeof playEnter === 'function') playEnter();   // the page's cards rise into place and the raise line draws itself
 }
+function leaveLive() { if (pg.unwatch) { pg.unwatch(); pg.unwatch = null; } pg.pendingTrades = null; if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (e) {} pg.lw = null; } }
 /* the charts are drawn again once the page is in the document, and whenever their column changes width */
 function drawCharts(p) {
   const s = (k, fn) => { const e = detailBox && $(k, detailBox); if (e) fn(e); };
   s('[data-dchart]', e => e.innerHTML = raiseSVG(p)); s('[data-dbars]', e => e.innerHTML = buysSVG(p));
-  s('[data-candles]', e => { if (pg.series && pg.pool) e.innerHTML = candleSVG(pg.series, pg.mode, pg.pool.value.supply, pg.pool.value.quote); });
+  s('[data-candles]', e => { if (pg.series && pg.pool && !pg.lw) e.innerHTML = candleSVG(pg.series, pg.mode, pg.pool.value.supply, pg.pool.value.quote, raiseIn(p, pg.pool.value.quote)); });
 }
 let chartRO = null;
 function watchCharts(p) {
@@ -729,14 +845,15 @@ function bindRail(p) {
     } else {
       $('[data-recv]', panel).textContent = `${fmtTok(n > 0 ? tokensFor(cur, Math.min(amountFor(n), leftOf(cur))) : 0)} $${cur.ticker}`;   // the buy inside the payment, capped at the room left
       if (!msg && n > 0) msg = pr.minBuy && n < pr.minBuy ? `The minimum deposit is ${fmtC(pr.minBuy, cur.q)} ${C.sym}.` : pr.maxBuy && n + (state.positions[cur.id] || 0) > pr.maxBuy ? `A wallet can put in at most ${fmtC(pr.maxBuy, cur.q)} ${C.sym}.`
-        : n > payLeft(cur) ? `Only ${fmtAmt(payLeft(cur), cur.q)} ${C.sym} fits in this raise.` : state.wallet && n > bal ? `Your wallet holds ${fmtAmt(bal, cur.q)} ${C.sym}.` : '';
+        : n > payLeft(cur) ? `Only ${fmtExact(payLeft(cur), cur.q)} ${C.sym} fits in this raise, the 1% fee included.` : state.wallet && n > bal ? `Your wallet holds ${fmtAmt(bal, cur.q)} ${C.sym}.` : '';
       go.textContent = !state.wallet ? 'Connect wallet to deposit' : n > 0 && !msg ? `Deposit ${fmtExact(Math.min(n, payLeft(cur)), cur.q)} ${C.sym}` : 'Deposit';
     }
     err.textContent = msg; go.disabled = !!state.wallet && (!!msg || !(n > 0));
   };
   inp.oninput = sync;
   panel.onclick = async e => {
-    const side = e.target.closest('[data-side] button'), chip = e.target.closest('[data-chip],[data-pct]'), cur = now();
+    const side = e.target.closest('[data-side] button'), chip = e.target.closest('[data-chip],[data-pct]'), cur = now(), pv = e.target.closest('[data-pv]');
+    if (pv) { const custom = pv.dataset.pv === 'custom'; damm.priority = custom ? (parseFloat(priVal.value) || 0.0001) : 'auto'; $$('[data-pv]', panel).forEach(b => b.setAttribute('aria-pressed', String(b === pv))); priVal.parentElement.hidden = !custom; return; }
     if (side) { pg.side = side.dataset.v; $$('[data-side] button', panel).forEach(b => b.setAttribute('aria-pressed', String(b === side))); inp.value = ''; chips(); sync(); inp.focus(); return; }
     if (chip) {
       const room = profileOf(cur).maxBuy ? Math.max(0, profileOf(cur).maxBuy - (state.positions[cur.id] || 0)) : Infinity;
@@ -788,6 +905,7 @@ function bindLiveTrade(p, panel) {
   };
   const later = () => { clearTimeout(timer); timer = setTimeout(sync, 250); };   // a keystroke's quote waits for the next one
   inp.oninput = later; slip.oninput = later;
+  const priVal = $('[data-prival]', panel); priVal.oninput = () => { const v = parseFloat(priVal.value); if (v >= 0 && v <= 0.05) damm.priority = v; };
   panel.onclick = async e => {
     const side = e.target.closest('[data-side] button'), chip = e.target.closest('[data-chip],[data-pct]'), cur = now();
     if (side) { pg.side = side.dataset.v; $$('[data-side] button', panel).forEach(b => b.setAttribute('aria-pressed', String(b === side))); inp.value = sell() && heldOf(cur) > 0 ? String(r6(heldOf(cur))) : ''; chips(); sync(); inp.focus(); return; }
@@ -828,6 +946,7 @@ async function loadAsync(p) {
   const again = () => { if (ui.sel !== id || !detailBox) return; const ch = $('.pp-pills .risk-chip', detailBox); if (ch) ch.outerHTML = riskChip(riskSummary(riskChecks(p))); if (pg.tab === 'backers' || pg.tab === 'info') renderTab(p); };
   if (await founderAdapter.refresh(p)) again();
   if (await backersAdapter.enrich(p)) again();
+  if (p.live && p.status === 'seeded' && !p.chainChecks) { try { const cc = await chainChecks(p); if (cc && pg.id === id) { p.chainChecks = cc; again(); } } catch (e) { console.warn('chain checks:', e.message); } }
 }
 /* live numbers in place, so the tab, the chat box and the buy input keep their state */
 function patchDetail(p) {

@@ -41,6 +41,11 @@ const backersAdapter = {
     return learned;
   },
 
+  /* how many accounts hold the token (the pool's and Seed's vaults among them), from the first DAS page */
+  async holderCount(p) {   // the same count the Holders tab shows: one per owner, the labelled accounts included
+    const mint = mintOf(p); if (!(p.live && isRealAddr(mint))) return null;
+    try { return (await chainHolders(p, mint)).count; } catch (e) { return null; }
+  },
   /* holders after seeding: every token account of the mint when the raise is on chain, otherwise derived from the demo crowd */
   async holders(p) {
     const pr = profileOf(p), supply = SUPPLY, mint = mintOf(p);
@@ -107,4 +112,47 @@ function applyOrigin(r, o) {
   else if (!o.complete) r.isFresh = false;
   if (o.fundedBy) r.fundedBy = o.fundedBy;
   r.from = 'chain';
+}
+
+/* ---- on-chain safety facts for a token that seeded on chain: read once per page visit, graded like the other checks.
+   Mint and freeze authority from the mint account; the LP lock from the position (all of its liquidity permanently
+   locked, its NFT in the raise PDA's account); metadata immutability from the Token Metadata account; holder
+   concentration from the token accounts, the pool's and Seed's vaults left out. */
+async function chainChecks(p) {
+  if (!(p.live && p.status === 'seeded' && p.mint)) return null;
+  await chain.init(); const out = [], add = (id, label, level, reason) => out.push({ id, label, level, reason, from: 'chain' });
+  const conn = chain.conn, mint = chain.pk(p.mint);
+  try {
+    const m = (await conn.getParsedAccountInfo(mint)).value, info = m && m.data && m.data.parsed && m.data.parsed.info;
+    if (info) {
+      add('mint-auth', 'Mint authority', info.mintAuthority ? 'fail' : 'pass', info.mintAuthority ? `Still held by ${shortMint(info.mintAuthority)}: more tokens could be minted.` : 'Revoked. The supply is fixed at 1,000,000,000.');
+      add('freeze-auth', 'Freeze authority', info.freezeAuthority ? 'fail' : 'pass', info.freezeAuthority ? `Still held by ${shortMint(info.freezeAuthority)}: wallets could be frozen.` : 'Revoked. No wallet can be frozen.');
+    }
+  } catch (e) { add('mint-auth', 'Mint authority', 'pending', 'Could not be read right now.'); }
+  try {
+    if (p.position && typeof damm !== 'undefined') {
+      await damm.init(); const pos = await damm.amm.fetchPositionState(chain.pk(p.position));
+      const unlocked = Number(pos.unlockedLiquidity.toString()), perm = Number(pos.permanentLockedLiquidity.toString()), vested = Number((pos.vestedLiquidity || 0).toString());
+      const nftAcc = (await conn.getParsedAccountInfo(chain.pda.dammNftAccount(pos.nftMint))).value, owner = nftAcc && nftAcc.data && nftAcc.data.parsed && nftAcc.data.parsed.info && nftAcc.data.parsed.info.owner;
+      const locked = perm > 0 && unlocked === 0 && vested === 0, held = owner === p.address;
+      add('lp-lock', 'Liquidity lock', locked && held ? 'pass' : 'fail', locked && held ? 'The whole position is permanently locked and its NFT sits in the raise account, which no instruction can move.' : !locked ? 'Part of the position is not permanently locked.' : `The position NFT is held by ${shortMint(owner || '?')}, not the raise account.`);
+    }
+  } catch (e) { add('lp-lock', 'Liquidity lock', 'pending', 'Could not be read right now.'); }
+  try {
+    const md = (await conn.getAccountInfo(chain.pda.metadata(mint)));
+    if (md) { const im = metadataImmutable(md.data); add('metadata', 'Token metadata', im ? 'pass' : 'fail', im ? 'Immutable: the name, symbol and image cannot change.' : 'Mutable: the name, symbol or image could change.'); }
+    else add('metadata', 'Token metadata', 'fail', 'No Metaplex metadata: wallets show the token as unknown.');
+  } catch (e) { add('metadata', 'Token metadata', 'pending', 'Could not be read right now.'); }
+  try {
+    const h = await chainHolders(p, p.mint), wallets = h.rows.filter(r => !r.label), circ = wallets.reduce((a, r) => a + r.amount, 0) || 1, top = wallets.slice(0, 10).reduce((a, r) => a + r.amount, 0) / circ * 100;
+    add('top10h', 'Top 10 holders', wallets.length < 2 ? 'info' : top > RISK.top10FailPct ? 'fail' : top > RISK.top10WarnPct ? 'warn' : 'pass', wallets.length < 2 ? `${plural(wallets.length, 'wallet holds', 'wallets hold')} the token so far.` : `The 10 largest wallets hold ${pctTxt(top)} of the tokens outside the pool and Seed's vaults.`);
+  } catch (e) { add('top10h', 'Top 10 holders', 'pending', 'Could not be read right now.'); }
+  return out;
+}
+/* Token Metadata's account: key, update authority, mint, three length-prefixed strings, a fee, optional creators, two flags */
+function metadataImmutable(data) {
+  let o = 1 + 32 + 32; const u32 = () => { const n = data[o] | (data[o + 1] << 8) | (data[o + 2] << 16) | (data[o + 3] << 24); o += 4; return n >>> 0; };
+  for (let i = 0; i < 3; i++) { const n = u32(); o += n; } o += 2;   // (o += u32() would read o before the call moved it)
+  if (data[o++]) { const n = u32(); o += n * 34; }
+  o += 1; return data[o] === 0;
 }

@@ -63,12 +63,19 @@ const fmtSchedule = s => { if (!s) return 'No team tokens'; if (s.tranches) retu
 /* ---------------------------------------------------------------- creator fees */
 /* the pool's fee on a volume, and how it splits */
 function feeSplit(volume, creatorShareBps = SEED.creatorShareBps) {
-  const fee = volume * SEED.poolFeeBps / BPS;
+  const fee = volume * SEED.poolFeeBps / BPS * (1 - (SEED.dammProtocolPct || 0) / 100);   // what the locked position earns: the pool fee less Meteora's protocol share
   return { fee, founder: fee * creatorShareBps / BPS, seed: fee * (BPS - creatorShareBps) / BPS };
 }
 /* what a raise's pool has earned so far: the demo keeps running totals on p.fees; live reads the position */
 function feesOf(p) {
-  const f = p.fees || { volume: 0, founderClaimed: 0, seedClaimed: 0 }, s = feeSplit(f.volume, p.creatorShareBps);
+  const f = p.fees || { volume: 0, founderClaimed: 0, seedClaimed: 0 };
+  const live = p.live && typeof chain !== 'undefined' && chain.feesLive && chain.feesLive[p.id];
+  if (live) {   // a pool on chain: the position's own figures, pending and claimed, in the pair asset
+    const share = (p.creatorShareBps || SEED.creatorShareBps) / BPS, earned = live.pending + live.claimed, fo = live.pending * share;
+    return { volume: f.volume, earned, founder: earned * share, seed: earned * (1 - share), founderClaimed: f.founderClaimed || 0, seedClaimed: f.seedClaimed || 0, founderUnclaimed: fo, seedUnclaimed: live.pending - fo, live: true };
+  }
+  if (p.live) return { volume: f.volume, earned: 0, founder: 0, seed: 0, founderClaimed: f.founderClaimed || 0, seedClaimed: f.seedClaimed || 0, founderUnclaimed: 0, seedUnclaimed: 0, reading: true };   // until the position is read, nothing is claimable
+  const s = feeSplit(f.volume, p.creatorShareBps);
   return { volume: f.volume, earned: s.fee, founder: s.founder, seed: s.seed, founderClaimed: f.founderClaimed || 0, seedClaimed: f.seedClaimed || 0, founderUnclaimed: Math.max(0, s.founder - (f.founderClaimed || 0)), seedUnclaimed: Math.max(0, s.seed - (f.seedClaimed || 0)) };
 }
 

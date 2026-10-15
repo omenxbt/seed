@@ -62,3 +62,24 @@ begin
 end $$;
 revoke all on function public.bump_volume(text, numeric, text) from public;
 grant execute on function public.bump_volume(text, numeric, text) to service_role;
+
+-- Phase 4 review: each candle also carries the close of the bucket before it, computed before the limit, so the oldest
+-- candle on a long chart opens where the one before it closed, not at the raise price
+create or replace function public.candles(p_raise_id text, p_tf integer, p_limit integer default 300)
+returns table (t timestamptz, open numeric, high numeric, low numeric, close numeric, volume numeric, trades integer, prev_close numeric)
+language sql stable as $$
+  with b as (
+    select to_timestamp(floor(extract(epoch from at) / p_tf) * p_tf) as t, price, pair_amount, at, signature
+    from public.trades where raise_id = p_raise_id
+  ), agg as (
+    select t,
+      (array_agg(price order by at, signature))[1] as open,
+      max(price) as high, min(price) as low,
+      (array_agg(price order by at desc, signature desc))[1] as close,
+      sum(pair_amount) as volume, count(*)::integer as trades
+    from b group by t
+  ), chained as (
+    select *, lag(close) over (order by t) as prev_close from agg
+  )
+  select * from (select * from chained order by t desc limit p_limit) x order by t asc
+$$;

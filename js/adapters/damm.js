@@ -6,7 +6,15 @@
    ========================================================================== */
 const DAMM_SDK = 'https://esm.sh/@meteora-ag/cp-amm-sdk@1.5.1?bundle';
 const damm = {
-  lib: null, amm: null, states: {}, slippage: 2,   // slippage: percent, the panel's setting, kept per session
+  lib: null, amm: null, states: {}, slippage: 2, priority: 'auto',   // the panel's settings, kept per session: slippage in percent; priority fee 'auto' or a number of SOL
+  /* the priority fee as a compute-unit price: auto asks the RPC for recent fees on the pool and takes the median; a custom one
+     is spread over the swap's compute budget */
+  async priorityIx(p, units) {
+    let micro = 0;
+    if (this.priority === 'auto') { try { const fees = await chain.conn.getRecentPrioritizationFees({ lockedWritableAccounts: [chain.pk(p.pool)] }); const xs = fees.map(f => f.prioritizationFee).filter(x => x > 0).sort((a, b) => a - b); micro = xs.length ? xs[Math.floor(xs.length / 2)] : 0; } catch (e) { micro = 0; } }
+    else if (this.priority > 0) micro = Math.round(this.priority * 1e9 * 1e6 / units);   // SOL → lamports → micro-lamports per unit
+    return micro > 0 ? chain.w.ComputeBudgetProgram.setComputeUnitPrice({ microLamports: Math.min(micro, 50_000_000) }) : null;
+  },
   async init() {
     if (this.amm) return true;
     if (!(await chain.init())) return false;
@@ -29,6 +37,15 @@ const damm = {
     const sq = Number(s.sqrtPrice.toString()) / Math.pow(2, 64), raw = sq * sq, price = tokA ? raw * Math.pow(10, d.tok - d.pair) : (1 / raw) * Math.pow(10, d.tok - d.pair);
     return { tok, pair, price, feeBps: SEED.poolFeeBps };   // the pool opened with Seed's flat fee and no dynamic fee
   },
+  /* the locked position's fees, in the pair asset: what waits to be claimed and what has been claimed so far (the pool
+     collects fees in the pair asset only). The program's claim splits a claim 70/30 between the payout wallet and Seed. */
+  async fees(p) {
+    if (!p.position) return null;
+    const s = await this.state(p), pos = await this.amm.fetchPositionState(chain.pk(p.position)), d = this.decimals(p);
+    const un = this.lib.getUnClaimLpFee(s, pos), tokA = s.tokenAMint.toBase58() === p.mint;
+    const pending = Number((tokA ? un.feeTokenB : un.feeTokenA).toString()) / Math.pow(10, d.pair), claimed = Number((tokA ? pos.metrics.totalClaimedBFee : pos.metrics.totalClaimedAFee).toString()) / Math.pow(10, d.pair);
+    return { pending, claimed };
+  },
   /* side 'buy': amount of the pair asset in; 'sell': tokens in. Returns amounts in the page's units. */
   async quote(p, side, amount, slippage = this.slippage) {
     const s = await this.state(p), d = this.decimals(p), inDec = side === 'buy' ? d.pair : d.tok, outDec = side === 'buy' ? d.tok : d.pair;
@@ -47,7 +64,8 @@ const damm = {
     const tokMint = chain.pk(p.mint), pairMint = chain.pk(SEED.pairMints[p.q]), tp = chain.pk(PROG.TOKEN);
     const tx = await this.amm.swap({ payer: me, pool: chain.pk(p.pool), inputTokenMint: side === 'buy' ? pairMint : tokMint, outputTokenMint: side === 'buy' ? tokMint : pairMint, amountIn: q.inAmount, minimumAmountOut: q.minOutRaw,
       tokenAVault: s.tokenAVault, tokenBVault: s.tokenBVault, tokenAMint: s.tokenAMint, tokenBMint: s.tokenBMint, tokenAProgram: tp, tokenBProgram: tp, referralTokenAccount: null, poolState: s });
-    const sig = await chain.send(tx.instructions, [], 400000);
+    const pri = await this.priorityIx(p, 400000);
+    const sig = await chain.send(pri ? [pri, ...tx.instructions] : tx.instructions, [], 400000);
     this.states[p.pool] = null;
     return { sig, quote: q };
   }

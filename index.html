@@ -790,7 +790,7 @@ a.ico:hover{color:var(--ink)}
     </section>
     <div class="board-foot">
       <p class="board-note" id="tryHint" hidden></p><p class="board-note" id="refundNote" hidden></p>
-      <span class="foot-note"><span data-foot>Prototype. Raise data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.</span> <button data-reset>Reset demo</button></span>
+      <span class="foot-note"><span data-foot>Live on Solana devnet: real transactions, test SOL with no value, and a day counts as a minute. Demo raises are marked; a connected wallet signs its own transactions.</span> <button data-reset>Reset demo</button></span>
     </div>
   </section>
 
@@ -948,7 +948,7 @@ a.ico:hover{color:var(--ink)}
     </div>
   </section>
 </main>
-<div class="appfoot"><span data-foot>Prototype. Raise data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.</span><button data-reset>Reset demo</button></div>
+<div class="appfoot"><span data-foot>Live on Solana devnet: real transactions, test SOL with no value, and a day counts as a minute. Demo raises are marked; a connected wallet signs its own transactions.</span><button data-reset>Reset demo</button></div>
 </div>
 
 <!-- ######################################################################
@@ -1151,7 +1151,7 @@ a.ico:hover{color:var(--ink)}
         </dl>
         <h3>On a swap</h3>
         <dl class="kv">
-          <div><dt>Trade $1,000 in the pool</dt><dd class="t">$10 fee: $7 to the founder, $3 to Seed</dd></div>
+          <div><dt>Trade $1,000 in the pool</dt><dd class="t">$10 fee: Meteora keeps $2, then $5.60 to the founder, $2.40 to Seed</dd></div>
         </dl>
         <table class="dtable">
           <thead><tr><th>Event</th><th class="r">What happens to the fee</th></tr></thead>
@@ -1159,15 +1159,15 @@ a.ico:hover{color:var(--ink)}
             <tr><td>Buy in</td><td class="num">1% held beside the raise</td></tr>
             <tr><td>Raise seeds</td><td class="num">Held fees go to Seed</td></tr>
             <tr><td>Raise refunds</td><td class="num">Held fees go back to backers</td></tr>
-            <tr><td>Swap in the pool</td><td class="num">1%: 70% founder, 30% Seed</td></tr>
+            <tr><td>Swap in the pool</td><td class="num">1%; Meteora keeps 20% of it, the rest 70% founder, 30% Seed</td></tr>
             <tr><td>Open, claim, refund</td><td class="num">No fee</td></tr>
           </tbody>
         </table>
         <h3>Founder's fee income by daily volume</h3>
         <dl class="kv">
-          <div><dt>$5,000 a day</dt><dd>$35 a day</dd></div>
-          <div><dt>$25,000 a day</dt><dd>$175 a day</dd></div>
-          <div><dt>$100,000 a day</dt><dd>$700 a day</dd></div>
+          <div><dt>$5,000 a day</dt><dd>$28 a day</dd></div>
+          <div><dt>$25,000 a day</dt><dd>$140 a day</dd></div>
+          <div><dt>$100,000 a day</dt><dd>$560 a day</dd></div>
         </dl>
       </div>
     </section>
@@ -1672,7 +1672,7 @@ function tile(p, i, trend, fresh = '') {
   return `<div class="tile ${p.status}${trend ? ' tr-card' : fresh}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
     <span class="tr-art">${artHTML(p, 'tr-img')}${trend ? `<span class="tr-rank">${i + 1}</span>` : ''}<span class="tr-pct" data-pct>${Math.floor(pc + 1e-7)}%</span><span class="bar"><i data-bar style="width:${pc}%"></i></span></span>
     <span class="tr-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${trend ? '' : `${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}`}</span>
-    <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></b>${doingChip(p)}</span>
+    <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></b>${doingChip(p)}${trend && !p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}</span>
     ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span>${rowAnn(p)}${rowLinks(p)}</span>
     <span class="tile-flags">${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
     <span class="t-act">${actCell(p)}</span>`}</div>`;
@@ -2406,6 +2406,7 @@ addEventListener('storage', e => {
 <script src="js/adapters/x.js"></script>
 <script src="js/adapters/program.js"></script>
 <script src="js/adapters/damm.js"></script>
+<script src="js/adapters/trades.js"></script>
 <script src="js/risk.js"></script>
 <script src="js/presale-page.js"></script>
 <script src="js/launch.js"></script>

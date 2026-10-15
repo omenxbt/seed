@@ -19,7 +19,7 @@ const slug = (ticker: string, raise: string) => `${ticker.toLowerCase()}-${raise
 
 /* the raise row an event belongs to, by the Raise account's address */
 async function raiseOf(address: string) {
-  const { data } = await db.from('raises').select('id, pair_mint, raised, backers, payout_wallet, fees_founder_claimed, fees_seed_claimed, team_claimed').eq('address', address).maybeSingle();
+  const { data } = await db.from('raises').select('id, pair_mint, pool, raised, backers, payout_wallet, fees_founder_claimed, fees_seed_claimed, team_claimed').eq('address', address).maybeSingle();
   return data;
 }
 const dec = (r: { pair_mint: string }) => PAIR_DEC[r.pair_mint] ?? 9;
@@ -52,7 +52,7 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
     case 'RaiseFilled': await up({ status: 'filled', seed_step: 'filled', filled_at: at }); break;
     case 'RaiseMinted': await up({ seed_step: 'minted', mint: e.mint }); break;
     case 'RaisePooled': await up({ seed_step: 'pooled', pool: e.pool, position: e.position }); await watchPool(e.pool as string); break;
-    case 'RaiseSeeded': await up({ status: 'seeded', seed_step: 'seeded', seeded_at: at, resolved_at: at }); break;
+    case 'RaiseSeeded': await up({ status: 'seeded', seed_step: 'seeded', seeded_at: at, resolved_at: at }); if (r.pool) await watchPool(r.pool); break;   // a second chance for the webhook list
     case 'RaiseRefunded': await up({ status: 'refunded', refund_reason: REFUND_REASON[Number(e.reason)] ?? 'missed', resolved_at: at }); break;
     case 'RefundClaimed': await db.from('contributions').update({ refunded_at: at }).eq('raise_id', r.id).eq('wallet', e.wallet as string); break;
     case 'TokensClaimed': await db.from('contributions').update({ claimed_at: at }).eq('raise_id', r.id).eq('wallet', e.wallet as string); break;
@@ -60,10 +60,10 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
       const founder = units(e.founder as bigint, d), seed = units(e.seed as bigint, d);
       const { data: dup } = await db.from('fee_claims').select('tx').eq('tx', tx).maybeSingle(); if (dup) break;
       await db.from('fee_claims').insert({ tx, raise_id: r.id, by: e.by, founder, seed, at });
-      // the pool's volume follows from the fee: 1% of volume, 70/30 split, so volume = (founder + seed) / 0.01
+      // what has been claimed so far; the volume itself comes from the indexed trades
       const { data: all } = await db.from('fee_claims').select('founder, seed').eq('raise_id', r.id);
       const f = (all ?? []).reduce((a, x) => a + Number(x.founder), 0), s = (all ?? []).reduce((a, x) => a + Number(x.seed), 0);
-      await up({ fees_founder_claimed: f, fees_seed_claimed: s, fees_volume: (f + s) * 100 }); break;
+      await up({ fees_founder_claimed: f, fees_seed_claimed: s }); break;
     }
     case 'VestedClaimed': await up({ team_claimed: Number(r.team_claimed) + units(e.tokens as bigint, TOKEN_DEC) }); break;
     case 'PayoutChangeRequested':
@@ -81,7 +81,7 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
    watched, a swap on it shows up here with the pool's vault balances before and after. The vaults belong to DAMM's pool
    authority; the one of the raise's mint moving one way and the pair's the other way is a swap. Seed's own transactions
    (the pool's opening, fee claims) are skipped by the program's presence in the account list. */
-const DAMM_AUTHORITY = 'HLnpSz9h2S4hiLQ43rnSD9XkcUThA7B8hQMKmDaiTLcC', SEED_PROGRAM = Deno.env.get('SEED_PROGRAM_ID') ?? '';
+const DAMM_AUTHORITY = 'HLnpSz9h2S4hiLQ43rnSD9XkcUThA7B8hQMKmDaiTLcC', SEED_PROGRAM = Deno.env.get('SEED_PROGRAM_ID') ?? '', POOL_FEE_BPS = Number(Deno.env.get('SEED_POOL_FEE_BPS') ?? 100);
 const HELIUS_KEY = Deno.env.get('HELIUS_API_KEY') ?? '', WEBHOOK_ID = Deno.env.get('HELIUS_WEBHOOK_ID') ?? '';
 type TokBal = { accountIndex: number; mint: string; owner?: string; uiTokenAmount: { amount: string; decimals: number } };
 async function indexSwap(t: { transaction?: { message?: { accountKeys?: unknown[] }; signatures?: string[] }; meta?: { preTokenBalances?: TokBal[]; postTokenBalances?: TokBal[]; loadedAddresses?: { writable?: string[]; readonly?: string[] } }; slot?: number; blockTime?: number }, tx: string) {
@@ -99,8 +99,9 @@ async function indexSwap(t: { transaction?: { message?: { accountKeys?: unknown[
     };
     const tok = delta(r.mint), pair = delta(r.pair_mint);
     if (!tok || !pair || tok.d === 0 || pair.d === 0 || Math.sign(tok.d) === Math.sign(pair.d)) continue;   // not a swap: nothing moved, or both vaults went the same way (liquidity)
-    const side = pair.d > 0 ? 'buy' : 'sell', pair_amount = Math.abs(pair.d), token_amount = Math.abs(tok.d);
-    const { error } = await db.from('trades').insert({ signature: tx, raise_id: r.id, pool: r.pool, side, pair_amount, token_amount, price: pair_amount / token_amount, trader: keys[0], slot: t.slot ?? 0, at: new Date((t.blockTime ?? Math.floor(Date.now() / 1000)) * 1000).toISOString() });
+    const side = pair.d > 0 ? 'buy' : 'sell', pair_amount = Math.abs(pair.d), token_amount = Math.abs(tok.d), fee = POOL_FEE_BPS / 10000;
+    const price = (side === 'buy' ? pair_amount * (1 - fee) : pair_amount / (1 - fee)) / token_amount;   // the pool's own price: a buy's delta carries the fee, a sell's comes after it
+    const { error } = await db.from('trades').insert({ signature: tx, raise_id: r.id, pool: r.pool, side, pair_amount, token_amount, price, trader: keys[0], slot: t.slot ?? 0, at: new Date((t.blockTime ?? Math.floor(Date.now() / 1000)) * 1000).toISOString() });
     if (error) { if (error.code !== '23505') console.error('trade', tx, error.message); continue; }   // 23505: seen before, so the volume was counted then
     await db.rpc('bump_volume', { p_raise_id: r.id, p_amount: pair_amount, p_signature: tx }).then(({ error: e2 }) => { if (e2) console.error('volume', e2.message); });
     n++;
