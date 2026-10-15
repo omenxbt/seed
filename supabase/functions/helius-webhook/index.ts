@@ -99,13 +99,13 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('POST only', { status: 405 });
   if (SECRET && req.headers.get('authorization') !== SECRET) return new Response('no', { status: 401 });
   let items: unknown[]; try { items = await req.json(); } catch { return new Response('not JSON', { status: 400 }); }
-  let n = 0;
-  for (const it of Array.isArray(items) ? items : [items]) {
+  let n = 0; const list = Array.isArray(items) ? items : [items];
+  for (const [i, it] of list.entries()) {
     const t = it as { transaction?: { signatures?: string[] }; meta?: { logMessages?: string[]; err?: unknown }; blockTime?: number; signature?: string };
     if (t.meta?.err) continue;   // a failed transaction emits nothing that counts
     const tx = t.transaction?.signatures?.[0] ?? t.signature ?? '', logs = t.meta?.logMessages ?? [];
     if (!tx) continue;
-    try { if (await indexSwap(db, t as Tx, tx)) n++; } catch (e) { console.error('swap', tx, (e as Error).message); }
+    try { if (await indexSwap(db, t as Tx, tx, undefined, i === list.length - 1)) n++; } catch (e) { console.error('swap', tx, (e as Error).message); }   // the delivery's last swap is the pool's latest: its price is the account's
     if (!logs.length) continue;
     for (const ev of await eventsInLogs(logs)) { try { await apply(ev.name, ev.data, tx, t.blockTime ?? Math.floor(Date.now() / 1000)); n++; } catch (e) { console.error(ev.name, tx, (e as Error).message); } }
   }

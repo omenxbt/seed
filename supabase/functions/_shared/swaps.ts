@@ -28,6 +28,20 @@ export async function readPoolFeeBps(rpcUrl: string, pool: string) {
   return Math.round(n / 1e5);
 }
 
+/* the pool account's live price with the slot it was read at: sqrt_price (a Q64.64 u128 at byte 456) squared is token B
+   per token A in base units; the mints at bytes 168 and 200 say which way round the raise's token is */
+const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+const b58 = (b: Uint8Array) => { let n = 0n; for (const x of b) n = n * 256n + BigInt(x); let s = ''; while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; } for (const x of b) { if (x !== 0) break; s = '1' + s; } return s; };
+export async function readPoolPrice(rpcUrl: string, pool: string, mint: string, tokDec: number, pairDec: number) {
+  const info = await rpcCall(rpcUrl, 'getAccountInfo', [pool, { encoding: 'base64', commitment: 'confirmed' }]) as { context?: { slot?: number }; value?: { data?: [string, string] } } | null;
+  const b64 = info?.value?.data?.[0]; if (!b64) return null;
+  const d = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)); if (d.length < 472) return null;
+  let sq = 0n; for (let i = 471; i >= 456; i--) sq = sq * 256n + BigInt(d[i]);
+  const raw = (Number(sq) / 2 ** 64) ** 2, tokA = b58(d.subarray(168, 200)) === mint;
+  if (!tokA && b58(d.subarray(200, 232)) !== mint) return null;
+  return { price: (tokA ? raw : 1 / raw) * 10 ** (tokDec - pairDec), slot: info?.context?.slot ?? 0 };
+}
+
 const feeCache: Record<string, number> = {};
 /* the raise's pool fee: the row's, else read from the chain and kept on the row; the env's setting only when the chain is out of reach */
 async function poolFeeBps(db: SupabaseClient, r: PoolRaise) {
@@ -40,8 +54,9 @@ async function poolFeeBps(db: SupabaseClient, r: PoolRaise) {
   return POOL_FEE_BPS;
 }
 
-/* the raise rows whose pool is in the transaction, then each one's swap if there is one; returns how many were new */
-export async function indexSwap(db: SupabaseClient, t: Tx, tx: string, only?: PoolRaise[]) {
+/* the raise rows whose pool is in the transaction, then each one's swap if there is one; returns how many were new.
+   `exact`: the swap is the pool's latest (just delivered), so the pool account's price is its price */
+export async function indexSwap(db: SupabaseClient, t: Tx, tx: string, only?: PoolRaise[], exact = false) {
   const m = t.meta; if (!m?.preTokenBalances || !m.postTokenBalances) return 0;
   const keys = (t.transaction?.message?.accountKeys ?? []).map((k) => typeof k === 'string' ? k : (k as { pubkey: string }).pubkey).concat(m.loadedAddresses?.writable ?? [], m.loadedAddresses?.readonly ?? []);
   if (!keys.length || (SEED_PROGRAM && keys.includes(SEED_PROGRAM))) return 0;
@@ -54,7 +69,7 @@ export async function indexSwap(db: SupabaseClient, t: Tx, tx: string, only?: Po
       const pre = m.preTokenBalances!.find((b) => b.owner === DAMM_AUTHORITY && b.mint === mint), post = m.postTokenBalances!.find((b) => b.owner === DAMM_AUTHORITY && b.mint === mint);
       if (!pre && !post) return null;
       const dec = (post ?? pre)!.uiTokenAmount.decimals, after = Number(post?.uiTokenAmount.amount ?? 0) / 10 ** dec;
-      return { d: after - Number(pre?.uiTokenAmount.amount ?? 0) / 10 ** dec, after };
+      return { d: after - Number(pre?.uiTokenAmount.amount ?? 0) / 10 ** dec, after, dec };
     };
     const tok = delta(r.mint), pair = delta(r.pair_mint);
     if (!tok || !pair || tok.d === 0 || pair.d === 0 || Math.sign(tok.d) === Math.sign(pair.d)) continue;   // not a swap: nothing moved, or both vaults went the same way (liquidity)
@@ -62,7 +77,11 @@ export async function indexSwap(db: SupabaseClient, t: Tx, tx: string, only?: Po
     /* the price is where the pool stands after the swap (its vaults' ratio: the whole range is one locked position, so
        the reserves sit at the price, give or take the fees waiting to be claimed), not the swap's own average fill, which
        on a thin pool is nowhere near where the price ends up. The fill price, net of the pool fee, only if a vault is unreadable */
-    const price = tok.after > 0 && pair.after > 0 ? pair.after / tok.after : (side === 'buy' ? pair_amount * (1 - fee) : pair_amount / (1 - fee)) / token_amount;
+    let price = tok.after > 0 && pair.after > 0 ? pair.after / tok.after : (side === 'buy' ? pair_amount * (1 - fee) : pair_amount / (1 - fee)) / token_amount;
+    /* the pool's own sqrt_price is exact (no fee drift): used for a swap the node has caught up with and that is the
+       pool's latest, i.e. the price the account holds is this swap's, and only while it agrees with the vault ratio to
+       within the drift (a swap that landed since would move it further). Older ones keep their own transaction's ratio */
+    if (RPC_URL && exact) { try { const live = await readPoolPrice(RPC_URL, r.pool, r.mint, tok.dec, pair.dec); if (live && live.slot >= (t.slot ?? 0) && Math.abs(live.price / price - 1) < 0.02) price = live.price; } catch (e) { console.error('pool price', r.pool, (e as Error).message); } }
     const { error } = await db.from('trades').insert({ signature: tx, raise_id: r.id, pool: r.pool, side, pair_amount, token_amount, price, trader: keys[0], slot: t.slot ?? 0, at: new Date((t.blockTime ?? Math.floor(Date.now() / 1000)) * 1000).toISOString() });
     if (error) { if (error.code !== '23505') console.error('trade', tx, error.message); continue; }   // 23505: seen before, so the volume was counted then
     await db.rpc('bump_volume', { p_raise_id: r.id, p_amount: pair_amount, p_signature: tx }).then(({ error: e2 }) => { if (e2) console.error('volume', e2.message); });
@@ -95,7 +114,7 @@ export async function backfillPool(db: SupabaseClient, rpcUrl: string, r: PoolRa
     if (known.has(s.signature)) continue;
     const t = await rpcCall(rpcUrl, 'getTransaction', [s.signature, { encoding: 'json', commitment: 'confirmed', maxSupportedTransactionVersion: 0 }]) as Tx | null;
     if (!t || t.meta?.err) continue;
-    n += await indexSwap(db, t, s.signature, [r]);
+    n += await indexSwap(db, t, s.signature, [r], s === sigs[0]);   // the pool's newest transaction may take the account's exact price
   }
   return n;
 }
