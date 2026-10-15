@@ -118,8 +118,10 @@ function applyOrigin(r, o) {
    Mint and freeze authority from the mint account; the LP lock from the position (all of its liquidity permanently
    locked, its NFT in the raise PDA's account); metadata immutability from the Token Metadata account; holder
    concentration from the token accounts, the pool's and Seed's vaults left out. */
+const chainChecksOf = {};   // by raise id: the raise objects are replaced whenever another tab saves, a cache by id survives that
 async function chainChecks(p) {
   if (!(p.live && p.status === 'seeded' && p.mint)) return null;
+  if (chainChecksOf[p.id] && !chainChecksOf[p.id].some(c => c.level === 'pending')) return chainChecksOf[p.id];
   await chain.init(); const out = [], add = (id, label, level, reason) => out.push({ id, label, level, reason, from: 'chain' });
   const conn = chain.conn, mint = chain.pk(p.mint);
   try {
@@ -147,6 +149,7 @@ async function chainChecks(p) {
     const h = await chainHolders(p, p.mint), wallets = h.rows.filter(r => !r.label), circ = wallets.reduce((a, r) => a + r.amount, 0) || 1, top = wallets.slice(0, 10).reduce((a, r) => a + r.amount, 0) / circ * 100;
     add('top10h', 'Top 10 holders', wallets.length < 2 ? 'info' : top > RISK.top10FailPct ? 'fail' : top > RISK.top10WarnPct ? 'warn' : 'pass', wallets.length < 2 ? `${plural(wallets.length, 'wallet holds', 'wallets hold')} the token so far.` : `The 10 largest wallets hold ${pctTxt(top)} of the tokens outside the pool and Seed's vaults.`);
   } catch (e) { add('top10h', 'Top 10 holders', 'pending', 'Could not be read right now.'); }
+  if (!out.some(c => c.level === 'pending')) chainChecksOf[p.id] = out;   // a read that failed is tried again next time
   return out;
 }
 /* Token Metadata's account: key, update authority, mint, three length-prefixed strings, a fee, optional creators, two flags */

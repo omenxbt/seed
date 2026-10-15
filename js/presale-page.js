@@ -982,7 +982,7 @@ async function loadAsync(p) {
   const again = () => { if (ui.sel !== id || !detailBox) return; const ch = $('.pp-pills .risk-chip', detailBox); if (ch) ch.outerHTML = riskChip(riskSummary(riskChecks(p))); if (pg.tab === 'backers' || pg.tab === 'info') renderTab(p); };
   if (await founderAdapter.refresh(p)) again();
   if (await backersAdapter.enrich(p)) again();
-  if (p.live && p.status === 'seeded' && !p.chainChecks) { try { const cc = await chainChecks(p); if (cc && pg.id === id) { p.chainChecks = cc; again(); } } catch (e) { console.warn('chain checks:', e.message); } }
+  if (p.live && p.status === 'seeded' && !(chainChecksOf[id] && !chainChecksOf[id].some(c => c.level === 'pending'))) { try { const cc = await chainChecks(p); if (cc && pg.id === id) { chainChecksOf[id] = cc; again(); } } catch (e) { console.warn('chain checks:', e.message); } }
 }
 /* live numbers in place, so the tab, the chat box and the buy input keep their state */
 function patchDetail(p) {

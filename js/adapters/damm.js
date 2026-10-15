@@ -55,7 +55,12 @@ const damm = {
     const inMint = side === 'buy' ? chain.pk(SEED.pairMints[p.q]) : chain.pk(p.mint);
     if (!(amount > 0)) return { out: 0, minOut: 0, fee: 0, impact: 0, price: (await this.reserves(p)).price };
     const inAmount = new chain.lib.BN(Math.round(amount * Math.pow(10, inDec)).toString());
-    const q = await this.amm.getQuote({ inAmount, inputTokenMint: inMint, slippage: Math.round(slippage * 100) /* the SDK takes basis points */, poolState: s, currentTime: Math.floor(Date.now() / 1000), currentSlot: await chain.conn.getSlot(), tokenADecimal: s.tokenAMint.toBase58() === p.mint ? d.tok : d.pair, tokenBDecimal: s.tokenAMint.toBase58() === p.mint ? d.pair : d.tok });
+    const slot = await chain.conn.getSlot();
+    const ask = s => this.amm.getQuote({ inAmount, inputTokenMint: inMint, slippage: Math.round(slippage * 100) /* the SDK takes basis points */, poolState: s, currentTime: Math.floor(Date.now() / 1000), currentSlot: slot, tokenADecimal: s.tokenAMint.toBase58() === p.mint ? d.tok : d.pair, tokenBDecimal: s.tokenAMint.toBase58() === p.mint ? d.pair : d.tok });
+    /* a lagging RPC node can still serve the pool from before its liquidity landed: the SDK then quotes nothing out. One
+       fresh read before giving up, and a plain message instead of the SDK's */
+    let q; try { q = await ask(s.liquidity.isZero() ? await this.state(p, true) : s); }
+    catch (e) { if (!/greater than 0/.test(e.message)) throw e; try { q = await ask(await this.state(p, true)); } catch (e2) { throw new Error(/greater than 0/.test(e2.message) ? 'the pool is still settling, try again in a moment' : e2.message); } }
     const out = Number(q.swapOutAmount.toString()) / Math.pow(10, outDec), minOut = Number(q.minSwapOutAmount.toString()) / Math.pow(10, outDec), fee = Number(q.totalFee.toString()) / Math.pow(10, d.pair);   // the pool collects its fee in the pair asset only (OnlyB)
     const impact = typeof q.priceImpact === 'number' ? q.priceImpact : Number(q.priceImpact.toString());
     return { out, minOut, fee, impact: impact / 100, price: side === 'buy' ? amount / out : out / amount, inAmount, minOutRaw: q.minSwapOutAmount };

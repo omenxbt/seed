@@ -48,7 +48,8 @@ function riskChecks(p, opts = {}) {
 
   // the token on chain, once it is there: read by chainChecks() and kept on the raise
   if (p.live && p.status === 'seeded') {
-    if (p.chainChecks) p.chainChecks.forEach(c => add(c.id, c.label, c.level, c.reason, 'chain'));
+    const cc = p.chainChecks || (typeof chainChecksOf !== 'undefined' && chainChecksOf[p.id]);
+    if (cc) cc.forEach(c => add(c.id, c.label, c.level, c.reason, 'chain'));
     else ['Mint authority', 'Freeze authority', 'Liquidity lock', 'Token metadata', 'Top 10 holders'].forEach((l, i) => add(['mint-auth', 'freeze-auth', 'lp-lock', 'metadata', 'top10h'][i], l, 'pending', 'Reading the chain…'));
   }
 

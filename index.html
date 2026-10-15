@@ -2468,7 +2468,7 @@ function boot() {
   $('#bq').addEventListener('input', e => { ui.bq = e.target.value; renderTerminal(); });
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();
-  initDocs(); renderPreview(); tick(true); renderAll(); route();
+  initDocs(); renderPreview(); tick(true); renderAll(); route(); booted = true;
   resume().then(() => xAdapter.finish()).then(() => chain.init()).then(ok => ok && chain.loadLive()).then(got => { if (got) { save(); renderAll(); if (detailBox) renderDetail(true); } });   // back from an X sign-in, the link is made once the wallet is back; then the live raises
   setInterval(() => tick(), 1000); setInterval(simulate, 3600);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeSegs);
@@ -2476,9 +2476,11 @@ function boot() {
 
 /* raise pages open in their own tab, so several copies of the app can be running. Each holds the state in memory and saves all of it,
    which would let a stale tab overwrite a buy made in another. So a tab takes on whatever another tab saves. If you are mid-amount,
-   the page is patched rather than rebuilt so the field keeps its focus and what you typed. */
+   the page is patched rather than rebuilt so the field keeps its focus and what you typed. Another tab saves every second, so
+   this can fire while the adapters' scripts are still loading: nothing to take on before boot has run. */
+let booted = false;
 addEventListener('storage', e => {
-  if (e.key !== KEY || busy) return;
+  if (e.key !== KEY || busy || !booted) return;
   const typing = document.activeElement && (document.activeElement.id === 'ppAmt' || !!document.activeElement.closest('.chat'));
   load();
   if (!typing) return renderAll();
