@@ -12,6 +12,7 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 7. **Top traders and PnL** on seeded raises (from `trades`).
 
 ## P2
+- **QA P2-26 (seed-qa, program change):** snapshot `pool_fee_bps` on the Raise at `open_raise` (as `creator_share_bps` is) so a raise live across a config change seeds at the fee its backers saw. Next program upgrade, with P2-4.
 - **Axiom/GMGN patterns from QA (P2-15..19):** Your position with Bought / Sold / Holding / PnL for traders; editable quick-amount presets saved per wallet; a 5m/1h/6h/24h strip (change, buys/sells, net volume) above the panel; Price/MCap/Liquidity/24h volume in a row by the name and CA; a USD/SOL toggle and 1s/30s intervals.
 - **QA P2-4 (seed-qa):** dust after crank_pool — ~0.5 token left in the pool staging vault and ~0.001 wSOL in the raise's stage after the DAMM deposit rounds. Burn or sweep both in crank_seed (program change; next upgrade).
 - Optional min buy / max per wallet / whitelist in the program (the site's profile carries them; the program does not enforce them yet).
@@ -19,6 +20,7 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 - Docs page pass for the new features.
 
 ## Done
+- QA push 9 (seed-qa): P1-F3 the page shows each pool's own fee, read from its state (cliff fee numerator), not the site's setting.
 - QA pushes 6–7 (seed-qa): P1-F1 the trades watch waits for the Supabase client (the channel was never opened on a fresh load); P1-F2 seeded cards show the pool's price and change from the reserves; P2-23 the refund note only for a wallet owed one; P2-24 compact lane rows.
 - Terminal lanes (B1): five stage columns at desktop width (tabbed board below 1100px), a starred watchlist with a toggle, search by name, ticker, CA, raise account or X handle, price on every card. Why: DECISIONS.md.
 - QA regression #1 (seed-qa): P1-F1 the price, market cap and position's worth re-read from the pool's reserves after each trade; P2-20 chart time in local time; P2-21 MCap axis labels with significant digits; P2-22 room for the top label.

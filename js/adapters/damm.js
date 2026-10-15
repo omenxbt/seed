@@ -28,6 +28,8 @@ const damm = {
     const s = await this.amm.fetchPoolState(chain.pk(k)); this.states[k] = { s, at: Date.now() }; return s;
   },
   decimals(p) { return { tok: 6, pair: p.q === 'SOL' ? 9 : 6 }; },
+  /* the pool's flat fee in basis points: the cliff fee numerator (a u64 over 1e9) at the head of the base fee bytes */
+  feeBps(s) { try { const d = s.poolFees.baseFee.baseFeeInfo.data; let n = 0; for (let i = 7; i >= 0; i--) n = n * 256 + Number(d[i]); return Math.round(n / 1e5); } catch (e) { return SEED.poolFeeBps; } },
   /* the pool's reserves and spot price, in the page's units: tokens per pair asset */
   async reserves(p) {
     const s = await this.state(p), d = this.decimals(p), tokA = s.tokenAMint.toBase58() === p.mint;
@@ -35,7 +37,8 @@ const damm = {
     const tok = Number((tokA ? va : vb).value.amount) / Math.pow(10, d.tok), pair = Number((tokA ? vb : va).value.amount) / Math.pow(10, d.pair);
     /* sqrt_price is Q64.64 of token B per token A in base units */
     const sq = Number(s.sqrtPrice.toString()) / Math.pow(2, 64), raw = sq * sq, price = tokA ? raw * Math.pow(10, d.tok - d.pair) : (1 / raw) * Math.pow(10, d.tok - d.pair);
-    return { tok, pair, price, feeBps: SEED.poolFeeBps };   // the pool opened with Seed's flat fee and no dynamic fee
+    p.poolFeeBps = this.feeBps(s);   // the fee this pool was opened with: a pool seeded before a config change keeps its own
+    return { tok, pair, price, feeBps: p.poolFeeBps };
   },
   /* the locked position's fees, in the pair asset: what waits to be claimed and what has been claimed so far (the pool
      collects fees in the pair asset only). The program's claim splits a claim 70/30 between the payout wallet and Seed. */

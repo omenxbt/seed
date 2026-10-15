@@ -168,7 +168,7 @@ const raiseIn = (p, quote) => quote === 'USD' ? usdOf(p, priceOf(p)) : priceOf(p
 /* Creator fees: the pool's fee so far and how it has split. Anyone can push a claim; it pays the payout wallet and Seed. */
 function ppFees(p) {
   const f = feesOf(p), C = Q(p), sym = esc(C.sym), q = n => `${n > 0 && n < 100 ? fmtExact(n, p.q) : fmtC(n, p.q, true)} ${sym}`, pc = payoutChange(p), share = (p.creatorShareBps || SEED.creatorShareBps) / 100;
-  return `<section class="panel pp-card pp-fees" data-fees><div class="pp-card-h"><h2>Creator fees</h2><span class="col-note">${share}% of the position's fees to the founder, ${100 - share}% to Seed, fixed at seeding. The pool charges ${SEED.poolFeeBps / 100}%; Meteora keeps ${SEED.dammProtocolPct}% of that, so ${(SEED.poolFeeBps / 100 * (1 - SEED.dammProtocolPct / 100)).toFixed(2).replace(/\.?0+$/, '')}% of volume reaches the position.</span></div>
+  return `<section class="panel pp-card pp-fees" data-fees><div class="pp-card-h"><h2>Creator fees</h2><span class="col-note">${share}% of the position's fees to the founder, ${100 - share}% to Seed, fixed at seeding. The pool charges ${poolFeePct(p)}%; Meteora keeps ${SEED.dammProtocolPct}% of that, so ${poolFeePct(p, true)}% of volume reaches the position.</span></div>
     <dl class="fee-grid"><div><dt>Volume traded</dt><dd class="num">${q(f.volume)}</dd></div><div><dt>Fees earned</dt><dd class="num">${q(f.earned)}</dd></div>
       <div><dt>Founder's ${share}%</dt><dd class="num">${q(f.founder)}</dd><span>${f.founderClaimed ? `${q(f.founderClaimed)} claimed` : 'nothing claimed yet'}</span></div>
       <div><dt>Claimable now</dt><dd class="num">${f.reading ? '…' : q(f.founderUnclaimed)}</dd><span>${f.reading ? 'reading the position' : 'to the payout wallet'}</span></div></dl>
@@ -265,6 +265,7 @@ async function refreshSpot(p) {
     if (typeof damm === 'undefined' || !p.pool) return; damm.states[p.pool] = null;
     const rs = await damm.reserves(p); if (pg.id !== p.id) return;
     p.spot = rs.price; if (pg.pool && pg.pool.value) { pg.pool.value.price = rs.price; pg.pool.value.liquidity = rs.pair * 2; pg.pool.value.mcap = pg.pool.value.fdv = rs.price * SUPPLY; }
+    const tf = detailBox && $('[data-tfee]', detailBox); if (tf) tf.textContent = `${poolFeePct(p)}%`;
     const ps = detailBox && $('[data-pstats]', detailBox); if (ps) ps.innerHTML = ppStats(p);
     const pw = detailBox && $('[data-poswrap]', detailBox); if (pw) { pw.innerHTML = positionPanel(p); const dc = $('[data-dclaim]', pw); if (dc) dc.onclick = () => claim(p, dc); }
     refreshPoolCard(p);
@@ -317,6 +318,8 @@ async function loadLiveTrading(p, box) {
     (pg.pendingTrades || []).forEach(t => { if (!(pg.trades || []).some(x => x.signature === t.signature)) foldTrade(ser, pg.tf, t); }); pg.pendingTrades = null;   // what landed while the series loaded
     pg.series = ser; const lw = lwMount(box, p); lwData(lw, ser, p);
     pg.statsAt = 0; await refreshPoolCard(p);
+    const tf = detailBox && $('[data-tfee]', detailBox); if (tf) tf.textContent = `${poolFeePct(p)}%`;   // the pool's own fee, now that it has been read
+    const cap = detailBox && $('[data-trade="live"] .rail-cap', detailBox); if (cap) cap.textContent = `A swap on the raise's Meteora DAMM v2 pool, signed in your wallet. The pool's ${poolFeePct(p)}% fee, less Meteora's ${SEED.dammProtocolPct}%, pays the founder and Seed 70/30.`;
     const ps = detailBox && $('[data-pstats]', detailBox); if (ps) ps.innerHTML = ppStats(p);
     if (pg.syncTrade) pg.syncTrade();
     loadLiveFees(p);
@@ -384,10 +387,10 @@ function liveTradePanel(p, side) {
     <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Amount to pay"><span class="suf" data-paysym>${side === 'sell' ? '$' + esc(p.ticker) : sym}</span></div>
     <div class="chips" data-tchips></div>
     <div class="recv"><span>You receive</span><b class="num" data-recv>—</b></div>
-    <dl class="kv"><div><dt>Price</dt><dd data-tprice>—</dd></div><div><dt>Price impact</dt><dd data-timpact>—</dd></div><div><dt>Minimum received</dt><dd data-tmin>—</dd></div><div><dt>Pool fee</dt><dd data-tfee>${SEED.poolFeeBps / 100}%</dd></div></dl>
+    <dl class="kv"><div><dt>Price</dt><dd data-tprice>—</dd></div><div><dt>Price impact</dt><dd data-timpact>—</dd></div><div><dt>Minimum received</dt><dd data-tmin>—</dd></div><div><dt>Pool fee</dt><dd data-tfee>${poolFeePct(p)}%</dd></div></dl>
     <p class="rail-err" data-buyerr role="alert"></p>
     <button type="button" class="btn btn-navy btn-block" data-go>${side === 'sell' ? 'Sell' : 'Buy'} $${esc(p.ticker)}</button>
-    <p class="rail-cap">A swap on the raise's Meteora DAMM v2 pool, signed in your wallet. The pool's ${SEED.poolFeeBps / 100}% fee, less Meteora's ${SEED.dammProtocolPct}%, pays the founder and Seed 70/30.</p>${tradeOn(p)}</section>`;
+    <p class="rail-cap">A swap on the raise's Meteora DAMM v2 pool, signed in your wallet. The pool's ${poolFeePct(p)}% fee, less Meteora's ${SEED.dammProtocolPct}%, pays the founder and Seed 70/30.</p>${tradeOn(p)}</section>`;
 }
 /* where else the token trades, with the mint filled in. Mainnet only: none of these index devnet. Each URL form was checked
    against the live site (Axiom /t/<mint> forwards to the pool page; Birdeye's canonical path is /solana/token/<mint>). */
@@ -396,6 +399,9 @@ function tradeOn(p) {
   if (SEED.network !== 'mainnet' || !p.mint) return '';
   return `<div class="trade-on"><span class="quiet">Trade on</span>${TRADE_ON.map(([n, f]) => `<a href="${esc(f(p.mint))}" target="_blank" rel="noopener">${n} ${ICONS.out}</a>`).join('')}</div>`;
 }
+/* the fee of this raise's pool, in percent: the pool's own once it has been read, the site's setting before that; `net` is what
+   reaches the position after Meteora's share */
+const poolFeePct = (p, net) => { const bps = p.poolFeeBps || SEED.poolFeeBps, pct = bps / 100 * (net ? 1 - SEED.dammProtocolPct / 100 : 1); return String(Number(pct.toFixed(3))); };
 /* an amount of the pair asset with the small ones kept: 0.0227 SOL, not 0.02 */
 const fmtExact = (n, q) => n >= 100 ? fmtAmt(n, q) : String(Number(n.toFixed(n >= 1 ? 4 : 6)));
 /* a toast that may carry a link, for a confirmed transaction */
