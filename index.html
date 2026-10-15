@@ -1917,7 +1917,8 @@ function syncMove() {
   $('#mvErr').textContent = msg;
   go.textContent = !state.wallet ? 'Connect wallet' : `${wd ? 'Withdraw' : 'Deposit'}${n > 0 && !msg ? ' ' + fmtAmt(n, m.asset) : ''} ${sym}`;
   go.disabled = !!state.wallet && (!!msg || !(n > 0) || (wd && !B58.test(to)));
-  $('#mvCap').textContent = isReal() ? 'Moving funds is not live for a real wallet yet. To add funds, send them to your wallet address from an exchange or another wallet.' : 'Simulated on the demo wallet. No transaction is sent.';
+  $('#move').classList.toggle('real', isReal());   // a real wallet holds its own SOL: nothing to move here, only where to send funds
+  $('#mvCap').textContent = isReal() ? 'Your SOL stays in your own wallet. To add funds, send them to the address above from an exchange or another wallet; the balance here follows.' : 'Simulated on the demo wallet. No transaction is sent.';
   const log = isReal() ? [] : (state.transfers || []).slice(0, 4);
   $('#mvLog').innerHTML = log.length ? `<h4>Recent</h4>${log.map(x => `<div><span>${x.side === 'withdraw' ? 'Withdrew' : 'Deposited'}${x.to ? ' to <span class="num">' + esc(shortMint(x.to)) + '</span>' : ''}</span><span class="num ${x.side === 'withdraw' ? '' : 'pos'}">${x.side === 'withdraw' ? '-' : '+'}${fmtAmt(x.amt, x.q)} ${esc(asset(x.q).sym)}</span><span class="mv-t">${fmtAgo(Date.now() - x.at)}</span></div>`).join('')}` : '';
 }

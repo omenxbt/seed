@@ -786,3 +786,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .hrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px 14px;align-items:center;padding:10px 0;border-top:1px solid var(--hair);font-size:13.5px}.hrow:first-of-type{border-top:0}.hrow .pos{color:var(--ok-ink)}.hrow .neg{color:var(--bad-ink)}.hrow svg{width:12px;height:12px}.card-h .quiet{font-weight:400;font-size:12.5px;margin-left:8px}
 #phist{display:flex;flex-direction:column;gap:14px;margin-top:14px}
 @media (max-width:520px){.founder-raises th:nth-child(4),.founder-raises td:nth-child(4),.founder-raises th:nth-child(5),.founder-raises td:nth-child(5){display:none}.founder-raises{min-width:0;width:100%}.founder-raises td,.founder-raises th{padding-left:6px;padding-right:6px;font-size:13px}.founder-raises td.num{white-space:nowrap}.fr-target{display:none}.fr-name{display:block;font-size:12px}.founder-raises .btag{white-space:normal}.fr-open{display:none}.founder-raises td,.founder-raises th{padding-left:4px;padding-right:4px}}   /* a phone: the raise, its outcome, the figure and the link */
+
+/* a real wallet's rail: the deposit and withdraw form is the demo wallet's; only the note on adding funds stays */
+.move.real > :not(#mvCap) { display: none; }
+.move.real #mvCap { margin-top: 0; }
