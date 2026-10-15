@@ -278,7 +278,7 @@ function renderPreview() {
     ['Pool depth', ok ? `<span class="num">${f(d.target)} ${sym}</span> each side at opening (${f(d.target * 2)} ${sym}, ${fmtUsd(usdOf(dp, d.target * 2))} in all). ${impactRow(dp, sym)}` : 'Set a target'],
     ['Your fee income', `<span class="num">${fees(5000)}</span>, <span class="num">${fees(25000)}</span> or <span class="num">${fees(100000)}</span> a day at $5K, $25K or $100K of daily volume`],
     ['Closes', typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode ? `in ${String(Number((d.hours / 24).toFixed(1)))} min on devnet (test mode: a day is a minute), or the moment it fills` : `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
-    ['If it misses', `Every buy and its fee go back to backers after ${label}. Nothing is minted`]
+    ['If it misses', `Short of the target when the ${label} are up: every buy and its fee go back to backers, claimable at once. Nothing is minted`]
   ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
   const checks = riskChecks(dp, { draft: true }), s = riskSummary(checks);
   $('#pvInfo').innerHTML = `<div class="rail-h"><h3>Info</h3>${riskChip(s)}</div><p class="rail-meta">What backers will see on your page. Checks marked with a clock run once the raise is live; your choices are shown as facts.</p>${infoList(checks)}`;
