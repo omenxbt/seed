@@ -160,7 +160,9 @@ var chain = {
     /* a founder's earlier raises, for the Founder card and the Info row: the chain raises by the same wallet opened before this one */
     const outcomeOf = x => x.blacklisted ? 'flagged' : x.status === 'seeded' ? 'seeded' : x.status === 'refunded' ? 'refunded' : x.status === 'filled' ? 'seeding' : 'live';
     list.forEach(p => { p.pastRaises = list.filter(x => x.founderWallet === p.founderWallet && x.id !== p.id && x.openedAt < p.openedAt).sort((a, b) => b.openedAt - a.openedAt).map(x => ({ name: x.name, ticker: x.ticker, outcome: outcomeOf(x), at: x.openedAt })); });
-    const ids = new Set(list.map(p => p.id));
+    const ids = new Set(list.map(p => p.id)), was = {}; state.presales.forEach(p => { was[p.id] = p; });
+    /* the pool price a raise already carried stays on the fresh object: a reload would otherwise draw the raise price until the reserves are read again */
+    list.forEach(p => { const o = was[p.id]; if (o && o.spot && p.status === 'seeded') { p.spot = o.spot; p.spotFrom = o.spotFrom; p.spotAt = o.spotAt; p.holderCount = o.holderCount != null ? o.holderCount : p.holderCount; } });
     state.presales = list.concat(state.presales.filter(p => !ids.has(p.id) && !p.live));
     this.fillArt(list);
     return true;
