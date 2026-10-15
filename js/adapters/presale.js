@@ -46,6 +46,7 @@ const presaleAdapter = {
       const [unit, agg] = TIMEFRAMES[tf], j = await geckoGet(`${pool.address}/ohlcv/${unit}?aggregate=${agg}&limit=120&currency=usd`);
       return withSrc(j.data.attributes.ohlcv_list.map(c => [c[0] * 1000, +c[1], +c[2], +c[3], +c[4], +c[5]]).reverse(), 'standin');
     }
+    if (p.live) return withSrc(flatSeries(p, tf), 'chain');   // a pool on chain: until its trades are indexed, the chart holds the raise price
     const ser = demoSeries(p, tf, 120), c = ser[ser.length - 1], px = spotOf(p);   // the newest candle closes where the in-app pool is
     c[4] = px; c[2] = Math.max(c[2], px); c[3] = Math.min(c[3], px);
     return withSrc(ser, 'demo');
@@ -64,6 +65,12 @@ function demoSeries(p, tf, n) {
     out.push([t, o, hi, lo, c, p.target * (0.002 + r() * 0.02)]); o = c;
   }
   return out;
+}
+/* a live pool with no indexed trades: flat candles at the raise price from seeding to now, no volume */
+function flatSeries(p, tf) {
+  const step = { '1m': 60e3, '5m': 300e3, '1h': H, '1D': D }[tf], px = priceOf(p), t0 = p.seededAt || p.resolvedAt || Date.now(), out = [];
+  for (let t = Math.max(t0, Date.now() - step * 120); t <= Date.now(); t += step) out.push([t, px, px, px, px, 0]);
+  return out.length ? out : [[t0, px, px, px, px, 0]];
 }
 /* share of a refunded raise still waiting to be claimed */
 const refundLeftShare = p => { const b = p.buys || []; const tot = b.reduce((a, x) => a + x.amount, 0) || 1; return b.filter(x => !x.refundClaimed).reduce((a, x) => a + x.amount, 0) / tot; };

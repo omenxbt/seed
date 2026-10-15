@@ -12,7 +12,7 @@ const backersAdapter = {
     const by = new Map(), raised = p.raised || 1;
     for (const b of p.buys || []) {
       let r = by.get(b.wallet);
-      if (!r) by.set(b.wallet, r = { wallet: b.wallet, amount: 0, first: b.at, last: b.at, fundedBy: b.fundedBy, isFresh: !!b.isFresh, firstTxAt: b.firstTxAt, tags: b.tags || [], you: isMe(b.wallet), refundClaimed: b.refundClaimed, from: isRealAddr(b.wallet) ? 'chain' : 'demo' });
+      if (!r) by.set(b.wallet, r = { wallet: b.wallet, amount: 0, first: b.at, last: b.at, fundedBy: b.fundedBy, isFresh: !!b.isFresh, firstTxAt: b.firstTxAt, tags: b.tags || [], you: isMe(b.wallet), refundClaimed: b.refundClaimed, tokensClaimed: b.tokensClaimed, from: isRealAddr(b.wallet) ? 'chain' : 'demo' });
       r.amount = r6(r.amount + b.amount); r.first = Math.min(r.first, b.at); r.last = Math.max(r.last, b.at);
     }
     const rows = [...by.values()].sort((a, b) => b.amount - a.amount);
@@ -41,13 +41,10 @@ const backersAdapter = {
     return learned;
   },
 
-  /* holders after seeding: live when the mint is real, otherwise derived from the demo crowd */
+  /* holders after seeding: every token account of the mint when the raise is on chain, otherwise derived from the demo crowd */
   async holders(p) {
-    const pr = profileOf(p), supply = SUPPLY;
-    if (isRealAddr(pr.mint)) {
-      const res = await rpcPaced('getTokenLargestAccounts', [pr.mint]);
-      return withSrc(res.value.map(a => ({ wallet: a.address, amount: Number(a.uiAmountString), pct: Number(a.uiAmountString) / supply * 100, label: '' })), 'chain');
-    }
+    const pr = profileOf(p), supply = SUPPLY, mint = mintOf(p);
+    if (p.live && isRealAddr(mint)) { const h = await chainHolders(p, mint); return withSrc(h.rows, 'chain', { count: h.count }); }
     const r = rng('holders/' + p.id), split = splitOf(p.teamBps), backerTok = split.backers, rows = this.rows(p);
     const list = [{ wallet: fakeAddr('pool/' + p.id), amount: split.pool * (0.9 + r() * 0.2), label: 'Meteora DAMM v2 pool, LP locked' }];
     if (split.team) { const u = unlockState(p); list.push({ wallet: fakeAddr(`vest/${p.id}`), amount: split.team - u.unlocked, label: `Team tokens, unlocking on schedule` }); if (u.unlocked) list.push({ wallet: p.payoutWallet, amount: u.unlocked, label: 'Payout wallet, unlocked team tokens' }); }
@@ -56,6 +53,55 @@ const backersAdapter = {
     return withSrc(list.slice(0, 30).map(h => Object.assign(h, { pct: h.amount / supply * 100 })), 'demo', { count: Math.round(rows.length * 1.35) });
   }
 };
+/* the token's mint: the chain's for a raise that seeded on chain, the demo's placeholder otherwise */
+const mintOf = p => (p.live && p.mint) || profileOf(p).mint || '';
+/* every holder of a live token, largest first. Helius DAS lists every token account of the mint in pages; a plain RPC
+   (localhost) falls back to the twenty largest. The accounts Seed itself opened are named: the locked pool, the backers' vault
+   that claims come out of, the team's vesting vault, Seed's treasury and the founder's payout wallet. */
+async function chainHolders(p, mint) {
+  const labels = await knownHolders(p, mint), rows = [];
+  let count = null;
+  try {
+    for (let page = 1; page <= 10; page++) {   // ten pages of a thousand: more holders than a devnet token will see
+      const r = await dasTokenAccounts(mint, page);
+      if (page === 1) count = r.total;
+      for (const a of r.token_accounts) rows.push({ account: a.address, owner: a.owner, raw: Number(a.amount) });
+      if (r.token_accounts.length < 1000) break;
+    }
+    if (!(count >= 0)) count = rows.length;
+  } catch (e) {   // not a DAS endpoint: the largest twenty, with their owners read separately
+    const big = (await rpc('getTokenLargestAccounts', [mint])).value, owners = big.length ? (await rpc('getMultipleAccounts', [big.map(a => a.address), { encoding: 'jsonParsed' }])).value : [];
+    big.forEach((a, i) => { const info = owners[i] && owners[i].data && owners[i].data.parsed && owners[i].data.parsed.info; rows.push({ account: a.address, owner: info ? info.owner : a.address, amount: Number(a.uiAmountString) }); });
+    count = null;
+  }
+  const scale = 1e6, by = new Map();   // the program mints every token with six decimals
+  for (const r of rows) {   // one row per owner: a wallet with two accounts of the token is still one holder
+    const amount = r.amount != null ? r.amount : r.raw / scale, label = labels[r.account] || labels[r.owner] || '';
+    const k = label ? r.account : r.owner, cur = by.get(k) || { wallet: r.owner, account: r.account, amount: 0, label };
+    cur.amount += amount; by.set(k, cur);
+  }
+  const list = [...by.values()].filter(h => h.amount > 0).sort((a, b) => b.amount - a.amount).map(h => Object.assign(h, { pct: h.amount / SUPPLY * 100, you: isMe(h.wallet) }));
+  return { rows: list, count: count == null ? list.length : by.size };
+}
+/* Helius names the field `mint`; the public devnet endpoint's DAS wants `mintAddress`, so the other spelling is tried on a field error */
+async function dasTokenAccounts(mint, page) {
+  try { return await rpc('getTokenAccounts', { mint, page, limit: 1000, options: { showZeroBalance: false } }); }
+  catch (e) { if (!/unknown field/.test(e.message)) throw e; return rpc('getTokenAccounts', { mintAddress: mint, page, limit: 1000, options: { showZeroBalance: false } }); }
+}
+async function knownHolders(p, mint) {
+  const out = {};
+  if (typeof chain === 'undefined' || !p.address) return out;
+  try {
+    await chain.init(); const raise = chain.pk(p.address), m = chain.pk(mint);
+    out[chain.ata(raise, m).toBase58()] = 'Backers, unclaimed';
+    out[chain.pda.teamVault(raise).toBase58()] = 'Team vesting';
+    out[chain.pda.poolVault(raise).toBase58()] = 'Pool staging';
+    if (p.pool) out[chain.pda.dammVault(m, chain.pk(p.pool)).toBase58()] = 'Locked pool';
+    if (chain.cfg && chain.cfg.seedTreasury) out[chain.cfg.seedTreasury.toBase58()] = 'Seed';
+    if (p.payoutWallet) out[p.payoutWallet] = 'Founder payout';
+  } catch (e) { console.warn('holder labels:', e.message); }
+  return out;
+}
 function applyOrigin(r, o) {
   if (o.firstTxAt) r.isFresh = r.first - o.firstTxAt < RISK.freshWalletDays * D;
   else if (!o.complete) r.isFresh = false;

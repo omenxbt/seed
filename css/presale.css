@@ -114,7 +114,8 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .pp .readout .bar{height:10px;margin:18px 0 14px}
 .pp .readout .sub{font-size:14.5px}
 .pp-pace,.pp-note{margin-top:16px;font-size:15px;color:var(--ink-2)}
-.pp-svg svg{display:block;width:100%;height:auto;overflow:visible}
+.pp-svg svg{display:block;width:100%;height:auto;overflow:hidden}
+.pp-chart,.pp-plot,.pp-svg{overflow:hidden;max-width:100%;min-width:0}
 .pp-svg.bars{margin-top:14px}
 /* the hover readout over the raise chart: a hairline, a dot on the line and a label */
 .pp-plot{position:relative;cursor:crosshair;touch-action:pan-y}   /* pan-y: a sideways drag reads the chart, an up or down drag still scrolls the page */

@@ -7,7 +7,8 @@
    ========================================================================== */
 /* charts draw at the width of their column, one unit to the pixel, so their labels keep their size however wide the window is */
 const chartW = () => { const b = detailBox && $('[data-dchart],[data-candles]', detailBox), w = b ? Math.floor(b.clientWidth) : 0; return w > 0 ? Math.max(320, w) : innerWidth < 720 ? 400 : 720; };
-const PTABS = ['overview', 'team', 'roadmap', 'backers', 'info', 'reports', 'announcements', 'deck'];
+const PTABS = ['overview', 'team', 'roadmap', 'holders', 'backers', 'info', 'reports', 'announcements', 'deck'];
+const tabsOf = p => p.status === 'seeded' ? PTABS : PTABS.filter(t => t !== 'holders');   // holders exist once the token does
 const PTAB_ALIAS = { updates: 'announcements', tokenomics: 'team', risk: 'info' };   // the tabs' earlier names, so old links still open them
 const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'price', side: 'buy', allBackers: false, deck: null, deckPage: 1, walletKey: '' };
 
@@ -63,6 +64,9 @@ const fmtDays = d => d < 1 ? 'today' : d < 60 ? `${Math.round(d)} days` : d < 73
 const initials = n => String(n || '?').split(/\s+/).map(x => x[0]).slice(0, 2).join('').toUpperCase();
 
 /* ---------------------------------------------------------------- header */
+/* the token's contract address: the chain's mint once the raise has seeded there, the demo's placeholder on a demo token */
+const caOf = p => p.live ? (p.status === 'seeded' && p.mint) || '' : (p.status === 'seeded' && profileOf(p).mint) || '';
+const explorer = (a, kind = 'account') => SEED.network === 'devnet' ? `https://solscan.io/${kind}/${a}?cluster=devnet` : solscan(a, kind);
 function ppHeader(p) {
   const pr = profileOf(p), C = Q(p), risk = riskSummary(riskChecks(p));
   const socials = SOCIALS.filter(s => safeUrl(pr.links && pr.links[s[0]])).map(s => `<a class="soc" href="${esc(safeUrl(pr.links[s[0]]))}" target="_blank" rel="noopener" aria-label="${s[1]}" title="${s[1]}">${ICONS[s[2]]}</a>`).join('');
@@ -71,7 +75,7 @@ function ppHeader(p) {
       <div class="pp-idrow">${artHTML(p, 'pp-art')}${statusPill(p)}</div>
       <div class="pp-name"><h1>${esc(p.name)}</h1><span class="pp-tk num">$${esc(p.ticker)}</span></div>
       <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/info" data-jump-risk>${riskChip(risk)}</a>${p.mine ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}</div>
-      ${pr.mint || socials ? `<div class="pp-meta">${pr.mint ? copyBtn(pr.mint, 'mint address', shortMint(pr.mint)) : ''}<span class="pp-socials">${socials}</span></div>` : ''}
+      ${caOf(p) || socials ? `<div class="pp-meta">${caOf(p) ? copyBtn(caOf(p), 'contract address', 'CA ' + shortMint(caOf(p))) : ''}<span class="pp-socials">${socials}</span></div>` : ''}
       <dl class="pp-stats" data-pstats>${ppStats(p)}</dl>
     </section>`;
 }
@@ -103,7 +107,7 @@ function ppFill(p) {
     const when = why === 'cancelled' ? `Cancelled ${fmtDate(p.resolvedAt)}` : why === 'timeout' ? `Filled ${fmtDate(p.filledAt)}, timed out ${fmtDate(p.resolvedAt)}` : `Deadline passed ${fmtDate(p.resolvedAt || p.endsAt)}`;
     return `<section class="panel pp-card pp-fill pp-missed"><div class="pp-card-h"><h2>${title}</h2></div>
       <div class="readout refunded"><div class="big"><b>${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num">${Math.floor(pc + 1e-7)}%</span></div>
-      <div class="bar"><i style="width:${pc}%"></i></div><div class="sub"><span>${when}</span><span>${p.backers} backers</span></div></div>
+      <div class="bar"><i style="width:${pc}%"></i></div><div class="sub"><span>${when}</span><span>${plural(p.backers, 'backer')}</span></div></div>
       <p class="pp-note">The raise ${refundReason(p)}. No token was minted and no pool was opened. Every backer claims back exactly what they paid in ${esc(C.sym)}, the 1% fee included. Refund status for each wallet is on the Backers tab.</p></section>`;
   }
   if (p.status === 'seeded') return ppTrading(p);
@@ -111,19 +115,19 @@ function ppFill(p) {
     const i = SEED_STEPS.indexOf(p.seedStep || 'filled');
     return `<section class="panel pp-card pp-fill" data-fill><div class="pp-card-h"><h2>Filled, seeding</h2><span class="pace-chip on">${i + 1} of ${SEED_STEPS.length} steps</span></div>
       <div class="readout live"><div class="big"><b>${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num">100%</span></div>
-      <div class="bar"><i style="width:100%"></i></div><div class="sub"><span>Filled ${fmtAgo(Date.now() - p.filledAt)}</span><span><span class="num">${p.backers}</span> backers</span></div></div>
+      <div class="bar"><i style="width:100%"></i></div><div class="sub"><span>Filled ${fmtAgo(Date.now() - p.filledAt)}</span><span>${plural(p.backers, 'backer')}</span></div></div>
       <p class="pp-note">The raise is closed to buys. Seeding mints the 1,000,000,000 supply, revokes the mint and freeze authorities, opens the Meteora pool with the whole raise and locks it for good. Anyone can run the steps; if they are not all done by ${fmtDate(seedDeadline(p))}, every backer claims a refund instead.</p></section>`;
   }
   return `<section class="panel pp-card pp-fill" data-fill><div class="pp-card-h"><h2>The raise</h2>${paceChip(pi)}${isFounder(p) ? '<button type="button" class="qb qb-sm pp-cancel" data-cancel>Cancel the raise</button>' : ''}</div>
     <div class="readout live" data-dreadout><div class="big"><b><span data-draised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num" data-dpct>${Math.floor(pc + 1e-7)}%</span></div>
       <div class="bar"><i data-dbar style="width:${pc}%"></i></div>
-      <div class="sub"><span>Ends in <span class="num" data-dtime>${fmtLeft(p.endsAt - Date.now())}</span></span><span><span class="num" data-dbackers>${p.backers}</span> backers</span></div></div>
+      <div class="sub"><span>Ends in <span class="num" data-dtime>${fmtLeft(p.endsAt - Date.now())}</span></span><span data-dbackers>${plural(p.backers, 'backer')}</span></div></div>
     <p class="pp-pace" data-pace>${esc(pi.text)}</p></section>`;
 }
 /* where the raise chart puts a time and an amount; the chart and its hover readout both draw from this */
 function raiseGeom(p) {
   const W = chartW(), Hh = W < 720 ? 220 : 300, pt = 20, pb = 28, t0 = p.openedAt, t1 = p.endsAt, live = p.status === 'live', end = live ? Date.now() : (p.resolvedAt || t1);
-  const X = t => (Math.min(Math.max(t, t0), t1) - t0) / (t1 - t0) * W, Y = v => pt + (1 - Math.min(v, p.target * 1.02) / p.target) * (Hh - pt - pb);
+  const X = t => (Math.min(Math.max(t, t0), t1) - t0) / (t1 - t0) * W, Y = v => pt + (1 - Math.min(Math.max(v, 0), p.target) / p.target) * (Hh - pt - pb);
   return { W, Hh, pt, pb, t0, t1, live, end, X, Y, series: (p.hist || []).filter(h => h[0] <= end).concat([[end, p.raised]]) };
 }
 function raiseSVG(p) {
@@ -141,15 +145,18 @@ function raiseSVG(p) {
     <circle class="tip" cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="4.5" style="fill:var(--ink);stroke:var(--panel-solid)" stroke-width="2.5"/>
     <g font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)"><text x="0" y="${Hh - 6}">Opened ${fmtDay(t0)}</text><text x="${W}" y="${Hh - 6}" text-anchor="end">Deadline ${fmtDay(t1)}</text><text x="${W}" y="${Y(p.target) - 7}" text-anchor="end">Target ${fmtC(p.target, p.q)}</text></g></svg>`;
 }
+/* the bucket the buys chart counts in: the raise's length split into 24 to 72 steps of a round size */
+const BUCKETS = [[10e3, '10 seconds'], [30e3, '30 seconds'], [60e3, 'minute'], [5 * 60e3, '5 minutes'], [15 * 60e3, '15 minutes'], [H, 'hour'], [6 * H, '6 hours'], [D, 'day']];
+function bucketOf(p) { const span = Math.max(1, p.endsAt - p.openedAt); return BUCKETS.find(([ms]) => span / ms <= 72) || BUCKETS[BUCKETS.length - 1]; }
 function buysSVG(p) {
-  const W = chartW(), Hh = 88, base = Hh - 22, t0 = p.openedAt, t1 = p.endsAt, n = Math.max(1, Math.ceil((t1 - t0) / H)), c = new Array(n).fill(0);
-  for (const b of p.buys || []) { const i = Math.floor((b.at - t0) / H); if (i >= 0 && i < n) c[i]++; }
-  const mx = Math.max(1, ...c), bw = W / n;
-  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Buys per hour, at most ${mx} in one hour">${c.map((v, i) => v ? `<rect x="${(i * bw + bw * 0.15).toFixed(1)}" y="${(base - v / mx * (base - 4)).toFixed(1)}" width="${Math.max(1, bw * 0.7).toFixed(1)}" height="${(v / mx * (base - 4)).toFixed(1)}" rx="1.5" style="fill:var(--navy-soft);--i:${i}"/>` : '').join('')}
-    <path d="M0 ${base}H${W}" style="stroke:var(--hair-2)"/><g font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)"><text x="0" y="${Hh - 4}">Buys per hour</text><text x="${W}" y="${Hh - 4}" text-anchor="end">Peak ${Math.max(0, ...c)}</text></g></svg>`;
+  const W = chartW(), Hh = 88, base = Hh - 22, t0 = p.openedAt, t1 = p.endsAt, [step, unit] = bucketOf(p), n = Math.max(1, Math.ceil((t1 - t0) / step)), c = new Array(n).fill(0);
+  for (const b of p.buys || []) { const i = Math.min(n - 1, Math.floor((b.at - t0) / step)); if (i >= 0) c[i]++; }
+  const mx = Math.max(1, ...c), bw = W / n, gap = Math.min(bw * 0.3, 4);
+  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Buys per ${unit}, at most ${mx} in one">${c.map((v, i) => v ? `<rect x="${(i * bw + gap / 2).toFixed(1)}" y="${(base - v / mx * (base - 4)).toFixed(1)}" width="${Math.max(1, bw - gap).toFixed(1)}" height="${(v / mx * (base - 4)).toFixed(1)}" rx="1.5" style="fill:var(--navy-soft);--i:${i}"/>` : '').join('')}
+    <path d="M0 ${base}H${W}" style="stroke:var(--hair-2)"/><g font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)"><text x="0" y="${Hh - 4}">Buys per ${unit}</text><text x="${W}" y="${Hh - 4}" text-anchor="end">Peak ${Math.max(0, ...c)}</text></g></svg>`;
 }
 function ppChart(p) {
-  return `<section class="panel pp-card pp-chart" data-chartcard><div class="pp-card-h"><h2>${p.status === 'seeded' ? 'How it raised' : 'Raised over time'}</h2><span class="legend"><span><i></i>Raised</span>${p.status === 'live' ? '<span><i class="dash"></i>Straight line to target</span>' : ''}<span><i class="bars"></i>Buys per hour</span></span></div>
+  return `<section class="panel pp-card pp-chart" data-chartcard><div class="pp-card-h"><h2>${p.status === 'seeded' ? 'How it raised' : 'Raised over time'}</h2><span class="legend"><span><i></i>Raised</span>${p.status === 'live' ? '<span><i class="dash"></i>Straight line to target</span>' : ''}<span><i class="bars"></i>Buys per ${bucketOf(p)[1]}</span></span></div>
     <div class="pp-plot" data-plot><div class="pp-svg" data-dchart></div><div class="cx" data-cross aria-hidden="true"><i class="cx-line"></i><i class="cx-dot"></i><span class="cx-tip num"></span></div></div>
     <div class="pp-svg bars" data-dbars></div></section>`;
 }
@@ -190,7 +197,7 @@ function candleSVG(series, mode, supply, quote, raise) {
   const Y = v => pt + (1 - (v - lo) / span) * priceH, vmax = Math.max(...series.map(c => c[5])) || 1, cw = (W - pr) / n;
   const f = v => quote === 'USD' ? fmtUsd(v) : fmtPrice(v);
   const ticks = [0, 0.25, 0.5, 0.75, 1].map(q => lo + span * q), last = series[n - 1], lastV = last[4] * k, lastUp = last[4] >= last[1];
-  const xt = W < 520 ? [0, n - 1] : [0, Math.round((n - 1) / 3), Math.round((n - 1) * 2 / 3), n - 1];
+  const nx = Math.max(2, Math.min(4, Math.floor((W - pr) / 170) + 1)), xt = [...new Set(Array.from({ length: nx }, (_, j) => Math.round((n - 1) * j / (nx - 1))))];   // time labels that fit side by side
   pg.cg = { W, Hh, pr, pt, pb, vH, priceH, lo, span, k, cw, n, series, f };
   return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${mode === 'mcap' ? 'Market cap' : 'Price'} candles, last ${f(lastV)}">
     ${ticks.map(v => `<path d="M0 ${Y(v).toFixed(1)}H${W - pr}" style="stroke:var(--hair)"/>${Math.abs(Y(v) - Y(lastV)) < 15 || (rv && Math.abs(Y(v) - Y(rv)) < 15) ? '' : `<text x="${W - pr + 8}" y="${(Y(v) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)">${f(v)}</text>`}`).join('')}
@@ -263,11 +270,18 @@ function depositPanel(p) {
     <p class="rail-err" data-buyerr role="alert"></p>
     <button type="button" class="btn btn-navy btn-block" data-go>Deposit</button>
     <p class="rail-meta">A raise only takes deposits: there is nothing to sell until it seeds. If it misses its target, you claim back everything you put in.</p>
-    <p class="rail-cap">Simulated on the demo wallet. No transaction is sent.</p></section>`;
+    <p class="rail-cap">${p.live ? 'Sent from your wallet on Solana ' + esc(SEED.network) + '. The 1% fee rides on top and comes back with a refund.' : 'Simulated on the demo wallet. No transaction is sent.'}</p></section>`;
 }
 function swapPanel(p) {
   const side = pg.side === 'sell' ? 'sell' : 'buy', pool = profileOf(p).pool, standin = !!(pool && isRealAddr(pool.address));
-  return `<section class="panel rail-card" data-trade="swap"><div class="rail-h"><h3>Trade $${esc(p.ticker)}</h3>${DEMO_PILL}</div>
+  if (p.live) {   // until the in-page swap lands, a live token trades on its pool at Meteora
+    const url = `https://app.meteora.ag/dammv2/${p.pool}${SEED.network === 'devnet' ? '?cluster=devnet' : ''}`;
+    return `<section class="panel rail-card" data-trade="meteora"><div class="rail-h"><h3>Trade $${esc(p.ticker)}</h3></div>
+      <p class="rail-meta">$${esc(p.ticker)} trades against ${esc(Q(p).sym)} on its Meteora DAMM v2 pool. The position that holds the raise is locked under the raise account for good.</p>
+      <a class="btn btn-navy btn-block" href="${esc(url)}" target="_blank" rel="noopener">Trade on Meteora ${ICONS.out}</a>
+      <p class="rail-cap">Contract address ${esc(shortMint(p.mint || ''))}${p.mint ? copyBtn(p.mint, 'contract address') : ''}</p></section>`;
+  }
+  return `<section class="panel rail-card" data-trade="swap"><div class="rail-h"><h3>Trade $${esc(p.ticker)}</h3>${p.live ? '' : DEMO_PILL}</div>
     <div class="seg mini-seg side-seg" data-side role="group" aria-label="Buy or sell">${['buy', 'sell'].map(v => `<button type="button" data-v="${v}" aria-pressed="${side === v}">${v === 'buy' ? 'Buy' : 'Sell'}</button>`).join('')}</div>
     <div class="trade-top"><label class="rail-lab" for="ppAmt">You pay</label><span class="rail-bal num" data-bal></span></div>
     <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Amount to pay"><span class="suf" data-paysym></span></div>
@@ -276,8 +290,8 @@ function swapPanel(p) {
     <dl class="kv"><div><dt>Price</dt><dd data-tprice></dd></div><div><dt>Price impact</dt><dd data-timpact></dd></div></dl>
     <p class="rail-err" data-buyerr role="alert"></p>
     <button type="button" class="btn btn-navy btn-block" data-go>Buy</button>
-    <p class="rail-cap">Simulated pool, on the demo wallet. No transaction is sent.</p>
-    ${standin ? `<p class="standin-note">In-app trades run against a simulated $${esc(p.ticker)} pool that opened at the raise price. The chart and the pool figures beside it are the stand-in pool’s.</p>` : ''}</section>`;
+    <p class="rail-cap">${p.live ? `Swaps on the raise's Meteora pool, signed in your wallet.` : 'Simulated pool, on the demo wallet. No transaction is sent.'}</p>
+    ${standin && !p.live ? `<p class="standin-note">In-app trades run against a simulated $${esc(p.ticker)} pool that opened at the raise price. The chart and the pool figures beside it are the stand-in pool’s.</p>` : ''}</section>`;
 }
 function positionPanel(p) {
   if (!state.wallet) return '';
@@ -298,7 +312,13 @@ function tabInfo(p) {
   return tabHead('Info', '', riskChip(s)) +
     `<ul class="risk-list risk-grid" data-risk>${checks.filter(c => c.level !== 'info').map(li).join('')}</ul>
     <p class="info-h">The founder's choices</p><ul class="risk-list risk-grid">${checks.filter(c => c.level === 'info').map(li).join('')}</ul>
-    <p class="quiet risk-note">Seed enforces the cap, the refunds, the locked pool and the 90-day unlock minimum in its program, and acts on fraud. Everything else here is for you to weigh.${demo ? ` ${DEMO_PILL} Checks run on demo data where no live account exists.` : ''}</p>`;
+    <p class="quiet risk-note">Seed enforces the cap, the refunds, the locked pool and the 90-day unlock minimum in its program, and acts on fraud. Everything else here is for you to weigh.${demo ? ` ${DEMO_PILL} Checks run on demo data where no live account exists.` : ''}</p>` + infoAddresses(p);
+}
+/* the accounts behind a raise that is on chain, each with a copy button and an explorer link */
+function infoAddresses(p) {
+  if (!p.live || !p.address) return '';
+  const row = (k, a, sub) => `<div><dt>${k}</dt><dd><span class="num">${esc(shortMint(a))}</span>${copyBtn(a, k.toLowerCase())}<a class="bar-link" href="${esc(explorer(a))}" target="_blank" rel="noopener">${ICONS.out}</a>${sub ? `<span class="quiet">${sub}</span>` : ''}</dd></div>`;
+  return `<p class="info-h">On chain</p><dl class="kv kv-wide addr-list">${row('Raise account', p.address, 'the program account that holds the terms, the escrow and the state')}${p.mint ? row('Token mint', p.mint, 'the contract address; mint and freeze authority revoked') : ''}${p.pool ? row('Pool', p.pool, 'Meteora DAMM v2, the position locked under the raise') : ''}${p.payoutWallet ? row('Payout wallet', p.payoutWallet, '') : ''}</dl>`;
 }
 /* the chat sits under the project card, open beside every tab */
 function chatPanel(p) { return typeof chatCard === 'function' ? chatCard(p) : ''; }
@@ -310,7 +330,7 @@ function ppFounder(p) {
   const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
   const outcome = r => ({ seeded: '<span class="btag ok">Seeded</span>', refunded: '<span class="btag">Refunded</span>', flagged: '<span class="btag bad">Flagged</span>' })[r.outcome] || esc(r.outcome || '');
   return `<section class="panel rail-card pp-founder"><div class="rail-h"><h3>Founder</h3>${pr.demo ? DEMO_PILL : ''}</div>
-    ${x.handle ? `<a class="x-acct" href="${esc(xUrl(x.handle))}" target="_blank" rel="noopener">${ICONS.x}<span><b>@${esc(x.handle)}</b><span class="num">${x.verified ? 'Verified X' : x.typed ? 'Typed on devnet' : 'Linked'}${x.followers != null ? ` · ${Number(x.followers).toLocaleString('en-US')} followers` : ''}${age != null ? ` · account ${fmtDays(age)} old` : ''}</span></span>${x.verified ? `<span class="vbadge x-ok" title="Verified: signed in with X">${RISK_ICON.pass}</span>` : ''}</a>`
+    ${x.handle ? `<a class="x-acct" href="${esc(xUrl(x.handle))}" target="_blank" rel="noopener">${ICONS.x}<span><b>@${esc(x.handle)}</b><span class="num">${x.verified ? 'Verified X' : x.typed ? 'Typed on devnet' : 'Linked'}${x.followers != null ? ` · ${plural(Number(x.followers), 'follower')}` : ''}${age != null ? ` · account ${fmtDays(age)} old` : ''}</span></span>${x.verified ? `<span class="vbadge x-ok" title="Verified: signed in with X">${RISK_ICON.pass}</span>` : ''}</a>`
       : `<p class="rail-meta">Opened with a wallet. No X account linked.</p>${isFounder(p) && p.status !== 'refunded' && (p.live || !isReal()) ? `<button type="button" class="qb" data-linkx>Link your X</button><p class="quiet">Adds a verified badge to this raise. Optional.</p>` : ''}`}
     <dl class="kv">${p.blacklisted ? row('Blacklisted', `<span class="bad">the founder wallet${x.handle ? ' and @' + esc(x.handle) : ''}</span>`) : ''}${row('Raises on Seed', past.length ? past.map(r => `<span class="past">$${esc(r.ticker)} ${outcome(r)}</span>`).join('') : 'This is the first')}
       ${row('Payout wallet', p.payoutWallet ? `<span class="num">${esc(shortMint(p.payoutWallet))}</span>${copyBtn(p.payoutWallet, 'payout wallet')}` : 'Set at opening')}${p.takeover ? row('Held by', esc(p.takeover.label || 'the community')) : ''}</dl>
@@ -327,7 +347,6 @@ function ppNotices(p) {
 
 /* ---------------------------------------------------------------- tabs */
 function tabLabel(p, t) {
-  if (t === 'backers') return p.status === 'seeded' ? 'Holders' : 'Backers';
   if (t === 'info') return 'Info';
   if (t === 'team') return 'Team &amp; unlocks';
   if (t === 'reports') { const n = (p.reports || []).length; return `Reports${n ? ` <span class="ct num">${n}</span>` : ''}`; }
@@ -335,13 +354,13 @@ function tabLabel(p, t) {
   return t[0].toUpperCase() + t.slice(1);
 }
 function ppTabs(p) {
-  return `<section class="panel pp-tabs"><div class="tabbar" role="tablist" aria-label="${esc(p.name)} sections">${PTABS.map(t => `<a role="tab" href="#/presale/${esc(p.id)}/${t}" data-ptab="${t}" aria-selected="${pg.tab === t}">${tabLabel(p, t)}</a>`).join('')}</div>
+  return `<section class="panel pp-tabs"><div class="tabbar" role="tablist" aria-label="${esc(p.name)} sections">${tabsOf(p).map(t => `<a role="tab" href="#/presale/${esc(p.id)}/${t}" data-ptab="${t}" aria-selected="${pg.tab === t}">${tabLabel(p, t)}</a>`).join('')}</div>
     <div class="tabbody" data-tabbody role="tabpanel"></div></section>`;
 }
 function renderTab(p) {
   const body = detailBox && $('[data-tabbody]', detailBox); if (!body) return;
   $$('[data-ptab]', detailBox).forEach(a => a.setAttribute('aria-selected', String(a.dataset.ptab === pg.tab))); placeTabInd();
-  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, roadmap: tabRoadmap, backers: tabBackers, info: tabInfo, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
+  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, roadmap: tabRoadmap, holders: tabHolders, backers: tabBackers, info: tabInfo, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
   body.innerHTML = fn(p); afterTab(p, body);
   const key = p.id + '/' + pg.tab;   // the tab's content eases in when the tab changes, not when it is redrawn in place
   if (pg.shown !== key) { pg.shown = key; body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap'); }
@@ -369,7 +388,7 @@ function tabRoadmap(p) {
     return `<li class="${st}"><span class="rm-dot">${st === 'shipped' ? RISK_ICON.pass : st === 'missed' ? RISK_ICON.fail : st === 'late' ? RISK_ICON.warn : ''}</span>
       <div><b>${esc(r.title)}</b><span class="num">${st === 'shipped' ? 'Shipped' : st === 'missed' ? 'Missed' : st === 'late' ? `Due ${fmtDay(due)}, ${fmtDays((now - due) / D)} late` : 'Due'}${st === 'late' ? '' : ' ' + fmtDay(due)}</span>${proof ? ` <a href="${esc(proof)}" target="_blank" rel="noopener">Proof ${ICONS.out}</a>` : ''}</div></li>`; }).join('');
   const done = list.filter(r => r.status === 'shipped').length;
-  return tabHead('Roadmap', prFrom(p), ` <span class="quiet">${done} of ${list.length} shipped</span>`) + `<ol class="roadmap">${items}</ol>
+  return tabHead('Roadmap', prFrom(p), ` <span class="quiet">${done} of ${plural(list.length, 'milestone')} shipped</span>`) + `<ol class="roadmap">${items}</ol>
     <p class="quiet">Milestones are the founder's own list. Seed shows them as given and does not enforce them; backers who see them slip can report the raise.</p>`;
 }
 /* a deck is a PDF (paged through here), an image (shown) or a slide file such as PowerPoint or Keynote (downloaded) */
@@ -438,27 +457,31 @@ function donutSVG(allocs) {
   return `<svg viewBox="0 0 180 180" class="donut" role="img" aria-label="Token allocation">${allocs.map((a, i) => { const len = a.pct / 100 * C, s = `<circle cx="90" cy="90" r="${R}" fill="none" stroke="${a.color || KIND_COL[a.kind] || KIND_COL.other}" stroke-width="26" stroke-dasharray="${Math.max(0, len - 1.5).toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}" transform="rotate(-90 90 90)"/>`; acc += len; return s; }).join('')}
     <text x="90" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" style="fill:var(--ink)">1B</text><text x="90" y="104" text-anchor="middle" font-size="11" style="fill:var(--muted)">supply</text></svg>`;
 }
+function tabHolders(p) { return tabHead('Holders', '') + '<div data-holders><div class="pp-loading">Loading holders…</div></div>'; }
 function tabBackers(p) {
-  if (p.status === 'seeded') return tabHead('Holders', '') + '<div data-holders><div class="pp-loading">Loading holders…</div></div>';
-  const rows = backersAdapter.rows(p), s = backersAdapter.summary(p, rows), C = Q(p), shown = pg.allBackers ? rows : rows.slice(0, 50), refund = p.status === 'refunded';
+  const rows = backersAdapter.rows(p), s = backersAdapter.summary(p, rows), C = Q(p), shown = pg.allBackers ? rows : rows.slice(0, 50), refund = p.status === 'refunded', seeded = p.status === 'seeded';
   const card = (k, v, lvl, sub) => `<div class="sum ${lvl || ''}"><dt>${k}</dt><dd class="num">${v}</dd>${sub ? `<span>${sub}</span>` : ''}</div>`;
   const tag = t => `<span class="btag ${t}">${{ kol: 'KOL', tracked: 'Tracked', 'repeat-backer': 'Repeat backer' }[t] || esc(t)}</span>`;
-  return tabHead('Backers', s.from, ` <span class="quiet">${rows.length} wallets${rows.some(r => isRealAddr(r.wallet)) ? `, the largest ${RISK.liveLookupCap} checked live` : ''}</span>`) +
+  if (!rows.length) return tabHead('Backers', '') + quietEmpty('Nobody has backed this raise yet.');
+  return tabHead('Backers', s.from, ` <span class="quiet">${plural(rows.length, 'wallet')}${rows.some(r => isRealAddr(r.wallet)) ? `, the largest ${RISK.liveLookupCap} checked live` : ''}</span>`) +
     `<dl class="sums">${card('Top 10', pctTxt(s.top10), s.top10 > RISK.top10FailPct ? 'fail' : s.top10 > RISK.top10WarnPct ? 'warn' : '', 'of the raise')}${card('Fresh wallets', pctTxt(s.fresh), s.fresh > RISK.freshWarnPct ? 'warn' : '', 'of backers')}
-      ${card('Bundled', pctTxt(s.bundled), s.bundled > RISK.bundledWarnPct ? 'warn' : '', s.bundles.length ? `${s.bundles.length} funding wallet${s.bundles.length > 1 ? 's' : ''}` : 'of the raise')}${card('KOL and tracked', s.kol + s.tracked, '', `${s.kol} KOL, ${s.tracked} tracked`)}${card('Repeat Seed backers', s.repeat, '', 'backed an earlier Seed raise')}</dl>
-    <div class="tscroll"><table class="dtable backers"><thead><tr><th>Wallet</th><th class="r">Amount</th><th class="r">Of raise</th><th class="r">Time</th><th>Funded by</th><th>Tags</th>${refund ? '<th>Refund</th>' : ''}</tr></thead><tbody>
+      ${card('Bundled', pctTxt(s.bundled), s.bundled > RISK.bundledWarnPct ? 'warn' : '', s.bundles.length ? plural(s.bundles.length, 'funding wallet') : 'of the raise')}${card('KOL and tracked', s.kol + s.tracked, '', `${s.kol} KOL, ${s.tracked} tracked`)}${card('Repeat Seed backers', s.repeat, '', 'backed an earlier Seed raise')}</dl>
+    <div class="tscroll"><table class="dtable backers"><thead><tr><th>Wallet</th><th class="r">Amount</th><th class="r">Of raise</th><th class="r">Time</th><th>Funded by</th><th>Tags</th>${refund ? '<th>Refund</th>' : seeded ? '<th>Tokens</th>' : ''}</tr></thead><tbody>
       ${shown.map(r => `<tr class="${r.you ? 'you' : ''}"><td class="mono">${r.you ? 'You' : esc(walletLabel(r.wallet))}</td><td class="num">${fmtC(r.amount, p.q)} ${esc(C.sym)}</td><td class="num">${r.pct.toFixed(r.pct < 1 ? 2 : 1)}%</td><td class="num">${fmtAgo(Date.now() - r.first)}</td>
         <td>${esc(funderLabel(r.fundedBy))}${r.isFresh ? ' <span class="btag fresh">Fresh</span>' : ''}${s.bundles.some(b => r.fundedBy && b.funder === r.fundedBy.addr) ? ' <span class="btag bundle">Bundle</span>' : ''}</td>
-        <td>${r.tags.map(tag).join(' ')}</td>${refund ? `<td>${r.refundClaimed ? 'Claimed' : '<b>Claimable</b>'}</td>` : ''}</tr>`).join('')}</tbody></table></div>
+        <td>${r.tags.map(tag).join(' ')}</td>${refund ? `<td>${r.refundClaimed ? 'Claimed' : '<b>Claimable</b>'}</td>` : seeded ? `<td>${r.tokensClaimed ? 'Claimed' : '<b>Claimable</b>'}</td>` : ''}</tr>`).join('')}</tbody></table></div>
     ${rows.length > shown.length ? `<button class="qb more" data-allbackers>Show all ${rows.length}</button>` : ''}`;
 }
 async function loadHolders(p) {
   const box = detailBox && $('[data-holders]', detailBox); if (!box) return;
   try {
-    const h = await backersAdapter.holders(p);
-    box.innerHTML = `<div class="tab-h"><span class="quiet">${h.count ? `${h.count.toLocaleString('en-US')} holders, top ${h.value.length} shown` : `Top ${h.value.length} holders`}</span>${srcPill(h.from)}</div>
-      <div class="tscroll"><table class="dtable backers"><thead><tr><th>Wallet</th><th class="r">$${esc(p.ticker)}</th><th class="r">Of supply</th><th>Label</th></tr></thead><tbody>
-      ${h.value.map(x => `<tr><td class="mono">${esc(shortMint(x.wallet))}</td><td class="num">${fmtTok(x.amount)}</td><td class="num">${x.pct.toFixed(2)}%</td><td>${esc(x.label || '')}</td></tr>`).join('')}</tbody></table></div>`;
+    const h = await backersAdapter.holders(p); if (!box.isConnected) return;
+    const all = pg.allHolders || h.value.length <= 100, shown = all ? h.value : h.value.slice(0, 100), wallets = h.value.filter(x => !x.label).length;
+    box.innerHTML = `<div class="tab-h"><span class="quiet">${plural(h.count || h.value.length, 'holder')}${h.from === 'chain' ? `: ${plural(wallets, 'wallet')} and ${plural(h.value.length - wallets, 'account')} Seed opened` : `, top ${h.value.length} shown`}</span>${srcPill(h.from)}</div>
+      <div class="tscroll"><table class="dtable backers"><thead><tr><th>Holder</th><th class="r">$${esc(p.ticker)}</th><th class="r">Of supply</th><th>Label</th></tr></thead><tbody>
+      ${shown.map(x => `<tr class="${x.you ? 'you' : ''}"><td class="mono">${x.you ? 'You' : h.from === 'chain' ? `<a href="${esc(explorer(x.account || x.wallet))}" target="_blank" rel="noopener">${esc(shortMint(x.wallet))}</a>` : esc(shortMint(x.wallet))}</td><td class="num">${x.amount > 0 && x.amount < 1 ? '<1' : fmtTok(x.amount)}</td><td class="num">${x.pct < 0.01 && x.pct > 0 ? '<0.01' : x.pct.toFixed(2)}%</td><td>${esc(x.label || '')}</td></tr>`).join('')}</tbody></table></div>
+      ${h.value.length > shown.length ? `<button class="qb more" data-allholders>Show all ${h.value.length}</button>` : ''}`;
+    const ah = $('[data-allholders]', box); if (ah) ah.onclick = () => { pg.allHolders = true; loadHolders(p); };
   } catch (e) { box.innerHTML = `<p class="quiet">Holders could not be loaded: ${esc(e.message)}</p>`; }
 }
 /* Reports: public, wallet-signed, kept off chain. Anyone with a wallet files one; Seed admins act on them: flag the raise for
@@ -496,7 +519,7 @@ function tabAnnouncements(p) {
       <input id="annT" name="t" maxlength="80" placeholder="Title" autocomplete="off" required><textarea name="b" rows="4" maxlength="2000" placeholder="What should backers know?" aria-label="Announcement" required></textarea>
       <div class="upd-foot"><span class="quiet">Markdown works: headings, lists, links and bold. <span class="num" data-annct>0 / 2000</span></span><button class="btn btn-navy btn-sm">Post announcement</button></div><div class="err" data-annerr role="alert"></div></form>` : '';
   const who = can ? (open ? '' : 'This raise refunded, so new announcements are closed.') : `Posted by the founder and team of ${esc(p.name)}.`;
-  return tabHead('Announcements', prFrom(p), ` <span class="quiet">${list.length ? `${list.length} from the team` : ''}</span>`) + form + (who ? `<p class="quiet ann-who">${who}</p>` : '') +
+  return tabHead('Announcements', prFrom(p), ` <span class="quiet">${list.length ? `${plural(list.length, 'announcement')} from the team` : ''}</span>`) + form + (who ? `<p class="quiet ann-who">${who}</p>` : '') +
     (list.length ? `<ol class="updates">${list.map(u => `<li${now - u.postedAt < ANN_NEW ? ' class="new"' : ''}><div class="u-h"><b>${esc(u.title)}</b>${now - u.postedAt < ANN_NEW ? '<span class="ann-new">New</span>' : ''}<span class="num">${fmtAgo(now - u.postedAt)} · ${fmtDate(u.postedAt)}</span></div><div class="md">${md(u.body)}</div>${annBy(p, u)}</li>`).join('')}</ol>`
       : quietEmpty(can && open ? 'Nothing posted yet. Your first announcement shows here and at the top of the page.' : 'The team has not posted an announcement yet.'));
 }
@@ -509,7 +532,7 @@ function ppAnnounce(p) {
 function refreshAnnounce(p) { const w = detailBox && $('[data-annwrap]', detailBox); if (w) w.innerHTML = ppNotices(p); }
 function afterTab(p, body) {
   if (pg.tab === 'deck' && profileOf(p).deck && deckKindOf(profileOf(p)) === 'pdf') loadDeck(p, body);
-  if (pg.tab === 'backers' && p.status === 'seeded') loadHolders(p);
+  if (pg.tab === 'holders') loadHolders(p);
   const f = $('[data-updform]', body);
   if (f) {
     const err = $('[data-annerr]', f), ct = $('[data-annct]', f);
@@ -561,7 +584,7 @@ async function loadDeck(p, body) {
     await loadPdfJs();
     if (!pg.deck || pg.deck.url !== url) { pg.deck = { url, doc: await pdfjsLib.getDocument(url).promise }; pg.deckPage = 1; }
     if (!body.isConnected) return;
-    const doc = pg.deck.doc; cnt.textContent = `${doc.numPages} pages`;
+    const doc = pg.deck.doc; cnt.textContent = plural(doc.numPages, 'page');
     const thumbs = $('[data-thumbs]', body);
     for (let i = 1; i <= doc.numPages; i++) {
       const b = document.createElement('button'); b.className = 'thumb'; b.dataset.pg = i; b.setAttribute('aria-label', 'Page ' + i); const c = document.createElement('canvas'); b.appendChild(c); thumbs.appendChild(b);
@@ -589,7 +612,7 @@ function renderDetail(force) {
   if (ui.tab !== 'presale') { if (pg.id) { box.innerHTML = ''; pg.id = null; if (typeof chatOff !== 'undefined' && chatOff) { chatOff(); chatOff = null; } } return; }
   const p = find(ui.sel);
   if (!p) { box.innerHTML = '<div class="panel empty">That raise is not in this demo any more. It may have been reset.<br><a href="#">Back to all raises</a></div>'; pg.id = null; return; }
-  const want = PTAB_ALIAS[ui.ptab] || ui.ptab, tab = PTABS.includes(want) ? want : 'overview', wkey = (state.wallet ? walletId() : '') + '/' + (state.positions[p.id] || 0) + '/' + !!state.claimed[p.id] + '/' + (p.status === 'seeded' ? heldOf(p) : 0) + '/' + balOf(p.q);
+  const want = PTAB_ALIAS[ui.ptab] || ui.ptab, tab = tabsOf(p).includes(want) ? want : 'overview', wkey = (state.wallet ? walletId() : '') + '/' + (state.positions[p.id] || 0) + '/' + !!state.claimed[p.id] + '/' + (p.status === 'seeded' ? heldOf(p) : 0) + '/' + balOf(p.q);
   if (!force && pg.id === p.id && pg.status === p.status) {
     if (pg.tab !== tab) { pg.tab = tab; renderTab(p); }
     if (pg.walletKey !== wkey) { pg.walletKey = wkey; const pw = $('[data-poswrap]', box); if (pw) { pw.innerHTML = positionPanel(p); bindRail(p); } if (pg.tab === 'announcements') renderTab(p); if (pg.chatW !== walletId()) mountChat(p); }
@@ -731,7 +754,7 @@ function patchDetail(p) {
   if (pg.syncTrade) pg.syncTrade();   // the room left in the raise has moved
   pg.seen = p.raised;
   s('[data-dbar]', e => { if (pc > parseFloat(e.style.width) + 1e-6) bump($('[data-dreadout]', detailBox)); e.style.width = pc + '%'; });
-  s('[data-draised]', e => roll(e, fmtC(p.raised, p.q, true))); s('[data-dpct]', e => roll(e, Math.floor(pc + 1e-7) + '%')); s('[data-dbackers]', e => roll(e, p.backers));
+  s('[data-draised]', e => roll(e, fmtC(p.raised, p.q, true))); s('[data-dpct]', e => roll(e, Math.floor(pc + 1e-7) + '%')); s('[data-dbackers]', e => roll(e, plural(p.backers, 'backer')));
   s('[data-sraised]', e => roll(e, fmtC(p.raised, p.q, true))); s('[data-spct]', e => roll(e, Math.floor(pc + 1e-7) + '%')); s('[data-sbackers]', e => roll(e, p.backers));
   s('[data-dchart]', e => e.innerHTML = raiseSVG(p)); s('[data-dbars]', e => e.innerHTML = buysSVG(p)); s('[data-pace]', e => e.textContent = pi.text);
   s('[data-fill] .pace-chip', e => e.outerHTML = paceChip(pi));

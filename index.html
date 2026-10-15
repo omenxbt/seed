@@ -1474,7 +1474,7 @@ function save() { try { state.at = state.at || Date.now(); localStorage.setItem(
 
 /* ---- chain reads (live), on the endpoint in SEED.rpc (js/config/seed.js), with a keyless public one behind it for mainnet
    token lookups. Calls are spaced and retried because public endpoints rate limit; api.mainnet-beta.solana.com refuses browser origins. */
-const RPCS = [SEED.rpc, 'https://public.rpc.solanavibestation.com'];
+const RPCS = SEED.network === 'devnet' ? [...new Set([SEED.rpc, 'https://api.devnet.solana.com'])] : [SEED.rpc, 'https://public.rpc.solanavibestation.com'];   // a fallback on the same network only
 const JUP_SEARCH = 'https://lite-api.jup.ag/tokens/v2/search?query=';
 const TOKEN_PROGRAMS = ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'];
 async function rpc(method, params) {
@@ -2180,7 +2180,16 @@ if ('ResizeObserver' in window) { let w = 0; new ResizeObserver(() => { const b 
 
 /* ------------------------------------------------------------------ docs */
 const calc = { q: 'SOL' };
-function fmtPrice(n) { if (n >= 1) return fmtSig(n); const d = Math.min(14, Math.ceil(-Math.log10(n)) + 2); return n.toFixed(d).replace(/0+$/, '').replace(/\.$/, ''); }
+/* a price: four significant digits; a tiny one folds its leading zeros into a subscript the way DEX screens do, 0.0₉235 */
+function fmtPrice(n) {
+  if (!(n > 0)) return '0'; if (n >= 1) return fmtSig(n);
+  let z = Math.floor(-Math.log10(n)), m = (n * Math.pow(10, z + 1)).toPrecision(4);   // z zeros after the point, then the digits
+  if (m.startsWith('10')) { z--; m = '1'; }
+  if (z >= 3) return '0.0' + String(z).replace(/\d/g, d => '₀₁₂₃₄₅₆₇₈₉'[d]) + m.replace('.', '').replace(/0+$/, '');
+  const d = Math.min(14, Math.ceil(-Math.log10(n)) + 3); return n.toFixed(d).replace(/0+$/, '').replace(/\.$/, '');
+}
+/* "1 backer", "2 backers" */
+const plural = (n, one, many) => `${Number(n).toLocaleString('en-US')} ${n === 1 ? one : many || one + 's'}`;
 function renderCalc() {
   const T = parseFloat(($('#cT').value || '').replace(/,/g, '')), g = parseFloat(($('#cC').value || '').replace(/,/g, '')), cur = calc.q, out = $('#calcOut');
   if (!(T > 0) || !(g >= 0)) { out.innerHTML = '<div><dt>Enter a target above zero</dt><dd></dd></div>'; return; }
