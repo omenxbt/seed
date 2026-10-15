@@ -1,22 +1,30 @@
-# Final report (2026-10-15)
+# Status report (2026-10-15, after the battle-test rounds)
 
-**The build loop is done.** Every item in LOOP.md's target feature set works on devnet with real data; BACKLOG.md has no P0 or P1; seed-qa's full regression passes #4 (63e628a) and #5 (5a6afc0) were both clean — 0 P0, 0 P1, on-chain flows (launch → fill → seed → claim, buys and sells at the quote, 70/30 fee claims, missed-deadline and founder-cancel refunds; team unlocks were verified in pass #2 and again when the crank paid qatwo's) and 22 page loads at 1440 and 390 with no overflow and no console errors; pages load in under 2 s on the preview.
+## Where it stands
+- **`main` = 29288d4** is the live site (seed-nu-ten.vercel.app). **`final-model` = e7865b8** is the preview, 7 commits ahead, all from today's battle-test rounds with seed-qa. `main` moves when seed-qa reports two consecutive clean full passes on it (pass #9 found two P1s, both fixed in e7865b8; pass #10 is running).
+- **Every item in LOOP.md's target feature set works on devnet with real data**, verified by both sessions: launch → fill → seed → claim, swaps at the quote on the DAMM v2 pool (1.25% fee, exactly), live tape and candles within seconds, holders and chain safety checks, 70/30 fee claims on chain, team unlocks paid by the crank, missed-deadline and founder-cancel refunds, the founder profile, the real-wallet portfolio, alerts, docs; every route at 1440 and 390 with no overflow and no console errors.
+- **The program** (devnet `8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn`) has not changed since the Phase 2 upgrade; the devnet Config now carries `pool_fee_bps = 125` (Josh applied it). Tests: 21/21 local, 18 + 3 admin-only on devnet.
+- **Devnet SOL** after Josh's 10 SOL top-up: deployer 6.8, crank 0.67, test founder/backer ~2.2 and ~2.1, seed-qa's wallets refilled from the deployer.
 
-## What shipped on `final-model` (from b59ecb9 to 5a6afc0)
-- **Program** (devnet `8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn`): a `RaiseMeta` PDA fixes the token's metadata URI at opening; `crank_mint` creates immutable Metaplex metadata before revoking the mint authority; mainnet builds require Arweave URIs. Config carries the pool fee (1.25% per Josh; 1% of volume reaches the position after Meteora's 20%).
-- **Trading**: in-page swaps on the raise's DAMM v2 pool through Meteora's SDK — quote, slippage, priority fee, impact warning, minimum out from the shown quote, wallet signature, Solscan toast, balances re-read; each pool's own fee shown.
-- **Live data**: swaps indexed from the pool vaults' balance changes (pools auto-join the Helius webhook), SQL candles and stats, TradingView Lightweight Charts live through Supabase Realtime, a Trades tab, a Top traders tab with PnL, pool figures from reserves and trades, creator fees from the locked position, holders by mint with Seed's accounts labelled.
-- **Safety from the chain**: mint and freeze authority, liquidity lock, metadata immutability, holder concentration, fresh and bundled wallets; founder choices shown as facts.
-- **Terminal**: five stage lanes with compact rows at desktop width (tabbed board below 1100px), watchlist, search by name / ticker / CA / X handle, pool price and change on seeded cards, Demo chips.
-- **Pages**: founder profile (raises and outcomes, fee income and claims, team unlocks); portfolio for real wallets (results by day in SOL, open positions with PnL, history with tx links, Creator tab from the chain); launch preview extras (pool depth, buy impact, fee income); alerts (bell: filled, seeded, refunds open, unlocks, payout moved); Trade-on links on mainnet; the mainnet launch checklist in `program/README.md`.
-- **Backend**: `trades`, `vested_claims` tables; `candles()`, `trade_stats()`; the crank's seeding timeout follows the config and it claims unlocked team tokens; volume from trades.
-- **QA**: ~45 findings from seed-qa across nine reports fixed (listed under Done in BACKLOG.md).
+## Fixed today (from the e2e rounds and seed-qa passes #8–#9)
+- **Indexing gap (P1, F7):** Helius only delivers a pool's transactions once the pool is on the webhook's address list, so a swap in the first minute after seeding was never indexed — exactly the early buys. The swap reader moved to `supabase/functions/_shared/swaps.ts` and the crank backfills from `getSignaturesForAddress` every pass for 30 minutes after seeding, then hourly for the last two hours. Reproduced and verified on `bkf-6m8ltg6e` (a buy 7 s after seeding, missed by the webhook, indexed by the next crank pass).
+- **Alerts bell (P1, F6):** the popover never showed (`.pop` needs `.open`; only `hidden` was toggled). Fixed; "Latest 30 of N" when more are stored; compact Clear.
+- **Load-order race:** another open Seed tab saves every second; its storage event reached a fresh tab before `x.js` had loaded (console `ReferenceError: xAdapter`) and replaced the raise objects mid-read so the Info tab stayed on "Reading the chain…". The storage listener waits for boot; chain checks live in a cache by raise id.
+- **Lagging RPC node:** a pool served from before its liquidity landed made the SDK throw "Amount out must be greater than 0" into the trade panel. The quote re-reads the pool once, then says the pool is still settling.
+- **Creator fees card** follows every live trade (it sat stale until a reload).
+- **Polish:** a chain check with nothing to grade stays with the checks; a real wallet's portfolio rail drops the demo Deposit/Withdraw form; watch-only lanes say the watchlist is empty; amounts under 0.1 keep two significant figures (0.005 SOL, not 0.01); a refunded raise's chat is badged Closed; Max with nothing to spend says to add SOL; `refreshHolding` re-checks the wallet after the await.
 
-## Still open (non-blocking)
-- **Needs Josh**: click "Apply 1.25% on devnet" on the preview's Portfolio page (admin wallet); an Irys node wallet for mainnet metadata; the mainnet pick-up check; the takeover question on unvested team tokens.
-- **Next program upgrade** (BACKLOG P2): snapshot `pool_fee_bps` on the Raise at opening; sweep the dust `crank_pool` leaves.
-- **Polish** (BACKLOG P2): Axiom/GMGN-style extras — a 5m/1h/6h/24h stats strip, a USD/SOL toggle and 1s/30s intervals, editable quick amounts, Bought/Sold/PnL in Your position, the figures row by the name.
-- Merge `final-model` into `main` when Josh has checked the preview (the live site must never show half old / half new).
+## Still open
+- **Needs Josh:** an Irys node wallet for mainnet metadata (devnet keeps token JSON in Supabase storage; the `seed` function's `upload-url` routes to Irys when `SEED_NETWORK=mainnet`); the mainnet pick-up check (which of Axiom / GMGN / DEXScreener / Birdeye / Jupiter list the first mainnet token); the takeover question on unvested team tokens (kept as is: unlocks keep paying the moved payout wallet).
+- **Next program upgrade** (BACKLOG P2, ~3 SOL of devnet buffer): snapshot `pool_fee_bps` on the Raise at opening; sweep the dust `crank_pool` leaves.
+- **Polish** (BACKLOG P2): Axiom/GMGN extras — 5m/1h/6h/24h stats strip, USD/SOL toggle and 1s/30s intervals, editable quick amounts, Bought/Sold/PnL in Your position, figures row by the name.
+- **Not testable without Josh:** the Phantom signing UI itself (both sessions only ever sign with the scripted test wallets); every signed flow was exercised through the same instructions from `keys/test/`.
+
+## Mainnet path (in order, from `program/README.md`)
+1. Irys wallet + secret, `SEED_NETWORK=mainnet` on the `seed` function.
+2. Mainnet program build (no test mode, Arweave-only URIs), deploy, Squads multisig as upgrade authority, `init_config` with 125 bps.
+3. A Helius mainnet webhook on the program; `SEED_RPC_URL`, `SEED_POOL_FEE_BPS=125`, the crank's pg_cron schedule.
+4. One small real raise end to end, then the pick-up check.
 
 ---
 
