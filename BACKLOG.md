@@ -4,10 +4,9 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 
 ## P1
 1. **Safety panel from on-chain facts only.** Mint/freeze authority, LP lock, metadata immutability, holder concentration, fresh and bundled wallets read from the chain for live raises (no demo checks on real raises).
-2. **Launch preview extras.** Pool depth, "a 10 SOL buy moves the chart X%", founder fee income at $5K/$25K/$100K daily volume.
-3. **Alerts.** In-app notifications for watched raises (filled, seeded, refunds open, unlocks).
-4. **Trade on links (Phase 5, mainnet only)** and the mainnet launch checklist in the README.
-5. **Top traders and PnL** on seeded raises (from `trades`).
+2. **Alerts.** In-app notifications for watched raises (filled, seeded, refunds open, unlocks).
+3. **Trade on links (Phase 5, mainnet only)** and the mainnet launch checklist in the README.
+4. **Top traders and PnL** on seeded raises (from `trades`).
 
 ## P2
 - **QA P2-26 (seed-qa, program change):** snapshot `pool_fee_bps` on the Raise at `open_raise` (as `creator_share_bps` is) so a raise live across a config change seeds at the fee its backers saw. Next program upgrade, with P2-4.
@@ -18,6 +17,7 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 - Docs page pass for the new features.
 
 ## Done
+- Launch preview extras (B4): pool depth at opening and what a 1/10/100 SOL (or 100/1K/10K USDC) buy does to the price; the founder's fee income at $5K/$25K/$100K daily volume was already there.
 - QA on 845347f (seed-qa): P1-F4 a real wallet's Creator tab lists only the raises it opened on chain, totals per pair asset, fees read from the positions; P2-32 held team tokens show as positions and vested claims are indexed (vested_claims) into the history; P2-33 day results summed unrounded; P2-34 refunded rows show what was paid and refunded.
 - Portfolio for real wallets (B3): contributions, swaps and token balances from the indexer and the chain → lots at average cost, realised results by day in SOL (graph and calendar), open positions with value/unrealised/realised, a history with tx links; the Creator tab reads the position's fees.
 - QA regression #2 (seed-qa): P2-27 small raised figures keep their digits; P2-28 demo founders get Profile links; P2-29 the profile is titled by name, X handle or wallet; P2-30 fee totals per pair asset; P2-31 the crank claims unlocked team tokens to the payout wallet (idempotent token account).

@@ -275,6 +275,7 @@ function renderPreview() {
     ['Raise price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token, fixed` : 'Set a target'],
     ['FDV at the raise', ok ? `<span class="num">${f(fdvOf(dp))} ${sym}</span> (${fmtUsd(fdvUsdOf(dp))})` : 'Set a target'],
     ['Pool at seeding', ok ? `<span class="num">${f(d.target)} ${sym}</span> + <span class="num">${fmtTok(split.pool)}</span> $${esc(dp.ticker)}, locked for good` : 'The whole raise, locked for good'],
+    ['Pool depth', ok ? `<span class="num">${f(d.target * 2)} ${sym}</span> (${fmtUsd(usdOf(dp, d.target * 2))}) on both sides at opening. ${impactRow(dp, sym)}` : 'Set a target'],
     ['Your fee income', `<span class="num">${fees(5000)}</span>, <span class="num">${fees(25000)}</span> or <span class="num">${fees(100000)}</span> a day at $5K, $25K or $100K of daily volume`],
     ['Closes', typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode && isReal() ? `in ${Math.round(d.hours * 60 / 24)} min on devnet (test mode: a day is a minute), or the moment it fills` : `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
     ['If it misses', `Every buy and its fee go back to backers after ${label}. Nothing is minted`]
@@ -285,6 +286,12 @@ function renderPreview() {
   const fw = pr.founder.wallet;
   if (fw && isRealAddr(fw) && founderLooked !== fw) { founderLooked = fw; founderAdapter.refresh(dp).then(learned => { if (learned) renderPreview(); }); }
   $('#upNote').textContent = supa.configured() ? 'Uploads go to Seed’s storage when you open the raise.' : 'Uploads are previewed in this browser only until Supabase storage is configured.';
+}
+/* what a buy does to the price of a pool that just opened: a constant-product pool with the raise on one side moves by
+   (1 + in/raise)² − 1, so the chart's first candle is in the founder's hands to foresee */
+function impactRow(dp, sym) {
+  const x0 = dp.target, buys = dp.q === 'SOL' ? [1, 10, 100] : [100, 1000, 10000], part = b => { const pc = (Math.pow(1 + b / x0, 2) - 1) * 100; return `<span class="num">${fmtC(b, dp.q)} ${sym}</span> <span class="num">+${pc >= 10 ? Math.round(pc) : pc.toFixed(1)}%</span>`; };
+  return `A buy moves the price: ${buys.map(part).join(', ')}`;
 }
 function syncOpenBtn() { const b = $('#openBtn'); if (b && !b.disabled) b.textContent = !state.wallet ? 'Connect wallet to open' : 'Open raise'; }
 /* what the raise shows as the price, and the pool it opens: read-only, derived from the target and the team share */

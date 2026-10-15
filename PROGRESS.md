@@ -25,6 +25,8 @@ independently; its notes live in `QA.md` (not committed by this session).
 
 - **Portfolio for real wallets**: `js/adapters/portfolio.js` reads the wallet's contributions and swaps from the indexer and its token balances from the chain; lots at average cost give realised results by day (the PnL graph and calendar, in SOL), open positions (value, unrealised, realised) and a history (backed, refund, claim, buy, sell) with Solscan links. Demo wallets keep the demo data.
 
+- **Launch preview extras**: pool depth at opening (both sides, in the pair asset and USD) and the price move of a 1, 10 and 100 SOL buy on the fresh constant-product pool, beside the derived price, FDV and the founder's fee income at $5K/$25K/$100K daily volume.
+
 ## Phase 1: bugs — done when
 - Holders tab lists every holder of the token mint (Helius DAS `getTokenAccounts`, plain-RPC fallback) with the accounts Seed opened labelled: Locked pool, Backers unclaimed, Team vesting, Pool staging, Seed, Founder payout. Backers tab lists contributions, with the claim state after seeding.
 - After seeding the header chip is the token mint, labelled CA, with copy. The raise account, mint, pool and payout wallet are under Info → On chain, each with copy and an explorer link.
