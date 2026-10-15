@@ -1,3 +1,25 @@
+# Final report (2026-10-15)
+
+**The build loop is done.** Every item in LOOP.md's target feature set works on devnet with real data; BACKLOG.md has no P0 or P1; seed-qa's full regression passes #4 (63e628a) and #5 (5a6afc0) were both clean — 0 P0, 0 P1, on-chain flows (launch → fill → seed → claim, buys and sells at the quote, 70/30 fee claims, missed-deadline and founder-cancel refunds, team unlocks) and 22 page loads at 1440 and 390 with no overflow and no console errors; pages load in under 2 s on the preview.
+
+## What shipped on `final-model` (from b59ecb9 to 5a6afc0)
+- **Program** (devnet `8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn`): a `RaiseMeta` PDA fixes the token's metadata URI at opening; `crank_mint` creates immutable Metaplex metadata before revoking the mint authority; mainnet builds require Arweave URIs. Config carries the pool fee (1.25% per Josh; 1% of volume reaches the position after Meteora's 20%).
+- **Trading**: in-page swaps on the raise's DAMM v2 pool through Meteora's SDK — quote, slippage, priority fee, impact warning, minimum out from the shown quote, wallet signature, Solscan toast, balances re-read; each pool's own fee shown.
+- **Live data**: swaps indexed from the pool vaults' balance changes (pools auto-join the Helius webhook), SQL candles and stats, TradingView Lightweight Charts live through Supabase Realtime, a Trades tab, a Top traders tab with PnL, pool figures from reserves and trades, creator fees from the locked position, holders by mint with Seed's accounts labelled.
+- **Safety from the chain**: mint and freeze authority, liquidity lock, metadata immutability, holder concentration, fresh and bundled wallets; founder choices shown as facts.
+- **Terminal**: five stage lanes with compact rows at desktop width (tabbed board below 1100px), watchlist, search by name / ticker / CA / X handle, pool price and change on seeded cards, Demo chips.
+- **Pages**: founder profile (raises and outcomes, fee income and claims, team unlocks); portfolio for real wallets (results by day in SOL, open positions with PnL, history with tx links, Creator tab from the chain); launch preview extras (pool depth, buy impact, fee income); alerts (bell: filled, seeded, refunds open, unlocks, payout moved); Trade-on links on mainnet; the mainnet launch checklist in `program/README.md`.
+- **Backend**: `trades`, `vested_claims` tables; `candles()`, `trade_stats()`; the crank's seeding timeout follows the config and it claims unlocked team tokens; volume from trades.
+- **QA**: ~45 findings from seed-qa across nine reports fixed (listed under Done in BACKLOG.md).
+
+## Still open (non-blocking)
+- **Needs Josh**: click "Apply 1.25% on devnet" on the preview's Portfolio page (admin wallet); an Irys node wallet for mainnet metadata; the mainnet pick-up check; the takeover question on unvested team tokens.
+- **Next program upgrade** (BACKLOG P2): snapshot `pool_fee_bps` on the Raise at opening; sweep the dust `crank_pool` leaves.
+- **Polish** (BACKLOG P2): Axiom/GMGN-style extras — a 5m/1h/6h/24h stats strip, a USD/SOL toggle and 1s/30s intervals, editable quick amounts, Bought/Sold/PnL in Your position, the figures row by the name.
+- Merge `final-model` into `main` when Josh has checked the preview (the live site must never show half old / half new).
+
+---
+
 # Progress: the terminal build on `final-model`
 
 ## Needs Josh
