@@ -7,10 +7,12 @@
 // are known), SEED_TOKEN_DECIMALS (the launched tokens' decimals, 6 by default).
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import { eventsInLogs, REFUND_REASON } from '../_shared/events.ts';
-import { indexSwap, type Tx } from '../_shared/swaps.ts';
+import { indexSwap, readPoolFeeBps, type Tx } from '../_shared/swaps.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
-const SECRET = Deno.env.get('HELIUS_WEBHOOK_SECRET') ?? '';
+const SECRET = Deno.env.get('HELIUS_WEBHOOK_SECRET') ?? '', RPC_URL = Deno.env.get('SEED_RPC_URL') ?? '';
+/* the fee the pool opened with, kept on the row for the swap reader; null when the node has not got the account yet (the reader then reads it at the first swap) */
+const poolFee = async (pool: string) => { try { return RPC_URL ? await readPoolFeeBps(RPC_URL, pool) : null; } catch (e) { console.error('pool fee', pool, (e as Error).message); return null; } };
 const TOKEN_DEC = Number(Deno.env.get('SEED_TOKEN_DECIMALS') ?? 6);
 const PAIR_DEC: Record<string, number> = { So11111111111111111111111111111111111111112: 9, EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: 6 };
 for (const kv of (Deno.env.get('SEED_PAIR_DECIMALS') ?? '').split(',')) { const [m, d] = kv.split(':'); if (m && d) PAIR_DEC[m.trim()] = Number(d); }
@@ -52,7 +54,7 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
       await up({ raised: units(e.raised as bigint, d), backers: e.backers }); break;
     case 'RaiseFilled': await up({ status: 'filled', seed_step: 'filled', filled_at: at }); break;
     case 'RaiseMinted': await up({ seed_step: 'minted', mint: e.mint }); break;
-    case 'RaisePooled': await up({ seed_step: 'pooled', pool: e.pool, position: e.position }); await watchPool(e.pool as string); break;
+    case 'RaisePooled': await up({ seed_step: 'pooled', pool: e.pool, position: e.position, pool_fee_bps: await poolFee(e.pool as string) }); await watchPool(e.pool as string); break;
     case 'RaiseSeeded': await up({ status: 'seeded', seed_step: 'seeded', seeded_at: at, resolved_at: at }); if (r.pool) await watchPool(r.pool); break;   // a second chance for the webhook list
     case 'RaiseRefunded': await up({ status: 'refunded', refund_reason: REFUND_REASON[Number(e.reason)] ?? 'missed', resolved_at: at }); break;
     case 'RefundClaimed': await db.from('contributions').update({ refunded_at: at }).eq('raise_id', r.id).eq('wallet', e.wallet as string); break;
