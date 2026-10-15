@@ -3,14 +3,13 @@
 P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P2 = polish. QA findings keep the priority QA gave.
 
 ## P1
-1. **Terminal columns.** New raises / Filling fast / Almost full / Seeding / Seeded & trading as live columns with the full card chip set; watchlist; search by CA or X handle.
-2. **Safety panel from on-chain facts only.** Mint/freeze authority, LP lock, metadata immutability, holder concentration, fresh and bundled wallets read from the chain for live raises (no demo checks on real raises).
-3. **Founder profile page.** Wallet, optional X, past raises and outcomes, fees earned, unlock history.
-4. **Portfolio for real wallets.** PnL graph and calendar, open positions, history, claims, Creator tab from chain and Supabase data.
-5. **Launch preview extras.** Pool depth, "a 10 SOL buy moves the chart X%", founder fee income at $5K/$25K/$100K daily volume.
-6. **Alerts.** In-app notifications for watched raises (filled, seeded, refunds open, unlocks).
-7. **Trade on links (Phase 5, mainnet only)** and the mainnet launch checklist in the README.
-8. **Top traders and PnL** on seeded raises (from `trades`).
+1. **Safety panel from on-chain facts only.** Mint/freeze authority, LP lock, metadata immutability, holder concentration, fresh and bundled wallets read from the chain for live raises (no demo checks on real raises).
+2. **Founder profile page.** Wallet, optional X, past raises and outcomes, fees earned, unlock history.
+3. **Portfolio for real wallets.** PnL graph and calendar, open positions, history, claims, Creator tab from chain and Supabase data.
+4. **Launch preview extras.** Pool depth, "a 10 SOL buy moves the chart X%", founder fee income at $5K/$25K/$100K daily volume.
+5. **Alerts.** In-app notifications for watched raises (filled, seeded, refunds open, unlocks).
+6. **Trade on links (Phase 5, mainnet only)** and the mainnet launch checklist in the README.
+7. **Top traders and PnL** on seeded raises (from `trades`).
 
 ## P2
 - **Axiom/GMGN patterns from QA (P2-15..19):** Your position with Bought / Sold / Holding / PnL for traders; editable quick-amount presets saved per wallet; a 5m/1h/6h/24h strip (change, buys/sells, net volume) above the panel; Price/MCap/Liquidity/24h volume in a row by the name and CA; a USD/SOL toggle and 1s/30s intervals.
@@ -20,6 +19,7 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 - Docs page pass for the new features.
 
 ## Done
+- Terminal lanes (B1): five stage columns at desktop width (tabbed board below 1100px), a starred watchlist with a toggle, search by name, ticker, CA, raise account or X handle, price on every card. Why: DECISIONS.md.
 - QA regression #1 (seed-qa): P1-F1 the price, market cap and position's worth re-read from the pool's reserves after each trade; P2-20 chart time in local time; P2-21 MCap axis labels with significant digits; P2-22 room for the top label.
 - Safety checks from the chain (QA P1-4): mint and freeze authority, liquidity lock (permanently locked, NFT in the raise account), metadata immutability, top-10 holder concentration; name/ticker and website are plain facts now.
 - Phase 5: Trade-on links (mainnet only, URL forms checked in a browser) and the mainnet launch checklist.

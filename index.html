@@ -449,6 +449,17 @@ a.ico:hover{color:var(--ink)}
 .trend-row:empty::after{content:"Nothing is moving right now.";font-size:14px;color:var(--muted);padding:8px 4px}
 /* the feed: one list of raises under tabs for each stage, in as many columns as fit */
 .board{display:flex;flex-direction:column;min-height:360px;padding:18px 18px 0}
+/* the lanes: five columns at desktop width, each scrolling on its own; below 1100px the tabbed board takes over */
+.lanes{display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:0 0 18px;align-items:start}
+@media (min-width:1100px){.lanes{display:grid}.board{display:none}.lanes+.board{display:none}}
+.lane{background:var(--panel);border:1px solid var(--hair);border-radius:18px;display:flex;flex-direction:column;min-height:420px;max-height:calc(100vh - 300px);min-width:0}
+.lane-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px 10px;border-bottom:1px solid var(--hair)}
+.lane-h h2{font-size:14px;font-weight:500;letter-spacing:-.01em}.lane-h .ct{font-size:12px;color:var(--muted)}
+.lane-list{display:flex;flex-direction:column;gap:10px;padding:10px;overflow-y:auto;overscroll-behavior:contain;min-height:0}
+.lane-list .tile{width:100%}.lane-empty{padding:28px 10px;text-align:center;color:var(--muted);font-size:13.5px}
+.star{position:absolute;top:8px;left:8px;z-index:2;width:26px;height:26px;border-radius:8px;border:0;background:transparent;color:var(--faint);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.star svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}.star:hover{color:var(--ink);background:var(--hair)}.star.on{color:#F5C542}.star.on svg{fill:#F5C542}
+#watchBtn.on{background:var(--hair);color:var(--ink)}
 .col-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px 16px}
 .col-side{display:flex;align-items:center;gap:12px;min-width:0}
 .col-note{font-size:14px;color:var(--muted);white-space:nowrap}
@@ -764,7 +775,7 @@ a.ico:hover{color:var(--ink)}
   <!-- ------------------------------------------------------ TERMINAL -->
   <section id="tab-terminal">
     <div class="xbar">
-      <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="bq" placeholder="Search the board by name or ticker" autocomplete="off" aria-label="Search the board"></label>
+      <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="bq" placeholder="Search by name, ticker, CA or X handle" autocomplete="off" aria-label="Search the board"></label>
       <div class="quick"><span>Quick deposit</span>
         <label class="mini"><input id="qbAmt" inputmode="decimal" aria-label="Quick deposit amount"></label>
         <button type="button" class="mini" id="qbAsset" aria-haspopup="listbox" aria-expanded="false" aria-label="Quick deposit asset"><span class="num" data-label>SOL</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button>
@@ -774,6 +785,7 @@ a.ico:hover{color:var(--ink)}
     <div class="filters">
       <div class="seg" id="assetSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span>
         <button data-v="SOL" aria-pressed="true">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button></div>
+      <button type="button" class="mini fbtn" id="watchBtn" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg><span>Watchlist</span></button>
       <button type="button" class="mini fbtn" id="filterBtn" aria-haspopup="dialog"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12l-4.6 5.4V13l-2.8 1V8.9z"/></svg><span>Filters</span><span class="ct num" id="filterCt" hidden></span></button>
     </div>
     <section class="trend" aria-labelledby="h-trend">
@@ -781,6 +793,7 @@ a.ico:hover{color:var(--ink)}
         <span class="trend-nav"><button type="button" class="x" data-tr="-1" aria-label="Scroll back">&#8249;</button><button type="button" class="x" data-tr="1" aria-label="Scroll forward">&#8250;</button></span></div>
       <div class="trend-row" id="trendRow"></div>
     </section>
+    <div class="lanes" id="lanes" aria-label="Raises by stage"></div>
     <section class="panel board" aria-label="All raises">
       <header class="col-head feed-head">
         <div class="feed-tabs" role="tablist" id="feedTabs"><button type="button" role="tab" data-feed="all" aria-selected="true">All<span class="ct num" id="n-all"></span></button><button type="button" role="tab" data-feed="new" aria-selected="false">New ideas<span class="ct num" id="n-new"></span></button><button type="button" role="tab" data-feed="seeding" aria-selected="false">Seeding<span class="ct num" id="n-seeding"></span></button><button type="button" role="tab" data-feed="seeded" aria-selected="false">Seeded<span class="ct num" id="n-seeded"></span></button><button type="button" role="tab" data-feed="refunded" aria-selected="false">Refunded<span class="ct num" id="n-refunded"></span></button></div>
@@ -1460,7 +1473,7 @@ function addr(seed) {
 
 const QUICK0 = () => ({ SOL: 2, USDC: 250, JUP: 500, BONK: 5000000, NVDAx: 1 });
 let state = { wallet: null, presales: [], positions: {}, claimed: {}, tokens: {}, quick: QUICK0(), custom: {} };
-const ui = { view: '', tab: 'terminal', sel: null, fAsset: 'SOL', bq: '', feed: 'all', sort: { all: 'trend', new: 'new', seeding: 'filled', seeded: 'ending', refunded: 'ending' }, qbAsset: 'SOL' };
+const ui = { view: '', tab: 'terminal', sel: null, fAsset: 'SOL', bq: '', feed: 'all', watchOnly: false, sort: { all: 'trend', new: 'new', seeding: 'filled', seeded: 'ending', refunded: 'ending' }, qbAsset: 'SOL' };
 function fresh() { return { at: Date.now(), wallet: null, presales: seedData(), positions: Object.assign({}, DEMO_WALLET_BUYS), claimed: {}, tokens: {}, quick: QUICK0(), custom: {} }; }
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q && s.presales[0].buys) {
@@ -1605,7 +1618,7 @@ const placeSegs = () => Object.values(seg).forEach(s => s.place());
 /* ============================================================= TERMINAL */
 /* bars sweep in only for rows that were not already on screen, so a buy or a re-sort does not replay every bar */
 const shown = { term: new Set() };
-function freshIn(k, list) { const prev = shown[k]; shown[k] = new Set(list.map(p => p.id)); return p => prev.has(p.id) ? '' : ' fresh'; }
+function freshIn(k, list) { const prev = shown[k] || (shown[k] = new Set()); shown[k] = new Set(list.map(p => p.id)); return p => prev.has(p.id) ? '' : ' fresh'; }
 /* the pair filter applies to all three columns */
 const pairOk = p => p.q === ui.fAsset;   // the board shows one pair at a time: SOL or USDC
 /* each column sorts on its own. Ending soon: live raises by deadline; in the seeded column it is the most recently seeded first.
@@ -1649,6 +1662,15 @@ function actCell(p) {
 }
 /* which column a raise sits in. Refunded ones are not on the board: they are named under it, and claims live in the portfolio. */
 const colOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'filled' ? 'seeding' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : 'seeding') : null;   // a filled raise sits with the seeding ones until it seeds
+/* the Terminal's lanes: where a raise is in its life. New under 50%, filling fast from 50 to 90, almost full above, then seeding and trading. */
+const LANES = [['new', 'New raises'], ['fast', 'Filling fast'], ['full', 'Almost full'], ['seeding', 'Seeding'], ['seeded', 'Seeded & trading']];
+const laneOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'filled' ? 'seeding' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : pctOf(p) < 90 ? 'fast' : 'full') : null;
+/* the search box matches a name, a ticker, a contract address, a raise account or an X handle */
+const matchQ = (p, q) => { if (!q) return true; const s = q.toLowerCase().replace(/^[@$]/, ''); return [p.name, p.ticker, p.mint, p.address, p.xAccount && p.xAccount.handle].some(v => v && String(v).toLowerCase().includes(s)); };
+/* the watchlist: starred raises, kept with the demo state; alerts and the Watchlist toggle read it */
+const isWatched = p => !!(state.watch && state.watch[p.id]);
+function toggleWatch(p) { state.watch = state.watch || {}; if (state.watch[p.id]) delete state.watch[p.id]; else state.watch[p.id] = Date.now(); save(); renderTerminal(); }
+const starBtn = p => `<button type="button" class="star${isWatched(p) ? ' on' : ''}" data-watch="${p.id}" aria-pressed="${isWatched(p)}" aria-label="${isWatched(p) ? 'Remove from' : 'Add to'} watchlist" title="Watchlist"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg></button>`;
 /* what is moving: a live raise by what it took in the last six hours as a share of its target, a seeded token by how recently
    it seeded. Refunded raises never trend. */
 function trendScore(p) {
@@ -1671,22 +1693,32 @@ function tile(p, i, trend, fresh = '') {
   const C = Q(p), pc = pctOf(p), live = p.status === 'live';
   return `<div class="tile ${p.status}${trend ? ' tr-card' : fresh}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
     <span class="tr-art">${artHTML(p, 'tr-img')}${trend ? `<span class="tr-rank">${i + 1}</span>` : ''}<span class="tr-pct" data-pct>${Math.floor(pc + 1e-7)}%</span><span class="bar"><i data-bar style="width:${pc}%"></i></span></span>
-    <span class="tr-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${trend ? '' : `${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}`}</span>
+    <span class="tr-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${trend ? '' : starBtn(p)}${trend ? '' : `${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}`}</span>
     <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></b>${doingChip(p)}${trend && !p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}</span>
-    ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span>${rowAnn(p)}${rowLinks(p)}</span>
+    ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span><span class="br-stat" title="${p.status === 'seeded' ? 'Price' : 'Raise price'}"><span class="num" data-price>${fmtPrice(p.status === 'seeded' && p.spot ? p.spot : priceOf(p))} ${esc(C.sym)}</span></span>${rowAnn(p)}${rowLinks(p)}</span>
     <span class="tile-flags">${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
     <span class="t-act">${actCell(p)}</span>`}</div>`;
 }
 const FEED_NOTE = { all: 'Live and seeded', new: 'Under 50% filled', seeding: 'Past halfway, or filled and seeding', seeded: 'Pool open', refunded: 'Missed, cancelled or timed out' };
 function renderTerminal() {
   const q = ui.bq.trim(), cols = {}; for (const k of ['new', 'seeding', 'seeded']) cols[k] = boardHit(k);
-  const ql = q.toLowerCase(), refunded = state.presales.filter(p => p.status === 'refunded' && pairOk(p) && (!ql || (p.name + ' ' + p.ticker).toLowerCase().includes(ql)));
+  const ql = q.toLowerCase(), refunded = state.presales.filter(p => p.status === 'refunded' && pairOk(p) && matchQ(p, ql) && (!ui.watchOnly || isWatched(p)));
   const lists = { all: [...cols.new, ...cols.seeding, ...cols.seeded], new: cols.new, seeding: cols.seeding, seeded: cols.seeded, refunded };
   for (const k in lists) { const n = $('#n-' + k); if (n) n.textContent = lists[k].length || ''; }
   syncFilterBadges();
   /* trending: the eight most active, whatever the tabs and filters say */
   const trend = state.presales.filter(p => trendScore(p) >= 0).sort((a, b) => trendScore(b) - trendScore(a) || b.openedAt - a.openedAt).slice(0, 8);
   $('#trendRow').innerHTML = trend.map((p, i) => tile(p, i, true)).join('');
+  /* the lanes: five columns on a wide screen, each the raises at that stage, newest or most active first */
+  const lanesEl = $('#lanes');
+  if (lanesEl) {
+    const inLane = {}; LANES.forEach(([k]) => inLane[k] = []);
+    [...cols.new, ...cols.seeding, ...cols.seeded].forEach(p => { const l = laneOf(p); if (l && inLane[l]) inLane[l].push(p); });
+    const order = { new: sorter('new'), fast: sorter('all'), full: sorter('all'), seeding: sorter('seeding'), seeded: sorter('seeded') };
+    lanesEl.innerHTML = LANES.map(([k, name]) => { const l = inLane[k].slice().sort(order[k]), fr = freshIn('lane-' + k, l);
+      return `<section class="lane" data-lane="${k}" aria-label="${name}"><header class="lane-h"><h2>${name}</h2><span class="ct num">${l.length || ''}</span></header><div class="lane-list">${l.length ? l.map((p, i) => tile(p, i, false, fr(p))).join('') : `<div class="lane-empty">${{ new: 'No new raises.', fast: 'Nothing between 50 and 90%.', full: 'Nothing above 90%.', seeding: 'Nothing seeding.', seeded: 'Nothing trading yet.' }[k]}</div>`}</div></section>`; }).join('');
+  }
+  const wb = $('#watchBtn'); if (wb) { const n = Object.keys(state.watch || {}).length; wb.classList.toggle('on', !!ui.watchOnly); wb.setAttribute('aria-pressed', String(!!ui.watchOnly)); $('span', wb).textContent = n ? `Watchlist ${n}` : 'Watchlist'; }
   /* the feed */
   const k = ui.feed, list = lists[k].slice().sort(sorter(k)), fresh = freshIn('term', list);
   $$('#feedTabs [data-feed]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.feed === k)));
@@ -1716,6 +1748,8 @@ function patchRows(p) {
 }
 $('#feedTabs').addEventListener('click', e => { const b = e.target.closest('[data-feed]'); if (b && b.dataset.feed !== ui.feed) { ui.feed = b.dataset.feed; renderTerminal(); } });
 $('.trend-nav').addEventListener('click', e => { const b = e.target.closest('[data-tr]'); if (b) $('#trendRow').scrollBy({ left: +b.dataset.tr * 420, behavior: 'smooth' }); });
+document.addEventListener('click', e => { const w = e.target.closest('[data-watch]'); if (w) { e.preventDefault(); const p = find(w.dataset.watch); if (p) toggleWatch(p); } });
+$('#watchBtn').addEventListener('click', () => { ui.watchOnly = !ui.watchOnly; renderTerminal(); });
 $('.board').addEventListener('click', e => {
   const qb = e.target.closest('[data-qb]'), cl = e.target.closest('[data-claim]');
   if (qb) return quickBuy(find(qb.dataset.qb), qb);

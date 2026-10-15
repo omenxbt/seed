@@ -85,7 +85,7 @@ function boardPass(k, p) {
 /* the raises a column shows: the toolbar's search and pair filter, the column's own rules, unsorted */
 function boardHit(k) {
   const q = ui.bq.trim().toLowerCase();
-  return state.presales.filter(p => colOf(p) === k && pairOk(p) && (!q || (p.name + ' ' + p.ticker).toLowerCase().includes(q)) && boardPass(k, p));
+  return state.presales.filter(p => colOf(p) === k && pairOk(p) && matchQ(p, q) && boardPass(k, p) && (!ui.watchOnly || isWatched(p)));
 }
 /* the toolbar button's count and each column's badge */
 function syncFilterBadges() {
