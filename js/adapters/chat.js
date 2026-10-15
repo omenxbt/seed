@@ -98,7 +98,7 @@ const backedBy = (p, w) => (p.buys || []).filter(b => b.wallet === w).reduce((a,
 let chatOff = null, chatReply = null;
 function chatCard(p) {
   const frozen = p.status === 'refunded';
-  return `<section class="panel rail-card chat-card" data-chat id="chat"><div class="rail-h"><h3>Chat</h3>${chatAdapter.live() || supa.configured() ? LIVE_PILL : DEMO_PILL}</div>
+  return `<section class="panel rail-card chat-card" data-chat id="chat"><div class="rail-h"><h3>Chat</h3>${frozen ? '<span class="tag" title="This raise refunded; its chat took its last message then">Closed</span>' : chatAdapter.live() || supa.configured() ? LIVE_PILL : DEMO_PILL}</div>
     <div class="chat${frozen ? ' frozen' : ''}"><div class="chat-pins" data-pins></div><div class="chat-list" data-chatlist aria-live="polite"><div class="pp-loading">Loading messages…</div></div>
     <div class="chat-compose" data-compose></div></div>
     ${supa.configured() ? '' : '<p class="rail-cap">Syncs between windows of this browser until Supabase is configured.</p>'}</section>`;

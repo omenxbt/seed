@@ -58,7 +58,10 @@ that X sign-in is not switched on, and the demo wallet uses a typed handle that 
   actions `admin-flag`, `admin-takeover`, `admin-dismiss` (wallets in `SEED_ADMINS`). The admin actions record the
   off-chain side; the on-chain instructions are sent by the admin multisig and indexed by the webhook.
 - `functions/crank/` is the scheduler: settles live raises past their deadline, runs the seeding steps for filled raises,
-  times out the ones that stall, claims creator fees hourly and applies due payout changes. It runs with a crank wallet
+  times out the ones that stall, claims creator fees hourly and applies due payout changes. It also backfills a pool's
+  swaps from the RPC (`_shared/swaps.ts`, the webhook's own reader): every pass for the first half hour after seeding,
+  since Helius only delivers a pool's transactions once the pool is on the webhook's address list and the first buys land
+  before that, then once an hour for the last two hours. It runs with a crank wallet
   (`SEED_CRANK_KEY`) that holds only SOL for fees; every instruction it sends is permissionless. Schedule it with pg_cron:
 
   ```sql

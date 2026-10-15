@@ -7,6 +7,7 @@
 // are known), SEED_TOKEN_DECIMALS (the launched tokens' decimals, 6 by default).
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import { eventsInLogs, REFUND_REASON } from '../_shared/events.ts';
+import { indexSwap, type Tx } from '../_shared/swaps.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const SECRET = Deno.env.get('HELIUS_WEBHOOK_SECRET') ?? '';
@@ -77,37 +78,9 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
   }
 }
 
-/* ---- the pool's swaps. Helius delivers every transaction that touches a watched address; once a raise's pool is
-   watched, a swap on it shows up here with the pool's vault balances before and after. The vaults belong to DAMM's pool
-   authority; the one of the raise's mint moving one way and the pair's the other way is a swap. Seed's own transactions
-   (the pool's opening, fee claims) are skipped by the program's presence in the account list. */
-const DAMM_AUTHORITY = 'HLnpSz9h2S4hiLQ43rnSD9XkcUThA7B8hQMKmDaiTLcC', SEED_PROGRAM = Deno.env.get('SEED_PROGRAM_ID') ?? '', POOL_FEE_BPS = Number(Deno.env.get('SEED_POOL_FEE_BPS') ?? 100);
+/* ---- the pool's swaps: parsed by the shared reader (../_shared/swaps.ts), which the crank also uses to backfill the
+   swaps that land before Helius has a new pool on its address list */
 const HELIUS_KEY = Deno.env.get('HELIUS_API_KEY') ?? '', WEBHOOK_ID = Deno.env.get('HELIUS_WEBHOOK_ID') ?? '';
-type TokBal = { accountIndex: number; mint: string; owner?: string; uiTokenAmount: { amount: string; decimals: number } };
-async function indexSwap(t: { transaction?: { message?: { accountKeys?: unknown[] }; signatures?: string[] }; meta?: { preTokenBalances?: TokBal[]; postTokenBalances?: TokBal[]; loadedAddresses?: { writable?: string[]; readonly?: string[] } }; slot?: number; blockTime?: number }, tx: string) {
-  const m = t.meta; if (!m?.preTokenBalances || !m.postTokenBalances) return false;
-  const keys = (t.transaction?.message?.accountKeys ?? []).map((k) => typeof k === 'string' ? k : (k as { pubkey: string }).pubkey).concat(m.loadedAddresses?.writable ?? [], m.loadedAddresses?.readonly ?? []);
-  if (!keys.length || (SEED_PROGRAM && keys.includes(SEED_PROGRAM))) return false;
-  const { data: raises } = await db.from('raises').select('id, pool, mint, pair_mint').in('pool', keys).not('pool', 'is', null);
-  if (!raises?.length) return false;
-  let n = 0;
-  for (const r of raises) {
-    const delta = (mint: string) => {
-      const pre = m.preTokenBalances!.find((b) => b.owner === DAMM_AUTHORITY && b.mint === mint), post = m.postTokenBalances!.find((b) => b.owner === DAMM_AUTHORITY && b.mint === mint);
-      if (!pre && !post) return null;
-      const dec = (post ?? pre)!.uiTokenAmount.decimals; return { d: (Number(post?.uiTokenAmount.amount ?? 0) - Number(pre?.uiTokenAmount.amount ?? 0)) / 10 ** dec };
-    };
-    const tok = delta(r.mint), pair = delta(r.pair_mint);
-    if (!tok || !pair || tok.d === 0 || pair.d === 0 || Math.sign(tok.d) === Math.sign(pair.d)) continue;   // not a swap: nothing moved, or both vaults went the same way (liquidity)
-    const side = pair.d > 0 ? 'buy' : 'sell', pair_amount = Math.abs(pair.d), token_amount = Math.abs(tok.d), fee = POOL_FEE_BPS / 10000;
-    const price = (side === 'buy' ? pair_amount * (1 - fee) : pair_amount / (1 - fee)) / token_amount;   // the pool's own price: a buy's delta carries the fee, a sell's comes after it
-    const { error } = await db.from('trades').insert({ signature: tx, raise_id: r.id, pool: r.pool, side, pair_amount, token_amount, price, trader: keys[0], slot: t.slot ?? 0, at: new Date((t.blockTime ?? Math.floor(Date.now() / 1000)) * 1000).toISOString() });
-    if (error) { if (error.code !== '23505') console.error('trade', tx, error.message); continue; }   // 23505: seen before, so the volume was counted then
-    await db.rpc('bump_volume', { p_raise_id: r.id, p_amount: pair_amount, p_signature: tx }).then(({ error: e2 }) => { if (e2) console.error('volume', e2.message); });
-    n++;
-  }
-  return n > 0;
-}
 /* the pool joins the webhook's address list, so its swaps start arriving */
 async function watchPool(pool: string) {
   if (!HELIUS_KEY || !WEBHOOK_ID) { console.warn('pool not watched: HELIUS_API_KEY or HELIUS_WEBHOOK_ID missing'); return; }
@@ -130,7 +103,7 @@ Deno.serve(async (req) => {
     if (t.meta?.err) continue;   // a failed transaction emits nothing that counts
     const tx = t.transaction?.signatures?.[0] ?? t.signature ?? '', logs = t.meta?.logMessages ?? [];
     if (!tx) continue;
-    try { if (await indexSwap(t as Parameters<typeof indexSwap>[0], tx)) n++; } catch (e) { console.error('swap', tx, (e as Error).message); }
+    try { if (await indexSwap(db, t as Tx, tx)) n++; } catch (e) { console.error('swap', tx, (e as Error).message); }
     if (!logs.length) continue;
     for (const ev of await eventsInLogs(logs)) { try { await apply(ev.name, ev.data, tx, t.blockTime ?? Math.floor(Date.now() / 1000)); n++; } catch (e) { console.error(ev.name, tx, (e as Error).message); } }
   }

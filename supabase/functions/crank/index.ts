@@ -4,7 +4,9 @@
 //   live raises     settle, once the deadline has passed with the raise short (it refunds)
 //   filled raises   the next seeding step (mint -> pool -> seed), or timeout_refund once the three days are up
 //   seeded raises   claim_creator_fees when the position has fees waiting (at most once an hour per raise), and
-//                   apply_payout_change once a requested change is due
+//                   apply_payout_change once a requested change is due; the pool's swaps are backfilled from the RPC
+//                   every pass for the first half hour after seeding (Helius only starts delivering them once the pool
+//                   is on the webhook's address list), then once an hour
 // The on-chain state is read fresh each pass; the tables are not trusted for what to send.
 //
 // Secrets: SEED_RPC_URL (devnet or mainnet), SEED_CRANK_KEY (the crank wallet's 64-byte secret key, base58),
@@ -14,12 +16,13 @@ import { Connection, Keypair, PublicKey } from 'npm:@solana/web3.js@1.95.3';
 import { AnchorProvider, Program, Wallet } from 'npm:@coral-xyz/anchor@0.30.1';
 import idl from './seed.json' with { type: 'json' };
 import { seedClient } from './client.ts';
+import { backfillPool } from '../_shared/swaps.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const SECRET = Deno.env.get('CRANK_SECRET') ?? '';
 const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function b58(s: string) { let n = 0n; for (const c of s) n = n * 58n + BigInt(B58.indexOf(c)); const out: number[] = []; while (n > 0n) { out.unshift(Number(n % 256n)); n /= 256n; } for (const c of s) { if (c !== '1') break; out.unshift(0); } return Uint8Array.from(out); }
-const FEE_CLAIM_EVERY = 3600e3;
+const FEE_CLAIM_EVERY = 3600e3, BACKFILL_FRESH = 30 * 60e3;   // after seeding, the pool's swaps are read back every pass for this long
 
 Deno.serve(async (req) => {
   if (SECRET && req.headers.get('authorization') !== SECRET) return new Response('no', { status: 401 });
@@ -47,10 +50,16 @@ Deno.serve(async (req) => {
       }
       if (status === 'seeded') {
         if (a.pendingPayout && Number(a.payoutEffectiveAt) * 1000 <= now) { await client.applyPayoutChange(r.publicKey); note(`payout ${id}`); }
-        const { data: last } = await db.from('fee_claims').select('at').eq('raise_id', (await db.from('raises').select('id').eq('address', id).maybeSingle()).data?.id ?? '').order('at', { ascending: false }).limit(1).maybeSingle();
+        const row = (await db.from('raises').select('id, pool, mint, pair_mint').eq('address', id).maybeSingle()).data;
+        const { data: last } = await db.from('fee_claims').select('at').eq('raise_id', row?.id ?? '').order('at', { ascending: false }).limit(1).maybeSingle();
         if (!last || now - Date.parse(last.at) > FEE_CLAIM_EVERY) {
           // the program refuses a claim with nothing waiting at preflight, which costs nothing; that is the quiet case
           try { await client.claimCreatorFees(r.publicKey); note(`fees ${id}`); } catch (e) { if (!String((e as Error).message).includes('NothingToClaim')) throw e; }
+        }
+        /* the swaps the webhook did not deliver: every pass while the pool is new, then once an hour (the top of it) */
+        const seededMs = Number(a.seededAt) * 1000, fresh = now - seededMs < BACKFILL_FRESH;
+        if (row?.pool && row.mint && row.pair_mint && (fresh || new Date(now).getMinutes() === 0)) {
+          try { const n = await backfillPool(db, Deno.env.get('SEED_RPC_URL')!, row, fresh ? 50 : 100, fresh ? 3600 : 2 * 3600); if (n) note(`backfill ${id} ${n}`); } catch (e) { fail(`backfill ${id}`, e); }
         }
         /* team tokens past their unlock: the schedule's tranches up to now, less what was claimed, with the config's unit (a minute in test mode) */
         if (Number(a.teamBps) > 0) {

@@ -451,7 +451,7 @@ a.ico:hover{color:var(--ink)}
 .bell-wrap{position:relative;display:inline-flex}.bell{position:relative;width:34px;height:34px;border-radius:10px;border:0;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .bell svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}.bell:hover,.bell.on{color:var(--ink)}
 .bell .ct{position:absolute;top:2px;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--navy);color:#fff;font-size:10.5px;line-height:16px;text-align:center}
-.bell-pop{width:340px;max-width:calc(100vw - 24px);padding:12px 12px 8px}.bell-h{display:flex;justify-content:space-between;align-items:center;padding:0 4px 8px;font-size:14px}
+.bell-pop{width:340px;max-width:calc(100vw - 24px);padding:12px 12px 8px}.bell-h{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 4px 8px;font-size:14px}.bell-h b{flex:1}.bell-h .quiet{font-size:12px}.bell-h .qb{width:auto;margin:0;padding:4px 10px}
 .bell-list{list-style:none;max-height:380px;overflow-y:auto}.bell-list li a{display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-top:1px solid var(--hair);color:inherit;text-decoration:none;font-size:13px;line-height:1.4}
 .bell-list li.new a{background:var(--hair)}.bell-list li a>span{display:flex;flex-direction:column;gap:2px;min-width:0}.bell-list small{color:var(--muted);font-size:11.5px}
 .board{display:flex;flex-direction:column;min-height:360px;padding:18px 18px 0}
@@ -1572,8 +1572,10 @@ const adapter = {
 
 /* ------------------------------------------------------------ formatting */
 const dpOf = k => asset(k).dp;
-const fmtAmt = (n, k) => Number(n.toFixed(dpOf(k))).toLocaleString('en-US', { maximumFractionDigits: dpOf(k) });
-const fmtRaised = (n, k) => n > 0 && n < 0.01 ? String(Number(n.toFixed(6))) : Number(n.toFixed(dpOf(k))).toLocaleString('en-US', { minimumFractionDigits: Math.min(2, dpOf(k)), maximumFractionDigits: dpOf(k) });   // 0.005, not 0.01
+/* an amount below 0.1 keeps at least two significant figures, so 0.005 SOL is never shown as 0.01 */
+const dpFor = (n, k) => { const a = Math.abs(n); return a > 0 && a < 0.1 ? Math.min(9, Math.max(dpOf(k), 1 - Math.floor(Math.log10(a)))) : dpOf(k); };
+const fmtAmt = (n, k) => Number(n.toFixed(dpFor(n, k))).toLocaleString('en-US', { maximumFractionDigits: dpFor(n, k) });
+const fmtRaised = (n, k) => Number(n.toFixed(dpFor(n, k))).toLocaleString('en-US', { minimumFractionDigits: Math.min(2, dpOf(k)), maximumFractionDigits: dpFor(n, k) });
 const trim2 = v => String(Number(v.toFixed(2)));
 /* compact form for table cells and big readouts: 43.2K, 1.25M, 2B */
 function fmtC(n, k, raised) { const a = Math.abs(n); return a >= 1e9 ? trim2(n / 1e9) + 'B' : a >= 1e6 ? trim2(n / 1e6) + 'M' : a >= 1e4 ? trim2(n / 1e3) + 'K' : raised ? fmtRaised(n, k) : fmtAmt(n, k); }
@@ -1755,7 +1757,7 @@ function renderTerminal() {
     const order = { new: sorter('new'), full: sorter('seeding'), seeded: sorter('seeded') };
     if (typeof chain !== 'undefined') chain.refreshSpots(inLane.seeded);
     lanesEl.innerHTML = LANES.map(([k, name]) => { const l = inLane[k].slice().sort(order[k]), fr = freshIn('lane-' + k, l);
-      return `<section class="lane" data-lane="${k}" aria-label="${name}"><header class="lane-h"><h2>${name}</h2><span class="ct num">${l.length || ''}</span></header><div class="lane-list">${l.length ? l.map((p, i) => laneRow(p, i, fr(p))).join('') : `<div class="lane-empty">${{ new: 'No live raises right now.', full: 'Nothing above 90% or seeding.', seeded: 'Nothing trading yet.' }[k]}</div>`}</div></section>`; }).join('');
+      return `<section class="lane" data-lane="${k}" aria-label="${name}"><header class="lane-h"><h2>${name}</h2><span class="ct num">${l.length || ''}</span></header><div class="lane-list">${l.length ? l.map((p, i) => laneRow(p, i, fr(p))).join('') : `<div class="lane-empty">${ui.watchOnly ? (Object.keys(state.watch || {}).length ? 'Nothing starred here.' : 'Your watchlist is empty. Star a raise to follow it.') : q ? 'No match.' : { new: 'No live raises right now.', full: 'Nothing above 90% or seeding.', seeded: 'Nothing trading yet.' }[k]}</div>`}</div></section>`; }).join('');
   }
   if (lanesEl) fitLanes();
   const wb = $('#watchBtn'); if (wb) { const n = Object.keys(state.watch || {}).length; wb.classList.toggle('on', !!ui.watchOnly); wb.setAttribute('aria-pressed', String(!!ui.watchOnly)); $('span', wb).textContent = n ? `Watchlist ${n}` : 'Watchlist'; }

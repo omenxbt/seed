@@ -894,8 +894,9 @@ function bindRail(p) {
     if (side) { pg.side = side.dataset.v; $$('[data-side] button', panel).forEach(b => b.setAttribute('aria-pressed', String(b === side))); inp.value = ''; chips(); sync(); inp.focus(); return; }
     if (chip) {
       const room = profileOf(cur).maxBuy ? Math.max(0, profileOf(cur).maxBuy - (state.positions[cur.id] || 0)) : Infinity;
+      if (chip.dataset.chip === 'max' && state.wallet && spendable(cur) <= 0) { inp.value = ''; sync(); err.textContent = `This wallet has nothing to spend: add ${Q(cur).sym} first${cur.q === 'SOL' && isReal() ? ', keeping about 0.01 SOL for the fees' : ''}.`; return; }
       inp.value = chip.dataset.pct ? (chip.dataset.pct === '100' ? heldOf(cur) : Math.floor(heldOf(cur) * chip.dataset.pct / 100))
-        : chip.dataset.chip !== 'max' ? chip.dataset.chip : swap ? balOf(cur.q) : r6(Math.min(state.wallet ? balOf(cur.q) : Infinity, payLeft(cur), room));
+        : chip.dataset.chip !== 'max' ? chip.dataset.chip : swap ? balOf(cur.q) : r6(Math.min(spendable(cur), payLeft(cur), room));
       sync(); return;
     }
     if (!e.target.closest('[data-go]') || busy) return;
@@ -946,7 +947,10 @@ function bindLiveTrade(p, panel) {
   panel.onclick = async e => {
     const side = e.target.closest('[data-side] button'), chip = e.target.closest('[data-chip],[data-pct]'), cur = now();
     if (side) { pg.side = side.dataset.v; $$('[data-side] button', panel).forEach(b => b.setAttribute('aria-pressed', String(b === side))); inp.value = sell() && heldOf(cur) > 0 ? String(r6(heldOf(cur))) : ''; chips(); sync(); inp.focus(); return; }
-    if (chip) { inp.value = chip.dataset.pct ? r6(heldOf(cur) * chip.dataset.pct / 100) : chip.dataset.chip !== 'max' ? chip.dataset.chip : Math.max(0, r6(balOf(cur.q) - (cur.q === 'SOL' ? 0.01 : 0))); sync(); return; }
+    if (chip) {
+      if (chip.dataset.chip === 'max' && spendable(cur) <= 0) { inp.value = ''; sync(); err.textContent = `This wallet has nothing to spend: add ${Q(cur).sym} first${cur.q === 'SOL' ? ', keeping about 0.01 SOL for the fees' : ''}.`; return; }
+      inp.value = chip.dataset.pct ? r6(heldOf(cur) * chip.dataset.pct / 100) : chip.dataset.chip !== 'max' ? chip.dataset.chip : r6(spendable(cur)); sync(); return;
+    }
     if (!e.target.closest('[data-go]') || busy) return;
     if (!on()) { await connect(); return; }
     const n = num(); if (go.disabled || !(n > 0)) return;
@@ -963,11 +967,14 @@ function bindLiveTrade(p, panel) {
   pg.syncTrade = sync; chips(); sync();
   if (on()) refreshHolding(p);   // the wallet's token balance, from the chain
 }
+/* what a wallet can put into a buy: its balance of the pair asset, less about 0.01 SOL a real wallet keeps for the fee and the token account */
+const spendable = p => Math.max(0, r6(balOf(p.q) - (p.q === 'SOL' && isReal() ? 0.01 : 0)));
 /* a real wallet's balance of the token, read from its token account and kept where the demo keeps its holdings */
 async function refreshHolding(p) {
   if (!isReal() || !p.mint) return;
   try {
-    await chain.init(); const me = chain.me(), ata = chain.ata(me, chain.pk(p.mint));
+    await chain.init(); if (!isReal()) return;   // the wallet can be replaced while the chain client comes up
+    const me = chain.me(), ata = chain.ata(me, chain.pk(p.mint));
     const info = await chain.conn.getTokenAccountBalance(ata).catch(() => null);
     if (!isReal() || state.wallet.pk !== me.toBase58()) return;   // the wallet changed while the chain answered
     const held = info ? Number(info.value.uiAmountString) : 0; (state.tokens = state.tokens || {})[p.id] = held;
