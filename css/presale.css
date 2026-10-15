@@ -780,3 +780,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .fp .dtable a svg,.fp-meta svg{width:12px;height:12px;vertical-align:-2px}.founder-raises td a{white-space:nowrap}
 @media (max-width:720px){.fp-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:520px){.fp-id h1{font-size:20px}}
+
+/* the portfolio's open positions and history rows */
+.hrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px 14px;align-items:center;padding:10px 0;border-top:1px solid var(--hair);font-size:13.5px}.hrow:first-of-type{border-top:0}.hrow .pos{color:var(--ok-ink)}.hrow .neg{color:var(--bad-ink)}.hrow svg{width:12px;height:12px}.card-h .quiet{font-weight:400;font-size:12.5px;margin-left:8px}
+#phist{display:flex;flex-direction:column;gap:14px;margin-top:14px}

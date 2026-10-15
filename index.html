@@ -951,6 +951,7 @@ a.ico:hover{color:var(--ink)}
           <div id="perfBody"></div>
         </section>
         <section class="panel"><h3 class="card-h">Positions</h3><div class="pcols" aria-hidden="true"><span>Raise</span><span>You paid</span><span>Status</span><span>Yours</span><span></span></div><div id="prows"></div></section>
+        <div id="phist" hidden></div>
         </div>
       </div>
       <aside class="ws-rail" aria-label="Wallet">
@@ -2087,7 +2088,21 @@ function renderPortfolio() {
         <span class="num">${a ? `${fmtAmt(a, p.q)} ${sym}` : '–'}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
     : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#">Buy into a raise from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
   $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` + xRow() + (isReal() && SEED.network === 'devnet' && !state.wallet.stale && !(balOf('SOL') > 0) ? '<p class="rail-meta">No devnet SOL. Switch the wallet app to Devnet (Phantom: Settings → Developer settings → Testnet mode) and get test SOL at <a href="https://faucet.solana.com" target="_blank" rel="noopener">faucet.solana.com</a>.</p>' : '') : '<p class="rail-meta">No wallet connected.</p>';
-  renderPerf(); syncMove(); renderCreator();
+  renderPerf(); syncMove(); renderCreator(); renderHistory();
+  if (isReal() && (!portfolioAdapter.data || portfolioAdapter.wallet !== state.wallet.pk)) portfolioAdapter.load().then(d => { if (d && ui.tab === 'portfolio') renderPortfolio(); });
+}
+/* a real wallet's open positions with their result, and everything it did on Seed, newest first */
+function renderHistory() {
+  const box = $('#phist'); if (!box) return;
+  const d = isReal() ? portfolioAdapter.data : null;
+  if (!isReal()) { box.hidden = true; return; } box.hidden = false;
+  if (!d) { box.innerHTML = '<section class="panel"><h3 class="card-h">History</h3><div class="empty">Reading this wallet\'s record…</div></section>'; return; }
+  const row = e => { const p = e.p, sym = esc(Q(p).sym), what = { back: `Backed with ${fmtExact(e.pair, p.q)} ${sym}`, refund: `Refund claimed, ${fmtExact(e.pair, p.q)} ${sym} back`, claim: `Claimed ${fmtTok(e.tokens)} $${esc(p.ticker)}`, buy: `Bought ${fmtTok(e.tokens)} $${esc(p.ticker)} for ${fmtExact(e.pair, p.q)} ${sym}`, sell: `Sold ${fmtTok(e.tokens)} $${esc(p.ticker)} for ${fmtExact(e.pair, p.q)} ${sym}` }[e.kind];
+    return `<div class="hrow"><span class="c-proj">${avatar(p)}<span class="nm"><b>${esc(what)}</b><span class="meta"><a href="#/presale/${esc(p.id)}">${esc(p.name)}</a></span></span></span><span class="num ${e.pnl > 0 ? 'pos' : e.pnl < 0 ? 'neg' : ''}">${e.pnl != null ? fmtPnl(e.pnl) : ''}</span><span class="num quiet" title="${esc(fmtDate(e.t))}">${fmtAgo(Date.now() - e.t)}</span><span>${e.sig ? `<a href="${esc(explorer(e.sig, 'tx'))}" target="_blank" rel="noopener" aria-label="View transaction">${ICONS.out}</a>` : ''}</span></div>`; };
+  const open = d.open.filter(x => x.held > 0);
+  const openRows = open.map(x => `<div class="hrow"><span class="c-proj">${avatar(x.p)}<span class="nm"><b>${fmtTok(x.held)} $${esc(x.p.ticker)}</b><span class="meta">${esc(x.p.name)}</span></span></span><span class="num">${fmtExact(x.value, x.p.q)} ${esc(Q(x.p).sym)}</span><span class="num ${x.unrealised > 0 ? 'pos' : x.unrealised < 0 ? 'neg' : ''}">${fmtPnl(x.unrealised)}</span><span class="num ${x.realised > 0 ? 'pos' : x.realised < 0 ? 'neg' : ''}">${x.realised ? fmtPnl(x.realised) : ''}</span></div>`).join('');
+  box.innerHTML = `<section class="panel"><h3 class="card-h">Open positions <span class="quiet">value, unrealised, realised</span></h3>${openRows || '<div class="empty">No tokens held from a Seed raise.</div>'}</section>
+    <section class="panel"><h3 class="card-h">History</h3>${d.history.length ? d.history.slice(0, 100).map(row).join('') : '<div class="empty">Nothing yet. Backing, claims and swaps show here as they land.</div>'}</section>`;
 }
 $('#prows').addEventListener('click', e => { const cl = e.target.closest('[data-claim]'); if (cl) claim(find(cl.dataset.claim), cl); });
 
@@ -2145,9 +2160,12 @@ async function requestPayoutChange(p, to) {
 /* ------------------------------------------------- portfolio: performance (PnL graph and calendar) */
 ui.perf = { mode: 'graph', m: 0 };   // m: months back from the current month, for the calendar
 const DOW = ['M', 'T', 'W', 'T', 'F', 'S', 'S'], MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-function pnlDays() { return isReal() ? [] : demoPnlDays(Date.now()); }
+function pnlDays() { return isReal() ? (portfolioAdapter.data ? portfolioAdapter.data.days : []) : demoPnlDays(Date.now()); }
+const pnlSol = () => isReal();   // a real wallet's results are in SOL; the demo's are in dollars
 /* +$5.3K, -$34.08, $0 */
-function fmtPnl(v, signed = true) { const a = Math.abs(v); if (a < 0.005) return '$0'; const sgn = v < 0 ? '-' : signed ? '+' : '';
+function fmtPnl(v, signed = true) { const a = Math.abs(v), sgn = v < 0 ? '-' : signed ? '+' : '';
+  if (pnlSol()) { if (a < 5e-7) return '0 SOL'; return `${sgn}${a >= 100 ? trimK(a) : String(Number(a.toFixed(a >= 1 ? 3 : 5)))} SOL`; }
+  if (a < 0.005) return '$0';
   const k = a >= 1e6 ? trimK(a / 1e6) + 'M' : a >= 1000 ? trimK(a / 1000) + 'K' : a.toFixed(2); return sgn + '$' + k; }
 function trimK(k) { return (k >= 100 ? k.toFixed(0) : k >= 10 ? k.toFixed(1) : k.toFixed(2)).replace(/\.?0+$/, ''); }
 function dayKey(t) { const d = new Date(t); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
@@ -2163,10 +2181,10 @@ function renderPerf() {
    unit to the pixel, so the labels keep their size. */
 let perfPlot = null;
 function niceStep(span, n) { const raw = span / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / mag; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag; }
-const fmtAxis = v => { const a = Math.abs(v); return a < 0.5 ? '$0' : (v < 0 ? '-' : '') + '$' + (a >= 1e6 ? trimK(a / 1e6) + 'M' : a >= 1000 ? trimK(a / 1000) + 'K' : a.toFixed(0)); };
+const fmtAxis = v => { const a = Math.abs(v); if (pnlSol()) return a < 1e-7 ? '0' : (v < 0 ? '-' : '') + String(Number(a.toPrecision(2))); return a < 0.5 ? '$0' : (v < 0 ? '-' : '') + '$' + (a >= 1e6 ? trimK(a / 1e6) + 'M' : a >= 1000 ? trimK(a / 1000) + 'K' : a.toFixed(0)); };
 function perfGraph(days) {
   const d = days.slice(-90), n = d.length, W = Math.max(300, Math.floor(($('#perfBody').clientWidth || 720) - 78)), H = W < 520 ? 230 : 290, mR = 68, mT = 18, mB = 30, pw = W - mR, ph = H - mT - mB;
-  let cum = 0; const cums = d.map(x => (cum = Math.round((cum + x.v) * 100) / 100)), total = cums[n - 1];
+  const rd = pnlSol() ? 1e6 : 100; let cum = 0; const cums = d.map(x => (cum = Math.round((cum + x.v) * rd) / rd)), total = cums[n - 1];   // cents, or millionths of a SOL
   const step = niceStep((Math.max(0, ...cums) - Math.min(0, ...cums)) || 1, 4), lo = Math.floor(Math.min(0, ...cums) / step) * step, hi = Math.ceil(Math.max(0, ...cums) / step) * step || step;
   const X = i => i * pw / (n - 1), Y = v => mT + (hi - v) / (hi - lo) * ph, y0 = Y(0), zf = ((y0 - mT) / ph).toFixed(4);
   const line = cums.map((v, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
@@ -2466,6 +2484,7 @@ addEventListener('storage', e => {
 <script src="js/adapters/program.js"></script>
 <script src="js/adapters/damm.js"></script>
 <script src="js/adapters/trades.js"></script>
+<script src="js/adapters/portfolio.js"></script>
 <script src="js/risk.js"></script>
 <script src="js/presale-page.js"></script>
 <script src="js/founder-page.js"></script>

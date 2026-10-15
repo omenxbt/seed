@@ -4,11 +4,10 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 
 ## P1
 1. **Safety panel from on-chain facts only.** Mint/freeze authority, LP lock, metadata immutability, holder concentration, fresh and bundled wallets read from the chain for live raises (no demo checks on real raises).
-2. **Portfolio for real wallets.** PnL graph and calendar, open positions, history, claims, Creator tab from chain and Supabase data.
-3. **Launch preview extras.** Pool depth, "a 10 SOL buy moves the chart X%", founder fee income at $5K/$25K/$100K daily volume.
-4. **Alerts.** In-app notifications for watched raises (filled, seeded, refunds open, unlocks).
-5. **Trade on links (Phase 5, mainnet only)** and the mainnet launch checklist in the README.
-6. **Top traders and PnL** on seeded raises (from `trades`).
+2. **Launch preview extras.** Pool depth, "a 10 SOL buy moves the chart X%", founder fee income at $5K/$25K/$100K daily volume.
+3. **Alerts.** In-app notifications for watched raises (filled, seeded, refunds open, unlocks).
+4. **Trade on links (Phase 5, mainnet only)** and the mainnet launch checklist in the README.
+5. **Top traders and PnL** on seeded raises (from `trades`).
 
 ## P2
 - **QA P2-26 (seed-qa, program change):** snapshot `pool_fee_bps` on the Raise at `open_raise` (as `creator_share_bps` is) so a raise live across a config change seeds at the fee its backers saw. Next program upgrade, with P2-4.
@@ -19,6 +18,7 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 - Docs page pass for the new features.
 
 ## Done
+- Portfolio for real wallets (B3): contributions, swaps and token balances from the indexer and the chain → lots at average cost, realised results by day in SOL (graph and calendar), open positions with value/unrealised/realised, a history with tx links; the Creator tab reads the position's fees.
 - QA regression #2 (seed-qa): P2-27 small raised figures keep their digits; P2-28 demo founders get Profile links; P2-29 the profile is titled by name, X handle or wallet; P2-30 fee totals per pair asset; P2-31 the crank claims unlocked team tokens to the payout wallet (idempotent token account).
 - Founder profile (B2): #/founder/<wallet> from the raise's Founder card — wallet, X, every raise with its outcome, fee income per seeded raise with the indexed claims, team unlocks.
 - QA push 9 (seed-qa): P1-F3 the page shows each pool's own fee, read from its state (cliff fee numerator), not the site's setting.
