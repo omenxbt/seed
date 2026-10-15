@@ -1966,6 +1966,9 @@
         },
         {
           "name": "founder_state",
+          "docs": [
+            "the founder's record of its live raise; made the first time"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -2312,6 +2315,19 @@
         167,
         242,
         212
+      ]
+    },
+    {
+      "name": "FounderState",
+      "discriminator": [
+        219,
+        141,
+        32,
+        112,
+        177,
+        243,
+        131,
+        72
       ]
     },
     {
@@ -2993,6 +3009,30 @@
           {
             "name": "at",
             "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FounderState",
+      "docs": [
+        "one per founder wallet: the raise it has live, so a wallet opens one at a time. Checked and refreshed by open_raise;",
+        "the raise named here is passed in and must have left Live (filled, refunded, cancelled, or past its deadline)."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "live_raise",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
           }
         ]
       }
