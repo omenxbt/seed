@@ -39,7 +39,9 @@ passed in as `prev_raise` so the program can see it has left Live. `admin_flag_f
 
 **Local runs.** `scripts/localnet.sh` starts a validator with DAMM v2, the Pyth account and the devnet USDC mint
 cloned from devnet and the program loaded, so the whole suite, admin tests included, runs offline in under a minute
-(on devnet the admin tests skip unless the provider wallet is the config's admin).
+(on devnet the admin tests skip unless the provider wallet is the config's admin). The suite's raises come from the
+deployer and from a second founder derived from its key (`'seed test founder'`); both are in `SEED.hiddenFounders`, so
+the site never shows them. Keep the admin tests off devnet: the fraud-flag test blacklists that second founder for good.
 
 The tests run on devnet because Meteora's DAMM v2 is deployed there and nowhere local. They use the provider wallet as
 admin, oracle, treasury and founder, derive the attestor key from it, and need about 0.4 SOL. The config PDA is made

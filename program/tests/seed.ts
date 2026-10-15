@@ -190,7 +190,9 @@ describe('seed', () => {
   }));
 
   describe('a cancelled raise, opened by a fresh founder wallet', () => {
-    let raise2: web3.PublicKey; const handle2 = handle + '_2', founder2 = Keypair.generate();
+    let raise2: web3.PublicKey; const handle2 = handle + '_2';
+    // a fixed wallet, derived like the attestor, so the site can keep its devnet test raises out of the Terminal (SEED.hiddenFounders)
+    const founder2 = Keypair.fromSeed(createHash('sha256').update(Buffer.concat([me.secretKey, Buffer.from('seed test founder')])).digest());
     it('refunds every backer exactly what they paid', async () => {
       await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: founder2.publicKey, lamports: 0.05 * LAMPORTS_PER_SOL })]);
       const { raise: rk, ixs } = await c.openRaise(founder2.publicKey, WSOL, attestor, handle2, { nonce: nonce + 3, name: 'Moss', ticker: 'MOSS', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: founder2.publicKey });
