@@ -231,16 +231,17 @@ function loadLw() {
   if (window.LightweightCharts) return Promise.resolve();
   return lwReady || (lwReady = new Promise((ok, no) => { const s = document.createElement('script'); s.src = LW_SRC; s.onload = ok; s.onerror = () => { lwReady = null; no(new Error('the chart library did not load')); }; document.head.appendChild(s); }));
 }
+const fmtSig4 = v => v >= 1000 ? fmtC(v, 'SOL', true) : v >= 1 ? String(Number(v.toPrecision(4))) : fmtPrice(v);   // market caps on the axis: four significant digits
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 /* the chart for a pool on chain: candles and volume from the indexed trades, the raise price as a line, Price or MCap */
 function lwMount(box, p) {
   if (pg.lw && pg.lw.box === box && pg.lw.el.isConnected) return pg.lw;
   if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (e) {} }
   box.innerHTML = '<div class="lw"></div>'; const el = box.firstElementChild, LW = window.LightweightCharts, k = () => pg.mode === 'mcap' ? SUPPLY : 1;
-  const f = v => (pg.mode === 'mcap' ? fmtC(v, p.q, true) : fmtPrice(v));
+  const f = v => (pg.mode === 'mcap' ? fmtSig4(v) : fmtPrice(v));
   const chart = LW.createChart(el, { width: el.clientWidth || 600, height: innerWidth < 720 ? 300 : 400, layout: { background: { color: 'transparent' }, textColor: cssVar('--muted') || '#8a8f98', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 },
-    grid: { vertLines: { color: cssVar('--hair') || '#1f232b' }, horzLines: { color: cssVar('--hair') || '#1f232b' } }, rightPriceScale: { borderColor: cssVar('--hair-2') || '#2a2f38', scaleMargins: { top: 0.08, bottom: 0.22 } },
-    timeScale: { borderColor: cssVar('--hair-2') || '#2a2f38', timeVisible: true, secondsVisible: false }, crosshair: { mode: LW.CrosshairMode.Normal }, localization: { priceFormatter: f }, handleScale: { axisPressedMouseMove: true }, handleScroll: true });
+    grid: { vertLines: { color: cssVar('--hair') || '#1f232b' }, horzLines: { color: cssVar('--hair') || '#1f232b' } }, rightPriceScale: { borderColor: cssVar('--hair-2') || '#2a2f38', scaleMargins: { top: 0.14, bottom: 0.22 } },
+    timeScale: { borderColor: cssVar('--hair-2') || '#2a2f38', timeVisible: true, secondsVisible: false, tickMarkFormatter: (t, type) => { const d = new Date(t * 1000); return type >= 2 ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : d.toLocaleDateString([], { month: 'short', day: 'numeric' }); } }, localization: { timeFormatter: t => new Date(t * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }), priceFormatter: f }, crosshair: { mode: LW.CrosshairMode.Normal }, handleScale: { axisPressedMouseMove: true }, handleScroll: true });
   const candles = chart.addCandlestickSeries({ upColor: CANDLE_UP, downColor: CANDLE_DN, borderVisible: false, wickUpColor: CANDLE_UP, wickDownColor: CANDLE_DN, priceFormat: { type: 'custom', formatter: f, minMove: 1e-12 } });
   const vol = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: '', color: cssVar('--navy-soft') || '#5B8CFF' });
   vol.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
@@ -257,6 +258,18 @@ function lwData(lw, series, p) {
   lw.chart.timeScale().fitContent();
 }
 function lwSet(lw, c, p) { const k = lw.k(); lw.candles.update({ time: Math.floor(c[0] / 1000), open: c[1] * k, high: c[2] * k, low: c[3] * k, close: c[4] * k }); lw.vol.update({ time: Math.floor(c[0] / 1000), value: c[5], color: c[4] >= c[1] ? 'rgba(47,191,122,.45)' : 'rgba(240,85,75,.45)' }); }
+/* the pool's price and depth re-read from its vaults after a trade: the header's Price and Market cap, the card and the
+   position's worth all move together, from the same source as on load */
+async function refreshSpot(p) {
+  try {
+    if (typeof damm === 'undefined' || !p.pool) return; damm.states[p.pool] = null;
+    const rs = await damm.reserves(p); if (pg.id !== p.id) return;
+    p.spot = rs.price; if (pg.pool && pg.pool.value) { pg.pool.value.price = rs.price; pg.pool.value.liquidity = rs.pair * 2; pg.pool.value.mcap = pg.pool.value.fdv = rs.price * SUPPLY; }
+    const ps = detailBox && $('[data-pstats]', detailBox); if (ps) ps.innerHTML = ppStats(p);
+    const pw = detailBox && $('[data-poswrap]', detailBox); if (pw) { pw.innerHTML = positionPanel(p); const dc = $('[data-dclaim]', pw); if (dc) dc.onclick = () => claim(p, dc); }
+    refreshPoolCard(p);
+  } catch (e) { console.warn('spot:', e.message); }
+}
 /* the figures beside the chart: pool reserves, the last day's volume and trades, the holder count, the price against the raise */
 async function refreshPoolCard(p) {
   const card = detailBox && $('[data-poolcard]', detailBox); if (!card || !pg.pool) return;
@@ -580,7 +593,8 @@ function onLiveTrade(p, t) {
     if (body) { body.insertAdjacentHTML('afterbegin', tradeRow(cur, t)); body.firstElementChild.classList.add('flash'); const h = detailBox && $('[data-trades] .tab-h .quiet', detailBox); if (h) h.textContent = `${plural(pg.trades.length, 'latest trade')}, newest first`; }
     else if (pg.tab === 'trades') renderTab(cur);
   }
-  cur.spot = t.price;
+  cur.spot = t.price;   // until the reserves answer
+  refreshSpot(cur);
   if (pg.lw && pg.series) { const { c, redraw } = foldTrade(pg.series, pg.tf, t); if (redraw) lwData(pg.lw, pg.series, cur); else lwSet(pg.lw, c, cur); }
   else (pg.pendingTrades = pg.pendingTrades || []).push(t);   // the series is still loading: folded in once it is
   const fees = cur.fees || (cur.fees = { volume: 0, founderClaimed: 0, seedClaimed: 0 }); fees.volume = r6((fees.volume || 0) + t.pair);

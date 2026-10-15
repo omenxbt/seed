@@ -20,6 +20,7 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 - Docs page pass for the new features.
 
 ## Done
+- QA regression #1 (seed-qa): P1-F1 the price, market cap and position's worth re-read from the pool's reserves after each trade; P2-20 chart time in local time; P2-21 MCap axis labels with significant digits; P2-22 room for the top label.
 - Safety checks from the chain (QA P1-4): mint and freeze authority, liquidity lock (permanently locked, NFT in the raise account), metadata immutability, top-10 holder concentration; name/ticker and website are plain facts now.
 - Phase 5: Trade-on links (mainnet only, URL forms checked in a browser) and the mainnet launch checklist.
 - QA Phase 3 findings (seed-qa): P1-5 fee maths include Meteora's 20% protocol share (site, docs, launch preview); P1-6 priority fee (Auto / custom SOL) in the trade panel as a compute-unit price; P2-2 Demo chip on Trending tiles; P2-6 holders table fits a phone; P2-10 explorer links carry the cluster; P2-11 the footer starts on the live line; P2-12 small fee figures readable; P2-13 the impact figure turns red; P2-14 the room message names the payment with the fee.
