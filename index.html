@@ -313,9 +313,9 @@ dialog[open]::backdrop{animation:fadeIn .32s var(--ease-out)}
 /* Entrances. While body.enter is on, a page's cards rise into place out of a slight blur, one after another down each column
    and one column after the next, and its title sharpens. Docs sections do the same as they are scrolled to (.rv, then .in).
    None of it runs for someone who has asked for reduced motion. */
-@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+@keyframes rise{from{transform:translateY(10px)}}   /* no opacity: a frosted card must blur its backdrop from the first frame */
 @keyframes sharpen{from{opacity:0;transform:translateY(6px)}}
-@keyframes swapIn{from{opacity:0;transform:translateY(6px)}}
+@keyframes swapIn{from{transform:translateY(6px)}}
 @keyframes fadeIn{from{opacity:0}}
 @keyframes draw{to{stroke-dashoffset:0}}
 @keyframes growX{from{transform:scaleX(0)}}
@@ -456,15 +456,16 @@ a.ico:hover{color:var(--ink)}
 .bell-list li.new a{background:var(--hair)}.bell-list li a>span{display:flex;flex-direction:column;gap:2px;min-width:0}.bell-list small{color:var(--muted);font-size:11.5px}
 .board{display:flex;flex-direction:column;min-height:360px;padding:18px 18px 0}
 /* the lanes: five columns at desktop width, each scrolling on its own; below 1100px the tabbed board takes over */
-.lanes{display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:0 0 18px;align-items:start}
+.lanes{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 18px;align-items:stretch;height:var(--lanes-h,calc(100vh - 320px));min-height:360px}
 @media (min-width:1100px){.lanes{display:grid}.board{display:none}.lanes+.board{display:none}}
-.lane{background:var(--panel);border:1px solid var(--hair);border-radius:18px;display:flex;flex-direction:column;min-height:420px;max-height:calc(100vh - 300px);min-width:0}
+.lane{background:var(--panel);border:1px solid var(--panel-line);border-radius:18px;-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);box-shadow:var(--panel-shadow);display:flex;flex-direction:column;min-height:0;height:100%;min-width:0}
 .lane-h{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px 10px;border-bottom:1px solid var(--hair)}
 .lane-h h2{font-size:14px;font-weight:500;letter-spacing:-.01em}.lane-h .ct{font-size:12px;color:var(--muted)}
 .lane-list{display:flex;flex-direction:column;gap:10px;padding:10px;overflow-y:auto;overscroll-behavior:contain;min-height:0}
 .lane-list .tile{width:100%}.lane-empty{padding:28px 10px;text-align:center;color:var(--muted);font-size:13.5px}
-.lrow{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px;border-radius:14px;background:var(--panel-solid);border:1px solid var(--hair);color:inherit;text-decoration:none;transition:border-color var(--fast)}
-.lrow:hover{border-color:var(--hair-2)}.lrow.fresh{animation:fadeIn .5s ease both}
+.lrow{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px;border-radius:14px;background:var(--panel);border:1px solid var(--panel-line);-webkit-backdrop-filter:var(--frost);backdrop-filter:var(--frost);color:inherit;text-decoration:none;transition:border-color var(--fast)}
+.lrow:hover{border-color:var(--hair-2)}.lrow.fresh{animation:slideUp .4s var(--ease-out) both}
+@keyframes slideUp{from{transform:translateY(8px)}}
 .lr-art{width:44px;height:44px;border-radius:12px;object-fit:cover;display:block}.lr-art.glyph-art{display:flex;align-items:center;justify-content:center;background:hsl(var(--h) 40% 22%)}.lr-art svg{width:22px;height:22px}
 .lr-main{display:flex;flex-direction:column;gap:4px;min-width:0}.lr-name{position:relative;display:flex;align-items:baseline;gap:6px;min-width:0;padding-right:26px}.lr-name b{font-weight:600;font-size:14px}.lr-name>span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lr-name .star{top:-4px;right:-4px;left:auto}
@@ -545,7 +546,7 @@ a.ico:hover{color:var(--ink)}
 .qb-bolt{display:none}
 .tile .qb-bolt{display:block;width:13px;height:13px;fill:currentColor}
 /* the Trending row's tiles are wider and show less */
-.tr-card{flex:none;width:272px;scroll-snap-align:start}
+.tr-card{flex:none;width:196px;scroll-snap-align:start}.tr-card .tr-art{aspect-ratio:16 / 9}.tr-card .tr-name b{font-size:14px}.tr-card .tr-fig{font-size:12px}
 /* one line under the columns: the refunded-presales note on the left, the prototype disclaimer and reset on the right. The columns are
    sized so this line sits at the foot of the window. */
 .board-foot{display:flex;align-items:baseline;gap:4px 24px;flex-wrap:wrap;margin-top:16px;padding:0 2px;font-size:13px;color:var(--muted)}
@@ -578,7 +579,7 @@ a.ico:hover{color:var(--ink)}
 
 .br.flash{animation:flash 1.8s ease-out}
 .tile.fresh{animation:cardIn .4s var(--ease-out) backwards;animation-delay:calc(var(--i,0)*35ms)}
-@keyframes cardIn{from{opacity:0;transform:translateY(8px)}}
+@keyframes cardIn{from{transform:translateY(8px)}}
 .pick::after{content:"";position:absolute;inset:0;border-radius:18px}
 .pick:focus-visible{outline:none}.pick:focus-visible::after{outline:2px solid var(--navy);outline-offset:2px}
 .t-act{text-align:right;position:relative;z-index:1}
@@ -840,7 +841,7 @@ a.ico:hover{color:var(--ink)}
         <section class="panel"><h3 class="card-h">Your raises</h3><div id="mineList"></div></section>
       </aside>
       <div class="ws-main">
-      <form class="panel lform" id="form" novalidate autocomplete="off">
+      <form class="panel lform" id="form" novalidate autocomplete="off" onsubmit="return false">
         <div class="xgate" id="xGate"></div>
         <fieldset><legend><span class="num">01</span>Project</legend><div class="form">
         <div class="f"><label for="fName">Project name</label><div class="inp"><input id="fName" maxlength="24" placeholder="Kiln"></div></div>
@@ -859,7 +860,7 @@ a.ico:hover{color:var(--ink)}
 
         <fieldset><legend><span class="num">02</span>Raise</legend><div class="form">
         <div class="f full"><span class="lab">Pair with<span class="hint">Backers buy in with this asset and the Meteora pool is paired against it. Raises pair with SOL or USDC.</span></span>
-          <div><div class="seg" id="pairSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span><button data-v="SOL" aria-pressed="true">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button></div></div>
+          <div><div class="seg" id="pairSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="SOL" aria-pressed="true">SOL</button><button type="button" data-v="USDC" aria-pressed="false">USDC</button></div></div>
         </div>
         <div class="f full" id="stockRow" hidden><span class="lab">Tokenized stock<span class="hint">xStocks from Meteora's approved list</span></span>
           <div class="chips stocks" style="margin-top:0"><button type="button" data-stock="NVDAx" aria-pressed="false" title="NVIDIA">NVDAx</button><button type="button" data-stock="AAPLx" aria-pressed="false" title="Apple">AAPLx</button><button type="button" data-stock="TSLAx" aria-pressed="false" title="Tesla">TSLAx</button><button type="button" data-stock="HOODx" aria-pressed="false" title="Robinhood">HOODx</button><button type="button" data-stock="COINx" aria-pressed="false" title="Coinbase">COINx</button><button type="button" data-stock="MSFTx" aria-pressed="false" title="Microsoft">MSFTx</button><button type="button" data-stock="SPYx" aria-pressed="false" title="S&amp;P 500 ETF">SPYx</button><button type="button" data-stock="GOOGLx" aria-pressed="false" title="Alphabet">GOOGLx</button><button type="button" data-stock="AMZNx" aria-pressed="false" title="Amazon">AMZNx</button><button type="button" data-stock="METAx" aria-pressed="false" title="Meta">METAx</button></div></div>
@@ -867,17 +868,17 @@ a.ico:hover{color:var(--ink)}
           <div class="chips" style="margin-top:2px"><button type="button" data-mint="JUP">JUP</button><button type="button" data-mint="BONK">BONK</button></div></div>
         <div class="f"><label for="fTarget">Target<span class="hint" id="targetUsd">at most $100,000</span></label><div class="inp"><input id="fTarget" inputmode="decimal" placeholder="200" autocomplete="off" class="num"><span class="suf num" id="fCur">SOL</span></div></div>
         <div class="f"><span class="lab">Deadline<i class="tip" tabindex="0" data-tip="How long the raise stays open. It closes the moment it fills; if it has not filled by the deadline, everyone is refunded, fee included.">?</i></span>
-          <div><div class="seg" id="timeSeg" role="group" aria-label="Deadline"><span class="seg-ind" aria-hidden="true"></span><button data-v="24" aria-pressed="false">24h</button><button data-v="72" aria-pressed="true">3 days</button><button data-v="168" aria-pressed="false">7 days</button><button data-v="336" aria-pressed="false">14 days</button></div></div>
+          <div><div class="seg" id="timeSeg" role="group" aria-label="Deadline"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="24" aria-pressed="false">24h</button><button type="button" data-v="72" aria-pressed="true">3 days</button><button type="button" data-v="168" aria-pressed="false">7 days</button><button type="button" data-v="336" aria-pressed="false">14 days</button></div></div>
         </div>
         <div class="f full derived" id="derived"><span class="lab">What backers pay<i class="tip" tabindex="0" data-tip="The price is not set by you. It is the target divided by the backers' tokens, so the pool opens at exactly what backers paid.">?</i></span><dl class="kv kv-wide" id="derivedRows"></dl></div>
         <div class="f lim" data-lim="min"><span class="lab"><label for="fMin">Minimum buy</label><i class="tip" tabindex="0" data-tip="The smallest buy a wallet can make. Off, any amount above zero counts.">?</i><button type="button" class="switch" role="switch" aria-checked="false" data-lim-toggle="min" aria-label="Set a minimum buy"></button></span>
           <p class="lim-off" data-lim-off>Off. Any amount counts.</p>
           <div class="lim-body" data-lim-body hidden><div class="inp"><input id="fMin" inputmode="decimal" class="num" placeholder="0"><span class="suf num" data-lim-suf data-cur>SOL</span></div>
-            <div class="seg seg-sm" id="minUnit" role="group" aria-label="Minimum buy unit"><span class="seg-ind" aria-hidden="true"></span><button data-v="q" aria-pressed="true" data-cur>SOL</button><button data-v="pct" aria-pressed="false">% of supply</button></div></div></div>
+            <div class="seg seg-sm" id="minUnit" role="group" aria-label="Minimum buy unit"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="q" aria-pressed="true" data-cur>SOL</button><button type="button" data-v="pct" aria-pressed="false">% of supply</button></div></div></div>
         <div class="f lim" data-lim="max"><span class="lab"><label for="fMax">Maximum per wallet</label><i class="tip" tabindex="0" data-tip="The most one wallet can put in over the whole raise. Off, a single wallet may fill it.">?</i><button type="button" class="switch" role="switch" aria-checked="false" data-lim-toggle="max" aria-label="Set a maximum per wallet"></button></span>
           <p class="lim-off" data-lim-off>Off. No limit per wallet.</p>
           <div class="lim-body" data-lim-body hidden><div class="inp"><input id="fMax" inputmode="decimal" class="num" placeholder="0"><span class="suf num" data-lim-suf data-cur>SOL</span></div>
-            <div class="seg seg-sm" id="maxUnit" role="group" aria-label="Maximum per wallet unit"><span class="seg-ind" aria-hidden="true"></span><button data-v="q" aria-pressed="true" data-cur>SOL</button><button data-v="pct" aria-pressed="false">% of supply</button></div></div></div>
+            <div class="seg seg-sm" id="maxUnit" role="group" aria-label="Maximum per wallet unit"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="q" aria-pressed="true" data-cur>SOL</button><button type="button" data-v="pct" aria-pressed="false">% of supply</button></div></div></div>
         </div></fieldset>
 
         <fieldset><legend><span class="num">03</span>Team share and unlocks</legend><div class="form">
@@ -886,7 +887,7 @@ a.ico:hover{color:var(--ink)}
           <div class="f"><span class="lab">The split</span><div class="split" id="splitBar" aria-hidden="true"></div><p class="split-leg num" id="splitLeg"></p></div>
           <div class="f full" id="schedWrap">
             <span class="lab">Unlock schedule<span class="hint">for the team share</span></span>
-            <div><div class="seg seg-sm" id="schedSeg" role="group" aria-label="Schedule type"><span class="seg-ind" aria-hidden="true"></span><button data-v="every" aria-pressed="true">Cliff, then every N days</button><button data-v="tranches" aria-pressed="false">Dated tranches</button></div></div>
+            <div><div class="seg seg-sm" id="schedSeg" role="group" aria-label="Schedule type"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="every" aria-pressed="true">Cliff, then every N days</button><button type="button" data-v="tranches" aria-pressed="false">Dated tranches</button></div></div>
             <div class="sched3" data-sched="every">
               <div class="f"><label for="fCliff">Cliff, days<i class="tip" tabindex="0" data-tip="How long after seeding before the first unlock. Nothing moves until the cliff passes. 0 means the first slice unlocks at seeding.">?</i></label><div class="inp"><input id="fCliff" inputmode="numeric" class="num" value="90" placeholder="90"></div></div>
               <div class="f"><label for="fEvery">Then every, days<i class="tip" tabindex="0" data-tip="How often a slice unlocks after the cliff. The first slice unlocks at the cliff, the next one this many days later, and so on until 100% is out.">?</i></label><div class="inp"><input id="fEvery" inputmode="numeric" class="num" value="30" placeholder="30"></div></div>
@@ -1682,8 +1683,8 @@ function actCell(p) {
 /* which column a raise sits in. Refunded ones are not on the board: they are named under it, and claims live in the portfolio. */
 const colOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'filled' ? 'seeding' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : 'seeding') : null;   // a filled raise sits with the seeding ones until it seeds
 /* the Terminal's lanes: where a raise is in its life. New under 50%, filling fast from 50 to 90, almost full above, then seeding and trading. */
-const LANES = [['new', 'New raises'], ['fast', 'Filling fast'], ['full', 'Almost full'], ['seeding', 'Seeding'], ['seeded', 'Seeded & trading']];
-const laneOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'filled' ? 'seeding' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : pctOf(p) < 90 ? 'fast' : 'full') : null;
+const LANES = [['new', 'New raises'], ['full', 'Almost full'], ['seeded', 'Seeded & trading']];   // under 90%; 90%+ and seeding; trading
+const laneOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'filled' ? 'full' : p.status === 'live' ? (pctOf(p) < 90 ? 'new' : 'full') : null;
 /* the search box matches a name, a ticker, a contract address, a raise account or an X handle */
 const matchQ = (p, q) => { if (!q) return true; const s = q.toLowerCase().replace(/^[@$]/, ''); return [p.name, p.ticker, p.mint, p.address, p.xAccount && p.xAccount.handle].some(v => v && String(v).toLowerCase().includes(s)); };
 /* the watchlist: starred raises, kept with the demo state; alerts and the Watchlist toggle read it */
@@ -1718,6 +1719,9 @@ function tile(p, i, trend, fresh = '') {
     <span class="tile-flags">${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
     <span class="t-act">${actCell(p)}</span>`}</div>`;
 }
+/* the lanes end at the bottom of the window, whatever sits above them: each scrolls inside */
+function fitLanes() { const el = $('#lanes'); if (!el || !el.offsetParent) return; const top = el.getBoundingClientRect().top + scrollY; el.style.setProperty('--lanes-h', `calc(100vh - ${Math.round(top)}px - 18px)`); }
+addEventListener('resize', () => fitLanes());
 /* a lane's row: the compact card, the way Pulse lists a token: art, ticker, the one figure that matters at this stage, age or
    time left, backers, chips. The big art stays in Trending and the board. */
 function laneRow(p, i, fresh = '') {
@@ -1744,11 +1748,12 @@ function renderTerminal() {
   if (lanesEl) {
     const inLane = {}; LANES.forEach(([k]) => inLane[k] = []);
     [...cols.new, ...cols.seeding, ...cols.seeded].forEach(p => { const l = laneOf(p); if (l && inLane[l]) inLane[l].push(p); });
-    const order = { new: sorter('new'), fast: sorter('all'), full: sorter('all'), seeding: sorter('seeding'), seeded: sorter('seeded') };
+    const order = { new: sorter('new'), full: sorter('seeding'), seeded: sorter('seeded') };
     if (typeof chain !== 'undefined') chain.refreshSpots(inLane.seeded);
     lanesEl.innerHTML = LANES.map(([k, name]) => { const l = inLane[k].slice().sort(order[k]), fr = freshIn('lane-' + k, l);
-      return `<section class="lane" data-lane="${k}" aria-label="${name}"><header class="lane-h"><h2>${name}</h2><span class="ct num">${l.length || ''}</span></header><div class="lane-list">${l.length ? l.map((p, i) => laneRow(p, i, fr(p))).join('') : `<div class="lane-empty">${{ new: 'No new raises.', fast: 'Nothing between 50 and 90%.', full: 'Nothing above 90%.', seeding: 'Nothing seeding.', seeded: 'Nothing trading yet.' }[k]}</div>`}</div></section>`; }).join('');
+      return `<section class="lane" data-lane="${k}" aria-label="${name}"><header class="lane-h"><h2>${name}</h2><span class="ct num">${l.length || ''}</span></header><div class="lane-list">${l.length ? l.map((p, i) => laneRow(p, i, fr(p))).join('') : `<div class="lane-empty">${{ new: 'No live raises right now.', full: 'Nothing above 90% or seeding.', seeded: 'Nothing trading yet.' }[k]}</div>`}</div></section>`; }).join('');
   }
+  if (lanesEl) fitLanes();
   const wb = $('#watchBtn'); if (wb) { const n = Object.keys(state.watch || {}).length; wb.classList.toggle('on', !!ui.watchOnly); wb.setAttribute('aria-pressed', String(!!ui.watchOnly)); $('span', wb).textContent = n ? `Watchlist ${n}` : 'Watchlist'; }
   /* the feed */
   const k = ui.feed, list = lists[k].slice().sort(sorter(k)), fresh = freshIn('term', list);
