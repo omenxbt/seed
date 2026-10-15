@@ -53,6 +53,12 @@ const tradesAdapter = {
     }
     return Object.values(by).map(l => Object.assign(l, { value: l.tokens * spot, unrealised: l.tokens * spot - l.cost, pnl: l.realised + l.tokens * spot - l.cost })).sort((a, b) => b.pnl - a.pnl);
   },
+  /* every new trade on any raise, as it is indexed (the board's rows and tiles tick per trade); returns the unsubscribe */
+  watchAll(onTrade) {
+    let ch = null, off = false;
+    supa.init().then(ok => { if (!ok || off) return; ch = supa.client.channel('trades-all').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades' }, x => onTrade(x.new.raise_id, rowTrade(x.new))).subscribe(); });
+    return () => { off = true; if (ch) supa.client.removeChannel(ch); };
+  },
   /* every new trade on the raise, as it is indexed; returns the unsubscribe */
   watch(p, onTrade) {   // the channel opens once the client is up; unsubscribing before that just cancels
     let ch = null, off = false;

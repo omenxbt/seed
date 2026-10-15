@@ -5,14 +5,17 @@
 //
 // The vaults belong to DAMM's pool authority; the one of the raise's mint moving one way and the pair's the other way is
 // a swap. Seed's own transactions (the pool's opening, fee claims) are skipped by the program's presence in the account list.
-// A swap is priced net of the pool's own fee, read once from the pool account (a pool seeded before a config change
-// keeps the fee it opened with) and kept on the raise row.
+// A swap's price is where the pool stands after it: the next_sqrt_price in DAMM's own swap event in the transaction;
+// failing that the pool account's price (the latest swap only) or the vaults' ratio; the fee-net fill only if a vault
+// balance is unreadable. Each pool's fee is read once from its account and kept on the raise row.
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2.45.4';
 
 export const DAMM_AUTHORITY = 'HLnpSz9h2S4hiLQ43rnSD9XkcUThA7B8hQMKmDaiTLcC';
 const SEED_PROGRAM = Deno.env.get('SEED_PROGRAM_ID') ?? '', POOL_FEE_BPS = Number(Deno.env.get('SEED_POOL_FEE_BPS') ?? 100), RPC_URL = Deno.env.get('SEED_RPC_URL') ?? '';
 type TokBal = { accountIndex: number; mint: string; owner?: string; uiTokenAmount: { amount: string; decimals: number } };
-export type Tx = { transaction?: { message?: { accountKeys?: unknown[] }; signatures?: string[] }; meta?: { err?: unknown; preTokenBalances?: TokBal[]; postTokenBalances?: TokBal[]; loadedAddresses?: { writable?: string[]; readonly?: string[] } }; slot?: number; blockTime?: number };
+type InnerIx = { programIdIndex: number; data: string };
+export type Tx = { transaction?: { message?: { accountKeys?: unknown[] }; signatures?: string[] }; meta?: { err?: unknown; preTokenBalances?: TokBal[]; postTokenBalances?: TokBal[]; loadedAddresses?: { writable?: string[]; readonly?: string[] }; innerInstructions?: { instructions: InnerIx[] }[] }; slot?: number; blockTime?: number };
+export const DAMM_PROGRAM = 'cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG';
 export type PoolRaise = { id: string; pool: string; mint: string; pair_mint: string; pool_fee_bps?: number | null };
 export const POOL_RAISE_COLS = 'id, pool, mint, pair_mint, pool_fee_bps';
 
@@ -32,6 +35,27 @@ export async function readPoolFeeBps(rpcUrl: string, pool: string) {
    per token A in base units; the mints at bytes 168 and 200 say which way round the raise's token is */
 const B58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 const b58 = (b: Uint8Array) => { let n = 0n; for (const x of b) n = n * 256n + BigInt(x); let s = ''; while (n > 0n) { s = B58[Number(n % 58n)] + s; n /= 58n; } for (const x of b) { if (x !== 0) break; s = '1' + s; } return s; };
+const b58d = (s: string) => { let n = 0n; for (const c of s) n = n * 58n + BigInt(B58.indexOf(c)); const out: number[] = []; while (n > 0n) { out.unshift(Number(n % 256n)); n /= 256n; } for (const c of s) { if (c !== '1') break; out.unshift(0); } return Uint8Array.from(out); };
+const u128 = (d: Uint8Array, off: number) => { let n = 0n; for (let i = off + 15; i >= off; i--) n = n * 256n + BigInt(d[i]); return n; };
+
+/* the sqrt price the pool was left at by its swap in this transaction, from DAMM's own swap event (emitted through a
+   self-CPI: the instruction data is Anchor's event prefix, the event's discriminator, then the event). EvtSwap2 carries
+   next_sqrt_price at byte 84 of the event, the older EvtSwap at byte 58; the first 32 bytes name the pool. The last
+   event for the pool wins (a route can swap it twice). Null when the transaction has no such event (then the vaults' ratio) */
+const EVENT_PREFIX = 'e445a52e51cb9a1d', SWAP_EVENTS: Record<string, number> = { bd4233a826507599: 84 /* EvtSwap2 */, '1b3c15d58aaabb93': 58 /* EvtSwap */ };
+const hex = (d: Uint8Array) => Array.from(d, (x) => x.toString(16).padStart(2, '0')).join('');
+export function swapEventSqrtPrice(t: Tx, keys: string[], pool: string) {
+  let found: bigint | null = null;
+  for (const inner of t.meta?.innerInstructions ?? []) for (const ix of inner.instructions ?? []) {
+    if (keys[ix.programIdIndex] !== DAMM_PROGRAM || !ix.data) continue;
+    let d: Uint8Array; try { d = b58d(ix.data); } catch { continue; }
+    if (d.length < 16 || hex(d.subarray(0, 8)) !== EVENT_PREFIX) continue;
+    const at = SWAP_EVENTS[hex(d.subarray(8, 16))]; if (!at) continue;
+    const body = d.subarray(16); if (body.length < at + 16 || b58(body.subarray(0, 32)) !== pool) continue;
+    found = u128(body, at);
+  }
+  return found;
+}
 export async function readPoolPrice(rpcUrl: string, pool: string, mint: string, tokDec: number, pairDec: number) {
   const info = await rpcCall(rpcUrl, 'getAccountInfo', [pool, { encoding: 'base64', commitment: 'confirmed' }]) as { context?: { slot?: number }; value?: { data?: [string, string] } } | null;
   const b64 = info?.value?.data?.[0]; if (!b64) return null;
@@ -78,10 +102,18 @@ export async function indexSwap(db: SupabaseClient, t: Tx, tx: string, only?: Po
        the reserves sit at the price, give or take the fees waiting to be claimed), not the swap's own average fill, which
        on a thin pool is nowhere near where the price ends up. The fill price, net of the pool fee, only if a vault is unreadable */
     let price = tok.after > 0 && pair.after > 0 ? pair.after / tok.after : (side === 'buy' ? pair_amount * (1 - fee) : pair_amount / (1 - fee)) / token_amount;
-    /* the pool's own sqrt_price is exact (no fee drift): used for a swap the node has caught up with and that is the
-       pool's latest, i.e. the price the account holds is this swap's, and only while it agrees with the vault ratio to
-       within the drift (a swap that landed since would move it further). Older ones keep their own transaction's ratio */
-    if (RPC_URL && exact) { try { const live = await readPoolPrice(RPC_URL, r.pool, r.mint, tok.dec, pair.dec); if (live && live.slot >= (t.slot ?? 0) && Math.abs(live.price / price - 1) < 0.02) price = live.price; } catch (e) { console.error('pool price', r.pool, (e as Error).message); } }
+    /* exact, from the swap event's next_sqrt_price: token B per token A in base units, squared, the raise's token
+       being A or B by which vault moved against the pair (the event names the pool, not the side) */
+    const sq = swapEventSqrtPrice(t, keys, r.pool);
+    if (sq != null) {
+      const raw = (Number(sq) / 2 ** 64) ** 2, a = raw * 10 ** (tok.dec - pair.dec), b = (1 / raw) * 10 ** (tok.dec - pair.dec);
+      const ev = Math.abs(a / price - 1) < Math.abs(b / price - 1) ? a : b;   // the orientation that agrees with the vaults
+      if (Math.abs(ev / price - 1) < 0.05) price = ev;
+    }
+    /* no event (a node that strips inner instructions): the pool account's own sqrt_price, when the swap is the pool's
+       latest (just delivered) and the node has caught up with it, and only while it agrees with the vault ratio to within
+       the fee drift (a swap that landed since would move it further) */
+    else if (RPC_URL && exact) { try { const live = await readPoolPrice(RPC_URL, r.pool, r.mint, tok.dec, pair.dec); if (live && live.slot >= (t.slot ?? 0) && Math.abs(live.price / price - 1) < 0.02) price = live.price; } catch (e) { console.error('pool price', r.pool, (e as Error).message); } }
     const { error } = await db.from('trades').insert({ signature: tx, raise_id: r.id, pool: r.pool, side, pair_amount, token_amount, price, trader: keys[0], slot: t.slot ?? 0, at: new Date((t.blockTime ?? Math.floor(Date.now() / 1000)) * 1000).toISOString() });
     if (error) { if (error.code !== '23505') console.error('trade', tx, error.message); continue; }   // 23505: seen before, so the volume was counted then
     await db.rpc('bump_volume', { p_raise_id: r.id, p_amount: pair_amount, p_signature: tx }).then(({ error: e2 }) => { if (e2) console.error('volume', e2.message); });
