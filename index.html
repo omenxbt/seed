@@ -448,6 +448,12 @@ a.ico:hover{color:var(--ink)}
 .trend-row::-webkit-scrollbar{display:none}
 .trend-row:empty::after{content:"Nothing is moving right now.";font-size:14px;color:var(--muted);padding:8px 4px}
 /* the feed: one list of raises under tabs for each stage, in as many columns as fit */
+.bell-wrap{position:relative;display:inline-flex}.bell{position:relative;width:34px;height:34px;border-radius:10px;border:0;background:transparent;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.bell svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}.bell:hover,.bell.on{color:var(--ink)}
+.bell .ct{position:absolute;top:2px;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--navy);color:#fff;font-size:10.5px;line-height:16px;text-align:center}
+.bell-pop{width:340px;max-width:calc(100vw - 24px);padding:12px 12px 8px}.bell-h{display:flex;justify-content:space-between;align-items:center;padding:0 4px 8px;font-size:14px}
+.bell-list{list-style:none;max-height:380px;overflow-y:auto}.bell-list li a{display:flex;gap:10px;align-items:flex-start;padding:9px 4px;border-top:1px solid var(--hair);color:inherit;text-decoration:none;font-size:13px;line-height:1.4}
+.bell-list li.new a{background:var(--hair)}.bell-list li a>span{display:flex;flex-direction:column;gap:2px;min-width:0}.bell-list small{color:var(--muted);font-size:11.5px}
 .board{display:flex;flex-direction:column;min-height:360px;padding:18px 18px 0}
 /* the lanes: five columns at desktop width, each scrolling on its own; below 1100px the tabbed board takes over */
 .lanes{display:none;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin:0 0 18px;align-items:start}
@@ -769,6 +775,7 @@ a.ico:hover{color:var(--ink)}
   <div class="right">
     <span class="icons"><a class="ico" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><span class="ico off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span><a class="ico" href="#/docs" aria-label="Docs" title="Docs"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8.5L19 8v12.5H6z"/><path d="M14 3.5V8.5h5M9 12.5h7M9 16h7"/></svg></a></span>
     <a class="textlink" href="#/docs">Docs</a>
+    <span class="bell-wrap"><button type="button" class="ico bell" id="bellBtn" aria-haspopup="true" aria-expanded="false" aria-label="Alerts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM9.5 20a2.5 2.5 0 0 0 5 0"/></svg><span class="ct num" id="bellCt" hidden></span></button><div class="pop bell-pop" id="bellPop" hidden></div></span>
     <button class="btn btn-ink" id="walletBtn" aria-haspopup="true" aria-expanded="false">Connect wallet</button>
     <div class="pop" id="walletPop" role="menu">
       <h4 id="walletName">Demo wallet</h4>
@@ -2343,7 +2350,7 @@ function route() {
 addEventListener('hashchange', route);
 
 /* ---------------------------------------------------------------- render */
-function renderAll() { renderWallet(); syncQuickUI(); renderAdminNote(); renderTerminal(); renderMine(); renderPortfolio(); if (typeof renderFounder === 'function') renderFounder(); if (ui.tab === 'launch' && typeof renderPreview === 'function') { renderPreview(); syncOpenBtn(); } }
+function renderAll() { renderWallet(); syncQuickUI(); renderAdminNote(); renderTerminal(); renderMine(); renderPortfolio(); if (typeof renderFounder === 'function') renderFounder(); if (typeof checkAlerts === 'function') checkAlerts(); if (ui.tab === 'launch' && typeof renderPreview === 'function') { renderPreview(); syncOpenBtn(); } }
 
 /* ----------------------------------------------------------------- clock */
 /* the target landed: the raise closes to buys and seeding starts. Anyone may run the steps; the demo runs them itself. */
@@ -2490,6 +2497,7 @@ addEventListener('storage', e => {
 <script src="js/risk.js"></script>
 <script src="js/presale-page.js"></script>
 <script src="js/founder-page.js"></script>
+<script src="js/alerts.js"></script>
 <script src="js/launch.js"></script>
 <script src="js/filters.js"></script>
 <script>boot();</script>
