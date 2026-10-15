@@ -1318,14 +1318,18 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-terminal" data-t="Reading the terminal">
       <div class="prose">
         <h2>Reading the terminal</h2>
-        <p>The terminal lists every raise, paired with SOL or USDC, along with the numbers needed to judge whether it will make its deadline.</p>
+        <p>The terminal lists every raise, paired with SOL or USDC, in three columns by stage: <b>New raises</b> (under 90% filled), <b>Almost full</b> (90% and over, or filled and seeding) and <b>Seeded &amp; trading</b>. Trending sits above them: the eight most active raises, whatever the filters say. Each row carries the numbers needed to judge whether it will make its deadline.</p>
         <ul>
           <li><b>Filled</b> is raised over target. Fees ride on top, so they are not part of it.</li>
           <li><b>Pace</b> compares the last six hours of buys with what is left and the time to the deadline. When the dashed line on the fill chart is steeper than the solid one, the raise is behind.</li>
           <li><b>Seeding</b> shows a filled raise's step count and the time left before it would refund.</li>
+          <li><b>Price</b> on a seeded raise is the pool's, with its change since the raise price.</li>
           <li><b>Quick deposit</b> sends your preset amount in one click, fee on top. Presets are kept per asset. Like any buy, it is trimmed to what fits.</li>
         </ul>
+        <p><b>Finding a raise.</b> Search matches a name, a ticker, a token address, a raise account or an X handle. Filters narrow the columns by pair asset, Verified X and the safety chips. The star on a row adds it to your <b>watchlist</b>; the Watchlist toggle shows only starred raises. The <b>bell</b> collects alerts for the raises you star, back, hold or opened: filled, seeded, refunds open, a team unlock passed, a payout wallet moved. The watchlist and the alerts live in this browser.</p>
         <p>Clicking a raise opens its own page in a new tab, with the fill chart, the team's unlocks, the founder (and the X account, when one is linked), the info panel and the reports. The terminal stays open where you left it, and the two tabs keep each other up to date.</p>
+        <p><b>Once it is seeded</b> the page becomes the token's: a live price chart (price or market cap, 1m to 1D, with the raise price marked), the trade panel on the raise's Meteora pool (buy and sell with quick amounts, slippage, a priority fee and the price impact before you sign), the trades tape, the holders with Seed's own accounts labelled (the locked pool, backers' unclaimed tokens, team vesting), the top traders and their results, the creator fees and what has been claimed, and the safety checks read from the chain: mint and freeze authority, the liquidity lock, metadata immutability and holder concentration.</p>
+        <p><b>The founder's page</b> (from the Founder card) lists every raise a wallet opened and how each ended, its fee income and claims, and its team unlocks. <b>Portfolio</b> is your own record: open positions, results by day, claims waiting (tokens or refunds), the history of everything you did on Seed, and for founders a Creator tab with fees, unlocks and the payout wallet.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
         <h3>The two numbers</h3>
