@@ -74,7 +74,7 @@ function feesOf(p) {
     const share = (p.creatorShareBps || SEED.creatorShareBps) / BPS, earned = live.pending + live.claimed, fo = live.pending * share;
     return { volume: f.volume, earned, founder: earned * share, seed: earned * (1 - share), founderClaimed: f.founderClaimed || 0, seedClaimed: f.seedClaimed || 0, founderUnclaimed: fo, seedUnclaimed: live.pending - fo, live: true };
   }
-  if (p.live) return { volume: f.volume, earned: 0, founder: 0, seed: 0, founderClaimed: f.founderClaimed || 0, seedClaimed: f.seedClaimed || 0, founderUnclaimed: 0, seedUnclaimed: 0, reading: true };   // until the position is read, nothing is claimable
+  if (p.live) return { volume: f.volume, earned: 0, founder: 0, seed: 0, founderClaimed: f.founderClaimed || 0, seedClaimed: f.seedClaimed || 0, founderUnclaimed: 0, seedUnclaimed: 0, reading: p.status === 'seeded' && !!p.position };   // until the position is read, nothing is claimable; a raise with no pool has nothing to read
   const s = feeSplit(f.volume, p.creatorShareBps);
   return { volume: f.volume, earned: s.fee, founder: s.founder, seed: s.seed, founderClaimed: f.founderClaimed || 0, seedClaimed: f.seedClaimed || 0, founderUnclaimed: Math.max(0, s.founder - (f.founderClaimed || 0)), seedUnclaimed: Math.max(0, s.seed - (f.seedClaimed || 0)) };
 }
