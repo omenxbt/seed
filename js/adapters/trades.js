@@ -37,10 +37,10 @@ const tradesAdapter = {
     return s ? { volume24h: Number(s.volume_24h), trades24h: Number(s.trades_24h), lastPrice: s.last_price != null ? Number(s.last_price) : null, lastAt: s.last_at ? Date.parse(s.last_at) : null } : null;
   },
   /* every new trade on the raise, as it is indexed; returns the unsubscribe */
-  watch(p, onTrade) {
-    if (!supa.client) return () => {};
-    const ch = supa.client.channel('trades-' + p.id).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `raise_id=eq.${p.id}` }, x => onTrade(rowTrade(x.new))).subscribe();
-    return () => supa.client.removeChannel(ch);
+  watch(p, onTrade) {   // the channel opens once the client is up; unsubscribing before that just cancels
+    let ch = null, off = false;
+    supa.init().then(ok => { if (!ok || off) return; ch = supa.client.channel('trades-' + p.id).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'trades', filter: `raise_id=eq.${p.id}` }, x => onTrade(rowTrade(x.new))).subscribe(); });
+    return () => { off = true; if (ch) supa.client.removeChannel(ch); };
   }
 };
 const rowTrade = r => ({ signature: r.signature, side: r.side, pair: Number(r.pair_amount), tokens: Number(r.token_amount), price: Number(r.price), trader: r.trader, slot: Number(r.slot), at: Date.parse(r.at) });

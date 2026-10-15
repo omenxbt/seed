@@ -162,6 +162,12 @@ var chain = {
     this.fillArt(list);
     return true;
   },
+  /* the pool price of the seeded raises on the board, read from their reserves once a minute, so the cards show the market, not the raise price */
+  refreshSpots(list) {
+    const due = (list || []).filter(p => p.live && p.pool && (!p.spotAt || Date.now() - p.spotAt > 60e3)); if (!due.length || typeof damm === 'undefined') return;
+    due.forEach(p => p.spotAt = Date.now());
+    Promise.all(due.map(p => damm.reserves(p).then(rs => { p.spot = rs.price; }).catch(() => {}))).then(() => { if (typeof renderTerminal === 'function' && ui.tab === 'terminal') renderTerminal(); });
+  },
   /* a raise with no page record (opened by a script, say) still has its token's image: the metadata JSON names it */
   fillArt(list) {
     const todo = list.filter(p => p.metadataUri && p.profile && !p.profile.art && !this.artTried[p.id]);

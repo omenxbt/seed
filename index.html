@@ -457,6 +457,14 @@ a.ico:hover{color:var(--ink)}
 .lane-h h2{font-size:14px;font-weight:500;letter-spacing:-.01em}.lane-h .ct{font-size:12px;color:var(--muted)}
 .lane-list{display:flex;flex-direction:column;gap:10px;padding:10px;overflow-y:auto;overscroll-behavior:contain;min-height:0}
 .lane-list .tile{width:100%}.lane-empty{padding:28px 10px;text-align:center;color:var(--muted);font-size:13.5px}
+.lrow{position:relative;display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px;border-radius:14px;background:var(--panel-solid);border:1px solid var(--hair);color:inherit;text-decoration:none;transition:border-color var(--fast)}
+.lrow:hover{border-color:var(--hair-2)}.lrow.fresh{animation:fadeIn .5s ease both}
+.lr-art{width:44px;height:44px;border-radius:12px;object-fit:cover;display:block}.lr-art.glyph-art{display:flex;align-items:center;justify-content:center;background:hsl(var(--h) 40% 22%)}.lr-art svg{width:22px;height:22px}
+.lr-main{display:flex;flex-direction:column;gap:4px;min-width:0}.lr-name{position:relative;display:flex;align-items:baseline;gap:6px;min-width:0;padding-right:26px}.lr-name b{font-weight:600;font-size:14px}.lr-name>span{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lr-name .star{top:-4px;right:-4px;left:auto}
+.lr-meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11.5px;color:var(--muted)}.lr-meta>span{white-space:nowrap}.lr-meta svg{width:11px;height:11px;vertical-align:-1px;margin-right:3px}.lr-meta .soon{color:var(--caution)}
+.lr-chips{display:flex;flex-wrap:wrap;gap:4px}.lr-chips>*{white-space:nowrap}.lr-chips .risk-chip,.lr-chips .pace-chip,.lr-chips .xv-chip,.lr-chips .demo-chip{font-size:10.5px;padding:1px 7px}
+.lr-fig{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:11px;color:var(--muted);min-width:76px;white-space:nowrap}.lr-fig b{font-size:14px;color:var(--ink)}.lr-fig .bar{width:76px;height:4px;border-radius:2px;background:var(--hair);overflow:hidden;display:block}.lr-fig .bar i{display:block;height:100%;background:var(--navy);border-radius:2px}
 .star{position:absolute;top:8px;left:8px;z-index:2;width:26px;height:26px;border-radius:8px;border:0;background:transparent;color:var(--faint);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .star svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}.star:hover{color:var(--ink);background:var(--hair)}.star.on{color:#F5C542}.star.on svg{fill:#F5C542}
 #watchBtn.on{background:var(--hair);color:var(--ink)}
@@ -1699,6 +1707,17 @@ function tile(p, i, trend, fresh = '') {
     <span class="tile-flags">${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
     <span class="t-act">${actCell(p)}</span>`}</div>`;
 }
+/* a lane's row: the compact card, the way Pulse lists a token: art, ticker, the one figure that matters at this stage, age or
+   time left, backers, chips. The big art stays in Trending and the board. */
+function laneRow(p, i, fresh = '') {
+  const C = Q(p), pc = pctOf(p), live = p.status === 'live', seeded = p.status === 'seeded', spot = seeded ? (p.spot || priceOf(p)) : null, x = spot ? spot / priceOf(p) : null;
+  const fig = seeded ? `<b class="num">${fmtPrice(spot)} ${esc(C.sym)}</b><span class="num ${x >= 1 ? 'up' : 'down'}">${x >= 1 ? '+' : ''}${((x - 1) * 100).toFixed(Math.abs(x - 1) < 0.01 ? 1 : 0)}%</span>` : `<b class="num">${Math.floor(pc + 1e-7)}%</b><span class="num">${fmtC(p.raised, p.q, true)} / ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</span>`;
+  return `<a class="lrow ${p.status}${fresh}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}" style="--i:${i};--h:${hashStr(p.ticker) % 360}">${artHTML(p, 'lr-art')}
+    <span class="lr-main"><span class="lr-name"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span>${starBtn(p)}</span>
+      <span class="lr-meta">${live ? `<span class="num${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span data-time>${timeCell(p)}</span></span>` : `<span class="num">${seeded ? fmtAgo(Date.now() - (p.resolvedAt || p.endsAt)) : timeCell(p)}</span>`}<span class="num" title="Backers">${ROW_ICON.people}<span data-rbackers>${p.backers}</span></span>${seeded && p.holderCount != null ? `<span class="num" title="Holders">${p.holderCount} holders</span>` : ''}</span>
+      <span class="lr-chips">${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip">Demo</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span></span>
+    <span class="lr-fig">${fig}${live ? `<span class="bar"><i data-bar style="width:${pc}%"></i></span>` : ''}</span></a>`;
+}
 const FEED_NOTE = { all: 'Live and seeded', new: 'Under 50% filled', seeding: 'Past halfway, or filled and seeding', seeded: 'Pool open', refunded: 'Missed, cancelled or timed out' };
 function renderTerminal() {
   const q = ui.bq.trim(), cols = {}; for (const k of ['new', 'seeding', 'seeded']) cols[k] = boardHit(k);
@@ -1715,8 +1734,9 @@ function renderTerminal() {
     const inLane = {}; LANES.forEach(([k]) => inLane[k] = []);
     [...cols.new, ...cols.seeding, ...cols.seeded].forEach(p => { const l = laneOf(p); if (l && inLane[l]) inLane[l].push(p); });
     const order = { new: sorter('new'), fast: sorter('all'), full: sorter('all'), seeding: sorter('seeding'), seeded: sorter('seeded') };
+    if (typeof chain !== 'undefined') chain.refreshSpots(inLane.seeded);
     lanesEl.innerHTML = LANES.map(([k, name]) => { const l = inLane[k].slice().sort(order[k]), fr = freshIn('lane-' + k, l);
-      return `<section class="lane" data-lane="${k}" aria-label="${name}"><header class="lane-h"><h2>${name}</h2><span class="ct num">${l.length || ''}</span></header><div class="lane-list">${l.length ? l.map((p, i) => tile(p, i, false, fr(p))).join('') : `<div class="lane-empty">${{ new: 'No new raises.', fast: 'Nothing between 50 and 90%.', full: 'Nothing above 90%.', seeding: 'Nothing seeding.', seeded: 'Nothing trading yet.' }[k]}</div>`}</div></section>`; }).join('');
+      return `<section class="lane" data-lane="${k}" aria-label="${name}"><header class="lane-h"><h2>${name}</h2><span class="ct num">${l.length || ''}</span></header><div class="lane-list">${l.length ? l.map((p, i) => laneRow(p, i, fr(p))).join('') : `<div class="lane-empty">${{ new: 'No new raises.', fast: 'Nothing between 50 and 90%.', full: 'Nothing above 90%.', seeding: 'Nothing seeding.', seeded: 'Nothing trading yet.' }[k]}</div>`}</div></section>`; }).join('');
   }
   const wb = $('#watchBtn'); if (wb) { const n = Object.keys(state.watch || {}).length; wb.classList.toggle('on', !!ui.watchOnly); wb.setAttribute('aria-pressed', String(!!ui.watchOnly)); $('span', wb).textContent = n ? `Watchlist ${n}` : 'Watchlist'; }
   /* the feed */
@@ -1732,8 +1752,9 @@ function renderTerminal() {
   const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live';
   hint.hidden = !show; if (show) hint.textContent = 'To see both endings: quick-deposit into Osprey from the board until it fills and it seeds on the spot. Deposit into Moss and its deadline passes in about three minutes.';
   const dead = state.presales.filter(p => p.status === 'refunded'), owed = dead.some(p => state.positions[p.id] && !state.claimed[p.id]), note = $('#refundNote');
-  note.hidden = !dead.length;
-  if (dead.length) note.innerHTML = `${dead.map(p => `<a href="#/presale/${p.id}" target="_blank" rel="noopener">${esc(p.name)}</a>`).join(', ')} missed ${dead.length === 1 ? 'its' : 'their'} target and refunded every backer.${owed ? ' You have a refund to claim in <a href="#/portfolio">your portfolio</a>.' : ''}`;
+  const mine = dead.filter(p => state.positions[p.id] && !state.claimed[p.id]);   // only a wallet with a refund waiting hears about it
+  note.hidden = !(state.wallet && owed);
+  if (state.wallet && owed) note.innerHTML = `${mine.map(p => `<a href="#/presale/${p.id}" target="_blank" rel="noopener">${esc(p.name)}</a>`).join(', ')} refunded every backer. You have a refund to claim in <a href="#/portfolio">your portfolio</a>.`;
   renderDetail();
 }
 function bump(row) { row.classList.remove('bump'); void row.offsetWidth; row.classList.add('bump'); setTimeout(() => row.classList.remove('bump'), 950); }
