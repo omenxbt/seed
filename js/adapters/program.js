@@ -321,13 +321,19 @@ function hexBytes(h) { const out = new Uint8Array(h.length / 2); for (let i = 0;
 /* ---- the adapter's live path: a real wallet goes to the chain, the demo wallet keeps its simulation */
 (function wire() {
   if (!chain.on()) return;
-  const live = (name, fn) => { const demo = adapter[name]; adapter[name] = function () { return isReal() ? fn.apply(chain, arguments) : demo.apply(adapter, arguments); }; };
+  /* a demo raise is the demo's whatever wallet is connected: its own steps run in the demo adapter, and a real wallet is
+     told it cannot act on one (its balances are the chain's, so a simulated buy would only corrupt what it shows) */
+  const isDemoRaise = p => !!(p && typeof p === 'object' && p.id && !p.live && p.status);
+  const live = (name, fn, demoOk) => { const demo = adapter[name]; adapter[name] = function (p) {
+    if (!isReal()) return demo.apply(adapter, arguments);
+    if (isDemoRaise(p)) { if (demoOk) return demo.apply(adapter, arguments); throw new Error('This is a demo raise. A real wallet acts on live raises; switch to the demo wallet to try this one.'); }
+    return fn.apply(chain, arguments); }; };
   live('openPresale', p => chain.openRaise(p));
   live('contribute', (p, pay) => chain.contribute(p, pay));
   live('claimRefund', p => chain.claimRefund(p));
   live('claimTokens', p => chain.claimTokens(p));
   live('cancelRaise', p => chain.cancelRaise(p));
-  live('seedStep', (p, step) => chain.seedStep(p, step));
+  live('seedStep', (p, step) => chain.seedStep(p, step), true);   // a demo raise seeds itself, whoever is connected
   live('claimFees', p => chain.claimFees(p));
   live('claimVested', p => chain.claimVested(p));
   live('requestPayoutChange', (p, to) => chain.requestPayoutChange(p, to));
