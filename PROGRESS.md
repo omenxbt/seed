@@ -21,6 +21,8 @@ independently; its notes live in `QA.md` (not committed by this session).
 ## Target features beyond the five phases
 - **Terminal lanes** (commit after 3b166c8): New raises / Filling fast / Almost full / Seeding / Seeded & trading as live columns at ≥1100px, the tabbed board below; watchlist (star on a card, Watchlist toggle); search by name, ticker, CA, raise account or X handle; price on every card.
 
+- **Founder profile**: `#/founder/<wallet>`, linked from a raise's Founder card: wallet with copy and explorer, X account, every raise the wallet opened with its outcome, fee income per seeded raise (from the pool position) with the indexed claims, team unlocks (unlocked, claimed, next, last).
+
 ## Phase 1: bugs — done when
 - Holders tab lists every holder of the token mint (Helius DAS `getTokenAccounts`, plain-RPC fallback) with the accounts Seed opened labelled: Locked pool, Backers unclaimed, Team vesting, Pool staging, Seed, Founder payout. Backers tab lists contributions, with the claim state after seeding.
 - After seeding the header chip is the token mint, labelled CA, with copy. The raise account, mint, pool and payout wallet are under Info → On chain, each with copy and an explorer link.

@@ -816,6 +816,9 @@ a.ico:hover{color:var(--ink)}
   </section>
 
   <!-- ------------------------------------------------------- PRESALE -->
+  <section id="tab-founder" hidden>
+    <div id="founderPage"></div>
+  </section>
   <section id="tab-presale" hidden>
     <div id="presalePage"></div>
   </section>
@@ -2288,7 +2291,7 @@ function canon(h) {
     if ((t === 'presale' || t === 'terminal') && id) return '#/presale/' + id;
     return t === 'launch' || t === 'portfolio' ? '#/' + t : '#'; }
   if (h.startsWith('#/terminal')) { const id = h.split('/')[2]; return id ? '#/presale/' + id : '#'; }
-  if (h.startsWith('#/docs') || h.startsWith('#/presale/') || h === '#/launch' || h === '#/portfolio') return h;
+  if (h.startsWith('#/docs') || h.startsWith('#/presale/') || h.startsWith('#/founder/') || h === '#/launch' || h === '#/portfolio') return h;
   return '#';
 }
 function route() {
@@ -2297,15 +2300,16 @@ function route() {
   const prevTab = ui.tab; let view = 'app', sec = null;
   if (h.startsWith('#/docs')) { view = 'docs'; sec = h.split('/')[2] || null; }
   else if (h.startsWith('#/presale/')) { const parts = h.split('/'); ui.tab = 'presale'; ui.sel = parts[2]; ui.ptab = parts[3] || 'overview'; }
+  else if (h.startsWith('#/founder/')) { ui.tab = 'founder'; ui.sel = h.split('/')[2] || ''; }
   else { ui.tab = h === '#/launch' ? 'launch' : h === '#/portfolio' ? 'portfolio' : 'terminal'; ui.sel = null; }
   const changed = view !== ui.view; ui.view = view;
   ['app', 'docs'].forEach(v => { $('#view-' + v).hidden = v !== view; document.body.classList.toggle('in-' + v, v === view); });
   if (changed || prevTab !== ui.tab) { shown.term = new Set(); playEnter(); }
   const pg = view === 'app' && ui.tab === 'presale' && find(ui.sel);
   document.title = pg ? `${pg.name} ($${pg.ticker}) raise on Seed` : view === 'docs' ? 'Seed docs: how it works, in plain terms'
-    : ui.tab === 'launch' ? 'Start a raise on Seed' : ui.tab === 'portfolio' ? 'Your positions on Seed' : 'Seed';
+    : ui.tab === 'launch' ? 'Start a raise on Seed' : ui.tab === 'portfolio' ? 'Your positions on Seed' : ui.tab === 'founder' ? 'Founder on Seed' : 'Seed';
   if (view === 'app') {
-    ['terminal', 'launch', 'portfolio', 'presale'].forEach(t => $('#tab-' + t).hidden = t !== ui.tab); seg.tabs.set(ui.tab === 'presale' ? 'terminal' : ui.tab);
+    ['terminal', 'launch', 'portfolio', 'presale', 'founder'].forEach(t => $('#tab-' + t).hidden = t !== ui.tab); seg.tabs.set(ui.tab === 'presale' || ui.tab === 'founder' ? 'terminal' : ui.tab);
     $('#view-app').classList.toggle('wide', ui.tab === 'terminal');
     $('#view-app').classList.toggle('on-presale', ui.tab === 'presale');
     $('#view-app').classList.toggle('fit', ui.tab !== 'terminal');   // these pages are workspaces: columns that fill the window on a wide screen
@@ -2319,7 +2323,7 @@ function route() {
 addEventListener('hashchange', route);
 
 /* ---------------------------------------------------------------- render */
-function renderAll() { renderWallet(); syncQuickUI(); renderAdminNote(); renderTerminal(); renderMine(); renderPortfolio(); if (ui.tab === 'launch' && typeof renderPreview === 'function') { renderPreview(); syncOpenBtn(); } }
+function renderAll() { renderWallet(); syncQuickUI(); renderAdminNote(); renderTerminal(); renderMine(); renderPortfolio(); if (typeof renderFounder === 'function') renderFounder(); if (ui.tab === 'launch' && typeof renderPreview === 'function') { renderPreview(); syncOpenBtn(); } }
 
 /* ----------------------------------------------------------------- clock */
 /* the target landed: the raise closes to buys and seeding starts. Anyone may run the steps; the demo runs them itself. */
@@ -2464,6 +2468,7 @@ addEventListener('storage', e => {
 <script src="js/adapters/trades.js"></script>
 <script src="js/risk.js"></script>
 <script src="js/presale-page.js"></script>
+<script src="js/founder-page.js"></script>
 <script src="js/launch.js"></script>
 <script src="js/filters.js"></script>
 <script>boot();</script>

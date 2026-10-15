@@ -770,3 +770,13 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 .pool-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}   /* six figures on a live pool: they wrap */
 .pri{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-6px 0 12px;font-size:12.5px}.pri .mini-seg button{padding:4px 10px;font-size:12.5px}
 .trade-on{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:12px;font-size:13px}.trade-on a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--hair-2)}.trade-on a:hover{border-color:var(--ink)}
+
+/* the founder profile */
+.fp{display:flex;flex-direction:column;gap:14px;max-width:1100px;margin:0 auto}
+.fp-head .back{display:inline-block;margin-bottom:14px}.fp-id{display:flex;gap:14px;align-items:center}.fp-id h1{font-size:24px;font-weight:500;letter-spacing:-.03em}
+.fp-id .m-av{width:52px;height:52px;border-radius:16px;display:inline-flex;align-items:center;justify-content:center;background:hsl(var(--h) 40% 24%);font-weight:600}
+.fp-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:6px;font-size:13.5px;color:var(--muted)}
+.fp-stats{margin-top:18px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px 18px}.fp-stats>div{display:block}.fp-stats dt{font-size:12.5px;color:var(--muted)}.fp-stats dd{font-size:18px;margin-top:3px}
+.fp .dtable a svg,.fp-meta svg{width:12px;height:12px;vertical-align:-2px}.founder-raises td a{white-space:nowrap}
+@media (max-width:720px){.fp-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.fp-id h1{font-size:20px}}

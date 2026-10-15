@@ -445,7 +445,8 @@ function ppFounder(p) {
   const x = p.xAccount || {}, pr = profileOf(p), f = pr.founder || {}, now = Date.now(), age = x.createdAt ? (now - x.createdAt) / D : null, past = p.pastRaises || [];
   const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
   const outcome = r => ({ seeded: '<span class="btag ok">Seeded</span>', refunded: '<span class="btag">Refunded</span>', flagged: '<span class="btag bad">Flagged</span>' })[r.outcome] || esc(r.outcome || '');
-  return `<section class="panel rail-card pp-founder"><div class="rail-h"><h3>Founder</h3>${pr.demo ? DEMO_PILL : ''}</div>
+  const fw = typeof founderOf === 'function' ? founderOf(p) : '';
+  return `<section class="panel rail-card pp-founder"><div class="rail-h"><h3>Founder</h3>${fw ? `<a class="bar-link" href="#/founder/${esc(fw)}">Profile ${ICONS.out}</a>` : ''}${pr.demo ? DEMO_PILL : ''}</div>
     ${x.handle ? `<a class="x-acct" href="${esc(xUrl(x.handle))}" target="_blank" rel="noopener">${ICONS.x}<span><b>@${esc(x.handle)}</b><span class="num">${x.verified ? 'Verified X' : x.typed ? 'Typed on devnet' : 'Linked'}${x.followers != null ? ` · ${plural(Number(x.followers), 'follower')}` : ''}${age != null ? ` · account ${fmtDays(age)} old` : ''}</span></span>${x.verified ? `<span class="vbadge x-ok" title="Verified: signed in with X">${RISK_ICON.pass}</span>` : ''}</a>`
       : `<p class="rail-meta">Opened with a wallet. No X account linked.</p>${isFounder(p) && p.status !== 'refunded' && (p.live || !isReal()) ? `<button type="button" class="qb" data-linkx>Link your X</button><p class="quiet">Adds a verified badge to this raise. Optional.</p>` : ''}`}
     <dl class="kv">${p.blacklisted ? row('Blacklisted', `<span class="bad">the founder wallet${x.handle ? ' and @' + esc(x.handle) : ''}</span>`) : ''}${row('Raises on Seed', past.length ? past.map(r => `<span class="past">$${esc(r.ticker)} ${outcome(r)}</span>`).join('') : 'This is the first')}

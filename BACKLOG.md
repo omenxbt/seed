@@ -4,12 +4,11 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 
 ## P1
 1. **Safety panel from on-chain facts only.** Mint/freeze authority, LP lock, metadata immutability, holder concentration, fresh and bundled wallets read from the chain for live raises (no demo checks on real raises).
-2. **Founder profile page.** Wallet, optional X, past raises and outcomes, fees earned, unlock history.
-3. **Portfolio for real wallets.** PnL graph and calendar, open positions, history, claims, Creator tab from chain and Supabase data.
-4. **Launch preview extras.** Pool depth, "a 10 SOL buy moves the chart X%", founder fee income at $5K/$25K/$100K daily volume.
-5. **Alerts.** In-app notifications for watched raises (filled, seeded, refunds open, unlocks).
-6. **Trade on links (Phase 5, mainnet only)** and the mainnet launch checklist in the README.
-7. **Top traders and PnL** on seeded raises (from `trades`).
+2. **Portfolio for real wallets.** PnL graph and calendar, open positions, history, claims, Creator tab from chain and Supabase data.
+3. **Launch preview extras.** Pool depth, "a 10 SOL buy moves the chart X%", founder fee income at $5K/$25K/$100K daily volume.
+4. **Alerts.** In-app notifications for watched raises (filled, seeded, refunds open, unlocks).
+5. **Trade on links (Phase 5, mainnet only)** and the mainnet launch checklist in the README.
+6. **Top traders and PnL** on seeded raises (from `trades`).
 
 ## P2
 - **QA P2-26 (seed-qa, program change):** snapshot `pool_fee_bps` on the Raise at `open_raise` (as `creator_share_bps` is) so a raise live across a config change seeds at the fee its backers saw. Next program upgrade, with P2-4.
@@ -20,6 +19,7 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 - Docs page pass for the new features.
 
 ## Done
+- Founder profile (B2): #/founder/<wallet> from the raise's Founder card — wallet, X, every raise with its outcome, fee income per seeded raise with the indexed claims, team unlocks.
 - QA push 9 (seed-qa): P1-F3 the page shows each pool's own fee, read from its state (cliff fee numerator), not the site's setting.
 - QA pushes 6–7 (seed-qa): P1-F1 the trades watch waits for the Supabase client (the channel was never opened on a fresh load); P1-F2 seeded cards show the pool's price and change from the reserves; P2-23 the refund note only for a wallet owed one; P2-24 compact lane rows.
 - Terminal lanes (B1): five stage columns at desktop width (tabbed board below 1100px), a starred watchlist with a toggle, search by name, ticker, CA, raise account or X handle, price on every card. Why: DECISIONS.md.
