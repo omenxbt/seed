@@ -133,6 +133,7 @@ function chatMount(p, body) {
   const compose = () => {
     if (frozen) { comp.innerHTML = '<p class="chat-note">This raise refunded, so its chat is closed. Earlier messages stay readable.</p>'; return; }
     if (!state.wallet) { comp.innerHTML = '<p class="chat-note">Connect a wallet to post. Reading is open to everyone.</p><button class="btn btn-navy btn-sm" data-cconnect>Connect wallet</button>'; return; }
+    if (!currentSession() && !isReal()) { comp.innerHTML = `<p class="chat-note">The demo wallet cannot sign, and a chat post needs one signed message. Connect Phantom, Solflare or Backpack to chat.</p>`; return; }
     if (!currentSession()) { comp.innerHTML = `<p class="chat-note">To post, sign one message with ${esc(state.wallet.name || 'your wallet')}. It proves you hold the wallet and is not a transaction. You sign once per session.</p><button class="btn btn-navy btn-sm" data-csign>Sign to chat</button>`; return; }
     const q = chatReply;
     comp.innerHTML = `${q ? `<div class="replying">Replying to ${esc(walletLabel(q.wallet))}: ${esc(q.body.slice(0, 80))} <button data-noreply aria-label="Cancel reply">&times;</button></div>` : ''}
