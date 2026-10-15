@@ -19,6 +19,7 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 - Docs page pass for the new features.
 
 ## Done
+- QA regression #2 (seed-qa): P2-27 small raised figures keep their digits; P2-28 demo founders get Profile links; P2-29 the profile is titled by name, X handle or wallet; P2-30 fee totals per pair asset; P2-31 the crank claims unlocked team tokens to the payout wallet (idempotent token account).
 - Founder profile (B2): #/founder/<wallet> from the raise's Founder card — wallet, X, every raise with its outcome, fee income per seeded raise with the indexed claims, team unlocks.
 - QA push 9 (seed-qa): P1-F3 the page shows each pool's own fee, read from its state (cliff fee numerator), not the site's setting.
 - QA pushes 6–7 (seed-qa): P1-F1 the trades watch waits for the Supabase client (the channel was never opened on a fresh load); P1-F2 seeded cards show the pool's price and change from the reserves; P2-23 the refund note only for a wallet owed one; P2-24 compact lane rows.

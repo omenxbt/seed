@@ -52,6 +52,14 @@ Deno.serve(async (req) => {
           // the program refuses a claim with nothing waiting at preflight, which costs nothing; that is the quiet case
           try { await client.claimCreatorFees(r.publicKey); note(`fees ${id}`); } catch (e) { if (!String((e as Error).message).includes('NothingToClaim')) throw e; }
         }
+        /* team tokens past their unlock: the schedule's tranches up to now, less what was claimed, with the config's unit (a minute in test mode) */
+        if (Number(a.teamBps) > 0) {
+          const unit = Number(cfg.testMode ? 60 : 86400), since = (now / 1000 - Number(a.seededAt)) / unit, team = Number(a.teamBps) / 10000 * 1e9 * 1e6;
+          const unlockedBps = (a.schedule as { dayOffset: number; bps: number }[]).filter(t => Number(t.dayOffset) <= since).reduce((s, t) => s + Number(t.bps), 0);
+          if (Math.floor(team * unlockedBps / 10000) > Number(a.teamClaimed) + 1) {
+            try { await client.claimVested(r.publicKey); note(`vested ${id}`); } catch (e) { if (!String((e as Error).message).includes('NothingToClaim')) throw e; }
+          }
+        }
       }
     } catch (e) { fail(id, e); }
   }

@@ -83,6 +83,12 @@ export function seedClient(program: Program, conn: web3.Connection) {
         tokenAVault: pda.dammVault(r.mint, pool), tokenBVault: pda.dammVault(r.pairMint, pool), dammEventAuthority: pda.dammEventAuthority(), cpAmmProgram: DAMM, tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
       return send([createAssociatedTokenAccountIdempotentInstruction(me, payoutToken, r.payoutWallet, r.pairMint), createAssociatedTokenAccountIdempotentInstruction(me, tre, cfg.seedTreasury, r.pairMint), ix]);
     },
+    /* unlocked team tokens to the payout wallet, its token account made on the way if it is missing */
+    async claimVested(raise: web3.PublicKey) {
+      const r = await raiseOf(raise), payoutToken = getAssociatedTokenAddressSync(r.mint, r.payoutWallet, true);
+      const ix = await m.claimVested().accounts({ raise, cranker: me, mint: r.mint, teamVault: PublicKey.findProgramAddressSync([Buffer.from('team'), raise.toBuffer()], pid)[0], payoutWallet: r.payoutWallet, payoutToken, tokenProgram: TOKEN_PROGRAM_ID }).instruction();
+      return send([createAssociatedTokenAccountIdempotentInstruction(me, payoutToken, r.payoutWallet, r.mint), ix]);
+    },
   };
 }
 export { getAccount };

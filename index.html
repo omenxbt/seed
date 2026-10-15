@@ -1560,7 +1560,7 @@ const adapter = {
 /* ------------------------------------------------------------ formatting */
 const dpOf = k => asset(k).dp;
 const fmtAmt = (n, k) => Number(n.toFixed(dpOf(k))).toLocaleString('en-US', { maximumFractionDigits: dpOf(k) });
-const fmtRaised = (n, k) => Number(n.toFixed(dpOf(k))).toLocaleString('en-US', { minimumFractionDigits: Math.min(2, dpOf(k)), maximumFractionDigits: dpOf(k) });
+const fmtRaised = (n, k) => n > 0 && n < 0.01 ? String(Number(n.toFixed(6))) : Number(n.toFixed(dpOf(k))).toLocaleString('en-US', { minimumFractionDigits: Math.min(2, dpOf(k)), maximumFractionDigits: dpOf(k) });   // 0.005, not 0.01
 const trim2 = v => String(Number(v.toFixed(2)));
 /* compact form for table cells and big readouts: 43.2K, 1.25M, 2B */
 function fmtC(n, k, raised) { const a = Math.abs(n); return a >= 1e9 ? trim2(n / 1e9) + 'B' : a >= 1e6 ? trim2(n / 1e6) + 'M' : a >= 1e4 ? trim2(n / 1e3) + 'K' : raised ? fmtRaised(n, k) : fmtAmt(n, k); }

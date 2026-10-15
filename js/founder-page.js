@@ -6,18 +6,20 @@
 const fpg = { wallet: null, claims: null, claimsFor: null };
 /* the raises a wallet opened: the live ones by their founder wallet, the demo ones by the profile's founder */
 function raisesBy(w) {
-  return state.presales.filter(p => (p.live ? p.founderWallet : (p.profile && p.profile.founder && p.profile.founder.wallet) || p.creator) === w).sort((a, b) => b.openedAt - a.openedAt);
+  return state.presales.filter(p => founderOf(p) === w).sort((a, b) => b.openedAt - a.openedAt);
 }
-const founderOf = p => p.live ? p.founderWallet : (p.profile && p.profile.founder && p.profile.founder.wallet) || p.creator || '';
+const founderOf = p => { if (p.live) return p.founderWallet || ''; const f = profileOf(p).founder; return (f && f.wallet) || p.creator || ''; };
 function renderFounder() {
   const box = $('#founderPage'); if (!box) return;
   if (ui.tab !== 'founder') { if (fpg.wallet) { box.innerHTML = ''; fpg.wallet = null; } return; }
   const w = ui.sel || '', list = raisesBy(w), real = isRealAddr(w), fresh = fpg.wallet !== w; fpg.wallet = w;
   if (!list.length) { box.innerHTML = `<div class="panel empty">No raise on Seed was opened by ${esc(walletLabel(w) || 'that wallet')}.<br><a href="#">Back to all raises</a></div>`; return; }
-  const latest = list[0], x = list.find(p => p.xAccount && p.xAccount.handle) && list.find(p => p.xAccount && p.xAccount.handle).xAccount, name = (latest.profile && latest.profile.founder && latest.profile.founder.name) || 'Founder';
+  const latest = list[0], x = list.find(p => p.xAccount && p.xAccount.handle) && list.find(p => p.xAccount && p.xAccount.handle).xAccount, pf = profileOf(latest).founder || {}, name = pf.name && pf.name !== 'Founder' ? pf.name : x && x.handle ? '@' + x.handle : walletLabel(w);
   const outcome = p => p.blacklisted ? '<span class="btag bad">Flagged</span>' : p.status === 'seeded' ? '<span class="btag ok">Seeded</span>' : p.status === 'refunded' ? `<span class="btag">Refunded${p.refundReason === 'cancelled' ? ', cancelled' : ''}</span>` : p.status === 'filled' ? '<span class="btag ok">Filled, seeding</span>' : '<span class="btag">Live</span>';
   const seeded = list.filter(p => p.status === 'seeded'), refunded = list.filter(p => p.status === 'refunded'), flagged = list.filter(p => p.blacklisted);
-  const fees = seeded.reduce((a, p) => { const f = feesOf(p); return { earned: a.earned + f.founder, claimed: a.claimed + f.founderClaimed, pending: a.pending + f.founderUnclaimed, vol: a.vol + f.volume, reading: a.reading || !!f.reading }; }, { earned: 0, claimed: 0, pending: 0, vol: 0, reading: false });
+  const byAsset = {}; let reading = false;   // totals per pair asset, since SOL and USDC do not add
+  seeded.forEach(p => { const f = feesOf(p), t = byAsset[p.q] || (byAsset[p.q] = { p, earned: 0, pending: 0 }); t.earned += f.founder; t.pending += f.founderUnclaimed; reading = reading || !!f.reading; });
+  const sumTxt = k => Object.values(byAsset).map(t => q(t[k], t.p)).join(' + ');
   const q = (n, p) => `${n > 0 && n < 100 ? fmtExact(n, p.q) : fmtC(n, p.q, true)} ${esc(Q(p).sym)}`;
   const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
   /* the record */
@@ -39,7 +41,7 @@ function renderFounder() {
           ${x && x.handle ? `<a class="x-acct" href="${esc(xUrl(x.handle))}" target="_blank" rel="noopener">${ICONS.x}<span><b>@${esc(x.handle)}</b><span class="num">${x.verified ? 'Verified X' : x.typed ? 'Typed on devnet' : 'Linked'}</span></span></a>` : '<span class="quiet">No X account linked</span>'}
           ${flagged.length ? '<span class="btag bad">Flagged for fraud</span>' : ''}</div></div></div>
       <dl class="pp-stats fp-stats"><div><dt>Raises</dt><dd class="num">${list.length}</dd></div><div><dt>Seeded</dt><dd class="num">${seeded.length}</dd></div><div><dt>Refunded</dt><dd class="num">${refunded.length}</dd></div>
-        <div><dt>Fees earned</dt><dd class="num">${!seeded.length ? '—' : fees.reading ? '…' : q(fees.earned, seeded[0])}</dd></div><div><dt>Claimable</dt><dd class="num">${!seeded.length ? '—' : fees.reading ? '…' : q(fees.pending, seeded[0])}</dd></div></dl></section>
+        <div><dt>Fees earned</dt><dd class="num">${!seeded.length ? '—' : reading ? '…' : sumTxt('earned')}</dd></div><div><dt>Claimable</dt><dd class="num">${!seeded.length ? '—' : reading ? '…' : sumTxt('pending')}</dd></div></dl></section>
     <section class="panel pp-card"><div class="tab-h"><h2>Raises on Seed</h2><span class="quiet">${plural(list.length, 'raise')}, newest first</span></div>${raises}</section>
     <section class="panel pp-card"><div class="tab-h"><h2>Fee income</h2><span class="quiet">${SEED.creatorShareBps / 100}% of each pool position's fees, paid to the payout wallet</span></div>${income}</section>
     <section class="panel pp-card"><div class="tab-h"><h2>Team unlocks</h2><span class="quiet">Schedules fixed at opening; unlocked tokens are claimed to the payout wallet</span></div>${unlocks}</section></div>`;
