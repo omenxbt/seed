@@ -65,7 +65,7 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
       const f = (all ?? []).reduce((a, x) => a + Number(x.founder), 0), s = (all ?? []).reduce((a, x) => a + Number(x.seed), 0);
       await up({ fees_founder_claimed: f, fees_seed_claimed: s }); break;
     }
-    case 'VestedClaimed': await up({ team_claimed: Number(r.team_claimed) + units(e.tokens as bigint, TOKEN_DEC) }); break;
+    case 'VestedClaimed': { const tokens = units(e.tokens as bigint, TOKEN_DEC); await up({ team_claimed: Number(r.team_claimed) + tokens }); await db.from('vested_claims').upsert({ tx, raise_id: r.id, tokens, payout_wallet: r.payout_wallet, at }, { onConflict: 'tx', ignoreDuplicates: true }); break; }
     case 'PayoutChangeRequested':
       await db.from('payout_changes').upsert({ tx, raise_id: r.id, from_wallet: e.from, to_wallet: e.to, requested_at: at, effective_at: ts(e.effectiveAt as bigint) }, { onConflict: 'tx', ignoreDuplicates: true });
       await up({ pending_payout: e.to, payout_effective_at: ts(e.effectiveAt as bigint) }); break;
