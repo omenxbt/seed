@@ -13,6 +13,7 @@ _None open. The Trade-on links and the mainnet checklist shipped in Phase 5; the
 - Docs page pass for the new features.
 
 ## Done
+- Battle-test pass (2026-10-15): demo raises seed themselves after filling (they waited for the button, while the fill toast promised otherwise); no duplicate toast for a raise already on screen; the founder's raises table fits a phone. Sweeps: every route at 390 and 1440 with no page overflow and no console errors; every control on every page clicked; demo wallet connect → deposit → fill → seed → claim → sell → buy → refund claim → disconnect; launch form validation and open.
 - QA pass #6 (seed-qa): P1-F5 chain raises carry the founder's earlier raises (Founder card and Info row, summarised past five); P2-38 lanes and Trending shrink on short windows.
 - Josh's pass (2026-10-15): three lanes (New raises under 90%, Almost full 90%+ and seeding, Seeded & trading) that end at the window's bottom and scroll inside; smaller Trending; frosted glass on lanes and rows; entrances without opacity so the glass is there from the first frame; the launch form no longer reloads the page (its segment buttons were submitting the form); the Founder card's Profile icon replaced by a link on the raises row.
 - QA pass #4 (seed-qa, clean): P2-37 the launch Closes row follows the config's test mode without a wallet; the buy-impact figures leave the pool fee out of the price.

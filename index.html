@@ -2418,7 +2418,7 @@ function tick(silent) {
   for (const p of state.presales) if (p.pendingPayoutWallet && now >= p.payoutEffectiveAt) { p.payoutWallet = p.pendingPayoutWallet; p.pendingPayoutWallet = null; p.payoutEffectiveAt = null; changed = true; }
   for (const p of state.presales) if (p.status === 'filled') {
     if (now >= seedDeadline(p)) { p.status = 'refunded'; p.refundReason = 'timeout'; p.resolvedAt = now; changed = true; if (silent !== true) toast(`${p.name} did not seed in time. Every backer can claim a refund.`); }
-    else if (!p.live && !profileOf(p).demo) { const last = p.crankAt || p.filledAt; if (now - last > 30e3 && !document.hidden && !busy) { p.crankAt = now; seedCrank(p); } }   // a demo raise waits for someone to run its steps; a live one is cranked on chain
+    else if (!p.live) { const last = p.crankAt || p.filledAt; if (now - last > 30e3 && !document.hidden && !busy) { p.crankAt = now; seedCrank(p); } }   // a demo raise runs its own steps, one every half minute, as the crank does for a live one; the button runs them sooner
   }
   if (chain.ready && !busy && !document.hidden && now - (chain.syncedAt || 0) > 20e3) {   // live raises that can still change are re-read from the chain
     chain.syncedAt = now; const open = state.presales.filter(p => p.live && (p.status === 'live' || p.status === 'filled' || p.pendingPayoutWallet)).slice(0, 6);

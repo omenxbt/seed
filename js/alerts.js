@@ -13,7 +13,7 @@ function pushAlert(p, kind, text) {
   if (state.alerts.some(a => a.key === key)) return;
   state.alerts.unshift({ key, id: p.id, kind, text, at: Date.now(), read: false });
   if (state.alerts.length > ALERT_KEEP) state.alerts.length = ALERT_KEEP;
-  toast(text);
+  if (!(ui.tab === 'presale' && ui.sel === p.id)) toast(text);   // the open page already shows the change (and its own toast)
 }
 /* called after every render: what changed since last time on the raises in scope */
 function checkAlerts() {
