@@ -10,7 +10,7 @@ const chartW = () => { const b = detailBox && $('[data-dchart],[data-candles]', 
 const PTABS = ['overview', 'team', 'roadmap', 'holders', 'backers', 'info', 'reports', 'announcements', 'deck'];
 const tabsOf = p => p.status === 'seeded' ? PTABS : PTABS.filter(t => t !== 'holders');   // holders exist once the token does
 const PTAB_ALIAS = { updates: 'announcements', tokenomics: 'team', risk: 'info' };   // the tabs' earlier names, so old links still open them
-const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'price', side: 'buy', allBackers: false, deck: null, deckPage: 1, walletKey: '' };
+const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'price', side: 'buy', quoteSeq: 0, shownQuote: null, allBackers: false, deck: null, deckPage: 1, walletKey: '' };
 
 const ICONS = {
   web: '<svg class="line" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3z"/></svg>',
@@ -83,18 +83,18 @@ function ppStats(p) {
   const C = Q(p), sym = esc(C.sym), pr = profileOf(p), st = (k, v, cls = '') => `<div class="${cls}"><dt>${k}</dt><dd class="num">${v}</dd></div>`;
   if (p.status === 'seeded') {
     const pool = pg.pool && pg.pool.value;
-    return st('Raised', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${sym}</em>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) +
+    return st('Raised', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) +
       st(`Price${pg.pool && pg.pool.from === 'standin' ? ' <span class="st-mini">stand-in</span>' : ''}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.price) : `${fmtPrice(pool.price)} ${esc(pool.quote)}`) : '…') + st(`Market cap${pg.pool && pg.pool.from === 'standin' ? ' <span class="st-mini">stand-in</span>' : ''}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.mcap) : `${fmtC(pool.mcap, p.q)} ${esc(pool.quote)}`) : '…') +
       st('Backers', p.backers) + st('Seeded', fmtDay(p.resolvedAt));
   }
   if (p.status === 'refunded') {
     const rows = backersAdapter.rows(p), claimed = rows.filter(r => r.refundClaimed).length;
-    return st('Final raise', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${sym}</em>`) + st('Filled', Math.floor(pctOf(p) + 1e-7) + '%') + st('Backers', p.backers) +
+    return st('Final raise', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Filled', Math.floor(pctOf(p) + 1e-7) + '%') + st('Backers', p.backers) +
       st('Refunds claimed', `${claimed} <em>/ ${rows.length}</em>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Closed', fmtDay(p.resolvedAt || p.endsAt));
   }
-  if (p.status === 'filled') return st('Raised', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${sym}</em>`) + st('Backers', p.backers) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) +
+  if (p.status === 'filled') return st('Raised', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Backers', p.backers) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) +
     st('Filled', fmtAgo(Date.now() - p.filledAt)) + st('Seeding', `${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1} <em>/ ${SEED_STEPS.length}</em>`) + st('Refunds if not seeded by', fmtDate(seedDeadline(p)));
-  return st('Raised', `<span data-sraised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${sym}</em>`) + st('Filled', `<span data-spct>${Math.floor(pctOf(p) + 1e-7)}%</span>`) +
+  return st('Raised', `<span data-sraised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Filled', `<span data-spct>${Math.floor(pctOf(p) + 1e-7)}%</span>`) +
     st('Backers', `<span data-sbackers>${p.backers}</span>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Time left', `<span data-stime>${fmtLeft(p.endsAt - Date.now())}</span>`) +
     st('Fee', `1% <em>on top, refunded on a miss</em>`);
 }
@@ -106,7 +106,7 @@ function ppFill(p) {
     const why = p.refundReason, title = why === 'cancelled' ? 'Cancelled by the founder, refunded' : why === 'timeout' ? 'Did not seed in time, refunded' : 'Missed target, refunded';
     const when = why === 'cancelled' ? `Cancelled ${fmtDate(p.resolvedAt)}` : why === 'timeout' ? `Filled ${fmtDate(p.filledAt)}, timed out ${fmtDate(p.resolvedAt)}` : `Deadline passed ${fmtDate(p.resolvedAt || p.endsAt)}`;
     return `<section class="panel pp-card pp-fill pp-missed"><div class="pp-card-h"><h2>${title}</h2></div>
-      <div class="readout refunded"><div class="big"><b>${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num">${Math.floor(pc + 1e-7)}%</span></div>
+      <div class="readout refunded"><div class="big"><b>${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></b><span class="num">${Math.floor(pc + 1e-7)}%</span></div>
       <div class="bar"><i style="width:${pc}%"></i></div><div class="sub"><span>${when}</span><span>${plural(p.backers, 'backer')}</span></div></div>
       <p class="pp-note">The raise ${refundReason(p)}. No token was minted and no pool was opened. Every backer claims back exactly what they paid in ${esc(C.sym)}, the 1% fee included. Refund status for each wallet is on the Backers tab.</p></section>`;
   }
@@ -114,12 +114,12 @@ function ppFill(p) {
   if (p.status === 'filled') {
     const i = SEED_STEPS.indexOf(p.seedStep || 'filled');
     return `<section class="panel pp-card pp-fill" data-fill><div class="pp-card-h"><h2>Filled, seeding</h2><span class="pace-chip on">${i + 1} of ${SEED_STEPS.length} steps</span></div>
-      <div class="readout live"><div class="big"><b>${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num">100%</span></div>
+      <div class="readout live"><div class="big"><b>${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></b><span class="num">100%</span></div>
       <div class="bar"><i style="width:100%"></i></div><div class="sub"><span>Filled ${fmtAgo(Date.now() - p.filledAt)}</span><span>${plural(p.backers, 'backer')}</span></div></div>
       <p class="pp-note">The raise is closed to buys. Seeding mints the 1,000,000,000 supply, revokes the mint and freeze authorities, opens the Meteora pool with the whole raise and locks it for good. Anyone can run the steps; if they are not all done by ${fmtDate(seedDeadline(p))}, every backer claims a refund instead.</p></section>`;
   }
   return `<section class="panel pp-card pp-fill" data-fill><div class="pp-card-h"><h2>The raise</h2>${paceChip(pi)}${isFounder(p) ? '<button type="button" class="qb qb-sm pp-cancel" data-cancel>Cancel the raise</button>' : ''}</div>
-    <div class="readout live" data-dreadout><div class="big"><b><span data-draised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b><span class="num" data-dpct>${Math.floor(pc + 1e-7)}%</span></div>
+    <div class="readout live" data-dreadout><div class="big"><b><span data-draised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></b><span class="num" data-dpct>${Math.floor(pc + 1e-7)}%</span></div>
       <div class="bar"><i data-dbar style="width:${pc}%"></i></div>
       <div class="sub"><span>Ends in <span class="num" data-dtime>${fmtLeft(p.endsAt - Date.now())}</span></span><span data-dbackers>${plural(p.backers, 'backer')}</span></div></div>
     <p class="pp-pace" data-pace>${esc(pi.text)}</p></section>`;
@@ -196,7 +196,7 @@ function candleSVG(series, mode, supply, quote, raise) {
   const hi = hi0 + pad, lo = Math.max(0, lo0 - pad), span = (hi - lo) || 1, priceH = Hh - pt - pb - vH;
   const Y = v => pt + (1 - (v - lo) / span) * priceH, vmax = Math.max(...series.map(c => c[5])) || 1, cw = (W - pr) / n;
   const f = v => quote === 'USD' ? fmtUsd(v) : fmtPrice(v);
-  const ticks = [0, 0.25, 0.5, 0.75, 1].map(q => lo + span * q), last = series[n - 1], lastV = last[4] * k, lastUp = last[4] >= last[1];
+  const ticks = [0, 0.25, 0.5, 0.75, 1].map(q => lo + span * q).filter((v, i, a) => !i || f(v) !== f(a[i - 1])), last = series[n - 1], lastV = last[4] * k, lastUp = last[4] >= last[1];   // a tiny range would repeat labels
   const nx = Math.max(2, Math.min(4, Math.floor((W - pr) / 170) + 1)), xt = [...new Set(Array.from({ length: nx }, (_, j) => Math.round((n - 1) * j / (nx - 1))))];   // time labels that fit side by side
   pg.cg = { W, Hh, pr, pt, pb, vH, priceH, lo, span, k, cw, n, series, f };
   return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${mode === 'mcap' ? 'Market cap' : 'Price'} candles, last ${f(lastV)}">
@@ -274,13 +274,7 @@ function depositPanel(p) {
 }
 function swapPanel(p) {
   const side = pg.side === 'sell' ? 'sell' : 'buy', pool = profileOf(p).pool, standin = !!(pool && isRealAddr(pool.address));
-  if (p.live) {   // until the in-page swap lands, a live token trades on its pool at Meteora
-    const url = `https://app.meteora.ag/dammv2/${p.pool}${SEED.network === 'devnet' ? '?cluster=devnet' : ''}`;
-    return `<section class="panel rail-card" data-trade="meteora"><div class="rail-h"><h3>Trade $${esc(p.ticker)}</h3></div>
-      <p class="rail-meta">$${esc(p.ticker)} trades against ${esc(Q(p).sym)} on its Meteora DAMM v2 pool. The position that holds the raise is locked under the raise account for good.</p>
-      <a class="btn btn-navy btn-block" href="${esc(url)}" target="_blank" rel="noopener">Trade on Meteora ${ICONS.out}</a>
-      <p class="rail-cap">Contract address ${esc(shortMint(p.mint || ''))}${p.mint ? copyBtn(p.mint, 'contract address') : ''}</p></section>`;
-  }
+  if (p.live) return liveTradePanel(p, side);
   return `<section class="panel rail-card" data-trade="swap"><div class="rail-h"><h3>Trade $${esc(p.ticker)}</h3>${p.live ? '' : DEMO_PILL}</div>
     <div class="seg mini-seg side-seg" data-side role="group" aria-label="Buy or sell">${['buy', 'sell'].map(v => `<button type="button" data-v="${v}" aria-pressed="${side === v}">${v === 'buy' ? 'Buy' : 'Sell'}</button>`).join('')}</div>
     <div class="trade-top"><label class="rail-lab" for="ppAmt">You pay</label><span class="rail-bal num" data-bal></span></div>
@@ -293,11 +287,33 @@ function swapPanel(p) {
     <p class="rail-cap">${p.live ? `Swaps on the raise's Meteora pool, signed in your wallet.` : 'Simulated pool, on the demo wallet. No transaction is sent.'}</p>
     ${standin && !p.live ? `<p class="standin-note">In-app trades run against a simulated $${esc(p.ticker)} pool that opened at the raise price. The chart and the pool figures beside it are the stand-in pool’s.</p>` : ''}</section>`;
 }
+/* a token on chain trades against its DAMM v2 pool right here: Meteora's SDK quotes it, the wallet signs it. The slippage
+   setting bounds what the swap may return; a price impact above 5% is called out before the button. */
+function liveTradePanel(p, side) {
+  const C = Q(p), sym = esc(C.sym);
+  return `<section class="panel rail-card" data-trade="live" data-now="${side}"><div class="rail-h"><h3>Trade $${esc(p.ticker)}</h3><span class="slip num" title="Slippage: the most the price may move against you before the swap fails"><span class="quiet">Slippage</span><input data-slip inputmode="decimal" value="${damm.slippage}" aria-label="Slippage in percent"><span class="quiet">%</span></span></div>
+    <div class="seg mini-seg side-seg" data-side role="group" aria-label="Buy or sell">${['buy', 'sell'].map(v => `<button type="button" data-v="${v}" aria-pressed="${side === v}">${v === 'buy' ? 'Buy' : 'Sell'}</button>`).join('')}</div>
+    <div class="trade-top"><label class="rail-lab" for="ppAmt">You pay</label><span class="rail-bal num" data-bal></span></div>
+    <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Amount to pay"><span class="suf" data-paysym>${side === 'sell' ? '$' + esc(p.ticker) : sym}</span></div>
+    <div class="chips" data-tchips></div>
+    <div class="recv"><span>You receive</span><b class="num" data-recv>—</b></div>
+    <dl class="kv"><div><dt>Price</dt><dd data-tprice>—</dd></div><div><dt>Price impact</dt><dd data-timpact>—</dd></div><div><dt>Minimum received</dt><dd data-tmin>—</dd></div><div><dt>Pool fee</dt><dd data-tfee>1%</dd></div></dl>
+    <p class="rail-err" data-buyerr role="alert"></p>
+    <button type="button" class="btn btn-navy btn-block" data-go>${side === 'sell' ? 'Sell' : 'Buy'} $${esc(p.ticker)}</button>
+    <p class="rail-cap">A swap on the raise's Meteora DAMM v2 pool, signed in your wallet. The pool's 1% fee pays the founder and Seed.</p></section>`;
+}
+/* an amount of the pair asset with the small ones kept: 0.0227 SOL, not 0.02 */
+const fmtExact = (n, q) => n >= 100 ? fmtAmt(n, q) : String(Number(n.toFixed(n >= 1 ? 4 : 6)));
+/* a toast that may carry a link, for a confirmed transaction */
+function toastLink(text, href, label) {
+  const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = `${esc(text)} <a href="${esc(href)}" target="_blank" rel="noopener">${esc(label)} ${ICONS.out}</a>`; $('#toasts').appendChild(t);
+  setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 350); }, 7000);
+}
 function positionPanel(p) {
   if (!state.wallet) return '';
   const C = Q(p), sym = esc(C.sym), pos = state.positions[p.id] || 0, claimed = state.claimed[p.id];
   const held = p.status === 'seeded' ? heldOf(p) : 0, row = (k, v) => `<div><dt>${k}</dt><dd class="num">${v}</dd></div>`;
-  const holding = held ? row('You hold', `${fmtTok(held)} $${esc(p.ticker)}`) + row('Worth', `${fmtAmt(held * spotOf(p), p.q)} ${sym}`) : '';
+  const holding = held ? row('You hold', `${fmtTok(held)} $${esc(p.ticker)}`) + row('Worth', `${fmtAmt(held * (p.live ? (p.spot || priceOf(p)) : spotOf(p)), p.q)} ${sym}`) : '';
   if (!pos) return `<section class="panel rail-card" data-position><h3>Your position</h3>${holding ? `<dl class="kv">${holding}</dl>` : `<p class="rail-meta">${esc(state.wallet.addr)} has not backed ${esc(p.name)}.</p>`}</section>`;
   const tok = tokensFor(p, pos), share = pos / (p.raised || 1) * 100;
   let act = '';
@@ -477,9 +493,9 @@ async function loadHolders(p) {
   try {
     const h = await backersAdapter.holders(p); if (!box.isConnected) return;
     const all = pg.allHolders || h.value.length <= 100, shown = all ? h.value : h.value.slice(0, 100), wallets = h.value.filter(x => !x.label).length;
-    box.innerHTML = `<div class="tab-h"><span class="quiet">${plural(h.count || h.value.length, 'holder')}${h.from === 'chain' ? `: ${plural(wallets, 'wallet')} and ${plural(h.value.length - wallets, 'account')} Seed opened` : `, top ${h.value.length} shown`}</span>${srcPill(h.from)}</div>
-      <div class="tscroll"><table class="dtable backers"><thead><tr><th>Holder</th><th class="r">$${esc(p.ticker)}</th><th class="r">Of supply</th><th>Label</th></tr></thead><tbody>
-      ${shown.map(x => `<tr class="${x.you ? 'you' : ''}"><td class="mono">${x.you ? 'You' : h.from === 'chain' ? `<a href="${esc(explorer(x.account || x.wallet))}" target="_blank" rel="noopener">${esc(shortMint(x.wallet))}</a>` : esc(shortMint(x.wallet))}</td><td class="num">${x.amount > 0 && x.amount < 1 ? '<1' : fmtTok(x.amount)}</td><td class="num">${x.pct < 0.01 && x.pct > 0 ? '<0.01' : x.pct.toFixed(2)}%</td><td>${esc(x.label || '')}</td></tr>`).join('')}</tbody></table></div>
+    box.innerHTML = `<div class="tab-h"><span class="quiet">${plural(h.count || h.value.length, 'holder')}${h.from === 'chain' ? `: ${plural(wallets, 'wallet')} and ${plural(h.value.length - wallets, 'pool or vault account')}` : `, top ${h.value.length} shown`}</span>${srcPill(h.from)}</div>
+      <div class="tscroll"><table class="dtable backers"><thead><tr><th>Holder</th><th class="r">$${esc(p.ticker)}</th><th class="r">Of supply</th><th class="h-label">Label</th></tr></thead><tbody>
+      ${shown.map(x => `<tr class="${x.you ? 'you' : ''}"><td class="mono">${x.you ? 'You' : h.from === 'chain' ? `<a href="${esc(explorer(x.account || x.wallet))}" target="_blank" rel="noopener">${esc(shortMint(x.wallet))}</a>` : esc(shortMint(x.wallet))}${x.label ? `<span class="h-sub">${esc(x.label)}</span>` : ''}</td><td class="num">${x.amount > 0 && x.amount < 1 ? '<1' : fmtTok(x.amount)}</td><td class="num">${x.pct < 0.01 && x.pct > 0 ? '<0.01' : x.pct.toFixed(2)}%</td><td class="h-label">${esc(x.label || '')}</td></tr>`).join('')}</tbody></table></div>
       ${h.value.length > shown.length ? `<button class="qb more" data-allholders>Show all ${h.value.length}</button>` : ''}`;
     const ah = $('[data-allholders]', box); if (ah) ah.onclick = () => { pg.allHolders = true; loadHolders(p); };
   } catch (e) { box.innerHTML = `<p class="quiet">Holders could not be loaded: ${esc(e.message)}</p>`; }
@@ -609,6 +625,7 @@ async function drawDeckPage(body) {
 let detailBox = null;
 function renderDetail(force) {
   const box = $('#presalePage'); detailBox = box;
+  if (typeof renderFootNote === 'function') renderFootNote();   // the footer follows the page: no demo reset on a live raise
   if (ui.tab !== 'presale') { if (pg.id) { box.innerHTML = ''; pg.id = null; if (typeof chatOff !== 'undefined' && chatOff) { chatOff(); chatOff = null; } } return; }
   const p = find(ui.sel);
   if (!p) { box.innerHTML = '<div class="panel empty">That raise is not in this demo any more. It may have been reset.<br><a href="#">Back to all raises</a></div>'; pg.id = null; return; }
@@ -688,6 +705,7 @@ function bindRail(p) {
   const cf = $('[data-claimfees]', box); if (cf) cf.onclick = async () => { cf.disabled = true; cf.textContent = 'Claiming…'; await claimCreatorFees(find(p.id) || p); };
   const ck = $('[data-crank]', box); if (ck) ck.onclick = async () => { ck.disabled = true; ck.textContent = 'Running…'; const cur = find(p.id) || p; cur.crankAt = Date.now(); const ok = await seedCrank(cur, true); if (!ok && detailBox) { const b = $('[data-crank]', detailBox); if (b) { b.disabled = false; b.textContent = 'Run the next step'; } } };
   const panel = $('[data-trade]', box), inp = panel && $('#ppAmt', panel); pg.syncTrade = null; if (!inp) return;
+  if (panel.dataset.trade === 'live') return bindLiveTrade(p, panel);
   const swap = panel.dataset.trade === 'swap', go = $('[data-go]', panel), err = $('[data-buyerr]', panel);
   const now = () => find(p.id) || p, num = () => parseFloat((inp.value || '').replace(/,/g, ''));
   /* the quick amounts: presets of the pair asset when paying with it, shares of the holding when selling */
@@ -709,10 +727,10 @@ function bindRail(p) {
       if (!msg && n > 0 && state.wallet && n > bal + 1e-9) msg = sell ? `You hold ${fmtTok(bal)} $${cur.ticker}.` : `Your wallet holds ${fmtAmt(bal, cur.q)} ${C.sym}.`;
       go.textContent = !state.wallet ? 'Connect wallet to trade' : `${sell ? 'Sell' : 'Buy'} $${cur.ticker}`;
     } else {
-      $('[data-recv]', panel).textContent = `${fmtTok(n > 0 ? tokensFor(cur, Math.min(n, payLeft(cur))) : 0)} $${cur.ticker}`;
+      $('[data-recv]', panel).textContent = `${fmtTok(n > 0 ? tokensFor(cur, Math.min(amountFor(n), leftOf(cur))) : 0)} $${cur.ticker}`;   // the buy inside the payment, capped at the room left
       if (!msg && n > 0) msg = pr.minBuy && n < pr.minBuy ? `The minimum deposit is ${fmtC(pr.minBuy, cur.q)} ${C.sym}.` : pr.maxBuy && n + (state.positions[cur.id] || 0) > pr.maxBuy ? `A wallet can put in at most ${fmtC(pr.maxBuy, cur.q)} ${C.sym}.`
         : n > payLeft(cur) ? `Only ${fmtAmt(payLeft(cur), cur.q)} ${C.sym} fits in this raise.` : state.wallet && n > bal ? `Your wallet holds ${fmtAmt(bal, cur.q)} ${C.sym}.` : '';
-      go.textContent = !state.wallet ? 'Connect wallet to deposit' : n > 0 && !msg ? `Deposit ${fmtAmt(n, cur.q)} ${C.sym}` : 'Deposit';
+      go.textContent = !state.wallet ? 'Connect wallet to deposit' : n > 0 && !msg ? `Deposit ${fmtExact(Math.min(n, payLeft(cur)), cur.q)} ${C.sym}` : 'Deposit';
     }
     err.textContent = msg; go.disabled = !!state.wallet && (!!msg || !(n > 0));
   };
@@ -735,6 +753,72 @@ function bindRail(p) {
     if (pg.syncTrade) pg.syncTrade();
   };
   pg.syncTrade = sync; chips(); sync();
+}
+/* the live trade panel: every change to the amount, the side, the slippage or the wallet asks the pool for a fresh quote */
+function bindLiveTrade(p, panel) {
+  const inp = $('#ppAmt', panel), go = $('[data-go]', panel), err = $('[data-buyerr]', panel), slip = $('[data-slip]', panel);
+  const now = () => find(p.id) || p, num = () => parseFloat((inp.value || '').replace(/,/g, '')), C = Q(p);
+  const sell = () => pg.side === 'sell', on = () => !!state.wallet && isReal();   // the demo wallet cannot trade a real pool
+  const chips = () => { $('[data-tchips]', panel).innerHTML = sell() ? [25, 50, 100].map(c => `<button type="button" data-pct="${c}">${c}%</button>`).join('')
+    : [0.01, 0.05, 0.1].filter(c => !on() || c <= balOf(p.q)).map(c => `<button type="button" data-chip="${c}">${c} ${esc(C.sym)}</button>`).join('') + '<button type="button" data-chip="max">Max</button>'; };
+  let timer = null;
+  const sync = async () => {
+    if (!panel.isConnected) return;
+    const cur = now(), raw = (inp.value || '').replace(/,/g, ''), n = parseFloat(raw), s = sell(), bal = on() ? (s ? heldOf(cur) : balOf(cur.q)) : 0, my = ++pg.quoteSeq;
+    pg.shownQuote = null;
+    panel.dataset.now = s ? 'sell' : 'buy';
+    $('[data-paysym]', panel).textContent = s ? '$' + cur.ticker : C.sym;
+    $('[data-bal]', panel).textContent = on() ? `Balance ${s ? fmtTok(bal) + ' $' + cur.ticker : fmtAmt(bal, cur.q) + ' ' + C.sym}` : '';
+    const sl = parseFloat(slip.value); if (sl > 0 && sl <= 50) damm.slippage = sl;
+    let msg = !raw ? '' : !(n > 0) ? 'Enter an amount above zero.' : !(sl > 0 && sl <= 50) ? 'Slippage must be between 0 and 50%.' : '';
+    if (!msg && n > 0 && on() && n > bal + 1e-9) msg = s ? `You hold ${fmtTok(bal)} $${cur.ticker}.` : `Your wallet holds ${fmtAmt(bal, cur.q)} ${C.sym}.`;
+    if (!msg && !s && n > 0 && on() && cur.q === 'SOL' && n > bal - 0.01) msg = 'Keep about 0.01 SOL for the transaction fee and the token account.';
+    go.textContent = !on() ? 'Connect a wallet to trade' : `${s ? 'Sell' : 'Buy'} $${cur.ticker}`;
+    err.textContent = msg; go.disabled = on() && (!!msg || !(n > 0));
+    if (!(n > 0)) { ['[data-recv]', '[data-tprice]', '[data-timpact]', '[data-tmin]'].forEach(k => $(k, panel).textContent = '—'); $('[data-timpact]', panel).className = ''; return; }
+    try {
+      const q = await damm.quote(cur, pg.side, n); if (my !== pg.quoteSeq || !panel.isConnected) return;
+      pg.shownQuote = { q, side: pg.side, n }; const imp = q.impact * 100;
+      $('[data-recv]', panel).textContent = s ? `${fmtExact(q.out, cur.q)} ${C.sym}` : `${fmtTok(q.out)} $${cur.ticker}`;
+      $('[data-tmin]', panel).textContent = s ? `${fmtExact(q.minOut, cur.q)} ${C.sym}` : `${fmtTok(q.minOut)} $${cur.ticker}`;
+      $('[data-tprice]', panel).textContent = `${fmtPrice(q.price)} ${C.sym}`;
+      const ti = $('[data-timpact]', panel); ti.textContent = imp < 0.01 ? 'under 0.01%' : imp.toFixed(2) + '%'; ti.className = imp >= 5 ? 'down' : '';
+      if (imp >= 5 && !msg) { err.textContent = `This trade moves the price ${imp.toFixed(1)}%. The pool is small; a smaller amount gets a better price.`; }
+    } catch (e) { if (my === pg.quoteSeq) err.textContent = `No quote: ${e.message}`; }
+  };
+  const later = () => { clearTimeout(timer); timer = setTimeout(sync, 250); };   // a keystroke's quote waits for the next one
+  inp.oninput = later; slip.oninput = later;
+  panel.onclick = async e => {
+    const side = e.target.closest('[data-side] button'), chip = e.target.closest('[data-chip],[data-pct]'), cur = now();
+    if (side) { pg.side = side.dataset.v; $$('[data-side] button', panel).forEach(b => b.setAttribute('aria-pressed', String(b === side))); inp.value = sell() && heldOf(cur) > 0 ? String(r6(heldOf(cur))) : ''; chips(); sync(); inp.focus(); return; }
+    if (chip) { inp.value = chip.dataset.pct ? r6(heldOf(cur) * chip.dataset.pct / 100) : chip.dataset.chip !== 'max' ? chip.dataset.chip : Math.max(0, r6(balOf(cur.q) - (cur.q === 'SOL' ? 0.01 : 0))); sync(); return; }
+    if (!e.target.closest('[data-go]') || busy) return;
+    if (!on()) { await connect(); return; }
+    const n = num(); if (go.disabled || !(n > 0)) return;
+    go.disabled = true; go.textContent = 'Confirm in wallet…'; busy = true;
+    try {
+      const s = sell(), shown = pg.shownQuote && pg.shownQuote.side === pg.side && pg.shownQuote.n === n ? pg.shownQuote.q : null;   // the bound the panel showed
+      const { sig, quote } = await damm.swap(cur, pg.side, n, damm.slippage, shown);
+      toastLink(s ? `Sold ${fmtTok(n)} $${cur.ticker} for ${fmtExact(quote.out, cur.q)} ${C.sym}` : `Bought ${fmtTok(quote.out)} $${cur.ticker} for ${fmtExact(n, cur.q)} ${C.sym}`, explorer(sig, 'tx'), 'View transaction');
+      inp.value = '';
+      await refreshHolding(cur); refreshBalances(true); loadTrading(cur); if (pg.tab === 'holders') renderTab(cur);
+    } catch (e) { toast(e.message); }
+    busy = false; if (panel.isConnected) { go.disabled = false; sync(); }
+  };
+  pg.syncTrade = sync; chips(); sync();
+  if (on()) refreshHolding(p);   // the wallet's token balance, from the chain
+}
+/* a real wallet's balance of the token, read from its token account and kept where the demo keeps its holdings */
+async function refreshHolding(p) {
+  if (!isReal() || !p.mint) return;
+  try {
+    await chain.init(); const me = chain.me(), ata = chain.ata(me, chain.pk(p.mint));
+    const info = await chain.conn.getTokenAccountBalance(ata).catch(() => null);
+    if (!isReal() || state.wallet.pk !== me.toBase58()) return;   // the wallet changed while the chain answered
+    const held = info ? Number(info.value.uiAmountString) : 0; (state.tokens = state.tokens || {})[p.id] = held;
+    const pw = detailBox && $('[data-poswrap]', detailBox); if (pw && pg.id === p.id) { pw.innerHTML = positionPanel(p); const dc = $('[data-dclaim]', pw); if (dc) dc.onclick = () => claim(p, dc); }
+    if (pg.syncTrade) pg.syncTrade();
+  } catch (e) { console.warn('holding:', e.message); }
 }
 async function loadAsync(p) {
   const box = detailBox, id = p.id;

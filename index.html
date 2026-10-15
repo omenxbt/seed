@@ -496,6 +496,7 @@ a.ico:hover{color:var(--ink)}
 .tr-chg.off{background:var(--chip);color:var(--muted)}
 .tile-meta,.tile-flags{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:0 2px;font-size:13px;color:var(--muted)}
 .tile-flags{gap:6px;position:relative;z-index:1;pointer-events:none}
+.demo-chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:500;color:var(--muted);background:var(--hair);letter-spacing:.01em}
 .xv-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 6px;border-radius:999px;font-size:11.5px;font-weight:500;color:var(--ok-ink);background:var(--ok-bg)}.xv-chip svg{width:11px;height:11px;fill:currentColor}
 .tile-flags .risk-chip,.tile-flags .pace-chip{font-size:11.5px;padding:2px 8px 2px 6px;gap:4px}
 .tile-flags .pace-chip{padding:2px 8px}
@@ -1671,9 +1672,9 @@ function tile(p, i, trend, fresh = '') {
   return `<div class="tile ${p.status}${trend ? ' tr-card' : fresh}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
     <span class="tr-art">${artHTML(p, 'tr-img')}${trend ? `<span class="tr-rank">${i + 1}</span>` : ''}<span class="tr-pct" data-pct>${Math.floor(pc + 1e-7)}%</span><span class="bar"><i data-bar style="width:${pc}%"></i></span></span>
     <span class="tr-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${trend ? '' : `${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}`}</span>
-    <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q)} ${esc(C.sym)}</em></b>${doingChip(p)}</span>
+    <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></b>${doingChip(p)}</span>
     ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span>${rowAnn(p)}${rowLinks(p)}</span>
-    <span class="tile-flags">${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
+    <span class="tile-flags">${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
     <span class="t-act">${actCell(p)}</span>`}</div>`;
 }
 const FEED_NOTE = { all: 'Live and seeded', new: 'Under 50% filled', seeding: 'Past halfway, or filled and seeding', seeded: 'Pool open', refunded: 'Missed, cancelled or timed out' };
@@ -1937,7 +1938,7 @@ function connect() {
     const finish = id => { d.onclick = d.oncancel = null; choosing = null; if (d.open) d.close(); (id ? connectWith(id) : Promise.resolve()).then(done); };
     $('#walletDlgBody').innerHTML = `<div class="sh-head"><span class="nm"><b>Connect a wallet</b></span><button class="x" data-wx aria-label="Close">&times;</button></div>
       <div class="wlist">${found.map(w => `<button data-w="${w.id}"><span>${w.name}</span><small>Detected</small></button>`).join('')}<button data-w="demo"><span>Demo wallet</span><small>Simulated funds</small></button></div>
-      <p class="where" style="margin-top:14px">A real wallet is only read for its address and balances. Buying, claiming and opening are not live yet and run on the demo wallet.</p>
+      <p class="where" style="margin-top:14px">A real wallet signs its own transactions on Solana devnet: opening, backing, claiming and trading. The demo wallet simulates everything and sends nothing.</p>
       <p class="where" style="margin-top:8px">A wallet is all you need. Linking an X account to it is optional, from the wallet menu once you are connected.</p>`;
     d.onclick = e => { const b = e.target.closest('[data-w]'); if (b) finish(b.dataset.w); else if (e.target === d || e.target.closest('[data-wx]')) finish(); };
     d.oncancel = () => finish();
@@ -2404,6 +2405,7 @@ addEventListener('storage', e => {
 <script src="js/adapters/chat.js"></script>
 <script src="js/adapters/x.js"></script>
 <script src="js/adapters/program.js"></script>
+<script src="js/adapters/damm.js"></script>
 <script src="js/risk.js"></script>
 <script src="js/presale-page.js"></script>
 <script src="js/launch.js"></script>

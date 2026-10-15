@@ -18,7 +18,7 @@ const enc = s => new TextEncoder().encode(s);
 const le8 = n => { const b = new Uint8Array(8); new DataView(b.buffer).setBigUint64(0, BigInt(n), true); return b; };
 
 var chain = {
-  lib: null, program: null, cfg: null, conn: null, loading: null, profiles: {}, ready: false, dry: false,
+  lib: null, program: null, cfg: null, conn: null, loading: null, profiles: {}, artTried: {}, ready: false, dry: false,
   on() { return !!(SEED.programId && SEED.rpc); },
   /* Anchor, the IDL, a read-only program and the config; once */
   init() {
@@ -159,7 +159,17 @@ var chain = {
     });
     const ids = new Set(list.map(p => p.id));
     state.presales = list.concat(state.presales.filter(p => !ids.has(p.id) && !p.live));
+    this.fillArt(list);
     return true;
+  },
+  /* a raise with no page record (opened by a script, say) still has its token's image: the metadata JSON names it */
+  fillArt(list) {
+    const todo = list.filter(p => p.metadataUri && p.profile && !p.profile.art && !this.artTried[p.id]);
+    todo.forEach(async p => {
+      this.artTried[p.id] = true;
+      try { const j = await (await fetch(p.metadataUri)).json(); if (j && typeof j.image === 'string' && /^https:\/\//.test(j.image)) { p.profile.art = j.image; if (!p.profile.description && j.description) p.profile.description = String(j.description); if (typeof renderAll === 'function') renderAll(); if (typeof detailBox !== 'undefined' && detailBox && pg.id === p.id) renderDetail(true); } }
+      catch (e) { /* no image, the identicon stays */ }
+    });
   },
   /* the raise, fresh from the chain, plus this wallet's own record on it */
   async sync(p) {
@@ -330,4 +340,6 @@ function renderFootNote() {
   $$('[data-foot]').forEach(el => { el.textContent = live
     ? `Live on ${net}${SEED.network === 'devnet' ? ': real transactions, test SOL with no value, and a day counts as a minute. Demo raises are marked; a connected wallet signs its own transactions.' : '.'}`
     : 'Prototype. Raise data is simulated and no transactions are sent. A connected wallet is only read for its address and balances.'; });
+  const cur = typeof find === 'function' && ui.tab === 'presale' ? find(ui.sel) : null;   // a live raise's page has no demo to reset
+  $$('[data-reset]').forEach(b => b.hidden = !!(cur && cur.live));
 }

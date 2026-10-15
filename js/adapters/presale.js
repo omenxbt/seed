@@ -30,9 +30,11 @@ const presaleAdapter = {
       return withSrc({ address: pool.address, pair: pool.pair, dex: pool.dex, price, quote: 'USD', mcap: Number(a.market_cap_usd || a.fdv_usd), fdv: Number(a.fdv_usd), liquidity: Number(a.reserve_in_usd),
         change24h: Number((a.price_change_percentage || {}).h24 || 0), volume24h: Number((a.volume_usd || {}).h24 || 0), supply: Number(a.fdv_usd) / price, url: `https://app.meteora.ag/dammv2/${pool.address}` }, 'standin');
     }
-    if (p.live && p.pool) {   // a raise seeded on chain: the pool is DAMM's, at the raise price until someone trades (the page does not read DAMM's reserves yet)
-      const price = priceOf(p), supply = SUPPLY, sol = SEED.network === 'devnet' ? '?cluster=devnet' : '';
-      return withSrc({ address: p.pool, pair: `${p.ticker}/${Q(p).sym}`, dex: DEX, price, quote: Q(p).sym, mcap: price * supply, fdv: price * supply, raisePrice: price, liquidity: p.target * 2, change24h: 0, volume24h: 0, supply, url: `https://app.meteora.ag/dammv2/${p.pool}${sol}` }, 'chain');
+    if (p.live && p.pool) {   // a raise seeded on chain: the pool's own reserves and price, read from DAMM
+      const supply = SUPPLY, host = SEED.network === 'devnet' ? 'https://devnet.meteora.ag' : 'https://app.meteora.ag';
+      let price = priceOf(p), liquidity = p.target * 2;
+      try { const rs = await damm.reserves(p); price = rs.price; liquidity = rs.pair * 2; p.spot = price; } catch (e) { console.warn('pool reserves:', e.message); }
+      return withSrc({ address: p.pool, pair: `${p.ticker}/${Q(p).sym}`, dex: DEX, price, quote: Q(p).sym, mcap: price * supply, fdv: price * supply, raisePrice: priceOf(p), liquidity, change24h: 0, volume24h: (p.fees || {}).volume || 0, supply, url: `${host}/dammv2/${p.pool}` }, 'chain');
     }
     const s = demoSeries(p, '1h', 48), amm = ammOf(p), last = amm.x / amm.y, supply = SUPPLY;   // the price is the in-app pool's, so a trade made here moves it
     return withSrc({ address: fakeAddr('pool/' + p.id), pair: `${p.ticker}/${Q(p).sym}`, dex: DEX, price: last, quote: Q(p).sym, mcap: last * supply, fdv: last * supply, raisePrice: priceOf(p),
@@ -70,7 +72,9 @@ function demoSeries(p, tf, n) {
 function flatSeries(p, tf) {
   const step = { '1m': 60e3, '5m': 300e3, '1h': H, '1D': D }[tf], px = priceOf(p), t0 = p.seededAt || p.resolvedAt || Date.now(), out = [];
   for (let t = Math.max(t0, Date.now() - step * 120); t <= Date.now(); t += step) out.push([t, px, px, px, px, 0]);
-  return out.length ? out : [[t0, px, px, px, px, 0]];
+  if (!out.length) out.push([t0, px, px, px, px, 0]);
+  const c = out[out.length - 1], now = p.spot || px; c[4] = now; c[2] = Math.max(c[2], now); c[3] = Math.min(c[3], now);   // the newest candle closes where the pool is
+  return out;
 }
 /* share of a refunded raise still waiting to be claimed */
 const refundLeftShare = p => { const b = p.buys || []; const tot = b.reduce((a, x) => a + x.amount, 0) || 1; return b.filter(x => !x.refundClaimed).reduce((a, x) => a + x.amount, 0) / tot; };

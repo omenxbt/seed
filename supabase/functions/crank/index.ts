@@ -10,7 +10,7 @@
 // Secrets: SEED_RPC_URL (devnet or mainnet), SEED_CRANK_KEY (the crank wallet's 64-byte secret key, base58),
 // SEED_PROGRAM_ID, CRANK_SECRET (the authorization header pg_cron sends). The IDL is bundled at deploy from js/idl/seed.json.
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
-import { Connection, Keypair } from 'npm:@solana/web3.js@1.95.3';
+import { Connection, Keypair, PublicKey } from 'npm:@solana/web3.js@1.95.3';
 import { AnchorProvider, Program, Wallet } from 'npm:@coral-xyz/anchor@0.30.1';
 import idl from './seed.json' with { type: 'json' };
 import { seedClient } from './client.ts';
@@ -31,12 +31,15 @@ Deno.serve(async (req) => {
 
   /* every raise the program knows that is not settled: the chain, not the table, decides what to send */
   const raises = await client.allRaises();
+  /* the seeding timeout as the program counts it: the config's seconds, shrunk 1440× in test mode (a day is a minute) */
+  const cfg = await (program.account as any).config.fetch(PublicKey.findProgramAddressSync([new TextEncoder().encode('config')], program.programId)[0]);
+  const seedTimeoutMs = Number(cfg.seedTimeout) * 1000 / (cfg.testMode ? 1440 : 1);
   for (const r of raises) {
     const id = r.publicKey.toBase58(), a = r.account, status = Object.keys(a.status)[0], step = Object.keys(a.seedStep)[0];   // Anchor enums arrive as { live: {} }
     try {
       if (status === 'live' && Number(a.endsAt) * 1000 <= now) { await client.settle(r.publicKey); note(`settle ${id}`); continue; }
       if (status === 'filled') {
-        if (Number(a.filledAt) * 1000 + 3 * 86400e3 <= now) { await client.timeoutRefund(r.publicKey); note(`timeout ${id}`); continue; }
+        if (Number(a.filledAt) * 1000 + seedTimeoutMs <= now) { await client.timeoutRefund(r.publicKey); note(`timeout ${id}`); continue; }
         if (step === 'filled') { await client.crankMint(r.publicKey); note(`mint ${id}`); }
         else if (step === 'minted') { await client.crankPool(r.publicKey); note(`pool ${id}`); }
         else if (step === 'pooled') { await client.crankSeed(r.publicKey); note(`seed ${id}`); }

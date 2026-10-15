@@ -51,7 +51,7 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
       await up({ raised: units(e.raised as bigint, d), backers: e.backers }); break;
     case 'RaiseFilled': await up({ status: 'filled', seed_step: 'filled', filled_at: at }); break;
     case 'RaiseMinted': await up({ seed_step: 'minted', mint: e.mint }); break;
-    case 'RaisePooled': await up({ seed_step: 'pooled', pool: e.pool, position: e.position }); break;
+    case 'RaisePooled': await up({ seed_step: 'pooled', pool: e.pool, position: e.position }); await watchPool(e.pool as string); break;
     case 'RaiseSeeded': await up({ status: 'seeded', seed_step: 'seeded', seeded_at: at, resolved_at: at }); break;
     case 'RaiseRefunded': await up({ status: 'refunded', refund_reason: REFUND_REASON[Number(e.reason)] ?? 'missed', resolved_at: at }); break;
     case 'RefundClaimed': await db.from('contributions').update({ refunded_at: at }).eq('raise_id', r.id).eq('wallet', e.wallet as string); break;
@@ -77,6 +77,48 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
   }
 }
 
+/* ---- the pool's swaps. Helius delivers every transaction that touches a watched address; once a raise's pool is
+   watched, a swap on it shows up here with the pool's vault balances before and after. The vaults belong to DAMM's pool
+   authority; the one of the raise's mint moving one way and the pair's the other way is a swap. Seed's own transactions
+   (the pool's opening, fee claims) are skipped by the program's presence in the account list. */
+const DAMM_AUTHORITY = 'HLnpSz9h2S4hiLQ43rnSD9XkcUThA7B8hQMKmDaiTLcC', SEED_PROGRAM = Deno.env.get('SEED_PROGRAM_ID') ?? '';
+const HELIUS_KEY = Deno.env.get('HELIUS_API_KEY') ?? '', WEBHOOK_ID = Deno.env.get('HELIUS_WEBHOOK_ID') ?? '';
+type TokBal = { accountIndex: number; mint: string; owner?: string; uiTokenAmount: { amount: string; decimals: number } };
+async function indexSwap(t: { transaction?: { message?: { accountKeys?: unknown[] }; signatures?: string[] }; meta?: { preTokenBalances?: TokBal[]; postTokenBalances?: TokBal[]; loadedAddresses?: { writable?: string[]; readonly?: string[] } }; slot?: number; blockTime?: number }, tx: string) {
+  const m = t.meta; if (!m?.preTokenBalances || !m.postTokenBalances) return false;
+  const keys = (t.transaction?.message?.accountKeys ?? []).map((k) => typeof k === 'string' ? k : (k as { pubkey: string }).pubkey).concat(m.loadedAddresses?.writable ?? [], m.loadedAddresses?.readonly ?? []);
+  if (!keys.length || (SEED_PROGRAM && keys.includes(SEED_PROGRAM))) return false;
+  const { data: raises } = await db.from('raises').select('id, pool, mint, pair_mint').in('pool', keys).not('pool', 'is', null);
+  if (!raises?.length) return false;
+  let n = 0;
+  for (const r of raises) {
+    const delta = (mint: string) => {
+      const pre = m.preTokenBalances!.find((b) => b.owner === DAMM_AUTHORITY && b.mint === mint), post = m.postTokenBalances!.find((b) => b.owner === DAMM_AUTHORITY && b.mint === mint);
+      if (!pre && !post) return null;
+      const dec = (post ?? pre)!.uiTokenAmount.decimals; return { d: (Number(post?.uiTokenAmount.amount ?? 0) - Number(pre?.uiTokenAmount.amount ?? 0)) / 10 ** dec };
+    };
+    const tok = delta(r.mint), pair = delta(r.pair_mint);
+    if (!tok || !pair || tok.d === 0 || pair.d === 0 || Math.sign(tok.d) === Math.sign(pair.d)) continue;   // not a swap: nothing moved, or both vaults went the same way (liquidity)
+    const side = pair.d > 0 ? 'buy' : 'sell', pair_amount = Math.abs(pair.d), token_amount = Math.abs(tok.d);
+    const { error } = await db.from('trades').insert({ signature: tx, raise_id: r.id, pool: r.pool, side, pair_amount, token_amount, price: pair_amount / token_amount, trader: keys[0], slot: t.slot ?? 0, at: new Date((t.blockTime ?? Math.floor(Date.now() / 1000)) * 1000).toISOString() });
+    if (error) { if (error.code !== '23505') console.error('trade', tx, error.message); continue; }   // 23505: seen before, so the volume was counted then
+    await db.rpc('bump_volume', { p_raise_id: r.id, p_amount: pair_amount, p_signature: tx }).then(({ error: e2 }) => { if (e2) console.error('volume', e2.message); });
+    n++;
+  }
+  return n > 0;
+}
+/* the pool joins the webhook's address list, so its swaps start arriving */
+async function watchPool(pool: string) {
+  if (!HELIUS_KEY || !WEBHOOK_ID) { console.warn('pool not watched: HELIUS_API_KEY or HELIUS_WEBHOOK_ID missing'); return; }
+  const url = `https://api.helius.xyz/v0/webhooks/${WEBHOOK_ID}?api-key=${HELIUS_KEY}`;
+  try {
+    const cur = await (await fetch(url)).json() as { webhookURL: string; transactionTypes: string[]; accountAddresses: string[]; webhookType: string; authHeader?: string };
+    if ((cur.accountAddresses ?? []).includes(pool)) return;
+    const r = await fetch(url, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ webhookURL: cur.webhookURL, transactionTypes: cur.transactionTypes, accountAddresses: [...(cur.accountAddresses ?? []), pool], webhookType: cur.webhookType, authHeader: cur.authHeader }) });
+    if (!r.ok) console.error('webhook update', r.status, await r.text());
+  } catch (e) { console.error('webhook update', (e as Error).message); }
+}
+
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('POST only', { status: 405 });
   if (SECRET && req.headers.get('authorization') !== SECRET) return new Response('no', { status: 401 });
@@ -86,7 +128,9 @@ Deno.serve(async (req) => {
     const t = it as { transaction?: { signatures?: string[] }; meta?: { logMessages?: string[]; err?: unknown }; blockTime?: number; signature?: string };
     if (t.meta?.err) continue;   // a failed transaction emits nothing that counts
     const tx = t.transaction?.signatures?.[0] ?? t.signature ?? '', logs = t.meta?.logMessages ?? [];
-    if (!tx || !logs.length) continue;
+    if (!tx) continue;
+    try { if (await indexSwap(t as Parameters<typeof indexSwap>[0], tx)) n++; } catch (e) { console.error('swap', tx, (e as Error).message); }
+    if (!logs.length) continue;
     for (const ev of await eventsInLogs(logs)) { try { await apply(ev.name, ev.data, tx, t.blockTime ?? Math.floor(Date.now() / 1000)); n++; } catch (e) { console.error(ev.name, tx, (e as Error).message); } }
   }
   return new Response(JSON.stringify({ applied: n }), { headers: { 'Content-Type': 'application/json' } });

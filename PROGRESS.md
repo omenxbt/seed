@@ -12,7 +12,7 @@ independently; its notes live in `QA.md` (not committed by this session).
 |---|---|---|
 | 1 Bugs | done, verified on the devnet preview | cd95e7b |
 | 2 Token metadata | done, verified on devnet (raise meta-7avrmrzs) | see git log |
-| 3 Real trading | not started | |
+| 3 Real trading | done, verified on devnet (swaps from both test wallets) | see git log |
 | 4 Live data | not started | |
 | 5 Terminal ready (mainnet only) | not started | |
 
@@ -31,10 +31,15 @@ independently; its notes live in `QA.md` (not committed by this session).
 
 Done when (met):
 - At launch the token JSON (name, symbol, description, image, website/X/Telegram when given) is uploaded to permanent storage: Arweave via Irys on mainnet, Supabase storage on devnet.
-- The seed mint step creates Metaplex Token Metadata with that URI and makes it immutable (`is_mutable = false`, update authority removed). The token stays a standard SPL token.
+- The seed mint step creates Metaplex Token Metadata with that URI and makes it immutable (`is_mutable = false`; the update authority is the raise PDA, which has no instruction that could update it, so nothing can change the name or image). The token stays a standard SPL token.
 - Program tests: metadata exists, matches the launch form, is immutable. Redeployed to devnet. Phantom shows the token name and image.
 
-## Phase 3: real trading — done when
+## Phase 3: real trading — shipped
+- `js/adapters/damm.js`: Meteora's cp-amm-sdk (esm.sh) quotes and builds the swap; the wallet signs; `chain.send` confirms by polling. Slippage is per session (default 2%, editable in the panel header, sent to the SDK in basis points); the minimum out sent is the one the panel showed.
+- The panel: Buy/Sell, quick amounts (0.01/0.05/0.1/Max of the pair asset; 25/50/100% of the holding), You receive, Price, Price impact (red above 5% with a note), Minimum received, Pool fee; a toast with a Solscan link; the wallet's SOL and token balances re-read from the chain after. The demo wallet cannot trade a real pool (treated as not connected); demo raises keep the simulated panel.
+- Devnet: four real swaps from the test wallets (founder buy 0.002, backer sell 20M, backer buy 0.001, founder buy 0.0005, backer sell 5M) on meta-7avrmrzs's pool through `program/scripts/e2e-swap.ts`, the same SDK calls the page makes; the page's own flow dry-run as the backer wallet.
+
+Done when (met):
 - On a seeded live raise the trade panel quotes and sends real swaps on the raise's DAMM v2 pool (`@meteora-ag/cp-amm-sdk`): quote, minimum out from an editable slippage (default 2%), price-impact warning above 5%, wallet signature, toast with an explorer link, balance refresh.
 - Buy and Sell both work; Sell defaults to the token balance with 25/50/100% buttons. Demo raises keep the simulated panel.
 
