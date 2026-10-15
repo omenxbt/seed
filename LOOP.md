@@ -18,7 +18,7 @@ Seeding
 - Backer tokens: pro rata, claimable right after seeding, no lockup.
 
 Founder income
-- Pool fee 1%, split 70% to the founder payout wallet and 30% to Seed, snapshotted at seeding. Anyone can trigger a claim, and Seed auto-claims on a schedule.
+- Pool fee 1.25% (Meteora's protocol keeps 20% of it, so 1% of volume reaches the locked position), split 70% to the founder payout wallet and 30% to Seed, snapshotted at seeding. Anyone can trigger a claim, and Seed auto-claims on a schedule.
 - Team tokens unlock on the founder's own schedule: an optional cliff then an amount per interval, or custom dated tranches. Last unlock at least 90 days after seeding, no maximum, fixed at seeding, paid to the payout wallet.
 - Payout wallet changes wait 7 days and show on the raise page while pending.
 

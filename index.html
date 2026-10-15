@@ -1160,7 +1160,7 @@ a.ico:hover{color:var(--ink)}
       <div class="prose">
         <h2>The two fees</h2>
         <p><b>Seed's fee on buys.</b> 1% of each buy, charged on top. Put 2 SOL into a raise and you pay 2.02 SOL. The fee is held beside the raise until it resolves: if the raise seeds, it goes to Seed; if it refunds, it goes back to you with the buy. A failed raise costs backers nothing beyond network fees.</p>
-        <p><b>The pool's fee on swaps.</b> The DAMM v2 pool charges a flat 1% on every trade, collected in the pair asset only. Locked liquidity still earns it. At seeding the split is fixed: 70% of what the pool earns goes to the founder's payout wallet and 30% to Seed. The split cannot be changed afterwards, not by the founder and not by Seed.</p>
+        <p><b>The pool's fee on swaps.</b> The DAMM v2 pool charges a flat 1.25% on every trade, collected in the pair asset only. Meteora's protocol keeps 20% of that, so 1% of volume reaches the locked position. At seeding the split is fixed: 70% of what the position earns goes to the founder's payout wallet and 30% to Seed. The split cannot be changed afterwards, not by the founder and not by Seed.</p>
         <p>Claiming is permissionless. Anyone can send the claim transaction and the money still goes where the snapshot says. Seed also claims on a schedule, so a founder never has to. This is a founder's income from a raise: not the raise itself, which is all in the pool, but a share of what trading on it earns.</p>
         <p>Opening a raise, claiming tokens, claiming fees and withdrawing a refund carry no Seed fee.</p>
       </div>
@@ -1172,7 +1172,7 @@ a.ico:hover{color:var(--ink)}
         </dl>
         <h3>On a swap</h3>
         <dl class="kv">
-          <div><dt>Trade $1,000 in the pool</dt><dd class="t">$10 fee: Meteora keeps $2, then $5.60 to the founder, $2.40 to Seed</dd></div>
+          <div><dt>Trade $1,000 in the pool</dt><dd class="t">$12.50 fee: Meteora keeps $2.50, then $7 to the founder, $3 to Seed</dd></div>
         </dl>
         <table class="dtable">
           <thead><tr><th>Event</th><th class="r">What happens to the fee</th></tr></thead>
@@ -1180,15 +1180,15 @@ a.ico:hover{color:var(--ink)}
             <tr><td>Buy in</td><td class="num">1% held beside the raise</td></tr>
             <tr><td>Raise seeds</td><td class="num">Held fees go to Seed</td></tr>
             <tr><td>Raise refunds</td><td class="num">Held fees go back to backers</td></tr>
-            <tr><td>Swap in the pool</td><td class="num">1%; Meteora keeps 20% of it, the rest 70% founder, 30% Seed</td></tr>
+            <tr><td>Swap in the pool</td><td class="num">1.25%; Meteora keeps 20% of it, the rest (1% of volume) 70% founder, 30% Seed</td></tr>
             <tr><td>Open, claim, refund</td><td class="num">No fee</td></tr>
           </tbody>
         </table>
         <h3>Founder's fee income by daily volume</h3>
         <dl class="kv">
-          <div><dt>$5,000 a day</dt><dd>$28 a day</dd></div>
-          <div><dt>$25,000 a day</dt><dd>$140 a day</dd></div>
-          <div><dt>$100,000 a day</dt><dd>$560 a day</dd></div>
+          <div><dt>$5,000 a day</dt><dd>$35 a day</dd></div>
+          <div><dt>$25,000 a day</dt><dd>$175 a day</dd></div>
+          <div><dt>$100,000 a day</dt><dd>$700 a day</dd></div>
         </dl>
       </div>
     </section>
@@ -1331,7 +1331,7 @@ a.ico:hover{color:var(--ink)}
       <div class="prose">
         <h2>The program and Meteora</h2>
         <p><b>Seed's program</b> holds the raise. It is an Anchor program with one config account and, per raise, a raise account, an escrow for the buys, a contribution account per backer, and a program-owned account that holds the pool position after seeding. It takes buys, enforces the cap, the deadline, the refunds and the unlock rules, runs the four seeding steps, splits the pool's fees on claim, and carries the two admin instructions. Nothing in it can move the locked position.</p>
-        <p><b>DAMM v2</b> is the pool. The raise and the pool's tokens go in across the full price range with the pair asset as token B, the fee mode set to collect in token B only, a flat 1% fee with the dynamic fee and the fee scheduler off, and the position locked at creation. Aggregators such as Jupiter can route to it as soon as it opens.</p>
+        <p><b>DAMM v2</b> is the pool. The raise and the pool's tokens go in across the full price range with the pair asset as token B, the fee mode set to collect in token B only, a flat 1.25% fee with the dynamic fee and the fee scheduler off, and the position locked at creation. Aggregators such as Jupiter can route to it as soon as it opens.</p>
         <p><b>Off chain</b>, a Supabase backend indexes the program's events for the site, signs the X attestations, keeps reports and announcements, and runs the schedules that crank seeding and claim fees. None of it holds funds.</p>
         <p>On devnet the program's upgrade authority is a developer key. On mainnet it moves to a Squads multisig. Any Solana wallet works, including Phantom, Solflare and Backpack.</p>
       </div>
@@ -1408,7 +1408,7 @@ a.ico:hover{color:var(--ink)}
             <tr><td>Team share, b</td><td>0% to under 100%, set by the founder</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Backers and pool</td><td>Half of the rest each; backers' tokens claimable at seeding, no vesting</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Team unlocks</td><td>Cliff and interval, or dated tranches; sum to 100%; last unlock at least 90 days after seeding; fixed at seeding</td><td class="num"><span class="st set">Set</span></td></tr>
-            <tr><td>Pool</td><td>DAMM v2, full range, pair asset as token B, flat 1% fee collected in token B, dynamic fee and scheduler off, locked at creation</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Pool</td><td>DAMM v2, full range, pair asset as token B, flat 1.25% fee collected in token B, dynamic fee and scheduler off, locked at creation</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Pool fee split</td><td>70% to the payout wallet, 30% to Seed, snapshotted at seeding; claims permissionless and scheduled</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Position NFT</td><td>Held by a Seed program account; no instruction can move it</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Founder identity</td><td>A wallet; an X account is optional, attested by Seed's backend and verified on chain; no KYC</td><td class="num"><span class="st set">Set</span></td></tr>
@@ -1711,7 +1711,7 @@ function tile(p, i, trend, fresh = '') {
    time left, backers, chips. The big art stays in Trending and the board. */
 function laneRow(p, i, fresh = '') {
   const C = Q(p), pc = pctOf(p), live = p.status === 'live', seeded = p.status === 'seeded', spot = seeded ? (p.spot || priceOf(p)) : null, x = spot ? spot / priceOf(p) : null;
-  const fig = seeded ? `<b class="num">${fmtPrice(spot)} ${esc(C.sym)}</b><span class="num ${x >= 1 ? 'up' : 'down'}">${x >= 1 ? '+' : ''}${((x - 1) * 100).toFixed(Math.abs(x - 1) < 0.01 ? 1 : 0)}%</span>` : `<b class="num">${Math.floor(pc + 1e-7)}%</b><span class="num">${fmtC(p.raised, p.q, true)} / ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</span>`;
+  const fig = seeded ? `<b class="num">${fmtPrice(spot)} ${esc(C.sym)}</b><span class="num ${x >= 1 ? 'up' : 'down'}">${Math.abs(x - 1) < 0.0005 ? '0%' : (x >= 1 ? '+' : '') + ((x - 1) * 100).toFixed(Math.abs(x - 1) < 0.01 ? 1 : 0) + '%'}</span>` : `<b class="num">${Math.floor(pc + 1e-7)}%</b><span class="num">${fmtC(p.raised, p.q, true)} / ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</span>`;
   return `<a class="lrow ${p.status}${fresh}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}" style="--i:${i};--h:${hashStr(p.ticker) % 360}">${artHTML(p, 'lr-art')}
     <span class="lr-main"><span class="lr-name"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span>${starBtn(p)}</span>
       <span class="lr-meta">${live ? `<span class="num${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span data-time>${timeCell(p)}</span></span>` : `<span class="num">${seeded ? fmtAgo(Date.now() - (p.resolvedAt || p.endsAt)) : timeCell(p)}</span>`}<span class="num" title="Backers">${ROW_ICON.people}<span data-rbackers>${p.backers}</span></span>${seeded && p.holderCount != null ? `<span class="num" title="Holders">${p.holderCount} holders</span>` : ''}</span>

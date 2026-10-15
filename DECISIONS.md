@@ -11,9 +11,10 @@ Layout and product calls made while building, with the reason. "What Seed is" in
   belongs on chain or in Seed's database, so it lives with the demo state and the alerts read it from there.
 - **Search matches contract addresses and X handles** as well as names and tickers, because a CA pasted from a wallet
   or a handle from a post is how traders arrive from elsewhere.
-- **Fee figures include Meteora's protocol share.** A DAMM v2 customizable pool pays 20% of its fee to Meteora; the
-  site shows the founder 0.56% and Seed 0.24% of volume rather than 0.7/0.3, because the first claim would have exposed
-  the gap. The 70/30 split itself is unchanged.
+- **Pool fee 1.25%, so 1% of volume reaches the position (Josh, Oct 2026).** A DAMM v2 customizable pool pays 20% of its
+  fee to Meteora's protocol, which the first fee claim exposed. Rather than show the founder 0.56% of volume, the pool
+  fee is 1.25%: Meteora keeps 0.25%, the locked position earns 1%, split 70/30 as before. Set in the program's Config
+  (`pool_fee_bps = 125`), `SEED.poolFeeBps`, the docs and LOOP.md.
 - **The chart on a live pool is TradingView's Lightweight Charts, the demo keeps the hand-drawn SVG.** Real data needs
   pan, zoom and live updates; the demo's random walk does not, and loading a 160 KB library for it would slow the
   prototype pages.

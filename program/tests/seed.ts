@@ -32,7 +32,7 @@ describe('seed', () => {
   before(async () => {
     // the config, once; the attestor is fixed by it, which is why the key derives from the wallet. A config that cannot
     // be read (an older layout) or that names another attestor is closed and made again when this wallet is its admin.
-    const make = async () => c.send([await c.initConfig({ admin: me.publicKey, attestor: attestor.publicKey, seedTreasury: me.publicKey, solFeed: SOL_FEED, feeBps: 100, creatorShareBps: 7000, poolFeeBps: 100, capUsdCents: new BN(10_000_000),
+    const make = async () => c.send([await c.initConfig({ admin: me.publicKey, attestor: attestor.publicKey, seedTreasury: me.publicKey, solFeed: SOL_FEED, feeBps: 100, creatorShareBps: 7000, poolFeeBps: 125, capUsdCents: new BN(10_000_000),
       minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90, payoutDelay: new BN(7 * 86400), testMode: true }, me.publicKey, USDC_DEVNET)]);
     try { cfg = await c.fetchConfig(); } catch { cfg = null; }
     if (!cfg) {

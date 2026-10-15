@@ -177,6 +177,16 @@ var chain = {
       catch (e) { /* no image, the identicon stays */ }
     });
   },
+  /* devnet only: the admin closes the Config account and makes it again with the site's numbers, keeping the admin,
+     treasury, attestor, price feed and test mode it has. One transaction; the program refuses it on a mainnet build. */
+  async resetConfig() {
+    await this.init(); const me = this.me(), c = this.cfg, BN = this.lib.BN;
+    const params = { admin: c.admin, attestor: c.attestor, seedTreasury: c.seedTreasury, solFeed: c.solFeed, feeBps: SEED.feeBps, creatorShareBps: SEED.creatorShareBps, poolFeeBps: SEED.poolFeeBps, capUsdCents: new BN(SEED.capUsd * 100),
+      minDeadline: new BN(SEED.minDeadlineH * 3600), maxDeadline: new BN(SEED.maxDeadlineH * 3600), seedTimeout: new BN(SEED.seedTimeoutDays * 86400), minUnlockDays: SEED.minUnlockDays, payoutDelay: new BN(SEED.payoutDelayDays * 86400), testMode: !!c.testMode };
+    const reset = await this.program.methods.resetConfig().accounts({ config: this.pda.config(), admin: me }).instruction();
+    const init = await this.program.methods.initConfig(params).accounts({ config: this.pda.config(), payer: me, systemProgram: this.pk(PROG.SYSTEM), devnetWitness: c.testMode ? this.pk(SEED.pairMints.USDC) : null }).instruction();
+    await this.send([reset, init]); this.cfg = await this.program.account.config.fetch(this.pda.config());
+  },
   /* the raise, fresh from the chain, plus this wallet's own record on it */
   async sync(p) {
     if (!p.address || !(await this.init())) return p;
@@ -336,7 +346,11 @@ function renderAdminNote() {
     box.hidden = false;
     box.innerHTML = `<div class="pp-notice"><b>Seed admin handover</b><p>The current admin named this wallet as the next Seed admin. Accepting makes it the wallet that can flag fraud and approve takeovers.</p><button type="button" class="btn btn-navy" data-accept-admin>Accept Seed admin</button></div>`;
     $('[data-accept-admin]', box).onclick = async e => { e.target.disabled = true; e.target.textContent = 'Confirm in wallet…'; try { await chain.acceptAdmin(); toast('This wallet is the Seed admin now.'); } catch (x) { toast(x.message); } renderAll(); };
-  } else if (chain.isAdmin()) { box.hidden = false; box.innerHTML = `<p class="quiet" style="margin-top:12px">This wallet is the Seed admin on ${esc(SEED.network)}.</p>`; }
+  } else if (chain.isAdmin()) {
+    box.hidden = false; const c = chain.cfg, stale = c && Number(c.poolFeeBps) !== SEED.poolFeeBps && SEED.network === 'devnet';
+    box.innerHTML = `<p class="quiet" style="margin-top:12px">This wallet is the Seed admin on ${esc(SEED.network)}.${c ? ` Config: pool fee ${Number(c.poolFeeBps) / 100}%, Seed fee ${Number(c.feeBps) / 100}%, founder share ${Number(c.creatorShareBps) / 100}%${c.testMode ? ', test mode' : ''}.` : ''}</p>${stale ? `<div class="pp-notice"><b>The site expects a ${SEED.poolFeeBps / 100}% pool fee</b><p>The devnet config says ${Number(c.poolFeeBps) / 100}%. Only a devnet build can close the config and make it again; new pools open with the new fee, existing ones keep theirs. Treasury, attestor and admin stay as they are.</p><button type="button" class="btn btn-navy" data-reset-config>Apply ${SEED.poolFeeBps / 100}% on devnet</button></div>` : ''}`;
+    const rb = $('[data-reset-config]', box); if (rb) rb.onclick = async e => { e.target.disabled = true; e.target.textContent = 'Confirm in wallet…'; try { await chain.resetConfig(); toast(`The devnet config now opens pools at ${SEED.poolFeeBps / 100}%.`); } catch (x) { toast(x.message); } renderAll(); };
+  }
   else box.hidden = true;
 }
 

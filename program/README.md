@@ -83,7 +83,7 @@ Before the first public raise on mainnet, one small real raise (a few dollars, a
 not the admin) run end to end, then checked where traders look:
 
 1. **Build and deploy the mainnet program** (`anchor build`, no `devnet` feature: no test mode, no `reset_config`,
-   metadata URIs must be Arweave). Upgrade authority and Config admin to the Squads multisig. `js/config/seed.js`:
+   metadata URIs must be Arweave). `init_config` with `pool_fee_bps = 125` (1.25%: Meteora keeps 20%, 1% of volume reaches the position), `fee_bps = 100`, `creator_share_bps = 7000`. Upgrade authority and Config admin to the Squads multisig. `js/config/seed.js`:
    `network: 'mainnet'`, the mainnet program id, the mainnet USDC mint, `xTyped: false`. Supabase: a mainnet Helius
    webhook (raw, the program id; pools join it as raises seed), `SEED_RPC_URL` mainnet, `SEED_DEV_X_HANDLES` unset,
    the Irys wallet for metadata uploads.

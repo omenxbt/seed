@@ -5,7 +5,7 @@
      price          derived: target / backer tokens, in the pair asset
      fee            1% on top of each buy, refunded with it if the raise does not seed
      unlocks        the team's tokens by schedule: a cliff then a slice every N days, or custom dated tranches
-     creator fees   the pool's 1% fee, split 70/30 between the payout wallet and Seed
+     creator fees   the pool's 1.25% fee (1% after Meteora's share), split 70/30 between the payout wallet and Seed
    Amounts are in the pair asset (q) unless named Usd. Shares are basis points (bps), 10000 = 100%.
    ========================================================================== */
 const BPS = 10000;

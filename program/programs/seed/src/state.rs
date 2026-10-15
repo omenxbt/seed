@@ -28,7 +28,7 @@ pub struct Config {
     pub sol_feed: Pubkey,         // the Pyth SOL/USD price account open_raise reads for the cap
     pub fee_bps: u16,             // 100: Seed's fee on each buy, on top
     pub creator_share_bps: u16,   // 7000: the founder's share of pool fees, snapshotted into each raise at opening
-    pub pool_fee_bps: u16,        // 100: the DAMM v2 pool's flat fee
+    pub pool_fee_bps: u16,        // 125: the DAMM v2 pool's flat fee; Meteora's protocol keeps 20% of it, so 1% of volume reaches the position
     pub cap_usd_cents: u64,       // 10_000_000: $100,000
     pub min_deadline: i64,        // seconds, 24h
     pub max_deadline: i64,        // seconds, 14d
