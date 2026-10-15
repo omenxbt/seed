@@ -277,7 +277,7 @@ function renderPreview() {
     ['Pool at seeding', ok ? `<span class="num">${f(d.target)} ${sym}</span> + <span class="num">${fmtTok(split.pool)}</span> $${esc(dp.ticker)}, locked for good` : 'The whole raise, locked for good'],
     ['Pool depth', ok ? `<span class="num">${f(d.target)} ${sym}</span> each side at opening (${f(d.target * 2)} ${sym}, ${fmtUsd(usdOf(dp, d.target * 2))} in all). ${impactRow(dp, sym)}` : 'Set a target'],
     ['Your fee income', `<span class="num">${fees(5000)}</span>, <span class="num">${fees(25000)}</span> or <span class="num">${fees(100000)}</span> a day at $5K, $25K or $100K of daily volume`],
-    ['Closes', typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode && isReal() ? `in ${String(Number((d.hours / 24).toFixed(1)))} min on devnet (test mode: a day is a minute), or the moment it fills` : `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
+    ['Closes', typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode ? `in ${String(Number((d.hours / 24).toFixed(1)))} min on devnet (test mode: a day is a minute), or the moment it fills` : `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
     ['If it misses', `Every buy and its fee go back to backers after ${label}. Nothing is minted`]
   ].map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
   const checks = riskChecks(dp, { draft: true }), s = riskSummary(checks);
@@ -290,7 +290,7 @@ function renderPreview() {
 /* what a buy does to the price of a pool that just opened: a constant-product pool with the raise on one side moves by
    (1 + in/raise)² − 1, so the chart's first candle is in the founder's hands to foresee */
 function impactRow(dp, sym) {
-  const x0 = dp.target, buys = dp.q === 'SOL' ? [1, 10, 100] : [100, 1000, 10000], part = b => { const m = Math.pow(1 + b / x0, 2), pc = (m - 1) * 100; return `<span class="num">${fmtC(b, dp.q)} ${sym}</span> <span class="num">${pc >= 1000 ? '×' + Math.round(m).toLocaleString('en-US') : '+' + (pc >= 10 ? Math.round(pc) : pc.toFixed(1)) + '%'}</span>`; };
+  const x0 = dp.target, buys = dp.q === 'SOL' ? [1, 10, 100] : [100, 1000, 10000], part = b => { const m = Math.pow(1 + b * (1 - SEED.poolFeeBps / BPS) / x0, 2), pc = (m - 1) * 100; /* the fee stays out of the price */ return `<span class="num">${fmtC(b, dp.q)} ${sym}</span> <span class="num">${pc >= 1000 ? '×' + Math.round(m).toLocaleString('en-US') : '+' + (pc >= 10 ? Math.round(pc) : pc.toFixed(1)) + '%'}</span>`; };
   return `A buy moves the price: ${buys.map(part).join(', ')}`;
 }
 function syncOpenBtn() { const b = $('#openBtn'); if (b && !b.disabled) b.textContent = !state.wallet ? 'Connect wallet to open' : 'Open raise'; }

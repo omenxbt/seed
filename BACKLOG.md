@@ -13,6 +13,7 @@ _None open. The Trade-on links and the mainnet checklist shipped in Phase 5; the
 - Docs page pass for the new features.
 
 ## Done
+- QA pass #4 (seed-qa, clean): P2-37 the launch Closes row follows the config's test mode without a wallet; the buy-impact figures leave the pool fee out of the price.
 - Top traders and PnL (B6): a Top traders tab on seeded live raises — bought, sold, holding, realised, unrealised, PnL per wallet from the indexed trades and claims.
 - Fresh and bundled wallet checks from chain (B7): already the case for live raises — backers.enrich() reads each real backer's first transaction and funder from the chain (getSignaturesForAddress/getTransaction, the largest 20, cached a day) and the Info rows carry the Live pill; the backlog wording was stale.
 - QA regression #3 (seed-qa): P2-35 pool depth reads per side with the total; big moves read ×N; P2-36 one test-mode close time.
