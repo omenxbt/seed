@@ -42,9 +42,9 @@ const damm = {
   },
   /* the locked position's fees, in the pair asset: what waits to be claimed and what has been claimed so far (the pool
      collects fees in the pair asset only). The program's claim splits a claim 70/30 between the payout wallet and Seed. */
-  async fees(p) {
+  async fees(p, fresh) {
     if (!p.position) return null;
-    const s = await this.state(p), pos = await this.amm.fetchPositionState(chain.pk(p.position)), d = this.decimals(p);
+    const s = await this.state(p, fresh), pos = await this.amm.fetchPositionState(chain.pk(p.position)), d = this.decimals(p);
     const un = this.lib.getUnClaimLpFee(s, pos), tokA = s.tokenAMint.toBase58() === p.mint;
     const pending = Number((tokA ? un.feeTokenB : un.feeTokenA).toString()) / Math.pow(10, d.pair), claimed = Number((tokA ? pos.metrics.totalClaimedBFee : pos.metrics.totalClaimedAFee).toString()) / Math.pow(10, d.pair);
     return { pending, claimed };

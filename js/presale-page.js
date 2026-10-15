@@ -325,8 +325,8 @@ async function loadLiveTrading(p, box) {
     loadLiveFees(p);
   } catch (e) { if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (x) {} pg.lw = null; } box.innerHTML = `<div class="pp-loading">The chart could not be loaded (${esc(e.message)}).</div>`; }
 }
-async function loadLiveFees(p) {
-  try { const f = await damm.fees(p); if (!f || pg.id !== p.id) return; (chain.feesLive = chain.feesLive || {})[p.id] = f; const card = detailBox && $('[data-fees]', detailBox); if (card) { card.outerHTML = ppFees(p); bindRail(p); } }
+async function loadLiveFees(p, fresh) {
+  try { const f = await damm.fees(p, fresh); if (!f || pg.id !== p.id) return; (chain.feesLive = chain.feesLive || {})[p.id] = f; const card = detailBox && $('[data-fees]', detailBox); if (card) { card.outerHTML = ppFees(p); bindRail(p); } }
   catch (e) { console.warn('position fees:', e.message); }
 }
 /* ---------------------------------------------------------------- right rail */
@@ -620,6 +620,7 @@ function onLiveTrade(p, t) {
   else (pg.pendingTrades = pg.pendingTrades || []).push(t);   // the series is still loading: folded in once it is
   const fees = cur.fees || (cur.fees = { volume: 0, founderClaimed: 0, seedClaimed: 0 }); fees.volume = r6((fees.volume || 0) + t.pair);
   pg.statsAt = 0; refreshPoolCard(cur);
+  loadLiveFees(cur, true);   // the position's fee state moved with the swap: the Creator fees card follows
 }
 function tabBackers(p) {
   const rows = backersAdapter.rows(p), s = backersAdapter.summary(p, rows), C = Q(p), shown = pg.allBackers ? rows : rows.slice(0, 50), refund = p.status === 'refunded', seeded = p.status === 'seeded';
