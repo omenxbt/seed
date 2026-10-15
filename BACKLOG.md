@@ -3,19 +3,19 @@
 P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P2 = polish. QA findings keep the priority QA gave.
 
 ## P1
-1. **Safety panel from on-chain facts only.** Mint/freeze authority, LP lock, metadata immutability, holder concentration, fresh and bundled wallets read from the chain for live raises (no demo checks on real raises).
-2. **Trade on links (Phase 5, mainnet only)** and the mainnet launch checklist in the README.
-3. **Top traders and PnL** on seeded raises (from `trades`).
+_None open. The Trade-on links and the mainnet checklist shipped in Phase 5; the live pick-up check needs a mainnet raise (Needs Josh)._
 
 ## P2
 - **QA P2-26 (seed-qa, program change):** snapshot `pool_fee_bps` on the Raise at `open_raise` (as `creator_share_bps` is) so a raise live across a config change seeds at the fee its backers saw. Next program upgrade, with P2-4.
 - **Axiom/GMGN patterns from QA (P2-15..19):** Your position with Bought / Sold / Holding / PnL for traders; editable quick-amount presets saved per wallet; a 5m/1h/6h/24h strip (change, buys/sells, net volume) above the panel; Price/MCap/Liquidity/24h volume in a row by the name and CA; a USD/SOL toggle and 1s/30s intervals.
 - **QA P2-4 (seed-qa):** dust after crank_pool — ~0.5 token left in the pool staging vault and ~0.001 wSOL in the raise's stage after the DAMM deposit rounds. Burn or sweep both in crank_seed (program change; next upgrade).
 - Optional min buy / max per wallet / whitelist in the program (the site's profile carries them; the program does not enforce them yet).
-- Priority fee setting in the trade panel.
 - Docs page pass for the new features.
 
 ## Done
+- Top traders and PnL (B6): a Top traders tab on seeded live raises — bought, sold, holding, realised, unrealised, PnL per wallet from the indexed trades and claims.
+- Fresh and bundled wallet checks from chain (B7): already the case for live raises — backers.enrich() reads each real backer's first transaction and funder from the chain (getSignaturesForAddress/getTransaction, the largest 20, cached a day) and the Info rows carry the Live pill; the backlog wording was stale.
+- QA regression #3 (seed-qa): P2-35 pool depth reads per side with the total; big moves read ×N; P2-36 one test-mode close time.
 - Alerts (B5): a bell in the header; watched, backed, held and opened raises raise an alert (and a toast) when they fill, seed, refund, pass a team unlock or move their payout wallet; kept in the browser with the watchlist.
 - Launch preview extras (B4): pool depth at opening and what a 1/10/100 SOL (or 100/1K/10K USDC) buy does to the price; the founder's fee income at $5K/$25K/$100K daily volume was already there.
 - QA on 845347f (seed-qa): P1-F4 a real wallet's Creator tab lists only the raises it opened on chain, totals per pair asset, fees read from the positions; P2-32 held team tokens show as positions and vested claims are indexed (vested_claims) into the history; P2-33 day results summed unrounded; P2-34 refunded rows show what was paid and refunded.

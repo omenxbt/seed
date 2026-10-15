@@ -36,6 +36,23 @@ const tradesAdapter = {
     const s = Array.isArray(data) ? data[0] : data;
     return s ? { volume24h: Number(s.volume_24h), trades24h: Number(s.trades_24h), lastPrice: s.last_price != null ? Number(s.last_price) : null, lastAt: s.last_at ? Date.parse(s.last_at) : null } : null;
   },
+  /* every wallet that traded or claimed the token, with its result: lots at average cost from claims (at what the raise
+     buy cost) and buys, sells realised against them, what is still held valued at the pool's price. Largest result first. */
+  async traders(p) {
+    if (!(await supa.init())) return [];
+    const { data, error } = await supa.client.from('trades').select('trader,side,pair_amount,token_amount,at,signature').eq('raise_id', p.id).order('at', { ascending: true }).limit(5000);
+    if (error) throw new Error(error.message);
+    const ev = data.map(x => ({ t: Date.parse(x.at), w: x.trader, kind: x.side, pair: Number(x.pair_amount), tokens: Number(x.token_amount) }));
+    (p.buys || []).forEach(b => { if (b.tokensClaimed) ev.push({ t: b.at, w: b.wallet, kind: 'claim', pair: b.paid != null ? b.paid : paidFor(b.amount), tokens: tokensFor(p, b.amount) }); });
+    ev.sort((a, b) => a.t - b.t);
+    const by = {}, spot = p.spot || priceOf(p);
+    for (const e of ev) {
+      const l = by[e.w] || (by[e.w] = { wallet: e.w, tokens: 0, cost: 0, bought: 0, sold: 0, realised: 0, buys: 0, sells: 0, last: 0 }); l.last = e.t;
+      if (e.kind === 'sell') { const avg = l.tokens > 0 ? l.cost / l.tokens : 0, basis = Math.min(l.tokens, e.tokens) * avg; l.realised += e.pair - basis; l.tokens = Math.max(0, l.tokens - e.tokens); l.cost = Math.max(0, l.cost - basis); l.sold += e.pair; l.sells++; }
+      else { l.tokens += e.tokens; l.cost += e.pair; l.bought += e.pair; if (e.kind === 'buy') l.buys++; else l.claims = (l.claims || 0) + 1; }
+    }
+    return Object.values(by).map(l => Object.assign(l, { value: l.tokens * spot, unrealised: l.tokens * spot - l.cost, pnl: l.realised + l.tokens * spot - l.cost })).sort((a, b) => b.pnl - a.pnl);
+  },
   /* every new trade on the raise, as it is indexed; returns the unsubscribe */
   watch(p, onTrade) {   // the channel opens once the client is up; unsubscribing before that just cancels
     let ch = null, off = false;

@@ -8,7 +8,7 @@
 /* charts draw at the width of their column, one unit to the pixel, so their labels keep their size however wide the window is */
 const chartW = () => { const b = detailBox && $('[data-dchart],[data-candles]', detailBox), w = b ? Math.floor(b.clientWidth) : 0; return w > 0 ? Math.max(320, w) : innerWidth < 720 ? 400 : 720; };
 const PTABS = ['overview', 'team', 'roadmap', 'holders', 'backers', 'info', 'reports', 'announcements', 'deck'];
-const PTABS_LIVE = ['overview', 'trades', 'holders', 'team', 'roadmap', 'backers', 'info', 'reports', 'announcements', 'deck'];
+const PTABS_LIVE = ['overview', 'trades', 'traders', 'holders', 'team', 'roadmap', 'backers', 'info', 'reports', 'announcements', 'deck'];
 const tabsOf = p => p.status !== 'seeded' ? PTABS.filter(t => t !== 'holders') : p.live ? PTABS_LIVE : PTABS;   // holders exist once the token does; trades once a pool is indexed
 const PTAB_ALIAS = { updates: 'announcements', tokenomics: 'team', risk: 'info' };   // the tabs' earlier names, so old links still open them
 const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'price', side: 'buy', quoteSeq: 0, shownQuote: null, allBackers: false, deck: null, deckPage: 1, walletKey: '' };
@@ -477,7 +477,7 @@ function ppTabs(p) {
 function renderTab(p) {
   const body = detailBox && $('[data-tabbody]', detailBox); if (!body) return;
   $$('[data-ptab]', detailBox).forEach(a => a.setAttribute('aria-selected', String(a.dataset.ptab === pg.tab))); placeTabInd();
-  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, roadmap: tabRoadmap, holders: tabHolders, trades: tabTrades, backers: tabBackers, info: tabInfo, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
+  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, roadmap: tabRoadmap, holders: tabHolders, trades: tabTrades, traders: tabTraders, backers: tabBackers, info: tabInfo, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
   body.innerHTML = fn(p); afterTab(p, body);
   const key = p.id + '/' + pg.tab;   // the tab's content eases in when the tab changes, not when it is redrawn in place
   if (pg.shown !== key) { pg.shown = key; body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap'); }
@@ -576,6 +576,19 @@ function donutSVG(allocs) {
 }
 function tabHolders(p) { return tabHead('Holders', '') + '<div data-holders><div class="pp-loading">Loading holders…</div></div>'; }
 function tabTrades(p) { return tabHead('Trades', '') + '<div data-trades><div class="pp-loading">Loading trades…</div></div>'; }
+function tabTraders(p) { return tabHead('Top traders', '') + '<div data-traders><div class="pp-loading">Loading traders…</div></div>'; }
+/* who has made and lost what on this token: realised from sells against an average cost, unrealised on what is still held */
+async function loadTraders(p) {
+  const box = detailBox && $('[data-traders]', detailBox); if (!box) return;
+  try {
+    const list = await tradesAdapter.traders(p); if (!box.isConnected) return;
+    const C = Q(p), sym = esc(C.sym), me = state.wallet && state.wallet.pk, pn = v => `<span class="num ${v > 1e-9 ? 'up' : v < -1e-9 ? 'down' : ''}">${v > 1e-9 ? '+' : ''}${fmtExact(v, p.q)} ${sym}</span>`;
+    box.innerHTML = list.length ? `<div class="tab-h"><span class="quiet">${plural(list.length, 'wallet')}, by result at the pool's price</span>${LIVE_PILL}</div>
+      <div class="tscroll"><table class="dtable traders"><thead><tr><th>#</th><th>Wallet</th><th class="r">Bought</th><th class="r">Sold</th><th class="r">Holding</th><th class="r">Realised</th><th class="r">Unrealised</th><th class="r">PnL</th></tr></thead><tbody>
+      ${list.slice(0, 50).map((l, i) => `<tr class="${l.wallet === me ? 'you' : ''}"><td class="num">${i + 1}</td><td class="mono">${l.wallet === me ? 'You' : `<a href="${esc(explorer(l.wallet))}" target="_blank" rel="noopener">${esc(shortMint(l.wallet))}</a>`}</td><td class="num">${fmtExact(l.bought, p.q)} ${sym}<span class="quiet"> · ${l.buys + (l.claims || 0)}</span></td><td class="num">${fmtExact(l.sold, p.q)} ${sym}<span class="quiet"> · ${l.sells}</span></td><td class="num">${l.tokens > 0 ? fmtTok(l.tokens) : '—'}</td><td>${pn(l.realised)}</td><td>${l.tokens > 0 ? pn(l.unrealised) : '—'}</td><td>${pn(l.pnl)}</td></tr>`).join('')}</tbody></table></div>
+      <p class="quiet">A claim counts as a buy at what the raise cost. Tokens received another way (a team unlock, a transfer) are not in these figures.</p>` : quietEmpty('No trades on the pool yet.');
+  } catch (e) { box.innerHTML = `<p class="quiet">Traders could not be loaded: ${esc(e.message)}</p>`; }
+}
 /* the latest swaps on the pool, newest first; a new one slides in at the top as the indexer sees it */
 async function loadTrades(p) {
   const box = detailBox && $('[data-trades]', detailBox); if (!box) return;
@@ -595,6 +608,7 @@ function tradesTable(p, list) {
 /* a trade the indexer just saw: the table, the chart's newest candle, the pool figures */
 function onLiveTrade(p, t) {
   const cur = find(p.id) || p; if (pg.id !== cur.id) return;
+  if (pg.tab === 'traders') loadTraders(cur);
   if (pg.trades && !pg.trades.some(x => x.signature === t.signature)) {
     pg.trades.unshift(t); const body = detailBox && $('[data-tradesbody]', detailBox);
     if (body) { body.insertAdjacentHTML('afterbegin', tradeRow(cur, t)); body.firstElementChild.classList.add('flash'); const h = detailBox && $('[data-trades] .tab-h .quiet', detailBox); if (h) h.textContent = `${plural(pg.trades.length, 'latest trade')}, newest first`; }
@@ -683,6 +697,7 @@ function afterTab(p, body) {
   if (pg.tab === 'deck' && profileOf(p).deck && deckKindOf(profileOf(p)) === 'pdf') loadDeck(p, body);
   if (pg.tab === 'holders') loadHolders(p);
   if (pg.tab === 'trades') loadTrades(p);
+  if (pg.tab === 'traders') loadTraders(p);
   const f = $('[data-updform]', body);
   if (f) {
     const err = $('[data-annerr]', f), ct = $('[data-annct]', f);

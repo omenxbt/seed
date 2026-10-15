@@ -29,6 +29,11 @@ independently; its notes live in `QA.md` (not committed by this session).
 
 - **Alerts**: `js/alerts.js` compares every raise in scope (starred, backed, held, opened) with what was last seen on each render and records filled / seeded / refunds open / team unlock passed / payout wallet moved, with a toast; the header bell counts unread alerts and lists the latest with links.
 
+- **Top traders and PnL**: a Top traders tab on seeded live raises, every wallet that traded or claimed with bought, sold, holding, realised (average cost), unrealised at the pool price and PnL, newest trades folded in live.
+- **Fresh and bundled wallet checks from chain**: for a live raise the Info rows come from each real backer's first transaction and funder read from the chain (the largest 20, cached a day) — in place since the risk adapter; the wording in the backlog was stale.
+
+**All target features are in.** What remains is QA's two consecutive clean full passes, the Needs Josh items, and the P2 polish list in BACKLOG.md.
+
 ## Phase 1: bugs — done when
 - Holders tab lists every holder of the token mint (Helius DAS `getTokenAccounts`, plain-RPC fallback) with the accounts Seed opened labelled: Locked pool, Backers unclaimed, Team vesting, Pool staging, Seed, Founder payout. Backers tab lists contributions, with the claim state after seeding.
 - After seeding the header chip is the token mint, labelled CA, with copy. The raise account, mint, pool and payout wallet are under Info → On chain, each with copy and an explorer link.
