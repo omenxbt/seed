@@ -233,7 +233,7 @@ function loadLw() {
   if (window.LightweightCharts) return Promise.resolve();
   return lwReady || (lwReady = new Promise((ok, no) => { const s = document.createElement('script'); s.src = LW_SRC; s.onload = ok; s.onerror = () => { lwReady = null; no(new Error('the chart library did not load')); }; document.head.appendChild(s); }));
 }
-const fmtSig4 = v => v >= 1000 ? fmtC(v, 'SOL', true) : v >= 1 ? String(Number(v.toPrecision(4))) : fmtPrice(v);   // market caps on the axis: four significant digits
+const fmtSig4 = v => v >= 1000 ? fmtC(v, 'SOL', true) : v >= 1 ? String(Number(v.toPrecision(4))) : v < 5e-5 ? '0' : Number(v.toPrecision(3)).toLocaleString('en-US', { maximumFractionDigits: 6 });   // market caps on the axis: four significant digits, a small devnet one plain, never the subscript price style
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 /* the chart for a pool on chain: candles and volume from the indexed trades, the raise price as a line, Price or MCap */
 function lwMount(box, p) {
