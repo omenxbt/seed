@@ -29,6 +29,7 @@ function riskChecks(p, opts = {}) {
   add('past', 'Past raises', flagged.length || dumped.length ? 'fail' : 'pass',
     flagged.length ? `${flagged.length} earlier Seed raise${flagged.length > 1 ? 's' : ''} by this account ${flagged.length > 1 ? 'were' : 'was'} flagged for fraud: ${flagged.map(r => '$' + r.ticker).join(', ')}.`
       : dumped.length ? `${dumped.length} past launch${dumped.length > 1 ? 'es' : ''} from this wallet ended dumped: ${dumped.map(e => `${e.name} on ${e.platform}`).join(', ')}.`
+      : past.length > 5 ? `${past.length} earlier Seed raises: ${['seeded', 'refunded', 'live', 'seeding'].map(o => [o, past.filter(r => r.outcome === o).length]).filter(x => x[1]).map(([o, n]) => `${n} ${o}`).join(', ')}. Latest: ${past.slice(0, 3).map(r => `$${r.ticker} ${r.outcome}`).join(', ')}.`
       : past.length ? `${past.length} earlier Seed raise${past.length > 1 ? 's' : ''}: ${past.map(r => `$${r.ticker} ${r.outcome}`).join(', ')}.` : 'The first raise by this account on Seed.', fromPr);
 
   // 3 to 5. the crowd

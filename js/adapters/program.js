@@ -157,6 +157,9 @@ var chain = {
       }
       return p;
     });
+    /* a founder's earlier raises, for the Founder card and the Info row: the chain raises by the same wallet opened before this one */
+    const outcomeOf = x => x.blacklisted ? 'flagged' : x.status === 'seeded' ? 'seeded' : x.status === 'refunded' ? 'refunded' : x.status === 'filled' ? 'seeding' : 'live';
+    list.forEach(p => { p.pastRaises = list.filter(x => x.founderWallet === p.founderWallet && x.id !== p.id && x.openedAt < p.openedAt).sort((a, b) => b.openedAt - a.openedAt).map(x => ({ name: x.name, ticker: x.ticker, outcome: outcomeOf(x), at: x.openedAt })); });
     const ids = new Set(list.map(p => p.id));
     state.presales = list.concat(state.presales.filter(p => !ids.has(p.id) && !p.live));
     this.fillArt(list);
