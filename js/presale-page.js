@@ -777,7 +777,7 @@ function renderDetail(force) {
   if (typeof renderFootNote === 'function') renderFootNote();   // the footer follows the page: no demo reset on a live raise
   if (ui.tab !== 'presale') { if (pg.id) { box.innerHTML = ''; pg.id = null; leaveLive(); if (typeof chatOff !== 'undefined' && chatOff) { chatOff(); chatOff = null; } } return; }
   const p = find(ui.sel);
-  if (!p) { box.innerHTML = '<div class="panel empty">That raise is not in this demo any more. It may have been reset.<br><a href="#">Back to all raises</a></div>'; pg.id = null; return; }
+  if (!p) { box.innerHTML = `<div class="panel empty">No raise at this address${chain.on() ? ' on ' + esc(SEED.network) : ' in this demo'}. The link may be wrong, or the raise may be on another network.<br><a href="#">Back to all raises</a></div>`; pg.id = null; return; }
   const want = PTAB_ALIAS[ui.ptab] || ui.ptab, tab = tabsOf(p).includes(want) ? want : 'overview', wkey = (state.wallet ? walletId() : '') + '/' + (state.positions[p.id] || 0) + '/' + !!state.claimed[p.id] + '/' + (p.status === 'seeded' ? heldOf(p) : 0) + '/' + balOf(p.q);
   if (!force && pg.id === p.id && pg.status === p.status) {
     if (pg.tab !== tab) { pg.tab = tab; renderTab(p); }
