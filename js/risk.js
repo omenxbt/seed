@@ -85,9 +85,12 @@ const RISK_ICON = {
   info: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.2v4M8 4.9v.1"/></svg>'
 };
 const riskChip = (s, extra = '') => `<span class="risk-chip ${s.level}"${extra}>${RISK_ICON[s.level]}${esc(s.text)}</span>`;
+/* a founder's choice, shown as a fact: an info row that is not a reading of the chain (a chain row with nothing to grade yet,
+   such as one holder, stays with the checks) */
+const isFact = c => c.level === 'info' && c.from !== 'chain';
 /* the panel itself: the checks, then the founder's choices under their own heading */
 function infoList(checks) {
   const li = c => `<li class="${c.level}">${RISK_ICON[c.level]}<div><b>${esc(c.label)}</b><span>${esc(c.reason)}</span></div></li>`;
-  const graded = checks.filter(c => c.level !== 'info'), facts = checks.filter(c => c.level === 'info');
+  const graded = checks.filter(c => !isFact(c)), facts = checks.filter(isFact);
   return `<ul class="risk-list">${graded.map(li).join('')}</ul>${facts.length ? `<p class="info-h">The founder's choices</p><ul class="risk-list">${facts.map(li).join('')}</ul>` : ''}`;
 }

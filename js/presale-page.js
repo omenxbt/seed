@@ -426,8 +426,8 @@ function positionPanel(p) {
 function tabInfo(p) {
   const checks = riskChecks(p), s = riskSummary(checks), demo = checks.some(c => c.from === 'demo'), li = c => `<li class="${c.level}">${RISK_ICON[c.level]}<div><b>${esc(c.label)}</b><span>${esc(c.reason)}</span></div></li>`;
   return tabHead('Info', '', riskChip(s)) +
-    `<ul class="risk-list risk-grid" data-risk>${checks.filter(c => c.level !== 'info').map(li).join('')}</ul>
-    <p class="info-h">The founder's choices</p><ul class="risk-list risk-grid">${checks.filter(c => c.level === 'info').map(li).join('')}</ul>
+    `<ul class="risk-list risk-grid" data-risk>${checks.filter(c => !isFact(c)).map(li).join('')}</ul>
+    <p class="info-h">The founder's choices</p><ul class="risk-list risk-grid">${checks.filter(isFact).map(li).join('')}</ul>
     <p class="quiet risk-note">Seed enforces the cap, the refunds, the locked pool and the 90-day unlock minimum in its program, and acts on fraud. Everything else here is for you to weigh.${demo ? ` ${DEMO_PILL} Checks run on demo data where no live account exists.` : ''}</p>` + infoAddresses(p);
 }
 /* the accounts behind a raise that is on chain, each with a copy button and an explorer link */
