@@ -12,11 +12,14 @@ const B58A = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
 function bs58(b: Uint8Array) { let n = 0n; for (const x of b) n = n * 256n + BigInt(x); let s = ''; while (n > 0n) { s = B58A[Number(n % 58n)] + s; n /= 58n; } for (const x of b) { if (x !== 0) break; s = '1' + s; } return s; }
 const maxKey = (a: web3.PublicKey, b: web3.PublicKey) => (Buffer.compare(a.toBuffer(), b.toBuffer()) === 1 ? a : b).toBuffer();
 const minKey = (a: web3.PublicKey, b: web3.PublicKey) => (Buffer.compare(a.toBuffer(), b.toBuffer()) === 1 ? b : a).toBuffer();
+const TOKEN_METADATA_PROGRAM = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 const pda = {
   config: (pid: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('config')], pid)[0],
   poolVault: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('pool'), raise.toBuffer()], pid)[0],
   stage: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('stage'), raise.toBuffer()], pid)[0],
   poolPayer: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('payer'), raise.toBuffer()], pid)[0],
+  raiseMeta: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('meta'), raise.toBuffer()], pid)[0],
+  metadata: (mint: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('metadata'), TOKEN_METADATA_PROGRAM.toBuffer(), mint.toBuffer()], TOKEN_METADATA_PROGRAM)[0],
   dammPool: (a: web3.PublicKey, b: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('cpool'), maxKey(a, b), minKey(a, b)], DAMM)[0],
   dammPosition: (nft: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('position'), nft.toBuffer()], DAMM)[0],
   dammPositionNftAccount: (nft: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('position_nft_account'), nft.toBuffer()], DAMM)[0],
@@ -57,7 +60,7 @@ export function seedClient(program: Program, conn: web3.Connection) {
     applyPayoutChange: (raise: web3.PublicKey) => m.applyPayoutChange().accounts({ raise }).rpc(),
     async crankMint(raise: web3.PublicKey) {
       const r = await raiseOf(raise), mint = Keypair.generate();
-      const ix = await m.crankMint().accounts({ raise, cranker: me, mint: mint.publicKey, backersVault: getAssociatedTokenAddressSync(mint.publicKey, raise, true), poolVault: pda.poolVault(pid, raise), teamVault: PublicKey.findProgramAddressSync([Buffer.from('team'), raise.toBuffer()], pid)[0], pairMint: r.pairMint, stage: pda.stage(pid, raise), poolPayer: pda.poolPayer(pid, raise), tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
+      const ix = await m.crankMint().accounts({ raise, cranker: me, mint: mint.publicKey, backersVault: getAssociatedTokenAddressSync(mint.publicKey, raise, true), poolVault: pda.poolVault(pid, raise), teamVault: PublicKey.findProgramAddressSync([Buffer.from('team'), raise.toBuffer()], pid)[0], pairMint: r.pairMint, stage: pda.stage(pid, raise), poolPayer: pda.poolPayer(pid, raise), raiseMeta: pda.raiseMeta(pid, raise), metadata: pda.metadata(mint.publicKey), tokenMetadataProgram: TOKEN_METADATA_PROGRAM, rent: web3.SYSVAR_RENT_PUBKEY, tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
       return send([ix], [mint]);
     },
     async crankPool(raise: web3.PublicKey) {

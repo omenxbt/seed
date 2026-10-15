@@ -5,7 +5,7 @@ import { BN, web3 } from '@coral-xyz/anchor';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, NATIVE_MINT, createAssociatedTokenAccountIdempotentInstruction, createSyncNativeInstruction, createTransferInstruction, getAccount, getAssociatedTokenAddressSync, getMint } from '@solana/spl-token';
 import { assert } from 'chai';
 import { createHash } from 'crypto';
-import { SeedClient, pda, handleHash, attestIx, WSOL, SOL_FEED } from '../client/seed';
+import { SeedClient, pda, handleHash, attestIx, decodeMetadata, WSOL, SOL_FEED } from '../client/seed';
 import idl from '../target/idl/seed.json';
 
 const { Keypair, PublicKey, SystemProgram, LAMPORTS_PER_SOL } = web3;
@@ -19,7 +19,7 @@ describe('seed', () => {
   const me = (provider.wallet as anchor.Wallet).payer;
   const attestor = Keypair.fromSeed(createHash('sha256').update(Buffer.concat([me.secretKey, Buffer.from('seed attestor')])).digest());
   const backer = Keypair.generate();
-  const nonce = Date.now();
+  const nonce = Date.now(), KILN_URI = 'https://xwokejftvhcwrwxxcykh.supabase.co/storage/v1/object/public/presale-media/test/kiln.json';
   let raise: web3.PublicKey, mint: web3.Keypair, nft: web3.Keypair, r: any;
   const handle = 'seed_test_' + nonce.toString(36);
   const expectFail = async (p: Promise<unknown>, code: string) => { try { await p; } catch (e: any) { const m = String(e.message || e); assert.include(m, code, `expected ${code}, got: ${m.slice(0, 1600)}`); return; } assert.fail(`expected ${code}`); };
@@ -64,8 +64,15 @@ describe('seed', () => {
     await expectFail(bad([{ dayOffset: 90, bps: 5000 }]), 'ScheduleSum');
   });
 
+  it('refuses a metadata URI that is not https:// or ar://, or is too long', async () => {
+    for (const uri of ['http://seed.test/x.json', 'ipfs://abc', 'https://' + 'a'.repeat(200)]) {
+      try { const { ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce: nonce + 11, name: 'Uri', ticker: 'URI', uri, target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey }); await c.send(ixs); assert.fail('opened'); }
+      catch (e: any) { assert.match(String(e.message || e), /BadUri/); }
+    }
+  });
+
   it('opens a raise with a wallet alone, no X account', async () => {
-    const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce, name: 'Kiln', ticker: 'KILN', target: sol(0.2), deadline: span(86400), teamBps: 1000, schedule: [{ dayOffset: 90, bps: 5000 }, { dayOffset: 180, bps: 5000 }], payoutWallet: me.publicKey });
+    const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce, name: 'Kiln', ticker: 'KILN', uri: KILN_URI, target: sol(0.2), deadline: span(86400), teamBps: 1000, schedule: [{ dayOffset: 90, bps: 5000 }, { dayOffset: 180, bps: 5000 }], payoutWallet: me.publicKey });
     assert.equal(ixs.length, 1, 'no attestation instruction without an X account');
     await c.send(ixs); raise = rk; r = await c.fetchRaise(raise);
     assert.equal(r.teamBps, 1000); assert.ok(r.target.eq(sol(0.2))); assert.deepEqual(Object.keys(r.status)[0], 'live');
@@ -109,6 +116,15 @@ describe('seed', () => {
     const backers = await getAccount(provider.connection, getAssociatedTokenAddressSync(mint.publicKey, raise, true)), pool = await getAccount(provider.connection, pda.poolVault(program.programId, raise)), team = await getAccount(provider.connection, pda.teamVault(program.programId, raise));
     assert.equal(team.amount, BigInt('100000000000000'), '10% to the team'); assert.equal(backers.amount, pool.amount); assert.equal(backers.amount, BigInt('450000000000000'));
     r = await c.fetchRaise(raise); assert.deepEqual(Object.keys(r.seedStep)[0], 'minted');
+  });
+
+  it('the token carries immutable Metaplex metadata: the raise name and ticker, the URI fixed at opening, no way to change them', async () => {
+    const acc = await provider.connection.getAccountInfo(pda.metadata(mint.publicKey)); assert.ok(acc, 'metadata account exists');
+    const md = decodeMetadata(acc!.data);
+    assert.equal(md.name, 'Kiln'); assert.equal(md.symbol, 'KILN'); assert.equal(md.uri, KILN_URI); assert.equal(md.isMutable, false);
+    assert.ok(md.mint.equals(mint.publicKey)); assert.ok(md.updateAuthority.equals(raise), 'the update authority is the raise PDA, which has no instruction to update it');
+    const meta = await (program.account as any).raiseMeta.fetch(pda.raiseMeta(program.programId, raise)); assert.equal(meta.uri, KILN_URI);
+    const m = await getMint(provider.connection, mint.publicKey); assert.equal(m.mintAuthority, null); assert.equal(m.freezeAuthority, null);
   });
 
   it('step 2: opens the DAMM v2 pool with the whole raise and locks the position under the raise PDA', async () => {

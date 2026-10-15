@@ -67,6 +67,16 @@ committed). `Anchor.toml` deploys and tests from `keys/deployer.json`, a wallet 
 above plus the tests. The SOL price the cap uses is set by `set_sol_price` from the oracle key; on mainnet that should read a
 Pyth feed instead.
 
+## Token metadata
+
+The founder's page uploads the token's JSON (name, symbol, description, image, website, X and Telegram) before the
+raise opens: to Supabase storage on devnet, to Arweave through Irys on mainnet. `open_raise` fixes its address in a
+`RaiseMeta` account (`["meta", raise]`, 200 characters at most; any https:// on devnet, Arweave only in a mainnet build), so whoever runs the permissionless
+mint step cannot choose it. `crank_mint` then creates Metaplex Token Metadata for the mint with the raise's name and
+ticker and that URI, `is_mutable = false`, update authority the raise PDA (which has no instruction to update it), and
+only then revokes the mint authority. The token is a standard SPL token with six decimals. `scripts/e2e-raise.ts` runs
+the whole path on devnet with the test wallets and prints what Helius DAS (what Phantom reads) resolves for the token.
+
 ## Upgrade authority
 
 On devnet the upgrade authority is the developer keypair that deployed it. **On mainnet the upgrade authority must be a

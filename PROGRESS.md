@@ -1,12 +1,17 @@
 # Progress: the terminal build on `final-model`
 
+## Needs Josh
+- **Mainnet metadata storage.** Devnet keeps the token JSON in Supabase storage. Mainnet needs Arweave through Irys: an Irys node wallet funded with a little SOL, its key as a Supabase secret, and the `seed` function's `upload-url` action routed to it when `SEED_NETWORK=mainnet`. The program side is done; only the upload target changes.
+- **Unvested team tokens on a community takeover.** Kept as is: unlocks keep paying the (moved) payout wallet. Open decision.
+- **Devnet SOL.** The deployer holds ~1.5 SOL after the Phase 2 upgrade; each program upgrade needs ~2.9 SOL free for the buffer (returned afterwards) plus `program extend` when the binary grows. The test wallets (`keys/test/`) hold 0.7 and 0.8.
+
 Phases ship in order on `final-model`; each is verified on devnet before the next starts. `seed-qa` tests each pushed phase
 independently; its notes live in `QA.md` (not committed by this session).
 
 | Phase | State | Pushed |
 |---|---|---|
-| 1 Bugs | done, verifying on devnet | see git log |
-| 2 Token metadata | not started | |
+| 1 Bugs | done, verified on the devnet preview | cd95e7b |
+| 2 Token metadata | done, verified on devnet (raise meta-7avrmrzs) | see git log |
 | 3 Real trading | not started | |
 | 4 Live data | not started | |
 | 5 Terminal ready (mainnet only) | not started | |
@@ -19,7 +24,12 @@ independently; its notes live in `QA.md` (not committed by this session).
 - Tiny prices read `0.0₅1234` everywhere a price shows (`fmtPrice`).
 - Counts pluralise: 1 backer, 2 backers; wallets, holders, accounts, milestones, announcements, pages, followers, funding wallets.
 
-## Phase 2: token metadata — done when
+## Phase 2: token metadata — shipped
+- `RaiseMeta` PDA fixes the URI at `open_raise`; `crank_mint` creates immutable Metaplex metadata (update authority = raise PDA, `is_mutable=false`) before revoking the mint authority. 21/21 tests locally, 18 + 3 admin-pending on devnet.
+- Launch uploads the token JSON to Supabase storage (`application/json` now allowed in the bucket) and passes the URI; the indexer stores `raises.metadata_uri`; the crank sends the new accounts.
+- Devnet check with the test wallets (founder ≠ admin): raise `meta-7avrmrzs`, mint `9RnSfLGVp9dMmt6QuNPmNP4UNYM6WjaFvEYP4odn1ZzQ`, pool `BwYXGXHyRkjw1UKqVgWJUgkgJ4AR1mUwL5yWf1qBJfSo`; Helius DAS resolves name "Meta", symbol META, the image and `mutable: false`, which is what Phantom shows.
+
+Done when (met):
 - At launch the token JSON (name, symbol, description, image, website/X/Telegram when given) is uploaded to permanent storage: Arweave via Irys on mainnet, Supabase storage on devnet.
 - The seed mint step creates Metaplex Token Metadata with that URI and makes it immutable (`is_mutable = false`, update authority removed). The token stays a standard SPL token.
 - Program tests: metadata exists, matches the launch form, is immutable. Redeployed to devnet. Phantom shows the token name and image.

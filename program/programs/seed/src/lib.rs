@@ -16,6 +16,7 @@ use anchor_lang::solana_program::sysvar::instructions::ID as INSTRUCTIONS_ID;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, SetAuthority, Token, TokenAccount, Transfer};
 use anchor_spl::token::spl_token::instruction::AuthorityType;
+use anchor_spl::metadata::{self, CreateMetadataAccountsV3, mpl_token_metadata::types::DataV2};
 
 pub mod attest;
 pub mod damm;
@@ -64,6 +65,7 @@ pub struct OpenParams {
     pub schedule: Vec<Tranche>,
     pub payout_wallet: Pubkey,
     pub x: Option<XAttest>,   // the X account, when the founder links one at opening
+    pub uri: String,          // the token metadata JSON (name, symbol, description, image, links), on permanent storage
 }
 /// an X attestation: the attestor signed (founder ‖ handle hash ‖ expiry) in the ed25519 instruction just before
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -155,6 +157,10 @@ pub mod seed {
         }
         // the terms
         require!(!p.name.is_empty() && p.name.len() <= MAX_NAME && !p.ticker.is_empty() && p.ticker.len() <= MAX_TICKER, SeedError::BadName);
+        require!(p.uri.len() <= MAX_URI && (p.uri.starts_with("https://") || p.uri.starts_with("ar://")), SeedError::BadUri);
+        // on mainnet the JSON must be on Arweave, where nobody can edit it; a devnet build takes any https:// address
+        #[cfg(not(feature = "devnet"))]
+        require!(p.uri.starts_with("ar://") || p.uri.starts_with("https://arweave.net/") || p.uri.starts_with("https://gateway.irys.xyz/"), SeedError::BadUri);
         require!(p.target > 0, SeedError::ZeroTarget);
         require!(p.deadline >= c.span(c.min_deadline) && p.deadline <= c.span(c.max_deadline), SeedError::BadDeadline);
         require!((p.team_bps as u64) < BPS, SeedError::BadTeamShare);
@@ -184,8 +190,9 @@ pub mod seed {
         r.mint = Pubkey::default(); r.pool = Pubkey::default(); r.position = Pubkey::default(); r.position_nft_mint = Pubkey::default();
         r.team_claimed = 0; r.blacklisted = false; r.flagged_at = 0; r.takeover_to = None; r.takeover_at = 0;
         r.name = p.name.clone(); r.ticker = p.ticker.clone(); r.bump = ctx.bumps.raise;
+        let m = &mut ctx.accounts.raise_meta; m.raise = r.key(); m.uri = p.uri.clone(); m.bump = ctx.bumps.raise_meta;
         emit!(RaiseOpened { raise: r.key(), founder: r.founder, x_handle_hash: r.x_handle_hash, pair_mint: pair, target: p.target, target_usd_cents, sol_usd_cents,
-            team_bps: p.team_bps, payout_wallet: p.payout_wallet, opened_at: now, ends_at: r.ends_at, name: p.name, ticker: p.ticker, schedule: r.schedule.clone() });
+            team_bps: p.team_bps, payout_wallet: p.payout_wallet, opened_at: now, ends_at: r.ends_at, name: p.name, ticker: p.ticker, schedule: r.schedule.clone(), uri: p.uri });
         Ok(())
     }
 
@@ -300,6 +307,10 @@ pub mod seed {
             if n == 0 { continue; }
             token::mint_to(CpiContext::new_with_signer(tp.clone(), token::MintTo { mint: mint.clone(), to, authority: auth.clone() }, signer), n)?;
         }
+        // the token's metadata: the name and ticker the raise opened with and the URI fixed then, immutable from the start
+        metadata::create_metadata_accounts_v3(CpiContext::new_with_signer(ai.token_metadata_program.to_account_info(), CreateMetadataAccountsV3 {
+            metadata: ai.metadata.to_account_info(), mint: mint.clone(), mint_authority: auth.clone(), payer: payer.clone(), update_authority: auth.clone(), system_program: sp.clone(), rent: ai.rent.to_account_info() }, signer),
+            DataV2 { name: r.name.clone(), symbol: r.ticker.clone(), uri: ai.raise_meta.uri.clone(), seller_fee_basis_points: 0, creators: None, collection: None, uses: None }, false, true, None)?;
         token::set_authority(CpiContext::new_with_signer(tp.clone(), SetAuthority { account_or_mint: mint.clone(), current_authority: auth.clone() }, signer), AuthorityType::MintTokens, None)?;
         let r = &mut ctx.accounts.raise;
         r.mint = ctx.accounts.mint.key(); r.seed_step = SeedStep::Minted;
@@ -544,6 +555,7 @@ pub struct OpenRaise<'info> {
     #[account(init_if_needed, payer = founder, space = 8 + FounderState::INIT_SPACE, seeds = [FOUNDER_SEED, founder.key().as_ref()], bump)] pub founder_state: Box<Account<'info, FounderState>>,
     /// the raise the founder's record names as live, when it names one
     pub prev_raise: Option<Box<Account<'info, Raise>>>,
+    #[account(init, payer = founder, space = 8 + RaiseMeta::INIT_SPACE, seeds = [META_SEED, raise.key().as_ref()], bump)] pub raise_meta: Box<Account<'info, RaiseMeta>>,
     /// CHECK: the instructions sysvar, read for the ed25519 instruction before this one
     #[account(address = INSTRUCTIONS_ID)] pub instructions: UncheckedAccount<'info>,
     pub token_program: Program<'info, Token>,
@@ -616,6 +628,11 @@ pub struct CrankMint<'info> {
     #[account(mut, seeds = [b"stage", raise.key().as_ref()], bump)] pub stage: UncheckedAccount<'info>,
     /// CHECK: a PDA with no data that owns the pool vault and the stage and is DAMM's payer; seeds ["payer", raise]
     #[account(seeds = [b"payer", raise.key().as_ref()], bump)] pub pool_payer: UncheckedAccount<'info>,
+    #[account(seeds = [META_SEED, raise.key().as_ref()], bump = raise_meta.bump)] pub raise_meta: Account<'info, RaiseMeta>,
+    /// CHECK: Token Metadata's PDA for the mint; the metadata program derives and checks it
+    #[account(mut)] pub metadata: UncheckedAccount<'info>,
+    pub token_metadata_program: Program<'info, metadata::Metadata>,
+    pub rent: Sysvar<'info, Rent>,
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,

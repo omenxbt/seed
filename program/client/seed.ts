@@ -18,7 +18,10 @@ const le8 = (n: BN | number) => new BN(n).toArrayLike(Buffer, 'le', 8);
 const maxKey = (a: web3.PublicKey, b: web3.PublicKey) => (Buffer.compare(a.toBuffer(), b.toBuffer()) === 1 ? a : b).toBuffer();
 const minKey = (a: web3.PublicKey, b: web3.PublicKey) => (Buffer.compare(a.toBuffer(), b.toBuffer()) === 1 ? b : a).toBuffer();
 
+export const TOKEN_METADATA_PROGRAM = new PublicKey('metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s');
 export const pda = {
+  raiseMeta: (pid: web3.PublicKey, raise: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('meta'), raise.toBuffer()], pid)[0],
+  metadata: (mint: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('metadata'), TOKEN_METADATA_PROGRAM.toBuffer(), mint.toBuffer()], TOKEN_METADATA_PROGRAM)[0],
   config: (pid: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('config')], pid)[0],
   raise: (pid: web3.PublicKey, founder: web3.PublicKey, nonce: BN | number) => PublicKey.findProgramAddressSync([Buffer.from('raise'), founder.toBuffer(), le8(nonce)], pid)[0],
   contribution: (pid: web3.PublicKey, raise: web3.PublicKey, wallet: web3.PublicKey) => PublicKey.findProgramAddressSync([Buffer.from('contrib'), raise.toBuffer(), wallet.toBuffer()], pid)[0],
@@ -71,12 +74,12 @@ export class SeedClient {
 
   /* open_raise, with the attestation instruction first when an X handle is linked (attestor + handle), else alone.
      The founder's record names its last live raise, which is passed in so the program can see it has ended. */
-  async openRaise(founder: web3.PublicKey, pairMint: web3.PublicKey, attestor: web3.Keypair | null, handle: string | null, p: { nonce: BN | number; name: string; ticker: string; target: BN; deadline: number; teamBps: number; schedule: Tranche[]; payoutWallet: web3.PublicKey }) {
+  async openRaise(founder: web3.PublicKey, pairMint: web3.PublicKey, attestor: web3.Keypair | null, handle: string | null, p: { nonce: BN | number; name: string; ticker: string; target: BN; deadline: number; teamBps: number; schedule: Tranche[]; payoutWallet: web3.PublicKey; uri?: string }) {
     const raise = this.raiseKey(founder, p.nonce), expiry = Math.floor(Date.now() / 1000) + 3600, hash = attestor && handle ? handleHash(handle) : null;
     const fs = await (this.program.account as any).founderState.fetchNullable(pda.founderState(this.pid, founder));
     const prevRaise = fs && !fs.liveRaise.equals(PublicKey.default) ? fs.liveRaise : null;
-    const open = await this.program.methods.openRaise({ nonce: new BN(p.nonce), name: p.name, ticker: p.ticker, target: p.target, deadline: new BN(p.deadline), teamBps: p.teamBps, schedule: p.schedule, payoutWallet: p.payoutWallet, x: hash ? { handleHash: [...hash], expiry: new BN(expiry) } : null })
-      .accounts({ config: this.config, solFeed: SOL_FEED, raise, founder, pairMint, escrow: getAssociatedTokenAddressSync(pairMint, raise, true), walletBlacklist: pda.blacklist(this.pid, founder), founderState: pda.founderState(this.pid, founder), prevRaise, instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+    const open = await this.program.methods.openRaise({ nonce: new BN(p.nonce), name: p.name, ticker: p.ticker, target: p.target, deadline: new BN(p.deadline), teamBps: p.teamBps, schedule: p.schedule, payoutWallet: p.payoutWallet, x: hash ? { handleHash: [...hash], expiry: new BN(expiry) } : null, uri: p.uri ?? 'https://seed.test/meta.json' })
+      .accounts({ config: this.config, solFeed: SOL_FEED, raise, founder, pairMint, escrow: getAssociatedTokenAddressSync(pairMint, raise, true), walletBlacklist: pda.blacklist(this.pid, founder), founderState: pda.founderState(this.pid, founder), prevRaise, raiseMeta: pda.raiseMeta(this.pid, raise), instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
         tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId })
       .remainingAccounts(hash ? [{ pubkey: pda.blacklist(this.pid, hash), isSigner: false, isWritable: false }] : []).instruction();
     return { raise, ixs: hash ? [attestIx(attestor!, founder, hash, expiry), open] : [open] };
@@ -99,7 +102,7 @@ export class SeedClient {
   }
   /* seeding, step 1: the mint is a fresh keypair the cranker signs with */
   crankMint(raise: web3.PublicKey, mint: web3.PublicKey, pairMint: web3.PublicKey, cranker: web3.PublicKey) {
-    return this.program.methods.crankMint().accounts({ raise, cranker, mint, backersVault: getAssociatedTokenAddressSync(mint, raise, true), poolVault: pda.poolVault(this.pid, raise), teamVault: pda.teamVault(this.pid, raise), pairMint, stage: pda.stage(this.pid, raise), poolPayer: pda.poolPayer(this.pid, raise), tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
+    return this.program.methods.crankMint().accounts({ raise, cranker, mint, backersVault: getAssociatedTokenAddressSync(mint, raise, true), poolVault: pda.poolVault(this.pid, raise), teamVault: pda.teamVault(this.pid, raise), pairMint, stage: pda.stage(this.pid, raise), poolPayer: pda.poolPayer(this.pid, raise), raiseMeta: pda.raiseMeta(this.pid, raise), metadata: pda.metadata(mint), tokenMetadataProgram: TOKEN_METADATA_PROGRAM, rent: web3.SYSVAR_RENT_PUBKEY, tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
   }
   /* seeding, step 2: the position NFT mint is a fresh keypair the cranker signs with */
   crankPool(raise: web3.PublicKey, mint: web3.PublicKey, pairMint: web3.PublicKey, positionNftMint: web3.PublicKey, cranker: web3.PublicKey) {
@@ -151,4 +154,14 @@ export class SeedClient {
       await new Promise(r => setTimeout(r, 1500));
     }
   }
+}
+
+/* Token Metadata's account, the fields that matter here: who may update it, the name, symbol and URI, and whether it can change */
+export function decodeMetadata(data: Buffer) {
+  let o = 1; const updateAuthority = new PublicKey(data.subarray(o, o + 32)); o += 32; const mint = new PublicKey(data.subarray(o, o + 32)); o += 32;
+  const str = () => { const n = data.readUInt32LE(o); o += 4; const v = data.subarray(o, o + n).toString('utf8').replace(/\0+$/, ''); o += n; return v; };
+  const name = str(), symbol = str(), uri = str(); o += 2;   // seller fee
+  const hasCreators = data[o]; o += 1; if (hasCreators) { const n = data.readUInt32LE(o); o += 4 + n * 34; }
+  const primarySaleHappened = !!data[o]; o += 1; const isMutable = !!data[o];
+  return { updateAuthority, mint, name, symbol, uri, primarySaleHappened, isMutable };
 }

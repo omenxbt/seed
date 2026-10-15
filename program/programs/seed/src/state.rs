@@ -5,6 +5,8 @@ pub const RAISE_SEED: &[u8] = b"raise";
 pub const CONTRIB_SEED: &[u8] = b"contrib";
 pub const BLACKLIST_SEED: &[u8] = b"blacklist";
 pub const FOUNDER_SEED: &[u8] = b"founder";
+pub const META_SEED: &[u8] = b"meta";
+pub const MAX_URI: usize = 200;   // Token Metadata's own limit
 
 pub const BPS: u64 = 10_000;
 pub const SUPPLY: u64 = 1_000_000_000;      // whole tokens
@@ -146,5 +148,16 @@ pub struct Blacklist {
 pub struct FounderState {
     pub wallet: Pubkey,
     pub live_raise: Pubkey,
+    pub bump: u8,
+}
+
+/// the token's metadata URI, fixed when the raise opens so that whoever runs the mint step cannot choose it. The mint step
+/// writes it into Token Metadata and makes that metadata immutable.
+#[account]
+#[derive(InitSpace)]
+pub struct RaiseMeta {
+    pub raise: Pubkey,
+    #[max_len(MAX_URI)]
+    pub uri: String,
     pub bump: u8,
 }

@@ -315,10 +315,13 @@ async function openPresale() {
     for (const k of ['banner', 'art']) if (lf.files[k]) { const f = await croppedImage(k); profile[k + 'Pos'] = '50% 50%';
       if (supa.configured()) { b.textContent = `Uploading ${k}…`; profile[k] = await supa.upload(f); } else profile[k] = URL.createObjectURL(f); }
     if (supa.configured() && lf.files.deck) { b.textContent = 'Uploading deck…'; profile.deck = await supa.upload(lf.files.deck); }
-    b.textContent = 'Confirm in wallet…';
     if (da.custom) state.custom[da.key] = da.a;
-    profile.mint = fakeAddr('mint/' + id);
     const p = Object.assign({ id, name: d.name, ticker: d.ticker, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [], profile }, modelFields(d, da));
+    /* the token's metadata JSON goes to permanent storage before the raise opens; the program fixes its address at opening and
+       the mint step writes it into immutable Token Metadata, so the name, symbol and image can never change afterwards */
+    if (isReal()) { b.textContent = 'Uploading token metadata…'; p.metadataUri = await uploadTokenJson(p, profile); }
+    else profile.mint = fakeAddr('mint/' + id);
+    b.textContent = 'Confirm in wallet…';
     await adapter.openPresale(p);   // a real wallet's raise comes back with its chain address and id
     if (supa.configured()) supa.call('register', { presaleId: p.id }).catch(() => {});
     state.presales.unshift(p); save();
@@ -334,6 +337,19 @@ async function openPresale() {
   busy = false; b.disabled = false; syncOpenBtn();
 }
 
+/* the Metaplex token standard JSON: name, symbol, description, image, links. Devnet keeps it in Supabase storage; mainnet
+   puts it on Arweave through Irys (see PROGRESS.md, Needs Josh: an Irys node wallet) */
+async function uploadTokenJson(p, profile) {
+  const links = profile.links || {}, ext = {};
+  if (safeUrl(links.website)) ext.website = safeUrl(links.website);
+  if (safeUrl(links.x)) ext.twitter = safeUrl(links.x);
+  if (safeUrl(links.telegram)) ext.telegram = safeUrl(links.telegram);
+  const j = { name: p.name, symbol: p.ticker, description: (profile.description || '').slice(0, 1000), image: profile.art || undefined, external_url: ext.website,
+    seller_fee_basis_points: 0, properties: { category: 'image', files: profile.art ? [{ uri: profile.art, type: /\.jpe?g(\?|$)/i.test(profile.art) ? 'image/jpeg' : /\.webp(\?|$)/i.test(profile.art) ? 'image/webp' : 'image/png' }] : [] }, extensions: Object.keys(ext).length ? ext : undefined };
+  const file = new File([JSON.stringify(j)], `${p.ticker.toLowerCase()}.json`, { type: 'application/json' });
+  if (!supa.configured()) throw new Error('Token metadata needs Seed storage, which is not configured here.');
+  return supa.upload(file);
+}
 function renderMine() {
   const l = state.presales.filter(p => p.mine);
   $('#mineList').innerHTML = l.length ? l.map(p => `<a class="row ${p.status}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}"><span class="c-proj">${projCell(p)}</span>${progCell(p)}

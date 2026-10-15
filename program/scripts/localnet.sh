@@ -11,6 +11,7 @@ LEDGER="${TMPDIR:-/tmp}/seed-ledger"
 rm -rf "$LEDGER"
 solana-test-validator -r --ledger "$LEDGER" --url "$RPC" \
   --clone-upgradeable-program cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG \
+  --clone-upgradeable-program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s \
   --clone 7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE \
   --clone 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU \
   --bpf-program 8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn target/deploy/seed.so --quiet &

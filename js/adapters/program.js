@@ -10,7 +10,8 @@ const ANCHOR_URL = 'https://esm.sh/@coral-xyz/anchor@0.30.1?bundle';
 const PROG = {
   TOKEN: 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', TOKEN_2022: 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb', ATA: 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL',
   SYSTEM: '11111111111111111111111111111111', DAMM: 'cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG', DAMM_AUTH: 'HLnpSz9h2S4hiLQ43rnSD9XkcUThA7B8hQMKmDaiTLcC',
-  SOL_FEED: '7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE', INSTRUCTIONS: 'Sysvar1nstructions1111111111111111111111111'
+  SOL_FEED: '7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE', INSTRUCTIONS: 'Sysvar1nstructions1111111111111111111111111', RENT: 'SysvarRent111111111111111111111111111111111',
+  METADATA: 'metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s'
 };
 const PAIR_DP = { SOL: 9, USDC: 6 };
 const enc = s => new TextEncoder().encode(s);
@@ -42,6 +43,8 @@ var chain = {
     contribution(raise, wallet) { return chain.find([enc('contrib'), raise.toBytes(), wallet.toBytes()]); },
     blacklist(subject) { return chain.find([enc('blacklist'), subject instanceof Uint8Array ? subject : subject.toBytes()]); },   // a wallet, or a handle's hash
     founderState(founder) { return chain.find([enc('founder'), founder.toBytes()]); },
+    raiseMeta(raise) { return chain.find([enc('meta'), raise.toBytes()]); },
+    metadata(mint) { return chain.find([enc('metadata'), chain.pk(PROG.METADATA).toBytes(), mint.toBytes()], chain.pk(PROG.METADATA)); },
     poolVault(raise) { return chain.find([enc('pool'), raise.toBytes()]); },
     teamVault(raise) { return chain.find([enc('team'), raise.toBytes()]); },
     stage(raise) { return chain.find([enc('stage'), raise.toBytes()]); },
@@ -127,7 +130,7 @@ var chain = {
       feeBps: r.fee_bps, creatorShareBps: r.creator_share_bps, teamBps: r.team_bps, teamSchedule: r.team_schedule, roadmap: m.roadmap || [], tokenUseCase: m.tokenUseCase || 'none', xAccount: r.x_id ? (m.xAccount && m.xAccount.handle ? m.xAccount : { handle: String(r.x_id).replace(/^dev:/, ''), verified: !String(r.x_id).startsWith('dev:'), typed: String(r.x_id).startsWith('dev:'), createdAt: null, followers: null }) : { handle: '', verified: false, createdAt: null, followers: null }, pastRaises: [],
       payoutWallet: r.payout_wallet, pendingPayoutWallet: r.pending_payout, payoutEffectiveAt: r.payout_effective_at ? Date.parse(r.payout_effective_at) : null, reports: [], blacklisted: r.blacklisted, flag: r.flag, takeover: r.takeover,
       mint: r.mint, pool: r.pool, position: r.position, fees: r.status === 'seeded' ? { volume: Number(r.fees_volume), founderClaimed: Number(r.fees_founder_claimed), seedClaimed: Number(r.fees_seed_claimed) } : undefined, teamClaimed: Number(r.team_claimed),
-      founderWallet: r.founder, mine: !!me && r.founder === me, creator: r.founder, hist: [], buys: [], profile: pr.profile || { description: '', links: {}, team: [], founder: { name: 'Founder', wallet: r.founder, pastLaunches: [] }, updates: [], chat: [] }, dayMs: m.dayMs || D };
+      founderWallet: r.founder, mine: !!me && r.founder === me, creator: r.founder, metadataUri: r.metadata_uri || '', hist: [], buys: [], profile: pr.profile || { description: '', links: {}, team: [], founder: { name: 'Founder', wallet: r.founder, pastLaunches: [] }, updates: [], chat: [] }, dayMs: m.dayMs || D };
     if (p.profile && !p.profile.founder) p.profile.founder = { name: 'Founder', wallet: r.founder, pastLaunches: [] };
     return p;
   },
@@ -186,10 +189,11 @@ var chain = {
     const nonce = Date.now(), raise = this.pda.raise(me, nonce), pairMint = this.pairMint(p), scale = this.cfg.testMode ? 1440 : 1;
     const deadline = Math.max(1, Math.round((p.endsAt - Date.now()) / 1000 / scale));
     const schedule = p.teamBps ? tranchesOf(p.teamSchedule).map(t => ({ dayOffset: t.dayOffset, bps: t.bps })) : [];
+    if (!/^(https:\/\/|ar:\/\/)/.test(p.metadataUri || '')) throw new Error('The token metadata was not uploaded, so the raise cannot open.');
     const fs = await this.program.account.founderState.fetchNullable(this.pda.founderState(me));   // the wallet's last live raise, which must have ended
     const prevRaise = fs && !fs.liveRaise.equals(this.w.PublicKey.default) ? fs.liveRaise : null;
-    const ix = await this.program.methods.openRaise({ nonce: new this.lib.BN(nonce), name: p.name, ticker: p.ticker, target: this.units(p, p.target), deadline: new this.lib.BN(deadline), teamBps: p.teamBps, schedule, payoutWallet: this.pk(p.payoutWallet), x: att ? att.arg : null })
-      .accounts({ config: this.pda.config(), solFeed: this.pk(PROG.SOL_FEED), raise, founder: me, pairMint, escrow: this.ata(raise, pairMint), walletBlacklist: this.pda.blacklist(me), founderState: this.pda.founderState(me), prevRaise, instructions: this.pk(PROG.INSTRUCTIONS), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) })
+    const ix = await this.program.methods.openRaise({ nonce: new this.lib.BN(nonce), name: p.name, ticker: p.ticker, target: this.units(p, p.target), deadline: new this.lib.BN(deadline), teamBps: p.teamBps, schedule, payoutWallet: this.pk(p.payoutWallet), x: att ? att.arg : null, uri: p.metadataUri || '' })
+      .accounts({ config: this.pda.config(), solFeed: this.pk(PROG.SOL_FEED), raise, founder: me, pairMint, escrow: this.ata(raise, pairMint), walletBlacklist: this.pda.blacklist(me), founderState: this.pda.founderState(me), prevRaise, raiseMeta: this.pda.raiseMeta(raise), instructions: this.pk(PROG.INSTRUCTIONS), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) })
       .remainingAccounts(att ? att.remaining : []).instruction();
     await this.send(att ? [att.ix, ix] : [ix]); if (this.dry) return;
     p.address = raise.toBase58(); p.live = true; p.id = `${p.ticker.toLowerCase()}-${p.address.slice(0, 8).toLowerCase()}`; p.founderWallet = state.wallet.pk; p.creator = state.wallet.pk;
@@ -239,7 +243,7 @@ var chain = {
     if (Object.keys(a.status)[0] !== 'filled') { this.apply(p, a); throw new Error('That raise is past seeding.'); }
     if (st === 'filled') {
       const mint = this.w.Keypair.generate();
-      await this.send([await this.program.methods.crankMint().accounts({ raise, cranker: me, mint: mint.publicKey, backersVault: this.ata(raise, mint.publicKey), poolVault: this.pda.poolVault(raise), teamVault: this.pda.teamVault(raise), pairMint, stage: this.pda.stage(raise), poolPayer: this.pda.poolPayer(raise), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) }).instruction()], [mint], 400000);
+      await this.send([await this.program.methods.crankMint().accounts({ raise, cranker: me, mint: mint.publicKey, backersVault: this.ata(raise, mint.publicKey), poolVault: this.pda.poolVault(raise), teamVault: this.pda.teamVault(raise), pairMint, stage: this.pda.stage(raise), poolPayer: this.pda.poolPayer(raise), raiseMeta: this.pda.raiseMeta(raise), metadata: this.pda.metadata(mint.publicKey), tokenMetadataProgram: this.pk(PROG.METADATA), rent: this.pk(PROG.RENT), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) }).instruction()], [mint], 400000);
     } else if (st === 'minted') {
       const nft = this.w.Keypair.generate(), mint = a.mint, pool = this.pda.dammPool(mint, pairMint);
       await this.send([await this.program.methods.crankPool().accounts({ raise, config: this.pda.config(), cranker: me, mint, pairMint, poolVault: this.pda.poolVault(raise), escrow: this.ata(raise, pairMint), stage: this.pda.stage(raise), poolPayer: this.pda.poolPayer(raise),

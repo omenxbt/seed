@@ -31,7 +31,7 @@ ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m));
 const ALLOWED = (Deno.env.get('SEED_ALLOWED_DOMAINS') ?? 'seed-nu-ten.vercel.app').split(',').map((s) => s.trim()).filter(Boolean);
 const AUTO_HIDE = 3;                 // matches RISK.chatAutoHideReports in js/config/risk.js
 const BUCKET = 'presale-media';
-const TYPES: Record<string, string> = { 'application/pdf': 'pdf', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp',
+const TYPES: Record<string, string> = { 'application/pdf': 'pdf', 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'application/json': 'json',   // json: the token's metadata
   // slide files, for a pitch deck
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx', 'application/vnd.ms-powerpoint': 'ppt',
   'application/vnd.apple.keynote': 'key', 'application/vnd.oasis.opendocument.presentation': 'odp' };
@@ -138,7 +138,7 @@ Deno.serve(async (req) => {
       }
       case 'upload-url': {
         const type = str(body.type, 60), size = Number(body.size);
-        if (!TYPES[type]) throw new Refusal(400, 'Only PDF, PNG, JPEG, WebP and slide files (PowerPoint, Keynote, OpenDocument) can be uploaded.');
+        if (!TYPES[type]) throw new Refusal(400, 'Only PDF, PNG, JPEG, WebP, slide files (PowerPoint, Keynote, OpenDocument) and the token metadata JSON can be uploaded.');
         if (!(size > 0 && size <= MAX_BYTES)) throw new Refusal(400, 'Files can be at most 10 MB.');
         const path = `uploads/${wallet}/${crypto.randomUUID()}.${TYPES[type]}`;
         const { data, error } = await db.storage.from(BUCKET).createSignedUploadUrl(path);

@@ -18,6 +18,7 @@ pub enum SeedError {
     #[msg("The last unlock must be at least the minimum days after seeding.")] ScheduleTooShort,
     #[msg("Too many tranches, or a tranche with no share.")] BadSchedule,
     #[msg("The name or ticker is too long or empty.")] BadName,
+    #[msg("The metadata URI must be an https:// or ar:// address of at most 200 characters (Arweave on mainnet).")] BadUri,
     #[msg("The amount is zero.")] ZeroAmount,
     #[msg("The raise is full.")] Full,
     #[msg("Buying is off: this raise was flagged for fraud.")] Flagged,
