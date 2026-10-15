@@ -1,6 +1,6 @@
 # Final report (2026-10-15)
 
-**The build loop is done.** Every item in LOOP.md's target feature set works on devnet with real data; BACKLOG.md has no P0 or P1; seed-qa's full regression passes #4 (63e628a) and #5 (5a6afc0) were both clean — 0 P0, 0 P1, on-chain flows (launch → fill → seed → claim, buys and sells at the quote, 70/30 fee claims, missed-deadline and founder-cancel refunds, team unlocks) and 22 page loads at 1440 and 390 with no overflow and no console errors; pages load in under 2 s on the preview.
+**The build loop is done.** Every item in LOOP.md's target feature set works on devnet with real data; BACKLOG.md has no P0 or P1; seed-qa's full regression passes #4 (63e628a) and #5 (5a6afc0) were both clean — 0 P0, 0 P1, on-chain flows (launch → fill → seed → claim, buys and sells at the quote, 70/30 fee claims, missed-deadline and founder-cancel refunds; team unlocks were verified in pass #2 and again when the crank paid qatwo's) and 22 page loads at 1440 and 390 with no overflow and no console errors; pages load in under 2 s on the preview.
 
 ## What shipped on `final-model` (from b59ecb9 to 5a6afc0)
 - **Program** (devnet `8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn`): a `RaiseMeta` PDA fixes the token's metadata URI at opening; `crank_mint` creates immutable Metaplex metadata before revoking the mint authority; mainnet builds require Arweave URIs. Config carries the pool fee (1.25% per Josh; 1% of volume reaches the position after Meteora's 20%).
