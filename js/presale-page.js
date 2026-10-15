@@ -11,7 +11,7 @@ const PTABS = ['overview', 'team', 'roadmap', 'holders', 'backers', 'info', 'rep
 const PTABS_LIVE = ['overview', 'trades', 'traders', 'holders', 'team', 'roadmap', 'backers', 'info', 'reports', 'announcements', 'deck'];
 const tabsOf = p => p.status !== 'seeded' ? PTABS.filter(t => t !== 'holders') : p.live ? PTABS_LIVE : PTABS;   // holders exist once the token does; trades once a pool is indexed
 const PTAB_ALIAS = { updates: 'announcements', tokenomics: 'team', risk: 'info' };   // the tabs' earlier names, so old links still open them
-const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'price', side: 'buy', quoteSeq: 0, shownQuote: null, allBackers: false, deck: null, deckPage: 1, walletKey: '' };
+const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'mcap', side: 'buy', quoteSeq: 0, shownQuote: null, allBackers: false, deck: null, deckPage: 1, walletKey: '' };
 
 const ICONS = {
   web: '<svg class="line" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3z"/></svg>',
@@ -85,7 +85,7 @@ function ppStats(p) {
   if (p.status === 'seeded') {
     const pool = pg.pool && pg.pool.value;
     return st('Raised', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) +
-      st(`Price${pg.pool && pg.pool.from === 'standin' ? ' <span class="st-mini">stand-in</span>' : ''}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.price) : `${fmtPrice(pool.price)} ${esc(pool.quote)}`) : '…') + st(`Market cap${pg.pool && pg.pool.from === 'standin' ? ' <span class="st-mini">stand-in</span>' : ''}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.mcap) : `${fmtC(pool.mcap, p.q)} ${esc(pool.quote)}`) : '…') +
+      st(`Price${srcMini(pg.pool)}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.price) : `${fmtPrice(pool.price)} ${esc(pool.quote)}`) : '…') + st(`Market cap${srcMini(pg.pool)}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.mcap) : `${fmtMcap(pool.mcap, p.q)} ${esc(pool.quote)}`) : '…') +
       st('Backers', p.backers) + st('Seeded', fmtDay(p.resolvedAt));
   }
   if (p.status === 'refunded') {
@@ -164,6 +164,8 @@ function ppChart(p) {
 
 /* ---------------------------------------------------------------- seeded: trading view */
 /* the raise price in the chart's quote: the pair asset, or USD at the SOL price the raise opened at */
+/* a small note by a figure whose source is not the pool itself: a stand-in pool, the last indexed trade, or the opening price */
+const srcMini = pool => { const t = pool && { standin: 'stand-in', trade: 'last trade', open: 'at open' }[pool.from]; return t ? ` <span class="st-mini">${t}</span>` : ''; };
 const raiseIn = (p, quote) => quote === 'USD' ? usdOf(p, priceOf(p)) : priceOf(p);
 /* Creator fees: the pool's fee so far and how it has split. Anyone can push a claim; it pays the payout wallet and Seed. */
 function ppFees(p) {
@@ -205,7 +207,7 @@ function candleSVG(series, mode, supply, quote, raise) {
     ${series.map((c, i) => { const x = i * cw + cw / 2, up = c[4] >= c[1], col = up ? CANDLE_UP : CANDLE_DN, yo = Y(c[1] * k), yc = Y(c[4] * k), vh = c[5] / vmax * (vH - 6);
       return `<path d="M${x.toFixed(1)} ${Y(c[2] * k).toFixed(1)}V${Y(c[3] * k).toFixed(1)}" stroke="${col}" stroke-width="1"/><rect x="${(x - cw * 0.35).toFixed(1)}" y="${Math.min(yo, yc).toFixed(1)}" width="${Math.max(1, cw * 0.7).toFixed(1)}" height="${Math.max(1, Math.abs(yc - yo)).toFixed(1)}" fill="${col}" rx=".5"/>
         <rect x="${(x - cw * 0.35).toFixed(1)}" y="${(Hh - pb - vh).toFixed(1)}" width="${Math.max(1, cw * 0.7).toFixed(1)}" height="${vh.toFixed(1)}" fill="${col}" opacity=".28"/>`; }).join('')}
-    ${rv ? `<path d="M0 ${Y(rv).toFixed(1)}H${W - pr}" style="stroke:var(--navy-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>${Math.abs(Y(rv) - Y(lastV)) < 15 ? '' : `<text x="${W - pr + 8}" y="${(Y(rv) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--navy-soft)">${f(rv)}</text><text x="${W - pr - 6}" y="${(Y(rv) - 5).toFixed(1)}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--navy-soft)">Raise price</text>`}` : ''}
+    ${rv ? `<path d="M0 ${Y(rv).toFixed(1)}H${W - pr}" style="stroke:var(--navy-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>${Math.abs(Y(rv) - Y(lastV)) < 15 ? '' : `<text x="${W - pr + 8}" y="${(Y(rv) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--navy-soft)">${f(rv)}</text><text x="${W - pr - 6}" y="${(Y(rv) - 5).toFixed(1)}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--navy-soft)">${mode === 'mcap' ? 'Raise MC' : 'Raise price'}</text>`}` : ''}
     <path d="M0 ${Y(lastV).toFixed(1)}H${W - pr}" stroke="${lastUp ? CANDLE_UP : CANDLE_DN}" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>
     <rect x="${W - pr + 3}" y="${(Y(lastV) - 11).toFixed(1)}" width="${pr - 3}" height="22" rx="7" fill="${lastUp ? CANDLE_UP : CANDLE_DN}"/>
     <text x="${W - pr + 8}" y="${(Y(lastV) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" font-weight="500" fill="#10151A">${f(lastV)}</text>
@@ -254,7 +256,7 @@ function lwData(lw, series, p) {
   const k = lw.k(), rows = series.map(c => ({ time: Math.floor(c[0] / 1000), open: c[1] * k, high: c[2] * k, low: c[3] * k, close: c[4] * k }));
   lw.candles.setData(rows); lw.vol.setData(series.map(c => ({ time: Math.floor(c[0] / 1000), value: c[5], color: c[4] >= c[1] ? 'rgba(47,191,122,.45)' : 'rgba(240,85,75,.45)' })));
   if (lw.raiseLine) lw.candles.removePriceLine(lw.raiseLine);
-  lw.raiseLine = lw.candles.createPriceLine({ price: priceOf(p) * k, color: cssVar('--navy-soft') || '#5B8CFF', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: 'Raise price' });
+  lw.raiseLine = lw.candles.createPriceLine({ price: priceOf(p) * k, color: cssVar('--navy-soft') || '#5B8CFF', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: pg.mode === 'mcap' ? 'Raise MC' : 'Raise price' });
   lw.chart.timeScale().fitContent();
 }
 function lwSet(lw, c, p) { const k = lw.k(); lw.candles.update({ time: Math.floor(c[0] / 1000), open: c[1] * k, high: c[2] * k, low: c[3] * k, close: c[4] * k }); lw.vol.update({ time: Math.floor(c[0] / 1000), value: c[5], color: c[4] >= c[1] ? 'rgba(47,191,122,.45)' : 'rgba(240,85,75,.45)' }); }
@@ -278,7 +280,7 @@ async function refreshPoolCard(p) {
   if (p.live) {
     if (Date.now() - (pg.statsAt || 0) > 15e3) { pg.statsAt = Date.now(); try { pg.stats = await tradesAdapter.stats(p); } catch (e) {} if (pg.holdersAt == null || Date.now() - pg.holdersAt > 60e3) { pg.holdersAt = Date.now(); backersAdapter.holderCount(p).then(n => { pg.holderCount = n; if (pg.id === p.id) refreshPoolCard(p); }).catch(() => {}); } }
     const st = pg.stats || { volume24h: 0, trades24h: 0 }, price = p.spot || v.price, x = price / priceOf(p);
-    card.innerHTML = `<div class="pool-grid"><div><dt>Pair</dt><dd>${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${q(v.liquidity)}</dd></div>
+    card.innerHTML = `<div class="pool-grid"><div><dt>Pair</dt><dd>${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${v.liquidity != null ? q(v.liquidity) : '<span class="quiet" title="The RPC did not answer for the pool just now">—</span>'}</dd></div>
       <div><dt>vs raise price</dt><dd class="num ${x >= 1 ? 'up' : 'down'}">${x.toFixed(2)}×</dd></div><div><dt>24h volume</dt><dd class="num">${q(st.volume24h)}</dd></div>
       <div><dt>24h trades</dt><dd class="num">${st.trades24h}</dd></div><div><dt>Holders</dt><dd class="num">${pg.holderCount != null ? pg.holderCount : '—'}</dd></div></div>
       <div class="pool-foot"><span class="num">${esc(v.dex)} pool ${esc(shortMint(v.address))}</span>${copyBtn(v.address, 'pool address')}<span class="pool-lock">${RISK_ICON.pass}Liquidity locked for good</span>

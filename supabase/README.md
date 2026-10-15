@@ -104,3 +104,7 @@ founder automatically. For the eight demo presales, add your own wallet if you w
 ```sql
 insert into public.presale_roles (presale_id, wallet, role) values ('quill', '<your wallet address>', 'founder');
 ```
+
+### Trade prices
+
+A trade's `price` is where the pool stands after the swap (the two vaults' ratio in the transaction's post balances: the whole range is one locked position, so the reserves sit at the price), not the swap's own average fill, which on a thin pool is nowhere near where the price ends up. The chart, the tape and the last price all read it. Each pool's fee is read once from its account (`raises.pool_fee_bps`) for the fallback fill price.

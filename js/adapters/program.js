@@ -169,7 +169,16 @@ var chain = {
   refreshSpots(list) {
     const due = (list || []).filter(p => p.live && p.pool && (!p.spotAt || Date.now() - p.spotAt > 60e3)); if (!due.length || typeof damm === 'undefined') return;
     due.forEach(p => p.spotAt = Date.now());
-    Promise.all(due.map(p => damm.reserves(p).then(rs => { p.spot = rs.price; }).catch(() => {}))).then(() => { if (typeof renderTerminal === 'function' && ui.tab === 'terminal') renderTerminal(); });
+    const redraw = () => { if (typeof renderTerminal === 'function' && ui.tab === 'terminal') renderTerminal(); };
+    Promise.all(due.map(p => damm.reserves(p).then(rs => { p.spot = rs.price; p.spotFrom = 'chain'; }).catch(() => p))).then(async missed => {
+      redraw();
+      /* a pool the RPC would not read (rate limit, lagging node): the last indexed trade's price, which is where the pool stood after it */
+      const left = missed.filter(p => p && p.pool && !p.spot && typeof tradesAdapter !== 'undefined' && typeof supa !== 'undefined' && supa.configured());
+      if (!left.length || !(await supa.init())) return;
+      const { data } = await supa.client.from('trades').select('raise_id, price, at').in('raise_id', left.map(p => p.id)).order('at', { ascending: false }).limit(20 * left.length);
+      for (const p of left) { const t = (data || []).find(r => r.raise_id === p.id); if (t) { p.spot = Number(t.price); p.spotFrom = 'trade'; } }
+      if (left.some(p => p.spot)) redraw();
+    });
   },
   /* a raise with no page record (opened by a script, say) still has its token's image: the metadata JSON names it */
   fillArt(list) {

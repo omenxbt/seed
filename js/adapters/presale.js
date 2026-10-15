@@ -32,9 +32,13 @@ const presaleAdapter = {
     }
     if (p.live && p.pool) {   // a raise seeded on chain: the pool's own reserves and price, read from DAMM
       const supply = SUPPLY, host = SEED.network === 'devnet' ? 'https://devnet.meteora.ag' : 'https://app.meteora.ag';
-      let price = priceOf(p), liquidity = p.target * 2;
-      try { const rs = await damm.reserves(p); price = rs.price; liquidity = rs.pair * 2; p.spot = price; } catch (e) { console.warn('pool reserves:', e.message); }
-      return withSrc({ address: p.pool, pair: `${p.ticker}/${Q(p).sym}`, dex: DEX, price, quote: Q(p).sym, mcap: price * supply, fdv: price * supply, raisePrice: priceOf(p), liquidity, change24h: 0, volume24h: (p.fees || {}).volume || 0, supply, url: `${host}/dammv2/${p.pool}` }, 'chain');
+      let price = null, liquidity = null, from = 'chain';
+      try { const rs = await damm.reserves(p); price = rs.price; liquidity = rs.pair * 2; p.spot = price; p.spotFrom = 'chain'; } catch (e) { console.warn('pool reserves:', e.message); }
+      if (price == null) {   // the RPC would not read the pool: the last indexed trade's price (where the pool stood after it), never the raise price passed off as the market
+        try { const st = await tradesAdapter.stats(p); if (st && st.lastPrice) { price = st.lastPrice; p.spot = price; p.spotFrom = 'trade'; from = 'trade'; } } catch (e) { console.warn('last trade:', e.message); }
+      }
+      if (price == null) { price = p.spot || priceOf(p); from = p.spot ? 'trade' : 'open'; }
+      return withSrc({ address: p.pool, pair: `${p.ticker}/${Q(p).sym}`, dex: DEX, price, quote: Q(p).sym, mcap: price * supply, fdv: price * supply, raisePrice: priceOf(p), liquidity, change24h: 0, volume24h: (p.fees || {}).volume || 0, supply, url: `${host}/dammv2/${p.pool}` }, from);
     }
     const s = demoSeries(p, '1h', 48), amm = ammOf(p), last = amm.x / amm.y, supply = SUPPLY;   // the price is the in-app pool's, so a trade made here moves it
     return withSrc({ address: fakeAddr('pool/' + p.id), pair: `${p.ticker}/${Q(p).sym}`, dex: DEX, price: last, quote: Q(p).sym, mcap: last * supply, fdv: last * supply, raisePrice: priceOf(p),

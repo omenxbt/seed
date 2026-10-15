@@ -10,7 +10,8 @@ const withSrc = (value, from, extra) => Object.assign({ value, from }, extra || 
 const DEMO_PILL = '<span class="tag demo-pill" title="This comes from the demo data set, not from Solana">Demo data</span>';
 const STANDIN_PILL = '<span class="tag standin-pill" title="Read live from a real account that stands in for this raise’s">Stand-in, live</span>';
 const LIVE_PILL = '<span class="tag live-pill" title="Read live">Live</span>';
-const srcPill = from => from === 'demo' ? DEMO_PILL : from === 'standin' ? STANDIN_PILL : from ? LIVE_PILL : '';
+const TRADE_PILL = '<span class="tag" title="The RPC did not answer for the pool just now: this is where it stood after its last indexed trade">Last trade</span>', OPEN_PILL = '<span class="tag" title="The RPC did not answer for the pool and no trade is indexed yet: the opening price">At open</span>';
+const srcPill = from => from === 'demo' ? DEMO_PILL : from === 'standin' ? STANDIN_PILL : from === 'trade' ? TRADE_PILL : from === 'open' ? OPEN_PILL : from ? LIVE_PILL : '';
 
 /* a small cache in localStorage, shared by every tab of the site */
 function cacheGet(key, ttl) { try { const j = JSON.parse(localStorage.getItem('seed.cache.' + key)); if (j && Date.now() - j.t < ttl) return j.v; } catch (e) {} return undefined; }

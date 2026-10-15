@@ -53,12 +53,16 @@ export async function indexSwap(db: SupabaseClient, t: Tx, tx: string, only?: Po
     const delta = (mint: string) => {
       const pre = m.preTokenBalances!.find((b) => b.owner === DAMM_AUTHORITY && b.mint === mint), post = m.postTokenBalances!.find((b) => b.owner === DAMM_AUTHORITY && b.mint === mint);
       if (!pre && !post) return null;
-      const dec = (post ?? pre)!.uiTokenAmount.decimals; return { d: (Number(post?.uiTokenAmount.amount ?? 0) - Number(pre?.uiTokenAmount.amount ?? 0)) / 10 ** dec };
+      const dec = (post ?? pre)!.uiTokenAmount.decimals, after = Number(post?.uiTokenAmount.amount ?? 0) / 10 ** dec;
+      return { d: after - Number(pre?.uiTokenAmount.amount ?? 0) / 10 ** dec, after };
     };
     const tok = delta(r.mint), pair = delta(r.pair_mint);
     if (!tok || !pair || tok.d === 0 || pair.d === 0 || Math.sign(tok.d) === Math.sign(pair.d)) continue;   // not a swap: nothing moved, or both vaults went the same way (liquidity)
     const side = pair.d > 0 ? 'buy' : 'sell', pair_amount = Math.abs(pair.d), token_amount = Math.abs(tok.d), fee = (await poolFeeBps(db, r)) / 10000;
-    const price = (side === 'buy' ? pair_amount * (1 - fee) : pair_amount / (1 - fee)) / token_amount;   // the pool's own price: a buy's delta carries the fee, a sell's comes after it
+    /* the price is where the pool stands after the swap (its vaults' ratio: the whole range is one locked position, so
+       the reserves sit at the price, give or take the fees waiting to be claimed), not the swap's own average fill, which
+       on a thin pool is nowhere near where the price ends up. The fill price, net of the pool fee, only if a vault is unreadable */
+    const price = tok.after > 0 && pair.after > 0 ? pair.after / tok.after : (side === 'buy' ? pair_amount * (1 - fee) : pair_amount / (1 - fee)) / token_amount;
     const { error } = await db.from('trades').insert({ signature: tx, raise_id: r.id, pool: r.pool, side, pair_amount, token_amount, price, trader: keys[0], slot: t.slot ?? 0, at: new Date((t.blockTime ?? Math.floor(Date.now() / 1000)) * 1000).toISOString() });
     if (error) { if (error.code !== '23505') console.error('trade', tx, error.message); continue; }   // 23505: seen before, so the volume was counted then
     await db.rpc('bump_volume', { p_raise_id: r.id, p_amount: pair_amount, p_signature: tx }).then(({ error: e2 }) => { if (e2) console.error('volume', e2.message); });
