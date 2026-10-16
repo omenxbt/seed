@@ -1584,7 +1584,7 @@ const trim2 = v => String(Number(v.toFixed(2)));
 /* compact form for table cells and big readouts: 43.2K, 1.25M, 2B */
 function fmtC(n, k, raised) { const a = Math.abs(n); return a >= 1e9 ? trim2(n / 1e9) + 'B' : a >= 1e6 ? trim2(n / 1e6) + 'M' : a >= 1e4 ? trim2(n / 1e3) + 'K' : raised ? fmtRaised(n, k) : fmtAmt(n, k); }
 /* a market cap in dollars, the way every terminal quotes one: $4.2K, $10K, $1.5M; a small one plain ($312, $70.12) */
-const fmtMcap = n => { const a = Math.abs(n); return a >= 1e4 ? fmtUsd(n) : a >= 1e3 ? '$' + trim2(n / 1e3) + 'K' : a >= 1 ? '$' + n.toLocaleString('en-US', { maximumFractionDigits: a >= 100 ? 0 : 2 }) : '$' + Number(n.toPrecision(2)); };
+const fmtMcap = n => { const a = Math.abs(n); return a >= 1e4 ? fmtUsd(n) : a >= 1e3 ? '$' + trim2(n / 1e3) + 'K' : a >= 100 ? '$' + n.toLocaleString('en-US', { maximumFractionDigits: 0 }) : a >= 1 ? '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '$' + Number(n.toPrecision(2)); };
 /* the same in the pair asset, for the tooltip: 2,500 SOL, 312.5 SOL, 0.4213 SOL */
 const fmtMcapQ = (n, k) => Math.abs(n) >= 1e4 ? fmtC(n, k) : Number(Number(n).toPrecision(4)).toLocaleString('en-US', { maximumFractionDigits: 6 });
 /* the market cap in the pair asset: the pool's spot price over the whole supply once it trades, the raise price before */
