@@ -315,7 +315,8 @@ async function loadTrading(p) {
 async function loadLiveTrading(p, box) {
   if (!pg.unwatch) pg.unwatch = tradesAdapter.watch(p, t => onLiveTrade(p, t));   // first, so nothing lands between the fetch and the watch
   try {
-    await loadLw(); if (typeof chain !== 'undefined') await chain.refreshSolUsd(); pg.pool = await presaleAdapter.pool(p); pg.series = null;   // the SOL price first: the market caps are quoted with it const ser = await tradesAdapter.candles(p, pg.tf);
+    await loadLw(); if (typeof chain !== 'undefined') await chain.refreshSolUsd(); pg.pool = await presaleAdapter.pool(p); pg.series = null;   // the SOL price first: the market caps are quoted with it
+    const ser = await tradesAdapter.candles(p, pg.tf);
     if (ui.sel !== p.id || !box.isConnected) return;
     (pg.pendingTrades || []).forEach(t => { if (!(pg.trades || []).some(x => x.signature === t.signature)) foldTrade(ser, pg.tf, t); }); pg.pendingTrades = null;   // what landed while the series loaded
     pg.series = ser; const lw = lwMount(box, p); lwData(lw, ser, p);
