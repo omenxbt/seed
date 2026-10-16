@@ -13,6 +13,8 @@ const solUsd = p => (p && p.solUsdAtOpen) || SEED.demoSolUsd;
 const dayOf = p => (p && p.dayMs) || D;                                  // one unlock "day" in ms: a minute for a devnet raise opened in test mode
 const usdOf = (p, q) => p.q === 'USDC' ? q : q * solUsd(p);           // a pair-asset amount in USD at the raise's own SOL price
 const qOf = (p, usd) => p.q === 'USDC' ? usd : usd / solUsd(p);
+const solUsdNow = p => SEED.solUsdLive || solUsd(p);                    // the SOL price today: the Pyth feed (chain.refreshSolUsd), else the raise's at open
+const usdNow = (p, q) => p.q === 'USDC' ? q : q * solUsdNow(p);        // a pair-asset amount in USD today: what a market cap is quoted in
 
 /* the supply: team share, then backers and the pool get equal halves of the rest */
 function splitOf(teamBps) {

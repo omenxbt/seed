@@ -167,8 +167,26 @@ var chain = {
     this.fillArt(list);
     return true;
   },
+  /* the SOL price in dollars, from the Pyth SOL/USD feed account the program prices raises with (the same address on devnet and
+     mainnet; the layout is pyth.rs's: discriminator, write authority, verification level, feed id, then price i64, conf u64,
+     exponent i32, publish time i64). Read once a minute; the market caps are quoted with it. Stale or unreadable, the last
+     figure stays (and before any, the raise's SOL price at open). */
+  async refreshSolUsd() {
+    if (this.solUsdAt && Date.now() - this.solUsdAt < 60e3) return SEED.solUsdLive; this.solUsdAt = Date.now();
+    try {
+      if (!(await this.init())) return null;
+      const acc = await this.conn.getAccountInfo(this.pk(PROG.SOL_FEED)); if (!acc) return null;
+      const d = acc.data, dv = new DataView(d.buffer, d.byteOffset, d.byteLength), o = 8 + 32 + 1 + 32;
+      const price = Number(dv.getBigInt64(o, true)), expo = dv.getInt32(o + 16, true), at = Number(dv.getBigInt64(o + 20, true));
+      if (!(price > 0) || Date.now() / 1000 - at > 3600) return null;
+      const usd = price * 10 ** expo, was = SEED.solUsdLive; SEED.solUsdLive = usd;
+      if ((!was || Math.abs(usd / was - 1) > 0.002) && typeof renderTerminal === 'function' && ui.tab === 'terminal') renderTerminal();   // the market caps were drawn at the old price
+      return usd;
+    } catch (e) { console.warn('SOL price:', e.message); return null; }
+  },
   /* the pool price of the seeded raises on the board, read from their reserves once a minute, so the cards show the market, not the raise price */
   refreshSpots(list) {
+    if (this.on()) this.refreshSolUsd();
     const due = (list || []).filter(p => p.live && p.pool && (!p.spotAt || Date.now() - p.spotAt > 60e3)); if (!due.length || typeof damm === 'undefined') return;
     due.forEach(p => p.spotAt = Date.now());
     const redraw = () => { if (typeof renderTerminal === 'function' && ui.tab === 'terminal') renderTerminal(); };

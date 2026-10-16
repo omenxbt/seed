@@ -85,7 +85,7 @@ function ppStats(p) {
   if (p.status === 'seeded') {
     const pool = pg.pool && pg.pool.value;
     return st('Raised', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) +
-      st(`Price${srcMini(pg.pool)}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.price) : `${fmtPrice(pool.price)} ${esc(pool.quote)}`) : '…') + st(`Market cap${srcMini(pg.pool)}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.mcap) : `${fmtMcap(pool.mcap, p.q)} ${esc(pool.quote)}`) : '…') +
+      st(`Price${srcMini(pg.pool)}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.price) : `${fmtPrice(pool.price)} ${esc(pool.quote)}`) : '…') + st(`Market cap${srcMini(pg.pool)}`, pool ? (pool.quote === 'USD' ? fmtUsd(pool.mcap) : `<span title="${esc(mcTitle(p, pool.price))}">${fmtMcap(usdNow(p, pool.mcap))}</span>`) : '…') +
       st('Backers', p.backers) + st('Seeded', fmtDay(p.resolvedAt));
   }
   if (p.status === 'refunded') {
@@ -198,7 +198,7 @@ function candleSVG(series, mode, supply, quote, raise) {
   const hi0 = Math.max(rv, ...series.map(c => c[2] * k)), lo0 = Math.min(rv || Infinity, ...series.map(c => c[3] * k)), pad = (hi0 - lo0 || hi0 * 0.01 || 1) * 0.06;
   const hi = hi0 + pad, lo = Math.max(0, lo0 - pad), span = (hi - lo) || 1, priceH = Hh - pt - pb - vH;
   const Y = v => pt + (1 - (v - lo) / span) * priceH, vmax = Math.max(...series.map(c => c[5])) || 1, cw = (W - pr) / n;
-  const f = v => quote === 'USD' ? fmtUsd(v) : fmtPrice(v);
+  const f = v => mode === 'mcap' ? fmtMcapAxis(v) : quote === 'USD' ? fmtUsd(v) : fmtPrice(v);
   const ticks = [0, 0.25, 0.5, 0.75, 1].map(q => lo + span * q).filter((v, i, a) => !i || f(v) !== f(a[i - 1])), last = series[n - 1], lastV = last[4] * k, lastUp = last[4] >= last[1];   // a tiny range would repeat labels
   const nx = Math.max(2, Math.min(4, Math.floor((W - pr) / 170) + 1)), xt = [...new Set(Array.from({ length: nx }, (_, j) => Math.round((n - 1) * j / (nx - 1))))];   // time labels that fit side by side
   pg.cg = { W, Hh, pr, pt, pb, vH, priceH, lo, span, k, cw, n, series, f };
@@ -233,18 +233,18 @@ function loadLw() {
   if (window.LightweightCharts) return Promise.resolve();
   return lwReady || (lwReady = new Promise((ok, no) => { const s = document.createElement('script'); s.src = LW_SRC; s.onload = ok; s.onerror = () => { lwReady = null; no(new Error('the chart library did not load')); }; document.head.appendChild(s); }));
 }
-const fmtSig4 = v => v >= 1000 ? fmtC(v, 'SOL', true) : v >= 1 ? String(Number(v.toPrecision(4))) : v < 5e-5 ? '0' : Number(v.toPrecision(3)).toLocaleString('en-US', { maximumFractionDigits: 6 });   // market caps on the axis: four significant digits, a small devnet one plain, never the subscript price style
+const fmtMcapAxis = v => v < 0 ? '' : fmtMcap(v);   // market caps on the axis, in dollars ($4.2K, $10K, $1.5M); a scale dragged below zero gets no label there
 const cssVar = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 /* the chart for a pool on chain: candles and volume from the indexed trades, the raise price as a line, Price or MCap */
 function lwMount(box, p) {
   if (pg.lw && pg.lw.box === box && pg.lw.el.isConnected) return pg.lw;
   if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (e) {} }
-  box.innerHTML = '<div class="lw"></div>'; const el = box.firstElementChild, LW = window.LightweightCharts, k = () => pg.mode === 'mcap' ? SUPPLY : 1;
-  const f = v => (pg.mode === 'mcap' ? fmtSig4(v) : fmtPrice(v));
+  box.innerHTML = '<div class="lw"></div>'; const el = box.firstElementChild, LW = window.LightweightCharts, usd = usdNow(p, 1), k = () => pg.mode === 'mcap' ? SUPPLY * usd : 1;   // MCap: the whole supply, in dollars at the SOL price when the chart was made (one scale for every candle)
+  const f = v => (pg.mode === 'mcap' ? fmtMcapAxis(v) : fmtPrice(v));
   const chart = LW.createChart(el, { width: el.clientWidth || 600, height: innerWidth < 720 ? 300 : 400, layout: { background: { color: 'transparent' }, textColor: cssVar('--muted') || '#8a8f98', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 },
     grid: { vertLines: { color: cssVar('--hair') || '#1f232b' }, horzLines: { color: cssVar('--hair') || '#1f232b' } }, rightPriceScale: { borderColor: cssVar('--hair-2') || '#2a2f38', scaleMargins: { top: 0.14, bottom: 0.22 } },
     timeScale: { borderColor: cssVar('--hair-2') || '#2a2f38', timeVisible: true, secondsVisible: false, tickMarkFormatter: (t, type) => { const d = new Date(t * 1000); return type >= 2 ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : d.toLocaleDateString([], { month: 'short', day: 'numeric' }); } }, localization: { timeFormatter: t => new Date(t * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }), priceFormatter: f }, crosshair: { mode: LW.CrosshairMode.Normal }, handleScale: { axisPressedMouseMove: true }, handleScroll: true });
-  const candles = chart.addCandlestickSeries({ upColor: CANDLE_UP, downColor: CANDLE_DN, borderVisible: false, wickUpColor: CANDLE_UP, wickDownColor: CANDLE_DN, priceFormat: { type: 'custom', formatter: f, minMove: 1e-12 } });
+  const candles = chart.addCandlestickSeries({ upColor: CANDLE_UP, downColor: CANDLE_DN, borderVisible: false, wickUpColor: CANDLE_UP, wickDownColor: CANDLE_DN, priceFormat: { type: 'custom', formatter: f, minMove: 1e-12 }, autoscaleInfoProvider: orig => { const r = orig(); if (r && r.priceRange) r.priceRange.minValue = Math.max(0, r.priceRange.minValue); return r; } });   // never autoscaled below zero
   const vol = chart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: '', color: cssVar('--navy-soft') || '#5B8CFF' });
   vol.priceScale().applyOptions({ scaleMargins: { top: 0.82, bottom: 0 } });
   const lw = pg.lw = { box, el, chart, candles, vol, raiseLine: null, k };
@@ -299,7 +299,7 @@ async function loadTrading(p) {
   try {
     const pool = pg.pool = await presaleAdapter.pool(p), ser = await presaleAdapter.candles(p, pg.tf);
     if (ui.sel !== p.id) return;
-    pg.series = ser.value; box.innerHTML = candleSVG(ser.value, pg.mode, pool.value.supply, pool.value.quote, raiseIn(p, pool.value.quote));
+    pg.series = ser.value; box.innerHTML = candleSVG(ser.value, pg.mode, pool.value.supply * (pool.value.quote === 'USD' ? 1 : usdNow(p, 1)), pool.value.quote, raiseIn(p, pool.value.quote));   // a market cap is in dollars
     const v = pool.value, x = v.price / raiseIn(p, v.quote);
     card.innerHTML = `<div class="pool-grid"><div><dt>Pair</dt><dd>${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.liquidity) : `${fmtC(v.liquidity, p.q)} ${esc(v.quote)}`}</dd></div>
       <div><dt>vs raise price</dt><dd class="num ${x >= 1 ? 'up' : 'down'}">${x.toFixed(2)}×</dd></div><div><dt>24h volume</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.volume24h) : fmtC(v.volume24h, p.q)}</dd></div></div>
@@ -315,7 +315,7 @@ async function loadTrading(p) {
 async function loadLiveTrading(p, box) {
   if (!pg.unwatch) pg.unwatch = tradesAdapter.watch(p, t => onLiveTrade(p, t));   // first, so nothing lands between the fetch and the watch
   try {
-    await loadLw(); pg.pool = await presaleAdapter.pool(p); pg.series = null; const ser = await tradesAdapter.candles(p, pg.tf);
+    await loadLw(); if (typeof chain !== 'undefined') await chain.refreshSolUsd(); pg.pool = await presaleAdapter.pool(p); pg.series = null;   // the SOL price first: the market caps are quoted with it const ser = await tradesAdapter.candles(p, pg.tf);
     if (ui.sel !== p.id || !box.isConnected) return;
     (pg.pendingTrades || []).forEach(t => { if (!(pg.trades || []).some(x => x.signature === t.signature)) foldTrade(ser, pg.tf, t); }); pg.pendingTrades = null;   // what landed while the series loaded
     pg.series = ser; const lw = lwMount(box, p); lwData(lw, ser, p);

@@ -1323,7 +1323,7 @@ a.ico:hover{color:var(--ink)}
           <li><b>Filled</b> is raised over target. Fees ride on top, so they are not part of it.</li>
           <li><b>Pace</b> compares the last six hours of buys with what is left and the time to the deadline. When the dashed line on the fill chart is steeper than the solid one, the raise is behind.</li>
           <li><b>Seeding</b> shows a filled raise's step count and the time left before it would refund.</li>
-          <li><b>MC</b> is the market cap: the pool's price over the whole supply on a seeded raise, with its change since the raise price; on a live raise, the market cap it will open at.</li>
+          <li><b>MC</b> is the market cap in dollars: the pool's price over the whole supply on a seeded raise, at today's SOL price, with its change since the raise price; on a live raise, the market cap it will open at. Hover it for the figure in SOL.</li>
           <li><b>Quick deposit</b> sends your preset amount in one click, fee on top. Presets are kept per asset. Like any buy, it is trimmed to what fits.</li>
         </ul>
         <p><b>Finding a raise.</b> Search matches a name, a ticker, a token address, a raise account or an X handle. Filters narrow the columns by pair asset, Verified X and the safety chips. The star on a row adds it to your <b>watchlist</b>; the Watchlist toggle shows only starred raises. The <b>bell</b> collects alerts for the raises you star, back, hold or opened: filled, seeded, refunds open, a team unlock passed, a payout wallet moved. The watchlist and the alerts live in this browser.</p>
@@ -1583,16 +1583,21 @@ const fmtRaised = (n, k) => Number(n.toFixed(dpFor(n, k))).toLocaleString('en-US
 const trim2 = v => String(Number(v.toFixed(2)));
 /* compact form for table cells and big readouts: 43.2K, 1.25M, 2B */
 function fmtC(n, k, raised) { const a = Math.abs(n); return a >= 1e9 ? trim2(n / 1e9) + 'B' : a >= 1e6 ? trim2(n / 1e6) + 'M' : a >= 1e4 ? trim2(n / 1e3) + 'K' : raised ? fmtRaised(n, k) : fmtAmt(n, k); }
-/* a market cap: compact above 10K, else four significant digits (2,500 SOL, 312.5 SOL, 0.4213 SOL) */
-const fmtMcap = (n, k) => Math.abs(n) >= 1e4 ? fmtC(n, k) : Number(Number(n).toPrecision(4)).toLocaleString('en-US', { maximumFractionDigits: 6 });
+/* a market cap in dollars, the way every terminal quotes one: $4.2K, $10K, $1.5M; a small one plain ($312, $70.12) */
+const fmtMcap = n => { const a = Math.abs(n); return a >= 1e4 ? fmtUsd(n) : a >= 1e3 ? '$' + trim2(n / 1e3) + 'K' : a >= 1 ? '$' + n.toLocaleString('en-US', { maximumFractionDigits: a >= 100 ? 0 : 2 }) : '$' + Number(n.toPrecision(2)); };
+/* the same in the pair asset, for the tooltip: 2,500 SOL, 312.5 SOL, 0.4213 SOL */
+const fmtMcapQ = (n, k) => Math.abs(n) >= 1e4 ? fmtC(n, k) : Number(Number(n).toPrecision(4)).toLocaleString('en-US', { maximumFractionDigits: 6 });
 /* the market cap in the pair asset: the pool's spot price over the whole supply once it trades, the raise price before */
 const spotNow = p => p.status !== 'seeded' ? priceOf(p) : p.live ? (p.spot || priceOf(p)) : spotOf(p);   // a demo pool's price is its in-app AMM's
 const mcapOf = p => spotNow(p) * SUPPLY;
+const mcapUsdOf = p => usdNow(p, mcapOf(p));                             // in dollars at today's SOL price
 const mcChange = x => Math.abs(x - 1) < 0.0005 ? '0%' : (x >= 1 ? '+' : '') + ((x - 1) * 100).toFixed(Math.abs(x - 1) < 0.01 ? 1 : 0) + '%';   // the pool's price against the raise price
+/* the tooltip behind an MC figure: the pair-asset market cap, the SOL price it was converted at, the token price */
+const mcTitle = (p, spot) => { const C = Q(p); return `Market cap ${fmtMcapQ(spot * SUPPLY, p.q)} ${C.sym}${p.q === 'USDC' ? '' : ` at $${Number(solUsdNow(p).toPrecision(4))} a SOL`}; ${fmtPrice(spot).replace(/<[^>]+>/g, '')} ${C.sym} a token`; };
 /* a seeded raise's market cap on its rows and tiles, patched in place as a trade lands (the figures the lanes were drawn with) */
 function patchSpot(p) {
-  const C = Q(p), spot = spotNow(p), x = spot / priceOf(p);
-  $$(`[data-row="${p.id}"] [data-mc]`).forEach(e => { e.textContent = `MC ${fmtMcap(spot * SUPPLY, p.q)} ${C.sym}`; e.title = `Market cap: ${fmtPrice(spot).replace(/<[^>]+>/g, '')} ${C.sym} a token`; });
+  const spot = spotNow(p), x = spot / priceOf(p);
+  $$(`[data-row="${p.id}"] [data-mc]`).forEach(e => { e.textContent = `MC ${fmtMcap(mcapUsdOf(p))}`; e.title = mcTitle(p, spot); });
   $$(`[data-row="${p.id}"] [data-mcx]`).forEach(e => { e.textContent = mcChange(x); e.classList.toggle('up', x >= 1); e.classList.toggle('down', x < 1); });
   $$(`[data-row="${p.id}"]`).forEach(bump);
 }
@@ -1743,7 +1748,7 @@ function tile(p, i, trend, fresh = '') {
     <span class="tr-art">${artHTML(p, 'tr-img')}${trend ? `<span class="tr-rank">${i + 1}</span>` : ''}<span class="tr-pct" data-pct>${Math.floor(pc + 1e-7)}%</span><span class="bar"><i data-bar style="width:${pc}%"></i></span></span>
     <span class="tr-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${trend ? '' : starBtn(p)}${trend ? '' : `${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}`}</span>
     <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></b>${doingChip(p)}${trend && !p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}</span>
-    ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span><span class="br-stat" title="${p.status === 'seeded' ? 'Market cap' : 'Market cap at the raise price'}"><span class="num" data-mc>MC ${fmtMcap(mcapOf(p), p.q)} ${esc(C.sym)}</span></span>${rowAnn(p)}${rowLinks(p)}</span>
+    ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span><span class="br-stat" title="${p.status === 'seeded' ? '' : 'At the raise price. '}${esc(mcTitle(p, spotNow(p)))}"><span class="num" data-mc>MC ${fmtMcap(mcapUsdOf(p))}</span></span>${rowAnn(p)}${rowLinks(p)}</span>
     <span class="tile-flags">${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
     <span class="t-act">${actCell(p)}</span>`}</div>`;
 }
@@ -1754,7 +1759,7 @@ addEventListener('resize', () => fitLanes());
    time left, backers, chips. The big art stays in Trending and the board. */
 function laneRow(p, i, fresh = '') {
   const C = Q(p), pc = pctOf(p), live = p.status === 'live', seeded = p.status === 'seeded', spot = seeded ? spotNow(p) : null, x = spot ? spot / priceOf(p) : null;
-  const fig = seeded ? `<b class="num" data-mc title="Market cap: ${fmtPrice(spot)} ${esc(C.sym)} a token">MC ${fmtMcap(spot * SUPPLY, p.q)} ${esc(C.sym)}</b><span class="num ${x >= 1 ? 'up' : 'down'}" data-mcx title="Against the raise price">${mcChange(x)}</span>` : `<b class="num">${Math.floor(pc + 1e-7)}%</b><span class="num">${fmtC(p.raised, p.q, true)} / ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</span>`;
+  const fig = seeded ? `<b class="num" data-mc title="${esc(mcTitle(p, spot))}">MC ${fmtMcap(mcapUsdOf(p))}</b><span class="num ${x >= 1 ? 'up' : 'down'}" data-mcx title="Against the raise price">${mcChange(x)}</span>` : `<b class="num">${Math.floor(pc + 1e-7)}%</b><span class="num">${fmtC(p.raised, p.q, true)} / ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</span>`;
   return `<a class="lrow ${p.status}${fresh}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}" style="--i:${i};--h:${hashStr(p.ticker) % 360}">${artHTML(p, 'lr-art')}
     <span class="lr-main"><span class="lr-name"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span>${starBtn(p)}</span>
       <span class="lr-meta">${live ? `<span class="num${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span data-time>${timeCell(p)}</span></span>` : `<span class="num">${seeded ? fmtAgo(Date.now() - (p.resolvedAt || p.endsAt)) : timeCell(p)}</span>`}<span class="num" title="Backers">${ROW_ICON.people}<span data-rbackers>${p.backers}</span></span>${seeded && p.holderCount != null ? `<span class="num" title="Holders">${p.holderCount} holders</span>` : ''}</span>
