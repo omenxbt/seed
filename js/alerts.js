@@ -53,3 +53,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('[data-bell-clear]')) { state.alerts = []; save(); renderBell(); return; }
   if (!e.target.closest('#bellPop')) { const pop = $('#bellPop'); if (pop && !pop.hidden) toggleBell(false); }
 });
+document.addEventListener('keydown', e => {   // Escape closes the popover and puts the focus back on the bell
+  if (e.key !== 'Escape') return; const pop = $('#bellPop'); if (!pop || pop.hidden) return;
+  e.preventDefault(); toggleBell(false); const b = $('#bellBtn'); if (b) b.focus();
+});

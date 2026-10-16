@@ -29,7 +29,7 @@ function riskChecks(p, opts = {}) {
   add('past', 'Past raises', flagged.length || dumped.length ? 'fail' : 'pass',
     flagged.length ? `${flagged.length} earlier Seed raise${flagged.length > 1 ? 's' : ''} by this account ${flagged.length > 1 ? 'were' : 'was'} flagged for fraud: ${flagged.map(r => '$' + r.ticker).join(', ')}.`
       : dumped.length ? `${dumped.length} past launch${dumped.length > 1 ? 'es' : ''} from this wallet ended dumped: ${dumped.map(e => `${e.name} on ${e.platform}`).join(', ')}.`
-      : past.length > 5 ? `${past.length} earlier Seed raises: ${['seeded', 'refunded', 'live', 'seeding'].map(o => [o, past.filter(r => r.outcome === o).length]).filter(x => x[1]).map(([o, n]) => `${n} ${o}`).join(', ')}. Latest: ${past.slice(0, 3).map(r => `$${r.ticker} ${r.outcome}`).join(', ')}.`
+      : past.length > 5 ? `${past.length} earlier Seed raises: ${['seeded', 'refunded', 'cancelled', 'live', 'seeding'].map(o => [o, past.filter(r => r.outcome === o).length]).filter(x => x[1]).map(([o, n]) => `${n} ${o}`).join(', ')}. Latest: ${past.slice(0, 3).map(r => `$${r.ticker} ${r.outcome}`).join(', ')}.`
       : past.length ? `${past.length} earlier Seed raise${past.length > 1 ? 's' : ''}: ${past.map(r => `$${r.ticker} ${r.outcome}`).join(', ')}.` : 'The first raise by this account on Seed.', fromPr);
 
   // 3 to 5. the crowd
@@ -48,7 +48,7 @@ function riskChecks(p, opts = {}) {
 
   // the token on chain, once it is there: read by chainChecks() and kept on the raise
   if (p.live && p.status === 'seeded') {
-    const cc = p.chainChecks || (typeof chainChecksOf !== 'undefined' && chainChecksOf[p.id]);
+    const cc = p.chainChecks || (typeof chainChecksKnown === 'function' ? chainChecksKnown(p.id) : typeof chainChecksOf !== 'undefined' && chainChecksOf[p.id]);
     if (cc) cc.forEach(c => add(c.id, c.label, c.level, c.reason, 'chain'));
     else ['Mint authority', 'Freeze authority', 'Liquidity lock', 'Token metadata', 'Top 10 holders'].forEach((l, i) => add(['mint-auth', 'freeze-auth', 'lp-lock', 'metadata', 'top10h'][i], l, 'pending', 'Reading the chain…'));
   }
@@ -73,9 +73,10 @@ function riskChecks(p, opts = {}) {
 }
 /* the grade only counts the checks; info rows are facts and are not graded */
 function riskSummary(checks) {
-  const fails = checks.filter(c => c.level === 'fail').length, warns = checks.filter(c => c.level === 'warn').length;
+  const fails = checks.filter(c => c.level === 'fail').length, warns = checks.filter(c => c.level === 'warn').length, pending = checks.some(c => c.level === 'pending');
   const parts = []; if (fails) parts.push(`${fails} fail${fails > 1 ? 's' : ''}`); if (warns) parts.push(`${warns} warning${warns > 1 ? 's' : ''}`);
-  return { fails, warns, level: fails ? 'fail' : warns ? 'warn' : 'pass', text: parts.length ? parts.join(', ') : 'All checks pass' };
+  // chain checks still to be read say so, so a badge is never read as final before it is
+  return { fails, warns, pending, level: fails ? 'fail' : warns ? 'warn' : 'pass', text: parts.length ? parts.join(', ') + (pending ? ' so far' : '') : pending ? 'Passing so far' : 'All checks pass' };
 }
 const RISK_ICON = {
   pass: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><path d="M5.2 8.3l1.9 1.9 3.8-4.1"/></svg>',

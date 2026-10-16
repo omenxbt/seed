@@ -523,6 +523,7 @@ a.ico:hover{color:var(--ink)}
 .tr-chg.off{background:var(--chip);color:var(--muted)}
 .tile-meta,.tile-flags{display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:0 2px;font-size:13px;color:var(--muted)}
 .tile-flags{gap:6px;position:relative;z-index:1;pointer-events:none}
+.demo-note{margin:0 0 14px;padding:10px 14px;border:1px dashed var(--hair-2);border-radius:12px;color:var(--muted);font-size:13px}
 .demo-chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:11.5px;font-weight:500;color:var(--muted);background:var(--hair);letter-spacing:.01em}
 .xv-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 6px;border-radius:999px;font-size:11.5px;font-weight:500;color:var(--ok-ink);background:var(--ok-bg)}.xv-chip svg{width:11px;height:11px;fill:currentColor}
 .tile-flags .risk-chip,.tile-flags .pace-chip{font-size:11.5px;padding:2px 8px 2px 6px;gap:4px}
@@ -955,6 +956,7 @@ a.ico:hover{color:var(--ink)}
       <div class="ws-main">
         <div id="pCreator" hidden></div>
         <div id="pBacker">
+        <p class="rail-meta demo-note" id="pDemoNote" hidden>This is the demo wallet's book: generated positions in the demo raises, nothing on chain. Connect a wallet to see your own.</p>
         <dl class="sums" id="pstats"></dl>
         <section class="panel perf" id="perf" aria-labelledby="perfH">
           <div class="perf-head"><h3 class="card-h" id="perfH">Performance</h3>
@@ -1027,7 +1029,7 @@ a.ico:hover{color:var(--ink)}
           <div><dt>Team share</dt><dd class="t">0% to under 100%, set by the founder</dd></div>
           <div><dt>Backers and the pool</dt><dd class="t">Half of the rest, each</dd></div>
           <div><dt>Seed fee</dt><dd class="t">1% on top of each buy, returned on a miss</dd></div>
-          <div><dt>Pool fee</dt><dd class="t">1%, 70% to the founder, 30% to Seed</dd></div>
+          <div><dt>Pool fee</dt><dd class="t">1.25% (1% after Meteora's share), 70% to the founder, 30% to Seed</dd></div>
           <div><dt>Refund if it misses</dt><dd>100%</dd></div>
         </dl>
       </div>
@@ -1370,7 +1372,7 @@ a.ico:hover{color:var(--ink)}
           <div><dt>Program ID</dt><dd>cpamd…n1sGG</dd></div>
           <div><dt>Curve</dt><dd class="t">Constant product, full range</dd></div>
           <div><dt>Token B</dt><dd class="t">The pair asset</dd></div>
-          <div><dt>Fee</dt><dd class="t">1% flat, collected in token B</dd></div>
+          <div><dt>Fee</dt><dd class="t">1.25% flat (1% after Meteora's share), collected in token B</dd></div>
           <div><dt>Liquidity</dt><dd class="t">Locked at creation, for good</dd></div>
           <div><dt>Position NFT</dt><dd class="t">Held by a Seed program account</dd></div>
         </dl>
@@ -1903,6 +1905,7 @@ async function quickBuy(p, btn) {
 }
 async function claim(p, btn) {
   if (!p || busy || !state.positions[p.id] || state.claimed[p.id]) return;
+  if (p.status !== 'seeded' && p.status !== 'refunded') { toast(p.status === 'filled' ? 'The raise is still seeding: tokens can be claimed once it has.' : 'Nothing to claim yet.'); return; }   // the program refuses both claims until the raise has resolved
   if (!(await ensureWallet())) return;
   const C = Q(p), amt = state.positions[p.id];
   busy = true; btn.disabled = true; btn.textContent = 'Confirm in wallet…';
@@ -2122,14 +2125,15 @@ $('#mintRow').addEventListener('click', e => { const b = e.target.closest('[data
 /* ------------------------------------------------------------- portfolio */
 function renderPortfolio() {
   const ids = [...new Set([...Object.keys(state.positions), ...Object.keys(state.tokens || {}).filter(id => state.tokens[id] > 0)])]; let nLive = 0, nRef = 0, nTok = 0;
-  ids.forEach(id => { const p = find(id); if (!p || !state.positions[id]) return; if (p.status === 'live') nLive++; else if (!state.claimed[id]) { if (p.status === 'refunded') nRef++; else nTok++; } });
+  ids.forEach(id => { const p = find(id); if (!p || !state.positions[id]) return; if (p.status === 'live') nLive++; else if (p.status === 'filled') return; else if (!state.claimed[id]) { if (p.status === 'refunded') nRef++; else nTok++; } });   // a filled raise is seeding: nothing to claim yet, either way
+  const dn = $('#pDemoNote'); if (dn) dn.hidden = isReal() || !(typeof chain !== 'undefined' && chain.on());   // on the live site, the demo book is named for what it is
   $('#pstats').innerHTML = `<div class="sum"><dt>Positions</dt><dd class="num">${ids.length}</dd></div><div class="sum"><dt>In live raises</dt><dd class="num">${nLive}</dd></div>
     <div class="sum"><dt>Refunds to claim</dt><dd class="num">${nRef}</dd></div><div class="sum"><dt>Token claims ready</dt><dd class="num">${nTok}</dd></div>`;
   $('#prows').innerHTML = ids.length ? ids.map(id => { const p = find(id); if (!p) return ''; const sym = esc(Q(p).sym), a = state.positions[id], cl = state.claimed[id];
       const st = RAISE_STATE[p.status], mineBuys = (p.buys || []).filter(b => b.you), paidAll = r6(mineBuys.reduce((s, b) => s + (b.paid != null ? b.paid : paidFor(b.amount)), 0)) || (a ? paidFor(a) : 0);
       const holds = p.status === 'seeded' && (cl || !a);   // claimed, or bought in the pool without backing the raise
-      const yours = p.status === 'live' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)} if it seeds` : holds ? `${fmtTok(heldOf(p))} $${esc(p.ticker)} held` : p.status === 'seeded' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)}` : `${fmtExact(paidAll || a, p.q)} ${sym}${cl ? ' refunded' : ' to claim'}`;
-      const act = p.status === 'live' ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">View</a>` : holds ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Trade</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
+      const yours = p.status === 'live' || p.status === 'filled' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)} ${p.status === 'filled' ? 'when it seeds' : 'if it seeds'}` : holds ? `${fmtTok(heldOf(p))} $${esc(p.ticker)} held` : p.status === 'seeded' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)}` : `${fmtExact(paidAll || a, p.q)} ${sym}${cl ? ' refunded' : ' to claim'}`;
+      const act = p.status === 'live' ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">View</a>` : p.status === 'filled' ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Seeding ${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1}/4</a>` : holds ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Trade</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
       return `<div class="prow"><span class="c-proj">${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta">${pairTag(p)}</span></span></span>
         <span class="num">${paidAll ? `${fmtExact(paidAll, p.q)} ${sym}` : '–'}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
     : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#">Buy into a raise from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
@@ -2499,7 +2503,7 @@ function boot() {
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();
   initDocs(); renderPreview(); tick(true); renderAll(); route(); booted = true; watchTrades();
-  resume().then(() => xAdapter.finish()).then(() => chain.init()).then(ok => ok && chain.loadLive()).then(got => { if (got) { save(); renderAll(); if (detailBox) renderDetail(true); } });   // back from an X sign-in, the link is made once the wallet is back; then the live raises
+  resume().then(() => xAdapter.finish()).then(() => chain.init()).then(ok => ok && chain.loadLive()).then(got => { if (got) { save(); renderAll(); if (detailBox) renderDetail(true); } if (typeof chain !== 'undefined' && chain.on()) chain.watchRaises(() => { save(); renderAll(); if (detailBox) renderDetail(true); }); });   // back from an X sign-in, the link is made once the wallet is back; then the live raises
   setInterval(() => tick(), 1000); setInterval(simulate, 3600);
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(placeSegs);
 }

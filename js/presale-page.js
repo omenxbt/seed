@@ -30,7 +30,7 @@ const safeUrl = u => /^https?:\/\//i.test(String(u || '')) ? String(u) : '';
 /* ---------------------------------------------------------------- helpers */
 function md(s) {
   if (!s) return '';
-  if (window.marked && window.DOMPurify) return DOMPurify.sanitize(marked.parse(String(s), { breaks: false, gfm: true }), { ADD_ATTR: ['target'] });
+  if (window.marked && window.DOMPurify) return DOMPurify.sanitize(marked.parse(String(s), { breaks: false, gfm: true }), { ADD_ATTR: ['target'], FORBID_TAGS: ['img', 'picture', 'source', 'video', 'audio', 'iframe'] });   // no remote images: a founder's text cannot carry a tracking pixel
   return String(s).split(/\n{2,}/).map(x => `<p>${esc(x)}</p>`).join('');
 }
 function fmtHours(h) { if (!isFinite(h)) return 'never'; if (h < 1) return Math.max(1, Math.round(h * 60)) + 'm'; if (h < 72) return Math.round(h) + 'h'; const d = Math.floor(h / 24); return `${d}d ${Math.round(h - d * 24)}h`; }
@@ -447,7 +447,7 @@ function ppRail(p) { return tradePanel(p) + `<div class="pp-pos" data-poswrap>${
 function ppFounder(p) {
   const x = p.xAccount || {}, pr = profileOf(p), f = pr.founder || {}, now = Date.now(), age = x.createdAt ? (now - x.createdAt) / D : null, past = p.pastRaises || [];
   const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
-  const outcome = r => ({ seeded: '<span class="btag ok">Seeded</span>', refunded: '<span class="btag">Refunded</span>', flagged: '<span class="btag bad">Flagged</span>' })[r.outcome] || esc(r.outcome || '');
+  const outcome = r => ({ seeded: '<span class="btag ok">Seeded</span>', refunded: '<span class="btag">Refunded</span>', cancelled: '<span class="btag">Cancelled</span>', seeding: '<span class="btag ok">Filled, seeding</span>', live: '<span class="btag">Live</span>', flagged: '<span class="btag bad">Flagged</span>' })[r.outcome] || esc(r.outcome || '');
   const fw = typeof founderOf === 'function' ? founderOf(p) : '';
   return `<section class="panel rail-card pp-founder"><div class="rail-h"><h3>Founder</h3>${pr.demo ? DEMO_PILL : ''}</div>
     ${x.handle ? `<a class="x-acct" href="${esc(xUrl(x.handle))}" target="_blank" rel="noopener">${ICONS.x}<span><b>@${esc(x.handle)}</b><span class="num">${x.verified ? 'Verified X' : x.typed ? 'Typed on devnet' : 'Linked'}${x.followers != null ? ` · ${plural(Number(x.followers), 'follower')}` : ''}${age != null ? ` · account ${fmtDays(age)} old` : ''}</span></span>${x.verified ? `<span class="vbadge x-ok" title="Verified: signed in with X">${RISK_ICON.pass}</span>` : ''}</a>`
@@ -643,7 +643,8 @@ async function loadHolders(p) {
   const box = detailBox && $('[data-holders]', detailBox); if (!box) return;
   try {
     const h = await backersAdapter.holders(p); if (!box.isConnected) return;
-    const all = pg.allHolders || h.value.length <= 100, shown = all ? h.value : h.value.slice(0, 100), wallets = h.value.filter(x => !x.label).length;
+    const WALLET_LABELS = ['Founder payout', 'Seed', 'KOL'];   // labelled, but wallets all the same; the rest are the pool and the program's vaults
+    const all = pg.allHolders || h.value.length <= 100, shown = all ? h.value : h.value.slice(0, 100), wallets = h.value.filter(x => !x.label || WALLET_LABELS.includes(x.label)).length;
     box.innerHTML = `<div class="tab-h"><span class="quiet">${plural(h.count || h.value.length, 'holder')}${h.from === 'chain' ? `: ${plural(wallets, 'wallet')} and ${plural(h.value.length - wallets, 'pool or vault account')}` : `, top ${h.value.length} shown`}</span>${srcPill(h.from)}</div>
       <div class="tscroll"><table class="dtable backers holders"><thead><tr><th>Holder</th><th class="r">$${esc(p.ticker)}</th><th class="r">Of supply</th><th class="h-label">Label</th></tr></thead><tbody>
       ${shown.map(x => `<tr class="${x.you ? 'you' : ''}"><td class="mono">${x.you ? 'You' : h.from === 'chain' ? `<a href="${esc(explorer(x.account || x.wallet))}" target="_blank" rel="noopener">${esc(shortMint(x.wallet))}</a>` : esc(shortMint(x.wallet))}${x.label ? `<span class="h-sub">${esc(x.label)}</span>` : ''}</td><td class="num">${x.amount > 0 && x.amount < 1 ? '<1' : fmtTok(x.amount)}</td><td class="num">${x.pct < 0.01 && x.pct > 0 ? '<0.01' : x.pct.toFixed(2)}%</td><td class="h-label">${esc(x.label || '')}</td></tr>`).join('')}</tbody></table></div>

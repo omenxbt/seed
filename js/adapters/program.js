@@ -158,7 +158,7 @@ var chain = {
       return p;
     });
     /* a founder's earlier raises, for the Founder card and the Info row: the chain raises by the same wallet opened before this one */
-    const outcomeOf = x => x.blacklisted ? 'flagged' : x.status === 'seeded' ? 'seeded' : x.status === 'refunded' ? 'refunded' : x.status === 'filled' ? 'seeding' : 'live';
+    const outcomeOf = x => x.blacklisted ? 'flagged' : x.status === 'seeded' ? 'seeded' : x.status === 'refunded' ? (x.refundReason === 'cancelled' ? 'cancelled' : 'refunded') : x.status === 'filled' ? 'seeding' : 'live';
     list.forEach(p => { p.pastRaises = list.filter(x => x.founderWallet === p.founderWallet && x.id !== p.id && x.openedAt < p.openedAt).sort((a, b) => b.openedAt - a.openedAt).map(x => ({ name: x.name, ticker: x.ticker, outcome: outcomeOf(x), at: x.openedAt })); });
     const ids = new Set(list.map(p => p.id)), was = {}; state.presales.forEach(p => { was[p.id] = p; });
     /* the pool price a raise already carried stays on the fresh object: a reload would otherwise draw the raise price until the reserves are read again */
@@ -166,6 +166,21 @@ var chain = {
     state.presales = list.concat(state.presales.filter(p => !ids.has(p.id) && !p.live));
     this.fillArt(list);
     return true;
+  },
+  /* the board follows the indexer: a raise opened or changed after the page loaded (Realtime on `raises`) reloads the live
+     list, at most once every few seconds; if Realtime is unavailable, the list is reloaded every two minutes instead */
+  watchRaises(onChange) {
+    if (this.watching || !supa.configured()) return; this.watching = true;
+    let timer = null; const bump = () => { if (timer) return; timer = setTimeout(async () => { timer = null; try { if (await this.loadLive()) onChange(); } catch (e) { console.warn('raises reload:', e.message); } }, 2500); };
+    supa.init().then(ok => {
+      if (!ok) return;
+      const onRow = x => {   // a new raise, or one whose stage changed; a contribution's update is left to the 20 s sync
+        const r = x.new || {}, p = typeof find === 'function' && r.id ? find(r.id) : null;
+        if (x.eventType === 'INSERT' || !p || p.status !== r.status || (p.seedStep || null) !== (r.seed_step || null) || !!p.blacklisted !== !!r.blacklisted) bump();
+      };
+      supa.client.channel('raises-all').on('postgres_changes', { event: '*', schema: 'public', table: 'raises' }, onRow).subscribe(st => { this.realtimeRaises = st === 'SUBSCRIBED'; });
+      setInterval(() => { if (!this.realtimeRaises && !document.hidden) bump(); }, 120e3);
+    });
   },
   /* the SOL price in dollars, from the Pyth SOL/USD feed account the program prices raises with (the same address on devnet and
      mainnet; the layout is pyth.rs's: discriminator, write authority, verification level, feed id, then price i64, conf u64,

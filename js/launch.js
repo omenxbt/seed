@@ -50,7 +50,7 @@ const extOf = name => (/\.([a-z0-9]+)$/i.exec(name || '') || [, ''])[1].toLowerC
 const deckInfo = file => DECK_EXT[extOf(file.name)] || Object.values(DECK_EXT).find(d => d[1] === file.type) || null;
 const MAX_UPLOAD = 10 * 1024 * 1024;
 const numv = v => { const n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : NaN; };
-const isUrl = v => !v || /^https?:\/\/[^\s]+\.[^\s]+/i.test(v);
+const isUrl = v => !v || /^https:\/\/[^\s]+\.[^\s]+/i.test(v);   // https only, as the copy says
 
 /* ---------------------------------------------------------------- row editors */
 const ROWS = {
@@ -172,7 +172,7 @@ const payoutNow = () => $('#fPayout').value.trim() || (state.wallet && (state.wa
 function modelFields(d, da) {
   const x = draftX();
   return { teamBps: teamBpsNow(), teamSchedule: scheduleNow(), roadmap: draftRoadmap(), tokenUseCase: lf.lim.use.on && $('#fUse').value.trim() ? $('#fUse').value.trim() : 'none', xAccount: x, pastRaises: pastRaisesOf(x.handle), reports: [], payoutWallet: payoutNow(),
-    targetUsd: d.target > 0 ? r6(usdOf({ q: da.key || 'SOL' }, d.target)) : 0, solUsdAtOpen: SEED.demoSolUsd, feeBps: SEED.feeBps, creatorShareBps: SEED.creatorShareBps };
+    targetUsd: d.target > 0 ? r6(usdNow({ q: da.key || 'SOL' }, d.target)) : 0, solUsdAtOpen: solUsdNow(), feeBps: SEED.feeBps, creatorShareBps: SEED.creatorShareBps };
 }
 function draftPresale() {
   const d = readDraft(), da = draftAsset(), now = Date.now();
@@ -190,7 +190,7 @@ function validateFields() {
   else if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) err('#fTicker', `$${d.ticker} is in use by a live raise. Pick another.`);
   if (da.err) err('#fMint', da.err);
   if (isNaN(d.target) || d.target <= 0) err('#fTarget', `Set a target in ${da.a ? da.a.sym : 'the pair asset'}.`);
-  else if (usdOf({ q: da.key }, d.target) > SEED.capUsd + 1e-6) err('#fTarget', `${fmtUsd(usdOf({ q: da.key }, d.target))} at today's SOL price. A raise can ask for at most $${SEED.capUsd.toLocaleString('en-US')}.`);
+  else if (usdNow({ q: da.key }, d.target) > SEED.capUsd + 1e-6) err('#fTarget', `${fmtUsd(usdNow({ q: da.key }, d.target))} at today's SOL price. A raise can ask for at most $${SEED.capUsd.toLocaleString('en-US')}.`);
   const mn = numv($('#fMin').value), mx = numv($('#fMax').value), L = lf.lim;
   if (L.min.on && !(mn > 0)) err('#fMin', 'Set the minimum buy, or switch it off.');
   else if (L.min.on && L.min.unit === 'pct' && mn >= 100) err('#fMin', 'Under 100% of the supply.');
@@ -262,8 +262,9 @@ function renderPreview() {
   $('#mintInfo').textContent = draft.pair !== 'any' ? '' : da.wait ? 'Checking on Solana…' : da.bad ? 'Not a token mint.' : da.err ? '' : !da.custom ? `Recognised as ${C.sym}`
     : da.off ? 'Solana could not be reached to check this mint. It will be listed as unverified.' : C.verified ? `${C.name || C.sym} (${C.sym}), verified on Jupiter` : `A real SPL mint${da.a.name ? `, ${da.a.name}` : ''}, but not on Jupiter's verified list. Backers will see a warning.`;
   $('#fCur').textContent = C.sym; $$('[data-cur]').forEach(e => e.textContent = C.sym); $('#fTarget').placeholder = { SOL: '200', USDC: '50000' }[da.key] || (C.stock ? '300' : '100000');
-  const usd = ok ? usdOf({ q: da.key }, d.target) : 0, over = usd > SEED.capUsd + 1e-6;
-  $('#targetUsd').textContent = ok ? `${fmtUsd(usd)}${da.key === 'SOL' ? ` at $${SEED.demoSolUsd} per SOL` : ''}${over ? `, over the $${SEED.capUsd.toLocaleString('en-US')} cap` : ''}` : `at most $${SEED.capUsd.toLocaleString('en-US')}${da.key === 'SOL' ? ', at the SOL price when it opens' : ''}`;
+  if (typeof chain !== 'undefined' && chain.on() && !SEED.solUsdLive) chain.refreshSolUsd().then(v => { if (v) renderPreview(); });   // the first preview before the feed is read is redrawn at today's price
+  const usd = ok ? usdNow({ q: da.key }, d.target) : 0, over = usd > SEED.capUsd + 1e-6;   // at today's SOL price (the Pyth feed the program opens the raise with), as the program will see it
+  $('#targetUsd').textContent = ok ? `${fmtUsd(usd)}${da.key === 'SOL' ? ` at $${Number(solUsdNow().toPrecision(4))} per SOL` : ''}${over ? `, over the $${SEED.capUsd.toLocaleString('en-US')} cap` : ''}` : `at most $${SEED.capUsd.toLocaleString('en-US')}${da.key === 'SOL' ? ', at the SOL price when it opens' : ''}`;
   $('#targetUsd').classList.toggle('bad', over);
   drawSplit(dp); drawDerived(dp, ok, sym);
   const art = pr.art ? `<img class="pv-art" src="${esc(pr.art)}" alt="" style="object-position:${pr.artPos}">` : `<span class="pv-art glyph-art" style="--h:${hashStr(dp.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(dp)}</svg></span>`;
@@ -273,9 +274,9 @@ function renderPreview() {
   $('#pvFacts').innerHTML = [
     ['The split', `<span class="num">${pc(split.backers)}</span> backers, <span class="num">${pc(split.pool)}</span> pool, <span class="num">${pc(split.team)}</span> team`],
     ['Raise price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token, fixed` : 'Set a target'],
-    ['FDV at the raise', ok ? `<span class="num">${f(fdvOf(dp))} ${sym}</span> (${fmtUsd(fdvUsdOf(dp))})` : 'Set a target'],
+    ['FDV at the raise', ok ? `<span class="num">${f(fdvOf(dp))} ${sym}</span> (${fmtUsd(usdNow(dp, fdvOf(dp)))})` : 'Set a target'],
     ['Pool at seeding', ok ? `<span class="num">${f(d.target)} ${sym}</span> + <span class="num">${fmtTok(split.pool)}</span> $${esc(dp.ticker)}, locked for good` : 'The whole raise, locked for good'],
-    ['Pool depth', ok ? `<span class="num">${f(d.target)} ${sym}</span> each side at opening (${f(d.target * 2)} ${sym}, ${fmtUsd(usdOf(dp, d.target * 2))} in all). ${impactRow(dp, sym)}` : 'Set a target'],
+    ['Pool depth', ok ? `<span class="num">${f(d.target)} ${sym}</span> each side at opening (${f(d.target * 2)} ${sym}, ${fmtUsd(usdNow(dp, d.target * 2))} in all). ${impactRow(dp, sym)}` : 'Set a target'],
     ['Your fee income', `<span class="num">${fees(5000)}</span>, <span class="num">${fees(25000)}</span> or <span class="num">${fees(100000)}</span> a day at $5K, $25K or $100K of daily volume`],
     ['Closes', typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode ? `in ${String(Number((d.hours / 24).toFixed(1)))} min on devnet (test mode: a day is a minute), or the moment it fills` : `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
     ['If it misses', `Short of the target when the ${label} are up: every buy and its fee go back to backers, claimable at once. Nothing is minted`]
