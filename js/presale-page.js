@@ -186,7 +186,7 @@ function ppTrading(p) {
       <div class="mode-seg" data-mode role="group" aria-label="Price or market cap">${['price', 'mcap'].map(m => `<button type="button" data-v="${m}" aria-pressed="${pg.mode === m}">${m === 'price' ? 'Price' : 'Market cap'}</button>`).join('')}</div></div>
     <div class="pp-plot" data-cplot><div class="pp-svg candles" data-candles><div class="pp-loading">Loading the pool…</div></div>
       <div class="cx" data-ccross aria-hidden="true"><i class="cx-line"></i><i class="cx-hline"></i><span class="cx-tag num"></span><span class="cx-read num"></span></div></div>
-    <div class="chart-foot"><span>Hover a candle to read it${p.live ? '; drag to pan, scroll to zoom' : ''}.</span><span class="num">Pool fee ${poolFeePct(p)}% · liquidity locked for good</span></div>
+    <div class="chart-foot"><span>Hover a candle to read it${p.live ? '<span class="cf-zoom">; drag to pan, scroll to zoom</span>' : ''}.</span><span class="num">Pool fee ${poolFeePct(p)}% · liquidity locked for good</span></div>
     <div class="pool-card" data-poolcard></div></section>`;
 }
 /* Candles, drawn at the column's width: price gridlines labelled on the right, the last price tagged on that axis, times along

@@ -121,6 +121,12 @@
 @media (max-width:1180px){.statchips{display:none}}
 .appbar .right{gap:10px}
 .appbar .bell .ct{top:-5px;right:-5px}
+/* on a phone the popovers hang from the bar itself, inside 10px gutters, instead of from the bell (which put them off the left edge) */
+@media (max-width:520px){
+  .appbar .right,.appbar .bell-wrap{position:static}
+  .appbar .pop{top:calc(100% + 8px);right:10px}
+  .appbar .bell-pop{left:10px;width:auto;max-width:none}
+}
 .xbar{margin-bottom:14px}
 
 /* ------------------------------------------------------- hero and featured */
@@ -132,14 +138,14 @@
 .hero p{color:var(--muted);font-size:15px;max-width:46ch;line-height:1.55}
 .hero-acts{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
 .hero-acts .btn{height:40px;padding:0 20px;font-size:13.5px}
-.hero-tiles{position:absolute;right:-26px;bottom:-34px;display:grid;grid-template-columns:repeat(5,54px);gap:9px;transform:rotate(-8deg) skewX(-6deg);pointer-events:none}
-.hero-tiles i{display:block;width:54px;height:54px;border-radius:13px;background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 12px 24px -12px rgba(0,0,0,.8)}
-.hero-tiles i.on{background:var(--grad-btn);border-color:rgba(91,140,255,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 0 26px -4px rgba(46,99,231,.85)}
-.hero-tiles i.gap{visibility:hidden}
+/* the Seed mark, large, where the Figma's hero has its tile cluster: muted dots, the seed in blue with a soft glow */
+.hero-mark{position:absolute;right:-28px;top:50%;width:272px;height:272px;transform:translateY(-50%);color:rgba(255,255,255,.13);--seed:var(--navy);filter:drop-shadow(0 0 22px rgba(46,99,231,.35));pointer-events:none}
+.hero>*:not(.hero-mark){position:relative;z-index:1}
 .featured{position:relative;overflow:hidden;padding:22px 24px;display:flex;flex-direction:column;gap:16px;color:inherit;transition:border-color var(--fast) var(--ease-out)}
 .featured:hover{border-color:var(--hair-2)}
 .ft-bg{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:14px 14px;-webkit-mask-image:linear-gradient(90deg,transparent 30%,#000 75%);mask-image:linear-gradient(90deg,transparent 30%,#000 75%)}
-.ft-area{position:absolute;right:0;bottom:0;width:58%;height:72%;pointer-events:none}
+.ft-area{position:absolute;right:0;bottom:0;width:44%;height:66%;pointer-events:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 45%);mask-image:linear-gradient(90deg,transparent,#000 45%)}
+.ft-chips{display:flex;gap:6px;align-items:center}
 .ft-area svg{display:block;width:100%;height:100%;overflow:visible}
 .ft-head{position:relative;display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--hair)}
 .ft-art{flex:none;width:44px;height:44px;border-radius:50%;object-fit:cover;display:grid;place-items:center}
@@ -147,11 +153,12 @@
 .ft-name{min-width:0}.ft-name b{display:block;font-size:16px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ft-name span{font-size:13px;color:var(--muted)}
 .ft-right{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
 .ft-code{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--faint)}
-.ft-stats{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px;max-width:62%}
-.ft-stats dt{font-size:12.5px;color:var(--muted)}.ft-stats dd{font-size:15px;margin-top:3px;white-space:nowrap}
+.ft-stats{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px;max-width:66%}
+.ft-stats>div{min-width:0}
+.ft-stats dt{font-size:12.5px;color:var(--muted)}.ft-stats dd{font-size:15px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ft-stats dd.up{color:var(--ok-ink)}.ft-stats dd.down{color:var(--bad-ink)}
 .ft-empty{position:relative;color:var(--muted);font-size:14px}
-@media (max-width:1100px){.hero-row{grid-template-columns:1fr}.hero{min-height:0}.hero-tiles{display:none}.ft-stats{max-width:none}.ft-area{opacity:.5}}
+@media (max-width:1100px){.hero-row{grid-template-columns:1fr}.hero{min-height:0}.hero-mark{display:none}.ft-stats{max-width:none}.ft-area{opacity:.5}}
 @media (max-width:700px){.hero{display:none}.hero-row{margin-bottom:12px}}
 
 /* --------------------------------------------------------------- the board */
@@ -170,7 +177,7 @@
 .feed-title{font-size:16px;font-weight:500;letter-spacing:-.02em;margin-right:4px;white-space:nowrap}
 .board .col-list{padding:12px 14px 16px}
 .board .col-list.table{display:flex;flex-direction:column;gap:0;padding:0 0 4px}
-.thead,.trow{display:grid;grid-template-columns:minmax(230px,2.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.35fr) minmax(0,.7fr) minmax(0,1fr) 150px 156px;gap:14px;align-items:center;padding:0 18px}
+.thead,.trow{display:grid;grid-template-columns:minmax(230px,2.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.35fr) minmax(0,.7fr) max-content 150px 156px;gap:14px;align-items:center;padding:0 18px}
 .thead{padding:10px 18px;font-size:13px;color:var(--faint);border-bottom:1px solid var(--hair);white-space:nowrap}
 .thead>span:nth-child(n+2),.trow>span:nth-child(n+2){text-align:right}
 .thead>span:nth-child(7),.trow>span:nth-child(7){text-align:center}
@@ -183,7 +190,8 @@
 .trow .tr-av{flex:none;width:36px;height:36px;border-radius:50%;object-fit:cover;display:grid;place-items:center}
 .trow .tr-av.glyph-art svg{width:50%;height:50%}
 .trow .nm b{font-size:15px}
-.trow .nm .meta{gap:4px 6px;font-size:12.5px;white-space:normal;flex-wrap:wrap;overflow:visible}
+/* the chips stay on one line and fade out at the edge, so a row keeps its height */
+.trow .nm .meta{gap:6px;font-size:12.5px;white-space:nowrap;flex-wrap:nowrap;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent)}
 .trow .nm .meta>span{flex:none}
 .trow .nm .meta:empty{display:none}
 .trow .nm b .tk{font-family:var(--sans);font-size:13px}
@@ -214,7 +222,8 @@
 .dtable td.rk{width:1%;padding-right:10px}
 .dtable .strip-cell{white-space:nowrap}
 .trow .c-time,.trow .c-raised>span:first-child{white-space:nowrap}
-@media (max-width:1280px){.thead,.trow{grid-template-columns:minmax(200px,2.4fr) minmax(0,.9fr) minmax(0,.8fr) minmax(0,1.2fr) minmax(0,1.1fr) 132px;gap:12px}.thead>span:nth-child(5),.trow>span:nth-child(5),.thead>span:nth-child(7),.trow>span:nth-child(7){display:none}.trow .c-raised .bar{max-width:90px}.trow .nm b .tk{display:none}}
+@media (max-width:1280px){.thead,.trow{grid-template-columns:minmax(200px,2.4fr) minmax(0,.9fr) minmax(0,.8fr) minmax(0,1.2fr) max-content 132px;gap:12px}.thead>span:nth-child(5),.trow>span:nth-child(5),.thead>span:nth-child(7),.trow>span:nth-child(7){display:none}.trow .c-raised .bar{max-width:90px}.trow .nm b .tk{display:none}}
+@media (max-width:1180px){.trow .c-raised em{display:none}}   /* the bar says how far along it is */
 
 /* the Trending row keeps its tiles, with Delta's rank badge */
 .tile .tr-rank{left:8px;top:8px;height:22px;min-width:30px;border-radius:7px;background:var(--grad-seg);border:1px solid var(--seg-line);box-shadow:var(--lit);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
@@ -232,19 +241,22 @@
 .mode-seg button{padding:5px 13px;border-radius:9px;border:1px solid var(--hair);background:var(--chip);font-size:12.5px;font-weight:500;color:var(--muted);transition:color var(--fast) var(--ease-out),background var(--fast) var(--ease-out)}
 .mode-seg button:hover{color:var(--ink)}
 @media (max-width:600px){.chart-bar>.quiet,.chart-bar .sep{display:none}.mode-seg button{padding:5px 10px}}
+@media (max-width:700px),(hover:none){.cf-zoom{display:none}}   /* no mouse: no pan-and-scroll hint */
 .chart-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted)}
 .chart-foot .num{color:var(--ink-2)}
 [data-trading] .pp-card-h h2{display:flex;align-items:center;gap:10px}
 /* the figures under the chart: a bordered grid, each cell centred, the move against the raise coloured */
 .pool-card{margin-top:16px;border-top:0;padding-top:0}
-.pool-grid{gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
-.pool-grid>div{background:var(--well);padding:14px 14px 13px;text-align:center;min-width:0}
-.pool-grid dt{font-size:12.5px}.pool-grid dd{font-size:16px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pool-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.pool-grid>div{background:var(--well);padding:14px 12px 13px;text-align:center;min-width:0}
+.pool-grid dt{font-size:12.5px}.pool-grid dd{font-size:15.5px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pool-grid dd:hover{white-space:normal;overflow-wrap:anywhere}
 .pool-foot{margin-top:14px}
 /* the project's numbers as the same bordered grid */
 .pp-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:12px;overflow:hidden;margin:18px 22px 0}
 .pp-stats>div{display:block;background:var(--well);padding:12px 14px;border-top:0}
-.pp-stats dt{font-size:12.5px}.pp-stats dd{text-align:left;margin-top:3px;font-size:15px}
+.pp-stats dt{font-size:12.5px}.pp-stats dd{text-align:left;margin-top:3px;font-size:15px;white-space:normal;overflow:visible;overflow-wrap:anywhere}
+.pp-stats dd em{white-space:nowrap}
 @media (min-width:720px) and (max-width:1439px){.pp-stats{grid-template-columns:repeat(3,1fr);column-gap:1px}}
 /* the Portfolio's four figures and the Backers tab's checks: the same grid */
 #pstats{gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:16px;overflow:hidden}

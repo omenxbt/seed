@@ -773,7 +773,7 @@ a.ico:hover{color:var(--ink)}
 <!-- the icon rail (from 1024px): the mark, the three sections, then X, Discord and the docs. route() lights the open one. -->
 <nav class="rail-nav" id="railNav" aria-label="Sections">
   <a href="#" class="brand" aria-label="Seed home"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg></a>
-  <a class="rn" href="#" data-rn="terminal" aria-label="Terminal" title="Terminal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V11M10 19V5M16 19v-7M3 21h18"/></svg></a>
+  <a class="rn" href="#" data-rn="terminal" aria-label="Terminal" title="Terminal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 17.5l5.5-6 4 3.5 7.5-8.5"/><path d="M15.5 6.5h5v5"/></svg></a>
   <a class="rn" href="#/launch" data-rn="launch" aria-label="Launch" title="Launch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg></a>
   <a class="rn" href="#/portfolio" data-rn="portfolio" aria-label="Portfolio" title="Portfolio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M15.5 14.5h2.5"/></svg><span class="ct num" id="ctPosRail"></span></a>
   <span class="rn-foot">
@@ -821,7 +821,7 @@ a.ico:hover{color:var(--ink)}
         <h1 id="h-hero"><i>Back the idea,</i> at one fixed price.</h1>
         <p>A raise sells its token at a price set by its target. Fill it and the whole raise opens a Meteora pool, locked for good. Miss it and every wallet is refunded, fee included.</p>
         <div class="hero-acts"><a class="btn btn-ink" href="#/launch">Start a raise</a><a class="btn btn-ghost" href="#/docs">How it works</a></div>
-        <span class="hero-tiles" aria-hidden="true"><i class="gap"></i><i class="gap"></i><i class="gap"></i><i class="gap"></i><i></i><i class="gap"></i><i class="gap"></i><i class="gap"></i><i></i><i></i><i class="gap"></i><i class="gap"></i><i></i><i class="on"></i><i></i><i class="gap"></i><i></i><i></i><i></i><i></i></span>
+        <svg class="mark hero-mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>
       </section>
       <a class="panel featured" id="featured" href="#" aria-label="The most active raise"></a>
     </div>
@@ -1780,7 +1780,7 @@ function tile(p, i, trend, fresh = '') {
     <span class="tr-art">${artHTML(p, 'tr-img')}${trend ? `<span class="tr-rank">${i + 1}</span>` : ''}<span class="tr-pct" data-pct>${Math.floor(pc + 1e-7)}%</span><span class="bar"><i data-bar style="width:${pc}%"></i></span></span>
     <span class="tr-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${trend ? '' : starBtn(p)}${trend ? '' : `${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}`}</span>
     <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></b>${doingChip(p)}${trend && !p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}</span>
-    ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span><span class="br-stat" title="${p.status === 'seeded' ? '' : 'At the raise price. '}${esc(mcTitle(p, spotNow(p)))}"><span class="num" data-mc>MC ${fmtMcap(mcapUsdOf(p))}</span></span>${rowAnn(p)}${rowLinks(p)}</span>
+    ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span>${p.status === 'refunded' ? '' : `<span class="br-stat" title="${p.status === 'seeded' ? '' : 'At the raise price. '}${esc(mcTitle(p, spotNow(p)))}"><span class="num" data-mc>MC ${fmtMcap(mcapUsdOf(p))}</span></span>`}${rowAnn(p)}${rowLinks(p)}</span>
     <span class="tile-flags">${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
     <span class="t-act">${actCell(p)}</span>`}</div>`;
 }
@@ -1813,7 +1813,7 @@ function trow(p, i, fresh = '') {
   const chips = `${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}`;
   return `<div class="trow ${p.status}${fresh}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
     <span class="c-proj"><span class="rank-badge num">${i + 1}</span>${artHTML(p, 'tr-av')}<span class="nm"><b><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled">$${esc(p.ticker)}</a><span class="tk">${esc(p.name)}</span></b><span class="meta">${chips}</span></span>${starBtn(p)}</span>
-    <span class="num" data-mc title="${p.status === 'seeded' ? '' : 'At the raise price. '}${esc(mcTitle(p, spotNow(p)))}">${fmtMcap(mcapUsdOf(p))}</span>
+    ${p.status === 'refunded' ? '<span class="num quiet" title="No token was minted">—</span>' : `<span class="num" data-mc title="${p.status === 'seeded' ? '' : 'At the raise price. '}${esc(mcTitle(p, spotNow(p)))}">${fmtMcap(mcapUsdOf(p))}</span>`}
     <span>${rowChange(p)}</span>
     <span class="num c-raised"><span><span data-raised>${fmtC(p.raised, p.q, true)}</span><em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></span><span class="bar"><i data-bar style="width:${pc}%"></i></span></span>
     <span class="num" data-rbackers title="Backers">${p.backers}</span>
@@ -1834,22 +1834,23 @@ function fillArea(p, W = 320, Hh = 120) {
 }
 function renderFeatured(trend) {
   const el = $('#featured'); if (!el) return;
-  const p = trend[0];
-  if (!p) { el.href = '#/launch'; el.innerHTML = '<div class="ft-bg"></div><p class="ft-empty">Nothing is moving yet. The first raise to open shows here.</p>'; return; }
+  const real = typeof chain !== 'undefined' && chain.on(), p = (real && trend.find(x => x.live)) || trend[0];   // on the live site a raise on chain comes first; a demo one is marked
+  if (!p) { el.href = '#/launch'; el.setAttribute('aria-label', 'No raise is moving yet. Start one'); el.innerHTML = '<div class="ft-bg"></div><p class="ft-empty">Nothing is moving yet. The first raise to open shows here.</p>'; return; }
   const C = Q(p), live = p.status === 'live', seeded = p.status === 'seeded', x = seeded ? spotNow(p) / priceOf(p) : null, code = Array.from(p.id).slice(0, 12).map(ch => (ch.charCodeAt(0) % 3 ? '·' : '•')).join('');
-  const st = (k, v, cls = '') => `<div><dt>${k}</dt><dd class="num ${cls}">${v}</dd></div>`;
-  el.href = `#/presale/${p.id}`; el.setAttribute('aria-label', `${p.name}, the most active raise`);
+  const st = (k, v, cls = '') => `<div><dt>${k}</dt><dd class="num ${cls}" title="${esc(String(v).replace(/<[^>]+>/g, ''))}">${v}</dd></div>`;
+  el.href = `#/presale/${p.id}`; el.setAttribute('aria-label', `${p.name}, the most active raise${real && !p.live ? ', a demo raise' : ''}`);
   el.innerHTML = `<div class="ft-bg"></div><div class="ft-area">${fillArea(p)}</div>
-    <div class="ft-head">${artHTML(p, 'ft-art')}<span class="ft-name"><b>${esc(p.name)}</b><span class="num">$${esc(p.ticker)} · ${esc(C.sym)} pair</span></span><span class="ft-right">${doingChip(p)}<span class="ft-code" aria-hidden="true">${code}</span></span></div>
+    <div class="ft-head">${artHTML(p, 'ft-art')}<span class="ft-name"><b>${esc(p.name)}</b><span class="num">$${esc(p.ticker)} · ${esc(C.sym)} pair</span></span><span class="ft-right"><span class="ft-chips">${real && !p.live ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${doingChip(p)}</span><span class="ft-code" aria-hidden="true">${code}</span></span></div>
     <dl class="ft-stats">${st('Market cap', fmtMcap(mcapUsdOf(p)))}${seeded ? st('vs raise price', mcChange(x), x >= 1 ? 'up' : 'down') : st('Filled', Math.floor(pctOf(p) + 1e-7) + '%')}${st('Raised', `${fmtC(p.raised, p.q, true)} ${esc(C.sym)}`)}
-      ${st('Backers', p.backers)}${st(live ? 'Time left' : seeded ? 'Seeded' : 'Status', live ? fmtLeft(p.endsAt - Date.now()) : seeded ? fmtAgo(Date.now() - (p.resolvedAt || p.endsAt)) : RAISE_STATE[p.status])}${st('Target', `${fmtC(p.target, p.q, true)} ${esc(C.sym)}`)}</dl>`;
+      ${st('Backers', p.backers)}${st(live ? 'Time left' : seeded ? 'Seeded' : 'Status', live ? fmtLeft(p.endsAt - Date.now()) : seeded ? fmtAgo(Date.now() - (p.resolvedAt || p.endsAt)) : p.status === 'filled' ? 'Seeding' : RAISE_STATE[p.status])}${st('Target', `${fmtC(p.target, p.q, true)} ${esc(C.sym)}`)}</dl>`;
 }
 /* the chips in the app bar: how many raises are open, what they hold, the SOL price the caps are quoted at */
 function renderStatChips() {
   const el = $('#statChips'); if (!el) return;
-  const open = state.presales.filter(p => p.status === 'live'), held = state.presales.filter(p => p.status !== 'refunded').reduce((a, p) => a + usdNow(p, p.raised), 0), sol = SEED.solUsdLive || SEED.demoSolUsd;
-  el.innerHTML = `<span class="statchip" title="Raises open right now"><svg viewBox="0 0 24 24"><path d="M4 19V11M10 19V5M16 19v-7M3 21h18"/></svg><b>${open.length}</b><em>live</em></span>
-    <span class="statchip" title="Raised across every raise that did not refund, in dollars today"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7.5c0-1.4 2.2-2.5 5-2.5s5 1.1 5 2.5S14.8 10 12 10s-5 1.1-5 2.5 2.2 2.5 5 2.5 5 1.1 5 2.5S14.8 20 12 20s-5-1.1-5-2.5"/></svg><b>${fmtUsd(held)}</b><em>raised</em></span>
+  const real = typeof chain !== 'undefined' && chain.on(), pool = real ? state.presales.filter(p => p.live) : state.presales;   // on the live site the chips count what is on chain, never the demo set
+  const open = pool.filter(p => p.status === 'live'), held = pool.filter(p => p.status !== 'refunded').reduce((a, p) => a + usdNow(p, p.raised), 0), sol = SEED.solUsdLive || SEED.demoSolUsd;
+  el.innerHTML = `<span class="statchip" title="Raises open right now${real ? ' on ' + esc(SEED.network) : ''}"><svg viewBox="0 0 24 24"><path d="M3.5 17.5l5.5-6 4 3.5 7.5-8.5"/><path d="M15.5 6.5h5v5"/></svg><b>${open.length}</b><em>live</em></span>
+    <span class="statchip" title="Raised across every ${real ? 'on-chain ' : ''}raise that did not refund, in dollars today"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7.5c0-1.4 2.2-2.5 5-2.5s5 1.1 5 2.5S14.8 10 12 10s-5 1.1-5 2.5 2.2 2.5 5 2.5 5 1.1 5 2.5S14.8 20 12 20s-5-1.1-5-2.5"/></svg><b>${fmtUsd(held)}</b><em>raised</em></span>
     <span class="statchip" title="${SEED.solUsdLive ? 'SOL in dollars, from Pyth' : 'SOL in dollars, the demo price'}"><svg viewBox="0 0 24 24"><path d="M5 8h12l2-2.5H7zM5 16h12l2 2.5H7zM19 12H7l-2 0"/></svg><b>$${Number(sol.toPrecision(4))}</b><em>SOL</em></span>`;
 }
 const FEED_NOTE = { all: 'Live and seeded', new: 'Under 50% filled', seeding: 'Past halfway, or filled and seeding', seeded: 'Pool open', refunded: 'Missed, cancelled or timed out' };
