@@ -1,0 +1,251 @@
+/* ==========================================================================
+   The Delta Liquidity redesign, in Seed's colours. Loaded after presale.css, so what is here wins.
+   What it borrows from the Figma (Delta Liquidity - Redesign, Pools V2 and Token Details): a thin icon rail down the left
+   with the mark on top and the socials at the foot; hatched gutters either side of the content; a top bar of search, stat
+   chips, square icon buttons and a glowing gradient wallet button; a hero beside a featured card; the board as one table
+   with muted column heads and barcode fill strips; segmented controls whose chosen segment is a lit, bordered block;
+   numbered rank badges and chevron buttons on rows; the chart's toolbar of timeframe pills and a mode switch with a foot
+   line; a bordered stat grid under the chart; labelled inputs in dark wells and one big gradient call to action.
+   Colours stay Seed's: charcoal greys, blue where Delta is green.
+   ========================================================================== */
+:root{
+  --well:#111215;                                                       /* a dark well: inputs, the search box, the seg track */
+  --grad-btn:linear-gradient(180deg,#5B8CFF 0%,#2E63E7 100%);          /* the primary button */
+  --grad-seg:linear-gradient(180deg,rgba(91,140,255,.34),rgba(46,99,231,.2));   /* a chosen segment, a rank badge */
+  --seg-line:rgba(91,140,255,.42);
+  --glow:0 0 0 1px rgba(91,140,255,.32),0 10px 28px -10px rgba(46,99,231,.8);
+  --glow-sm:0 0 14px -4px rgba(46,99,231,.7);
+  --lit:inset 0 1px 0 rgba(255,255,255,.14);                          /* the highlight along the top edge of anything raised */
+  --hatch:repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 1px,transparent 1px 9px);
+}
+
+/* ------------------------------------------------------------------ cards */
+.panel,.lane,.tile,.lrow,.toc,.doc-hero,.prose,.aside,.pop,.sheet{box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
+.panel,.tile{border-radius:16px}
+
+/* ---------------------------------------------------------------- buttons */
+/* the primary: a blue gradient pill, lit along the top, with a soft glow under it */
+.btn-ink,.btn-navy,.appbar .btn,.tile .qb,.qb:hover,.qb.hot,.row:hover .pill-sm,.pill-sm.hot,.st.set,.feed-tabs button[aria-selected="true"] .ct{background:var(--grad-btn);color:#fff;border-color:transparent;box-shadow:var(--lit),var(--glow)}
+.btn-ink:hover,.btn-navy:hover,.appbar .btn:hover,.tile .qb:hover{background:var(--grad-btn);filter:brightness(1.08)}
+.btn{border-radius:999px}
+.btn-lg{padding:13px 22px;font-size:14px}
+.btn[disabled]{box-shadow:none;filter:none}
+.qb,.pill-sm{border-radius:999px}
+.qb{background:var(--chip);border-color:var(--hair-2)}
+.appbar .btn{height:36px;padding:0 18px;font-size:13px}
+/* the secondary: a dark pill with a hairline */
+.btn-ghost{background:var(--chip);border:1px solid var(--hair-2);color:var(--ink)}
+.btn-ghost:hover{background:var(--mist)}
+/* square icon buttons: refresh, the bell, filters */
+.ibtn,.appbar .bell,.trend-nav .x{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--chip);border:1px solid var(--hair);color:var(--muted);transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out)}
+.ibtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ibtn:hover,.appbar .bell:hover,.appbar .bell.on{color:var(--ink);background:var(--mist);border-color:var(--hair-2)}
+.ibtn.busy svg{animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.trend-nav .x{width:32px;height:32px;font-size:20px;padding-bottom:2px}
+
+/* ------------------------------------------------------- segmented controls */
+/* a dark track with a hairline; the chosen segment is a lit, bordered block with a glow */
+.seg{padding:3px;border-radius:12px;background:var(--well);border:1px solid var(--hair)}
+.seg .seg-ind{top:3px;bottom:3px;border-radius:9px;background:var(--grad-seg);border:1px solid var(--seg-line);box-shadow:var(--lit),var(--glow-sm)}
+.seg button{border-radius:9px;color:var(--muted)}
+.seg button[aria-pressed="true"]{color:#fff}
+.seg-sm{padding:3px;border-radius:10px}.seg-sm .seg-ind{top:3px;bottom:3px;border-radius:7px}
+.appbar .tabs{border:0;background:none;padding:0}
+.appbar .tabs .seg-ind{top:0;bottom:0;border-radius:999px}
+:is(.pp,.ws) .mini-seg,.mini-seg{padding:3px;border:1px solid var(--hair);border-radius:12px;background:var(--well)}
+.mini-seg button{border-radius:9px}
+.mini-seg button[aria-pressed="true"],.feed-tabs button[aria-selected="true"],.tf-pills button[aria-pressed="true"],.mode-seg button[aria-pressed="true"],.toc a.on{background:var(--grad-seg);color:#fff;border:1px solid var(--seg-line);box-shadow:var(--lit),var(--glow-sm)}
+.side-seg button[data-v="buy"][aria-pressed="true"]{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok-line);box-shadow:var(--lit)}
+.side-seg button[data-v="sell"][aria-pressed="true"]{background:var(--bad-bg);color:var(--bad-ink);border-color:color-mix(in srgb,var(--bad) 40%,transparent);box-shadow:var(--lit)}
+.feed-tabs{gap:3px;padding:3px;border-radius:12px;background:var(--well);border:1px solid var(--hair)}
+.feed-tabs button{padding:5px 12px;border-radius:9px;font-size:13.5px;border:1px solid transparent}
+.feed-tabs .ct{font-size:11.5px}
+.toc a{border:1px solid transparent}
+
+/* ------------------------------------------------------------------ inputs */
+.inp,.mini{background:var(--well);border-color:var(--hair);border-radius:12px}
+.inp:focus-within,.mini:focus-within{border-color:var(--seg-line);box-shadow:0 0 0 4px var(--ring),var(--glow-sm)}
+.rail-card .rail-lab,.rail-card .trade-top .rail-lab{color:var(--navy-deep);font-weight:500}
+:is(.pp,.ws) .rail-card .inp .suf{background:var(--grad-seg);border:1px solid var(--seg-line);color:#fff;box-shadow:var(--lit)}
+.rail-card .btn-block{height:48px;font-size:14.5px;border-radius:14px}
+.lsubmit .btn-block{height:48px;border-radius:14px}
+.switch[aria-checked="true"]{background:var(--grad-btn);box-shadow:var(--lit)}
+
+/* ----------------------------------------------------------- the icon rail */
+/* a thin rail down the left on a wide window: the mark, the three sections, and X, Discord and the docs at the foot */
+.rail-nav{display:none}
+@media (min-width:1024px){
+  .rail-nav{position:fixed;left:0;top:0;bottom:0;width:64px;z-index:120;display:flex;flex-direction:column;align-items:center;gap:6px;padding:calc(14px + env(safe-area-inset-top,0px)) 0 calc(16px + env(safe-area-inset-bottom,0px));background:var(--bar);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);border-right:1px solid var(--hair)}
+  .rail-nav>.brand{width:36px;height:36px;margin-bottom:14px;justify-content:center}
+  .rail-nav>.brand .mark{width:34px;height:34px}
+  .rail-nav .rn{position:relative;display:grid;place-items:center;width:40px;height:40px;border-radius:12px;color:var(--muted);border:1px solid transparent;transition:background var(--fast) var(--ease-out),color var(--fast) var(--ease-out),border-color var(--fast) var(--ease-out),box-shadow var(--fast) var(--ease-out)}
+  .rail-nav .rn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .rail-nav .rn svg.fill{fill:currentColor;stroke:none;width:17px;height:17px}
+  .rail-nav .rn:hover{color:var(--ink);background:var(--mist)}
+  .rail-nav .rn[aria-current="page"]{color:#fff;background:var(--grad-seg);border-color:var(--seg-line);box-shadow:var(--lit),var(--glow-sm)}
+  .rail-nav .rn.off{opacity:.38;cursor:not-allowed}
+  .rail-nav .rn .ct{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--navy);color:#fff;font-size:10.5px;line-height:16px;text-align:center}
+  .rail-nav .rn .ct:empty{display:none}
+  .rn-foot{margin-top:auto;display:flex;flex-direction:column;gap:6px}
+  .rn-foot .rn{width:36px;height:36px;border-radius:10px;background:var(--chip);border-color:var(--hair)}
+  .rn-foot .rn[aria-current="page"]{background:var(--grad-seg);border-color:var(--seg-line)}
+  /* the pages sit to the right of the rail; hatched gutters frame the content as the Figma does */
+  body.in-app #view-app,body.in-docs #view-docs{padding-left:64px}
+  body.in-app::before,body.in-app::after,body.in-docs::before,body.in-docs::after{content:"";position:fixed;top:0;bottom:0;width:12px;z-index:0;background:var(--hatch);pointer-events:none}
+  body.in-app::before,body.in-docs::before{left:64px}
+  body.in-app::after,body.in-docs::after{right:0}
+  .appbar{position:sticky;z-index:100}
+  /* the app bar: the brand and the section tabs move to the rail; what is left is the search, the stat chips and the controls */
+  #view-app .appbar{grid-template-columns:minmax(0,1fr) auto;gap:16px;height:64px;padding:0 20px 0 20px}
+  #view-app .appbar .brand,#view-app .appbar .tabs,#view-app .appbar .icons,#view-app .appbar .textlink{display:none}
+}
+@media (min-width:901px) and (max-width:1023px){
+  .appbar{grid-template-columns:auto auto minmax(0,1fr) auto}
+  .appbar .icons,.appbar .textlink{display:none}
+}
+@media (max-width:900px){
+  .appbar .search-wrap{grid-column:1 / -1;grid-row:3}
+}
+
+/* ------------------------------------------------------------- the app bar */
+.search-wrap{display:flex;align-items:center;gap:14px;min-width:0}
+.appbar .mini.search{flex:0 1 440px;height:38px;padding:0 14px;border-radius:12px}
+.appbar .mini.search input{width:100%;font-size:14px}
+.appbar .mini.search svg{width:16px;height:16px;stroke:var(--navy-deep)}
+.statchips{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}
+.statchip{flex:none;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;background:var(--chip);border:1px solid var(--hair);font-size:13px;color:var(--ink-2);white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.statchip svg{width:15px;height:15px;fill:none;stroke:var(--navy-deep);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.statchip b{font-weight:500;font-family:var(--mono);letter-spacing:-.03em;color:var(--ink)}
+.statchip em{font-style:normal;color:var(--muted)}
+@media (max-width:1180px){.statchips{display:none}}
+.appbar .right{gap:10px}
+.appbar .bell .ct{top:-5px;right:-5px}
+.xbar{margin-bottom:14px}
+
+/* ------------------------------------------------------- hero and featured */
+/* the Pools page's top: a hero on the left with its staircase of tiles, the most active raise on the right as a card */
+.hero-row{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:14px;margin:0 0 16px}
+.hero{position:relative;overflow:hidden;padding:30px 32px;min-height:228px;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.hero h1{font-size:clamp(26px,2.4vw,34px);font-weight:500;letter-spacing:-.045em;line-height:1.05;max-width:13em}
+.hero h1 i{font-family:var(--serif);font-weight:400;letter-spacing:-.02em;font-size:1.1em}
+.hero p{color:var(--muted);font-size:15px;max-width:46ch;line-height:1.55}
+.hero-acts{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
+.hero-acts .btn{height:40px;padding:0 20px;font-size:13.5px}
+.hero-tiles{position:absolute;right:-26px;bottom:-34px;display:grid;grid-template-columns:repeat(5,54px);gap:9px;transform:rotate(-8deg) skewX(-6deg);pointer-events:none}
+.hero-tiles i{display:block;width:54px;height:54px;border-radius:13px;background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),0 12px 24px -12px rgba(0,0,0,.8)}
+.hero-tiles i.on{background:var(--grad-btn);border-color:rgba(91,140,255,.6);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 0 26px -4px rgba(46,99,231,.85)}
+.hero-tiles i.gap{visibility:hidden}
+.featured{position:relative;overflow:hidden;padding:22px 24px;display:flex;flex-direction:column;gap:16px;color:inherit;transition:border-color var(--fast) var(--ease-out)}
+.featured:hover{border-color:var(--hair-2)}
+.ft-bg{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:14px 14px;-webkit-mask-image:linear-gradient(90deg,transparent 30%,#000 75%);mask-image:linear-gradient(90deg,transparent 30%,#000 75%)}
+.ft-area{position:absolute;right:0;bottom:0;width:58%;height:72%;pointer-events:none}
+.ft-area svg{display:block;width:100%;height:100%;overflow:visible}
+.ft-head{position:relative;display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--hair)}
+.ft-art{flex:none;width:44px;height:44px;border-radius:50%;object-fit:cover;display:grid;place-items:center}
+.ft-art.glyph-art svg{width:50%;height:50%}
+.ft-name{min-width:0}.ft-name b{display:block;font-size:16px;letter-spacing:-.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ft-name span{font-size:13px;color:var(--muted)}
+.ft-right{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.ft-code{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--faint)}
+.ft-stats{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 18px;max-width:62%}
+.ft-stats dt{font-size:12.5px;color:var(--muted)}.ft-stats dd{font-size:15px;margin-top:3px;white-space:nowrap}
+.ft-stats dd.up{color:var(--ok-ink)}.ft-stats dd.down{color:var(--bad-ink)}
+.ft-empty{position:relative;color:var(--muted);font-size:14px}
+@media (max-width:1100px){.hero-row{grid-template-columns:1fr}.hero{min-height:0}.hero-tiles{display:none}.ft-stats{max-width:none}.ft-area{opacity:.5}}
+@media (max-width:700px){.hero{display:none}.hero-row{margin-bottom:12px}}
+
+/* --------------------------------------------------------------- the board */
+/* the lanes gave way to one table; the stage tabs under the title choose what it lists */
+.lanes{display:none!important}
+.lanes+.board,.board{display:flex!important}
+.board{padding:0;overflow:hidden}
+.board .feed-head{padding:12px 18px;border-bottom:1px solid var(--hair);gap:12px;flex-wrap:wrap}
+.feed-title{font-size:16px;font-weight:500;letter-spacing:-.02em;margin-right:4px;white-space:nowrap}
+.board .col-list{padding:12px 14px 16px}
+.board .col-list.table{display:flex;flex-direction:column;gap:0;padding:0 0 4px}
+.thead,.trow{display:grid;grid-template-columns:minmax(230px,2.3fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.35fr) minmax(0,.7fr) minmax(0,1fr) 150px 156px;gap:14px;align-items:center;padding:0 18px}
+.thead{padding:10px 18px;font-size:13px;color:var(--faint);border-bottom:1px solid var(--hair);white-space:nowrap}
+.thead>span:nth-child(n+2),.trow>span:nth-child(n+2){text-align:right}
+.thead>span:nth-child(7),.trow>span:nth-child(7){text-align:center}
+.trow{position:relative;padding-top:11px;padding-bottom:11px;border-bottom:1px solid var(--hair);transition:background var(--fast) var(--ease-out)}
+.trow:last-child{border-bottom:0}
+.trow:hover{background:var(--hover)}
+.trow.fresh{animation:slideUp .4s var(--ease-out) both}
+.trow .pick::after{border-radius:0}
+.trow .c-proj{gap:12px;min-width:0}
+.trow .tr-av{flex:none;width:36px;height:36px;border-radius:50%;object-fit:cover;display:grid;place-items:center}
+.trow .tr-av.glyph-art svg{width:50%;height:50%}
+.trow .nm b{font-size:15px}
+.trow .nm .meta{gap:4px 6px;font-size:12.5px;white-space:normal;flex-wrap:wrap;overflow:visible}
+.trow .nm .meta>span{flex:none}
+.trow .nm .meta:empty{display:none}
+.trow .nm b .tk{font-family:var(--sans);font-size:13px}
+.trow .nm .meta .risk-chip,.trow .nm .meta .pace-chip,.trow .nm .meta .xv-chip,.trow .nm .meta .demo-chip,.trow .nm .meta .tag{font-size:10.5px;padding:1px 7px}
+.trow .star{position:static;margin-left:auto;flex:none}
+.trow>span.num{font-size:14.5px;letter-spacing:-.03em}
+.trow .c-raised{display:flex;flex-direction:column;align-items:flex-end;gap:5px;font-size:14.5px}
+.trow .c-raised em{font-style:normal;color:var(--faint);font-size:12.5px;margin-left:4px}
+.trow .c-raised .bar{width:100%;max-width:120px;height:4px;flex:none}
+.trow .c-time{font-size:13.5px}.trow .c-time.soon{color:var(--caution-ink)}
+.trow .t-act .qb{padding:6px 12px}
+.trow .t-act .qb .qb-w{display:none}
+.chg{display:inline-flex;align-items:center;justify-content:flex-end;gap:5px;font-size:14px;white-space:nowrap}
+.chg svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chg.up{color:var(--ok-ink)}.chg.down{color:var(--bad-ink)}.chg.quiet{color:var(--muted)}
+.chg em{font-style:normal;font-size:11.5px;color:var(--faint);margin-left:2px}
+/* a numbered badge and a chevron, the way Delta ranks rows */
+.rank-badge{flex:none;display:inline-grid;place-items:center;min-width:30px;height:22px;padding:0 8px;border-radius:7px;font-family:var(--mono);font-size:12px;color:#fff;background:var(--grad-seg);border:1px solid var(--seg-line);box-shadow:var(--lit)}
+.chev{display:inline-grid;place-items:center;width:38px;height:26px;border-radius:8px;background:var(--grad-seg);border:1px solid var(--seg-line);color:#fff;box-shadow:var(--lit)}
+.chev svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* a barcode strip: thin bars, lit up to the share they stand for */
+.strip{position:relative;display:inline-block;width:100%;max-width:150px;height:18px;border-radius:2px;background:repeating-linear-gradient(90deg,var(--hair-2) 0 2px,transparent 2px 5px);vertical-align:middle;overflow:hidden}
+.strip i{position:absolute;left:0;top:0;bottom:0;display:block;background:repeating-linear-gradient(90deg,var(--navy-deep) 0 2px,transparent 2px 5px);transition:width .6s var(--ease-out)}
+.strip i::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.18),transparent 60%);mix-blend-mode:overlay}
+.seeded .strip i{background:repeating-linear-gradient(90deg,var(--ok) 0 2px,transparent 2px 5px)}
+.refunded .strip i{background:repeating-linear-gradient(90deg,var(--faint) 0 2px,transparent 2px 5px)}
+.dtable .strip{max-width:110px;height:14px;margin-left:10px}
+.dtable td.rk{width:1%;padding-right:10px}
+.dtable .strip-cell{white-space:nowrap}
+@media (max-width:1280px){.thead,.trow{grid-template-columns:minmax(210px,2.2fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr) minmax(0,.9fr) 150px}.thead>span:nth-child(5),.trow>span:nth-child(5),.thead>span:nth-child(7),.trow>span:nth-child(7){display:none}}
+
+/* the Trending row keeps its tiles, with Delta's rank badge */
+.tile .tr-rank{left:8px;top:8px;height:22px;min-width:30px;border-radius:7px;background:var(--grad-seg);border:1px solid var(--seg-line);box-shadow:var(--lit);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.tile .tr-pct{height:22px;border-radius:7px}
+
+/* -------------------------------------------------------- the raise page */
+/* the chart toolbar: timeframe pills on the left, the Price / MCap switch on the right, a foot line under the chart */
+.chart-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--hair);border-radius:12px;background:var(--well);margin-bottom:12px}
+.tf-pills{display:flex;gap:2px;flex-wrap:wrap}
+.tf-pills button{padding:4px 9px;border-radius:7px;border:1px solid transparent;font-family:var(--mono);font-size:12.5px;color:var(--muted);transition:color var(--fast) var(--ease-out),background var(--fast) var(--ease-out)}
+.tf-pills button:hover{color:var(--ink)}
+.tf-pills button[aria-pressed="true"]{font-weight:500}
+.chart-bar .sep{width:1px;height:18px;background:var(--hair-2)}
+.mode-seg{margin-left:auto;display:flex;gap:6px}
+.mode-seg button{padding:5px 13px;border-radius:9px;border:1px solid var(--hair);background:var(--chip);font-size:12.5px;font-weight:500;color:var(--muted);transition:color var(--fast) var(--ease-out),background var(--fast) var(--ease-out)}
+.mode-seg button:hover{color:var(--ink)}
+@media (max-width:600px){.chart-bar>.quiet,.chart-bar .sep{display:none}.mode-seg button{padding:5px 10px}}
+.chart-foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--hair);font-size:12.5px;color:var(--muted)}
+.chart-foot .num{color:var(--ink-2)}
+[data-trading] .pp-card-h h2{display:flex;align-items:center;gap:10px}
+/* the figures under the chart: a bordered grid, each cell centred, the move against the raise coloured */
+.pool-card{margin-top:16px;border-top:0;padding-top:0}
+.pool-grid{gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.pool-grid>div{background:var(--well);padding:14px 14px 13px;text-align:center;min-width:0}
+.pool-grid dt{font-size:12.5px}.pool-grid dd{font-size:16px;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pool-foot{margin-top:14px}
+/* the project's numbers as the same bordered grid */
+.pp-stats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:12px;overflow:hidden;margin:18px 22px 0}
+.pp-stats>div{display:block;background:var(--well);padding:12px 14px;border-top:0}
+.pp-stats dt{font-size:12.5px}.pp-stats dd{text-align:left;margin-top:3px;font-size:15px}
+@media (min-width:720px) and (max-width:1439px){.pp-stats{grid-template-columns:repeat(3,1fr);column-gap:1px}}
+/* the Portfolio's four figures and the Backers tab's checks: the same grid */
+#pstats{gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:16px;overflow:hidden}
+#pstats .sum{border:0;border-radius:0;background:var(--well);-webkit-backdrop-filter:none;backdrop-filter:none}
+.sums{gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.sum{border-radius:0;border:0;background:var(--well);-webkit-backdrop-filter:none;backdrop-filter:none}
+/* the rail's cards: the deposit, the swap and the position */
+.rail-card .recv{padding:10px 12px;border-radius:10px;background:var(--well);border:1px solid var(--hair)}
+.seed-steps li.now .num,.steps .num{background:var(--grad-seg);border:1px solid var(--seg-line);color:#fff;box-shadow:var(--lit)}
+
+/* ---------------------------------------------------------------- docs */
+.toc a.on{font-weight:500}

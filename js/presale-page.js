@@ -180,11 +180,13 @@ function ppFees(p) {
     <p class="quiet">The claim is permissionless: whoever sends it pays the transaction and the fees still go to the payout wallet and Seed. Seed also claims on a schedule.</p></section>`;
 }
 function ppTrading(p) {
-  return `<section class="panel pp-card pp-fill" data-trading><div class="pp-card-h"><h2>${pg.mode === 'mcap' ? 'Market cap' : 'Price'}</h2>
-      <div class="pp-tools"><div class="seg mini-seg" data-mode>${['price', 'mcap'].map(m => `<button data-v="${m}" aria-pressed="${pg.mode === m}">${m === 'price' ? 'Price' : 'MCap'}</button>`).join('')}</div>
-      <div class="seg mini-seg" data-tf>${Object.keys(TIMEFRAMES).map(t => `<button data-v="${t}" aria-pressed="${pg.tf === t}">${t}</button>`).join('')}</div></div></div>
+  /* the toolbar, as the Figma's chart: timeframe pills on the left, the Price / Market cap switch on the right; a foot line under the plot */
+  return `<section class="panel pp-card pp-fill" data-trading><div class="pp-card-h"><h2>${pg.mode === 'mcap' ? 'Market cap' : 'Price'}</h2>${p.live ? LIVE_PILL : ''}</div>
+    <div class="chart-bar"><div class="tf-pills" data-tf role="group" aria-label="Timeframe">${Object.keys(TIMEFRAMES).map(t => `<button type="button" data-v="${t}" aria-pressed="${pg.tf === t}">${t}</button>`).join('')}</div><span class="sep" aria-hidden="true"></span><span class="quiet">${p.live ? 'Candles from the pool on chain' : 'The stand-in pool'}</span>
+      <div class="mode-seg" data-mode role="group" aria-label="Price or market cap">${['price', 'mcap'].map(m => `<button type="button" data-v="${m}" aria-pressed="${pg.mode === m}">${m === 'price' ? 'Price' : 'Market cap'}</button>`).join('')}</div></div>
     <div class="pp-plot" data-cplot><div class="pp-svg candles" data-candles><div class="pp-loading">Loading the pool…</div></div>
       <div class="cx" data-ccross aria-hidden="true"><i class="cx-line"></i><i class="cx-hline"></i><span class="cx-tag num"></span><span class="cx-read num"></span></div></div>
+    <div class="chart-foot"><span>Hover a candle to read it${p.live ? '; drag to pan, scroll to zoom' : ''}.</span><span class="num">Pool fee ${poolFeePct(p)}% · liquidity locked for good</span></div>
     <div class="pool-card" data-poolcard></div></section>`;
 }
 /* Candles, drawn at the column's width: price gridlines labelled on the right, the last price tagged on that axis, times along
@@ -633,8 +635,8 @@ function tabBackers(p) {
   return tabHead('Backers', s.from, ` <span class="quiet">${plural(rows.length, 'wallet')}${rows.some(r => isRealAddr(r.wallet)) ? `, the largest ${RISK.liveLookupCap} checked live` : ''}</span>`) +
     `<dl class="sums">${card('Top 10', pctTxt(s.top10), s.top10 > RISK.top10FailPct ? 'fail' : s.top10 > RISK.top10WarnPct ? 'warn' : '', 'of the raise')}${card('Fresh wallets', pctTxt(s.fresh), s.fresh > RISK.freshWarnPct ? 'warn' : '', 'of backers')}
       ${card('Bundled', pctTxt(s.bundled), s.bundled > RISK.bundledWarnPct ? 'warn' : '', s.bundles.length ? plural(s.bundles.length, 'funding wallet') : 'of the raise')}${card('KOL and tracked', s.kol + s.tracked, '', `${s.kol} KOL, ${s.tracked} tracked`)}${card('Repeat Seed backers', s.repeat, '', 'backed an earlier Seed raise')}</dl>
-    <div class="tscroll"><table class="dtable backers"><thead><tr><th>Wallet</th><th class="r">Amount</th><th class="r">Of raise</th><th class="r">Time</th><th>Funded by</th><th>Tags</th>${refund ? '<th>Refund</th>' : seeded ? '<th>Tokens</th>' : ''}</tr></thead><tbody>
-      ${shown.map(r => `<tr class="${r.you ? 'you' : ''}"><td class="mono">${r.you ? 'You' : esc(walletLabel(r.wallet))}</td><td class="num">${fmtC(r.amount, p.q)} ${esc(C.sym)}</td><td class="num">${r.pct.toFixed(r.pct < 1 ? 2 : 1)}%</td><td class="num">${fmtAgo(Date.now() - r.first)}</td>
+    <div class="tscroll"><table class="dtable backers"><thead><tr><th class="rk">#</th><th>Wallet</th><th class="r">Amount</th><th class="r">Of raise</th><th class="r">Time</th><th>Funded by</th><th>Tags</th>${refund ? '<th>Refund</th>' : seeded ? '<th>Tokens</th>' : ''}</tr></thead><tbody>
+      ${shown.map((r, i) => `<tr class="${r.you ? 'you' : ''}"><td class="rk"><span class="rank-badge num">${i + 1}</span></td><td class="mono">${r.you ? 'You' : esc(walletLabel(r.wallet))}</td><td class="num">${fmtC(r.amount, p.q)} ${esc(C.sym)}</td><td class="num strip-cell">${r.pct.toFixed(r.pct < 1 ? 2 : 1)}%<span class="strip" aria-hidden="true"><i style="width:${(r.pct / Math.max(1e-9, ...shown.map(z => z.pct)) * 100).toFixed(1)}%"></i></span></td><td class="num">${fmtAgo(Date.now() - r.first)}</td>
         <td>${esc(funderLabel(r.fundedBy))}${r.isFresh ? ' <span class="btag fresh">Fresh</span>' : ''}${s.bundles.some(b => r.fundedBy && b.funder === r.fundedBy.addr) ? ' <span class="btag bundle">Bundle</span>' : ''}</td>
         <td>${r.tags.map(tag).join(' ')}</td>${refund ? `<td>${r.refundClaimed ? 'Claimed' : '<b>Claimable</b>'}</td>` : seeded ? `<td>${r.tokensClaimed ? 'Claimed' : '<b>Claimable</b>'}</td>` : ''}</tr>`).join('')}</tbody></table></div>
     ${rows.length > shown.length ? `<button class="qb more" data-allbackers>Show all ${rows.length}</button>` : ''}`;
@@ -644,10 +646,10 @@ async function loadHolders(p) {
   try {
     const h = await backersAdapter.holders(p); if (!box.isConnected) return;
     const WALLET_LABELS = ['Founder payout', 'Seed', 'KOL'];   // labelled, but wallets all the same; the rest are the pool and the program's vaults
-    const all = pg.allHolders || h.value.length <= 100, shown = all ? h.value : h.value.slice(0, 100), wallets = h.value.filter(x => !x.label || WALLET_LABELS.includes(x.label)).length;
+    const all = pg.allHolders || h.value.length <= 100, shown = all ? h.value : h.value.slice(0, 100), wallets = h.value.filter(x => !x.label || WALLET_LABELS.includes(x.label)).length, top = Math.max(1e-9, ...shown.map(x => x.pct));
     box.innerHTML = `<div class="tab-h"><span class="quiet">${plural(h.count || h.value.length, 'holder')}${h.from === 'chain' ? `: ${plural(wallets, 'wallet')} and ${plural(h.value.length - wallets, 'pool or vault account')}` : `, top ${h.value.length} shown`}</span>${srcPill(h.from)}</div>
-      <div class="tscroll"><table class="dtable backers holders"><thead><tr><th>Holder</th><th class="r">$${esc(p.ticker)}</th><th class="r">Of supply</th><th class="h-label">Label</th></tr></thead><tbody>
-      ${shown.map(x => `<tr class="${x.you ? 'you' : ''}"><td class="mono">${x.you ? 'You' : h.from === 'chain' ? `<a href="${esc(explorer(x.account || x.wallet))}" target="_blank" rel="noopener">${esc(shortMint(x.wallet))}</a>` : esc(shortMint(x.wallet))}${x.label ? `<span class="h-sub">${esc(x.label)}</span>` : ''}</td><td class="num">${x.amount > 0 && x.amount < 1 ? '<1' : fmtTok(x.amount)}</td><td class="num">${x.pct < 0.01 && x.pct > 0 ? '<0.01' : x.pct.toFixed(2)}%</td><td class="h-label">${esc(x.label || '')}</td></tr>`).join('')}</tbody></table></div>
+      <div class="tscroll"><table class="dtable backers holders"><thead><tr><th class="rk">#</th><th>Holder</th><th class="r">$${esc(p.ticker)}</th><th class="r">Of supply</th><th class="h-label">Label</th></tr></thead><tbody>
+      ${shown.map((x, i) => `<tr class="${x.you ? 'you' : ''}"><td class="rk"><span class="rank-badge num">${i + 1}</span></td><td class="mono">${x.you ? 'You' : h.from === 'chain' ? `<a href="${esc(explorer(x.account || x.wallet))}" target="_blank" rel="noopener">${esc(shortMint(x.wallet))}</a>` : esc(shortMint(x.wallet))}${x.label ? `<span class="h-sub">${esc(x.label)}</span>` : ''}</td><td class="num">${x.amount > 0 && x.amount < 1 ? '<1' : fmtTok(x.amount)}</td><td class="num strip-cell">${x.pct < 0.01 && x.pct > 0 ? '<0.01' : x.pct.toFixed(2)}%<span class="strip" aria-hidden="true"><i style="width:${(x.pct / top * 100).toFixed(1)}%"></i></span></td><td class="h-label">${esc(x.label || '')}</td></tr>`).join('')}</tbody></table></div>
       ${h.value.length > shown.length ? `<button class="qb more" data-allholders>Show all ${h.value.length}</button>` : ''}`;
     const ah = $('[data-allholders]', box); if (ah) ah.onclick = () => { pg.allHolders = true; loadHolders(p); };
   } catch (e) { box.innerHTML = `<p class="quiet">Holders could not be loaded: ${esc(e.message)}</p>`; }
