@@ -2624,7 +2624,7 @@ addEventListener('storage', e => {
   if (isReal()) { let other = null; try { other = JSON.parse(e.newValue || 'null'); } catch (x) {}
     if (!(other && other.wallet && other.wallet.pk === state.wallet.pk)) mine = { wallet: state.wallet, positions: state.positions, claimed: state.claimed, tokens: state.tokens, demoBook: state.demoBook }; }
   load();
-  if (mine) Object.assign(state, mine);
+  if (mine) { Object.assign(state, mine); const me = state.wallet.pk; state.presales.forEach(p => (p.buys || []).forEach(b => { b.you = b.wallet === me; })); }   // the other tab marked no buy as this wallet's: re-mark them, or refunded rows lose their amounts
   if (!typing) return renderAll();
   renderWallet(); state.presales.forEach(patchRows); const p = find(ui.sel); if (p) patchDetail(p);
 });
