@@ -16,6 +16,11 @@ pub const MAX_TRANCHES: usize = 24;
 pub const MAX_NAME: usize = 32;
 pub const MAX_TICKER: usize = 8;
 pub const DAY: i64 = 86_400;
+/// the smallest raise: 81 SOL, the size a pump.fun curve collects before it graduates, so the smallest Seed pool opens where
+/// those tokens migrate and a bigger target opens at a higher market cap. A USDC raise meets the same dollars at the SOL price.
+/// In test mode (devnet) it is 0.05 SOL, so a test cycle costs cents.
+pub const MIN_TARGET_LAMPORTS: u64 = 81_000_000_000;
+pub const TEST_MIN_TARGET_LAMPORTS: u64 = 50_000_000;
 
 /// The fixed terms. The site's js/config/seed.js carries the same numbers.
 #[account]
@@ -43,6 +48,8 @@ impl Config {
     pub fn unit(&self) -> i64 { if self.test_mode { 60 } else { DAY } }
     /// a span the terms give in seconds, in this config's time: a day's worth becomes a minute's worth in test mode
     pub fn span(&self, secs: i64) -> i64 { if self.test_mode { secs / (DAY / 60) } else { secs } }
+    /// the floor under a raise's target, in lamports (see MIN_TARGET_LAMPORTS)
+    pub fn min_target(&self) -> u64 { if self.test_mode { TEST_MIN_TARGET_LAMPORTS } else { MIN_TARGET_LAMPORTS } }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]

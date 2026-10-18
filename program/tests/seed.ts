@@ -56,6 +56,9 @@ describe('seed', () => {
     const { ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 1, name: 'Fake', ticker: 'FAKE', target: sol(0.2), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
     ixs[0] = attestIx(fake, me.publicKey, hash, expiry);
     await expectFail(c.send(ixs), 'BadAttestation');
+    // the floor: 81 SOL, or 0.05 SOL in test mode; a target under it does not open
+    const low = await c.openRaise(me.publicKey, WSOL, null, null, { nonce: nonce + 12, name: 'Low', ticker: 'LOW', uri: KILN_URI, target: sol(cfg.testMode ? 0.01 : 80), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
+    await expectFail(c.send(low.ixs), 'UnderFloor');
   });
 
   it('refuses a schedule that ends before 90 days or does not add up', async () => {

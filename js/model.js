@@ -15,6 +15,10 @@ const usdOf = (p, q) => p.q === 'USDC' ? q : q * solUsd(p);           // a pair-
 const qOf = (p, usd) => p.q === 'USDC' ? usd : usd / solUsd(p);
 const solUsdNow = p => SEED.solUsdLive || solUsd(p);                    // the SOL price today: the Pyth feed (chain.refreshSolUsd), else the raise's at open
 const usdNow = (p, q) => p.q === 'USDC' ? q : q * solUsdNow(p);        // a pair-asset amount in USD today: what a market cap is quoted in
+/* the floor under a target, in SOL: the program's constant, which test mode on devnet brings down to 0.05 SOL */
+const minTargetSol = () => typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode ? SEED.testMinTargetSol : SEED.minTargetSol;
+/* the same floor in the pair asset: SOL as is, USDC as the dollars 81 SOL are worth today */
+const minTargetIn = q => q === 'USDC' ? minTargetSol() * solUsdNow({ q: 'SOL' }) : minTargetSol();
 
 /* the supply: team share, then backers and the pool get equal halves of the rest */
 function splitOf(teamBps) {

@@ -1,3 +1,9 @@
+# Status report (2026-10-18, the minimum raise)
+
+- **Minimum raise = 81 SOL (Josh's decision):** the size a pump.fun curve collects before it graduates, so the smallest Seed pool opens where those tokens migrate; a bigger target opens at a proportionally higher market cap, and a USDC raise meets the same dollars at the SOL price when it opens. In the program as `MIN_TARGET_LAMPORTS` (0.05 SOL in test mode, so devnet cycles stay cheap) with the `UnderFloor` error; on the site in the Launch form's validation and hint (the chain's config decides which floor applies), the docs and the parameters table. Chosen as a constant rather than a Config field so the devnet program could be upgraded in place with no Config reset (the config's admin is Josh's wallet, not the deployer) and no gap on the live site.
+- **Devnet program upgraded** (slot 512533641, deployer 5.21 → 5.209 SOL); the IDL copies in `js/idl/` and the crank function were refreshed (one new error code; no account layout change, so the deployed crank keeps working). The test suite gained an `UnderFloor` case.
+- **Mainnet:** the mainnet build carries the 81 SOL floor automatically (no test mode). Nothing else on the mainnet path changed.
+
 # Status report (2026-10-17 evening, battle-test round 3; seed-qa passes #19–#21)
 
 ## Where it stands

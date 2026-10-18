@@ -75,7 +75,8 @@ pub struct XAttest { pub handle_hash: [u8; 32], pub expiry: u64 }
 pub mod seed {
     use super::*;
 
-    /// once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks; it is
+    /// once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks, and the
+    /// 81 SOL floor under a target 0.05 SOL; it is
     /// compiled only into devnet builds (`--features devnet`) and, even there, needs the devnet USDC mint as a witness,
     /// an account that exists on no other cluster. A mainnet build has no code path that sets it.
     pub fn init_config(ctx: Context<InitConfig>, p: ConfigParams) -> Result<()> {
@@ -166,11 +167,15 @@ pub mod seed {
         require!((p.team_bps as u64) < BPS, SeedError::BadTeamShare);
         let pair = ctx.accounts.pair_mint.key();
         require!(pair == WSOL || pair == USDC || pair == USDC_DEVNET, SeedError::BadPair);
+        let cents = pyth::sol_usd_cents(&ctx.accounts.sol_feed.to_account_info(), now)?;   // today's SOL price: the cap and the floor are both measured with it
         let (target_usd_cents, sol_usd_cents) = if pair == WSOL {
-            let cents = pyth::sol_usd_cents(&ctx.accounts.sol_feed.to_account_info(), now)?;
             (math::mul_div(p.target, cents, 1_000_000_000).ok_or(SeedError::Overflow)?, cents)   // lamports to cents
-        } else { (p.target / 10_000, 0) };                                                                          // USDC base units (6 dp) to cents
+        } else { (p.target / 10_000, 0) };                                                      // USDC base units (6 dp) to cents
         require!(target_usd_cents <= c.cap_usd_cents, SeedError::OverCap);
+        // the floor: at least 81 SOL (0.05 in test mode), so the smallest pool opens where a pump.fun curve graduates; a bigger target
+        // opens at a higher market cap. A SOL raise is held in lamports, a USDC raise to the same dollars at today's SOL price
+        if pair == WSOL { require!(p.target >= c.min_target(), SeedError::UnderFloor); }
+        else { require!(target_usd_cents >= math::mul_div(c.min_target(), cents, 1_000_000_000).ok_or(SeedError::Overflow)?, SeedError::UnderFloor); }
         if p.team_bps > 0 {
             require!(!p.schedule.is_empty() && p.schedule.len() <= MAX_TRANCHES && p.schedule.iter().all(|t| t.bps > 0), SeedError::BadSchedule);
             let sum: u64 = p.schedule.iter().map(|t| t.bps as u64).sum();

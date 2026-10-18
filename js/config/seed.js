@@ -7,6 +7,8 @@ const SEED = {
   dammProtocolPct: 20,         // Meteora keeps this share of every pool fee (fixed by its program for customizable pools); the 70/30 split is of the rest
   creatorShareBps: 7000,       // of pool fees: 70% to the founder's payout wallet, 30% to Seed, snapshotted at seeding
   capUsd: 100000,              // the largest target a raise may set, in USD at the SOL price when it opens
+  minTargetSol: 81,            // the smallest raise, in SOL: what a pump.fun curve collects before it graduates, so the smallest Seed pool opens where those tokens migrate and a bigger target opens at a higher market cap. A USDC raise meets the same dollars at the SOL price
+  testMinTargetSol: 0.05,      // the floor in test mode on devnet, so a test cycle costs cents (the program's TEST_MIN_TARGET_LAMPORTS)
   minDeadlineH: 24, maxDeadlineH: 14 * 24,
   seedTimeoutDays: 3,          // a filled raise that has not seeded by then refunds everyone
   minUnlockDays: 90,           // the last team unlock is at least this long after seeding

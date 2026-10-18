@@ -190,6 +190,7 @@ function validateFields() {
   else if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) err('#fTicker', `$${d.ticker} is in use by a live raise. Pick another.`);
   if (da.err) err('#fMint', da.err);
   if (isNaN(d.target) || d.target <= 0) err('#fTarget', `Set a target in ${da.a ? da.a.sym : 'the pair asset'}.`);
+  else if (da.a && d.target < minTargetIn(da.key) - 1e-9) err('#fTarget', `A raise asks for at least ${fmtC(minTargetIn(da.key), da.key)} ${da.a.sym}${da.key === 'USDC' ? ` (${minTargetSol()} SOL at today's price)` : ''}: that is where a pump.fun token migrates, so the smallest Seed pool opens there. Ask for more to open at a higher market cap.`);
   else if (usdNow({ q: da.key }, d.target) > SEED.capUsd + 1e-6) err('#fTarget', `${fmtUsd(usdNow({ q: da.key }, d.target))} at today's SOL price. A raise can ask for at most $${SEED.capUsd.toLocaleString('en-US')}.`);
   const mn = numv($('#fMin').value), mx = numv($('#fMax').value), L = lf.lim;
   if (L.min.on && !(mn > 0)) err('#fMin', 'Set the minimum buy, or switch it off.');
@@ -263,9 +264,10 @@ function renderPreview() {
     : da.off ? 'Solana could not be reached to check this mint. It will be listed as unverified.' : C.verified ? `${C.name || C.sym} (${C.sym}), verified on Jupiter` : `A real SPL mint${da.a.name ? `, ${da.a.name}` : ''}, but not on Jupiter's verified list. Backers will see a warning.`;
   $('#fCur').textContent = C.sym; $$('[data-cur]').forEach(e => e.textContent = C.sym); $('#fTarget').placeholder = { SOL: '200', USDC: '50000' }[da.key] || (C.stock ? '300' : '100000');
   if (typeof chain !== 'undefined' && chain.on() && !SEED.solUsdLive) chain.refreshSolUsd().then(v => { if (v) renderPreview(); });   // the first preview before the feed is read is redrawn at today's price
-  const usd = ok ? usdNow({ q: da.key }, d.target) : 0, over = usd > SEED.capUsd + 1e-6;   // at today's SOL price (the Pyth feed the program opens the raise with), as the program will see it
-  $('#targetUsd').textContent = ok ? `${fmtUsd(usd)}${da.key === 'SOL' ? ` at $${Number(solUsdNow().toPrecision(4))} per SOL` : ''}${over ? `, over the $${SEED.capUsd.toLocaleString('en-US')} cap` : ''}` : `at most $${SEED.capUsd.toLocaleString('en-US')}${da.key === 'SOL' ? ', at the SOL price when it opens' : ''}`;
-  $('#targetUsd').classList.toggle('bad', over);
+  if (typeof chain !== 'undefined' && chain.on() && !chain.cfg) chain.init().then(() => { if (chain.cfg) renderPreview(); }).catch(() => {});   // and at the chain's floor once the config is read (test mode brings it down)
+  const usd = ok ? usdNow({ q: da.key }, d.target) : 0, over = usd > SEED.capUsd + 1e-6, floor = da.a ? minTargetIn(da.key) : 0, under = ok && d.target < floor - 1e-9;   // at today's SOL price (the Pyth feed the program opens the raise with), as the program will see it
+  $('#targetUsd').textContent = ok ? `${fmtUsd(usd)}${da.key === 'SOL' ? ` at $${Number(solUsdNow().toPrecision(4))} per SOL` : ''}${over ? `, over the $${SEED.capUsd.toLocaleString('en-US')} cap` : under ? `, under the ${fmtC(floor, da.key)} ${sym} minimum` : ''}` : `${da.a ? `at least ${fmtC(floor, da.key)} ${sym}, ` : ''}at most $${SEED.capUsd.toLocaleString('en-US')}${da.key === 'SOL' ? ', at the SOL price when it opens' : ''}`;
+  $('#targetUsd').classList.toggle('bad', over || under);
   drawSplit(dp); drawDerived(dp, ok, sym);
   const art = pr.art ? `<img class="pv-art" src="${esc(pr.art)}" alt="" style="object-position:${pr.artPos}">` : `<span class="pv-art glyph-art" style="--h:${hashStr(dp.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(dp)}</svg></span>`;
   $('#pvCard').innerHTML = `${pr.banner ? `<div class="pv-banner"><img src="${esc(pr.banner)}" alt="" style="object-position:${pr.bannerPos}"></div>` : ''}<div class="pv-id">${art}<span class="nm"><b>${esc(dp.name)}<span class="tk">$${esc(dp.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div><div class="c-prog"><span class="bar"><i style="width:0%"></i></span><span class="pct num">0%</span></div>`;

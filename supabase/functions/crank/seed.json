@@ -1775,7 +1775,8 @@
     {
       "name": "init_config",
       "docs": [
-        "once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks; it is",
+        "once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks, and the",
+        "81 SOL floor under a target 0.05 SOL; it is",
         "compiled only into devnet builds (`--features devnet`) and, even there, needs the devnet USDC mint as a witness,",
         "an account that exists on no other cluster. A mainnet build has no code path that sets it."
       ],
@@ -2668,166 +2669,171 @@
     },
     {
       "code": 6009,
+      "name": "UnderFloor",
+      "msg": "The target is under the minimum raise (81 SOL on mainnet, or the same in dollars for a USDC raise)."
+    },
+    {
+      "code": 6010,
       "name": "StalePrice",
       "msg": "The SOL price is stale: the Pyth feed has not updated recently."
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "BadPair",
       "msg": "The pair asset must be SOL or USDC."
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "BadTeamShare",
       "msg": "The team share must be under 100%."
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "ScheduleSum",
       "msg": "The unlocks must add up to exactly 100%."
     },
     {
-      "code": 6013,
+      "code": 6014,
       "name": "ScheduleTooShort",
       "msg": "The last unlock must be at least the minimum days after seeding."
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "BadSchedule",
       "msg": "Too many tranches, or a tranche with no share."
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "BadName",
       "msg": "The name or ticker is too long or empty."
     },
     {
-      "code": 6016,
+      "code": 6017,
       "name": "BadUri",
       "msg": "The metadata URI must be an https:// or ar:// address of at most 200 characters (Arweave on mainnet)."
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "ZeroAmount",
       "msg": "The amount is zero."
     },
     {
-      "code": 6018,
+      "code": 6019,
       "name": "Full",
       "msg": "The raise is full."
     },
     {
-      "code": 6019,
+      "code": 6020,
       "name": "Flagged",
       "msg": "Buying is off: this raise was flagged for fraud."
     },
     {
-      "code": 6020,
+      "code": 6021,
       "name": "Blacklisted",
       "msg": "This X account cannot open a raise."
     },
     {
-      "code": 6021,
+      "code": 6022,
       "name": "BadAttestation",
       "msg": "The attestation is missing, malformed or not from the attestor."
     },
     {
-      "code": 6022,
+      "code": 6023,
       "name": "AttestationExpired",
       "msg": "The attestation has expired."
     },
     {
-      "code": 6023,
+      "code": 6024,
       "name": "NotFounder",
       "msg": "Only the founder can do that."
     },
     {
-      "code": 6024,
+      "code": 6025,
       "name": "NotAdmin",
       "msg": "Only the admin can do that."
     },
     {
-      "code": 6025,
+      "code": 6026,
       "name": "BadPriceAccount",
       "msg": "That is not the Pyth SOL/USD price account, or it is not fully verified."
     },
     {
-      "code": 6026,
+      "code": 6027,
       "name": "BadConfig",
       "msg": "Those terms are out of range."
     },
     {
-      "code": 6027,
+      "code": 6028,
       "name": "OneLiveRaise",
       "msg": "This wallet already has a live raise. One at a time."
     },
     {
-      "code": 6028,
+      "code": 6029,
       "name": "PrevRaiseMissing",
       "msg": "The raise named as this wallet's live one was not passed in."
     },
     {
-      "code": 6029,
+      "code": 6030,
       "name": "XAlreadyLinked",
       "msg": "This raise already has an X account linked."
     },
     {
-      "code": 6030,
+      "code": 6031,
       "name": "RaiseOver",
       "msg": "A refunded raise cannot link an X account."
     },
     {
-      "code": 6031,
+      "code": 6032,
       "name": "XBlacklistMissing",
       "msg": "The X handle's blacklist account was not passed in."
     },
     {
-      "code": 6032,
+      "code": 6033,
       "name": "NotPendingAdmin",
       "msg": "Only the pending admin can accept the handover."
     },
     {
-      "code": 6033,
+      "code": 6034,
       "name": "TestModeNotAllowed",
       "msg": "Test mode exists only in devnet builds, and only with the devnet proof account."
     },
     {
-      "code": 6034,
+      "code": 6035,
       "name": "WrongStep",
       "msg": "That seeding step is not next."
     },
     {
-      "code": 6035,
+      "code": 6036,
       "name": "TimeoutNotPassed",
       "msg": "The seeding timeout has not passed."
     },
     {
-      "code": 6036,
+      "code": 6037,
       "name": "AlreadyClaimed",
       "msg": "Already claimed."
     },
     {
-      "code": 6037,
+      "code": 6038,
       "name": "NothingToClaim",
       "msg": "Nothing to claim."
     },
     {
-      "code": 6038,
+      "code": 6039,
       "name": "ChangeNotDue",
       "msg": "The payout wallet change is not due yet."
     },
     {
-      "code": 6039,
+      "code": 6040,
       "name": "NoChangePending",
       "msg": "No payout wallet change is pending."
     },
     {
-      "code": 6040,
+      "code": 6041,
       "name": "WrongAccount",
       "msg": "The account does not match the raise."
     },
     {
-      "code": 6041,
+      "code": 6042,
       "name": "Overflow",
       "msg": "Arithmetic overflow."
     }

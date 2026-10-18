@@ -11,6 +11,7 @@ pub enum SeedError {
     #[msg("The deadline must be between the minimum and the maximum.")] BadDeadline,
     #[msg("The target is zero.")] ZeroTarget,
     #[msg("The target is over the cap at today's SOL price.")] OverCap,
+    #[msg("The target is under the minimum raise (81 SOL on mainnet, or the same in dollars for a USDC raise).")] UnderFloor,
     #[msg("The SOL price is stale: the Pyth feed has not updated recently.")] StalePrice,
     #[msg("The pair asset must be SOL or USDC.")] BadPair,
     #[msg("The team share must be under 100%.")] BadTeamShare,

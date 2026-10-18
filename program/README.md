@@ -1,6 +1,8 @@
 # The Seed program
 
 An Anchor program (`programs/seed`) that holds a raise end to end: buys at a fixed price with a 1% fee on top, the
+81 SOL floor (`MIN_TARGET_LAMPORTS`: the size a pump.fun curve collects before it graduates, so the smallest pool opens
+where those tokens migrate; 0.05 SOL in test mode; a USDC raise meets the same dollars at the SOL price) and the
 $100,000 cap, the deadline, refunds on a miss, a cancel or a stalled seeding, the four seeding steps (mint the supply,
 open and lock the Meteora DAMM v2 pool, finish), backers' claims, the pool's fees split 70/30 on a permissionless
 claim, team unlocks on a schedule fixed at opening, payout wallet changes after seven days, and the admin's two

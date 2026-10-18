@@ -901,7 +901,7 @@ a.ico:hover{color:var(--ink)}
           <div class="chips stocks" style="margin-top:0"><button type="button" data-stock="NVDAx" aria-pressed="false" title="NVIDIA">NVDAx</button><button type="button" data-stock="AAPLx" aria-pressed="false" title="Apple">AAPLx</button><button type="button" data-stock="TSLAx" aria-pressed="false" title="Tesla">TSLAx</button><button type="button" data-stock="HOODx" aria-pressed="false" title="Robinhood">HOODx</button><button type="button" data-stock="COINx" aria-pressed="false" title="Coinbase">COINx</button><button type="button" data-stock="MSFTx" aria-pressed="false" title="Microsoft">MSFTx</button><button type="button" data-stock="SPYx" aria-pressed="false" title="S&amp;P 500 ETF">SPYx</button><button type="button" data-stock="GOOGLx" aria-pressed="false" title="Alphabet">GOOGLx</button><button type="button" data-stock="AMZNx" aria-pressed="false" title="Amazon">AMZNx</button><button type="button" data-stock="METAx" aria-pressed="false" title="Meta">METAx</button></div></div>
         <div class="f full" id="mintRow" hidden><label for="fMint">Token mint address<span class="hint" id="mintInfo"></span></label><div class="inp"><input id="fMint" class="num" placeholder="Paste an SPL mint address" autocomplete="off" spellcheck="false" style="font-size:13px"></div>
           <div class="chips" style="margin-top:2px"><button type="button" data-mint="JUP">JUP</button><button type="button" data-mint="BONK">BONK</button></div></div>
-        <div class="f"><label for="fTarget">Target<span class="hint" id="targetUsd">at most $100,000</span></label><div class="inp"><input id="fTarget" inputmode="decimal" placeholder="200" autocomplete="off" class="num"><span class="suf num" id="fCur">SOL</span></div></div>
+        <div class="f"><label for="fTarget">Target<span class="hint" id="targetUsd">at least 81 SOL, at most $100,000</span></label><div class="inp"><input id="fTarget" inputmode="decimal" placeholder="200" autocomplete="off" class="num"><span class="suf num" id="fCur">SOL</span></div></div>
         <div class="f"><span class="lab">Deadline<i class="tip" tabindex="0" data-tip="How long the raise stays open. It closes the moment it fills; if it has not filled by the deadline, everyone is refunded, fee included.">?</i></span>
           <div><div class="seg" id="timeSeg" role="group" aria-label="Deadline"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="24" aria-pressed="false">24h</button><button type="button" data-v="72" aria-pressed="true">3 days</button><button type="button" data-v="168" aria-pressed="false">7 days</button><button type="button" data-v="336" aria-pressed="false">14 days</button></div></div>
         </div>
@@ -1041,7 +1041,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-overview" data-t="Overview">
       <div class="prose">
         <h2>Overview</h2>
-        <p>A founder connects a wallet, sets a target of up to $100,000, a deadline of one to fourteen days, the asset the raise is paired with, and how much of the supply the team keeps. Backers buy in with that asset at one fixed price, plus a 1% fee on top.</p>
+        <p>A founder connects a wallet, sets a target from 81 SOL up to $100,000, a deadline of one to fourteen days, the asset the raise is paired with, and how much of the supply the team keeps. Backers buy in with that asset at one fixed price, plus a 1% fee on top.</p>
         <p>If the target is met, Seed's program mints the 1,000,000,000 supply, revokes the mint and freeze authorities, puts the whole raise and the pool's half of the supply into a Meteora DAMM v2 pool at the raise price, and locks that liquidity permanently. Backers claim their tokens straight away. If the deadline passes first, nothing is minted and every backer takes back what they paid, fee included.</p>
         <p>There is no treasury, no vault and no reserve. The money raised goes into the pool and nowhere else, so there is nothing to rug. What a founder earns is a share of the pool's trading fees, paid to a payout wallet, and the team tokens they chose to keep, which unlock on a schedule everyone can see.</p>
         <p>Seed enforces a short list of hard rules in its program and acts on fraud. Everything else a founder decides, and the page shows those decisions as facts rather than warnings.</p>
@@ -1053,7 +1053,7 @@ a.ico:hover{color:var(--ink)}
           <div><dt>Raise</dt><dd class="t">Seed program, fixed price</dd></div>
           <div><dt>Pool</dt><dd class="t">Meteora DAMM v2, locked for good</dd></div>
           <div><dt>Pairs with</dt><dd class="t">SOL or USDC</dd></div>
-          <div><dt>Target</dt><dd class="t">Up to $100,000</dd></div>
+          <div><dt>Target</dt><dd class="t">81 SOL to $100,000</dd></div>
           <div><dt>Deadline</dt><dd class="t">24 hours to 14 days</dd></div>
           <div><dt>Token supply</dt><dd>1,000,000,000</dd></div>
           <div><dt>Team share</dt><dd class="t">0% to under 100%, set by the founder</dd></div>
@@ -1142,7 +1142,7 @@ a.ico:hover{color:var(--ink)}
         <h2>Pair assets and the cap</h2>
         <p>Every raise is priced and paid for in one asset, chosen by the founder when it opens: SOL or USDC. Both are deep, verified and simple to price, which is why they are the only two.</p>
         <p>Backers buy in with that asset. The fee is held in it, the Meteora pool is paired against it, the pool's fees are collected in it, and a refund returns it. Nothing is swapped along the way, so there is no slippage inside a raise.</p>
-        <p>A target can be at most $100,000. A USDC target is its own dollar size. A SOL target is converted at the SOL price the moment the raise opens, and that is the number the cap is checked against; the dollar size then moves with SOL while the raise is live, and after the open the token's dollar price moves with SOL even when nobody trades it.</p>
+        <p>A target is at least 81 SOL and at most $100,000. The floor is the size a pump.fun curve collects before it graduates, so the smallest Seed pool opens where those tokens migrate; a bigger target opens the pool at a higher market cap, in proportion. A USDC raise meets the same floor in dollars at the SOL price when it opens. A USDC target is its own dollar size. A SOL target is converted at the SOL price the moment the raise opens, and that is the number the cap is checked against; the dollar size then moves with SOL while the raise is live, and after the open the token's dollar price moves with SOL even when nobody trades it.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
         <h3>Everything is in the pair asset</h3>
@@ -1327,7 +1327,7 @@ a.ico:hover{color:var(--ink)}
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
         <h3>Enforced by the program</h3>
         <dl class="kv">
-          <div><dt>Target</dt><dd class="t">≤ $100,000 at the open</dd></div>
+          <div><dt>Target</dt><dd class="t">≥ 81 SOL, ≤ $100,000 at the open</dd></div>
           <div><dt>Deadline</dt><dd class="t">24 hours to 14 days</dd></div>
           <div><dt>Refunds</dt><dd class="t">Miss, cancel or seeding timeout</dd></div>
           <div><dt>Supply</dt><dd class="t">1B, authorities revoked</dd></div>
@@ -1451,6 +1451,7 @@ a.ico:hover{color:var(--ink)}
             <tr><td>Network</td><td>Solana</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Raise engine</td><td>Seed's own program: fixed price, no withdrawals while live, closes at the target</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Pair asset</td><td>SOL or USDC, chosen by the founder</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Target floor</td><td>81 SOL (0.05 SOL in test mode on devnet); a USDC raise the same in dollars at the SOL price when it opens</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Target cap</td><td>$100,000, SOL converted at the price when the raise opens</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Deadline</td><td>24 hours to 14 days</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Seed fee, f</td><td>1% on top of each buy, returned on a refund</td><td class="num"><span class="st set">Set</span></td></tr>
@@ -2208,6 +2209,7 @@ function validateDraft(d, da) {
   if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) return `$${d.ticker} is already in use by a live raise. Pick another ticker.`;
   if (da.err) return da.err;
   if (isNaN(d.target) || d.target <= 0) return `Set a target in ${da.a.sym}.`;
+  if (d.target < minTargetIn(da.key) - 1e-9) return `A raise asks for at least ${fmtC(minTargetIn(da.key), da.key)} ${da.a.sym}.`;
   if (da.a.min && (d.target < da.a.min || d.target > da.a.max)) return `${da.a.sym} targets run from ${da.a.min.toLocaleString('en-US')} to ${da.a.max.toLocaleString('en-US')} ${da.a.sym}.`;
   return '';
 }
