@@ -973,7 +973,7 @@ function bindLiveTrade(p, panel) {
       toastLink(s ? `Sold ${fmtTok(n)} $${cur.ticker} for ${fmtExact(quote.out, cur.q)} ${C.sym}` : `Bought ${fmtTok(quote.out)} $${cur.ticker} for ${fmtExact(n, cur.q)} ${C.sym}`, explorer(sig, 'tx'), 'View transaction');
       inp.value = '';
       await refreshHolding(cur); refreshBalances(true); loadTrading(cur); if (pg.tab === 'holders') renderTab(cur);
-    } catch (e) { toast(e.message); }
+    } catch (e) { toast(chain.explain ? chain.explain(e) : e.message); }   // a refusal in the wallet reads as a cancellation, not the wallet's raw text
     busy = false; if (panel.isConnected) { go.disabled = false; sync(); }
   };
   pg.syncTrade = sync; chips(); sync();

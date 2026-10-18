@@ -1544,7 +1544,8 @@ function load() {
     state = Object.assign(fresh(), s); return; } } catch (e) {}
   state = fresh();
 }
-function save() { try { state.at = state.at || Date.now(); localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} }
+let lastSaved = '';   // a tick that changed nothing writes nothing, so idle tabs stop waking the others
+function save() { try { state.at = state.at || Date.now(); const s = JSON.stringify(state); if (s === lastSaved) return; lastSaved = s; localStorage.setItem(KEY, s); } catch (e) {} }
 
 /* ---- chain reads (live), on the endpoint in SEED.rpc (js/config/seed.js), with a keyless public one behind it for mainnet
    token lookups. Calls are spaced and retried because public endpoints rate limit; api.mainnet-beta.solana.com refuses browser origins. */
@@ -1962,7 +1963,7 @@ const spotOf = p => { const a = ammOf(p); return a.x / a.y; };
 /* tokens the wallet holds: what it claimed plus what it bought, less what it sold */
 function heldOf(p) {
   const t = state.tokens || (state.tokens = {});
-  if (t[p.id] == null && state.claimed[p.id] === 'tokens') t[p.id] = Math.round(tokensFor(p, state.positions[p.id] || 0));   // claimed before balances were kept
+  if (t[p.id] == null && !isReal() && state.claimed[p.id] === 'tokens') t[p.id] = Math.round(tokensFor(p, state.positions[p.id] || 0));   // a demo claim before balances were kept; a real wallet's balance comes from the chain only
   return t[p.id] || 0;
 }
 /* side 'buy': amt of the pair asset in, tokens out. side 'sell': amt of tokens in, pair asset out. price is the pair asset per token. */
@@ -2199,7 +2200,8 @@ function lookupMint(mint) {
     if ($('#fMint').value.trim() === mint) renderPreview();
   }, 350);
 }
-const readDraft = () => ({ name: $('#fName').value.trim(), ticker: $('#fTicker').value.trim().toUpperCase(), hours: draft.hours, target: parseFloat(($('#fTarget').value || '').replace(/,/g, '')) });
+const cleanNum = v => { const s = String(v || '').replace(/,/g, '').trim(); return /^\d*\.?\d+$/.test(s) ? Number(s) : NaN; };   // a plain decimal only: "12abc" and "Infinity" are not targets
+const readDraft = () => ({ name: $('#fName').value.trim(), ticker: $('#fTicker').value.trim().toUpperCase(), hours: draft.hours, target: cleanNum($('#fTarget').value) });
 function validateDraft(d, da) {
   if (!d.name) return 'Give the project a name.';
   if (!/^[A-Z0-9]{1,6}$/.test(d.ticker)) return 'A ticker is 1 to 6 letters or digits.';
@@ -2221,14 +2223,14 @@ function renderPortfolio() {
   $('#prows').innerHTML = ids.length ? ids.map(id => { const p = find(id); if (!p) return ''; const sym = esc(Q(p).sym), a = state.positions[id], cl = state.claimed[id];
       const st = RAISE_STATE[p.status], mineBuys = (p.buys || []).filter(b => b.you), paidAll = r6(mineBuys.reduce((s, b) => s + (b.paid != null ? b.paid : paidFor(b.amount)), 0)) || (a ? paidFor(a) : 0);
       const holds = p.status === 'seeded' && (cl || !a);   // claimed, or bought in the pool without backing the raise
-      const yours = p.status === 'live' || p.status === 'filled' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)} ${p.status === 'filled' ? 'when it seeds' : 'if it seeds'}` : holds ? `${fmtTok(heldOf(p))} $${esc(p.ticker)} held` : p.status === 'seeded' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)}` : `${fmtExact(paidAll || a, p.q)} ${sym}${cl ? ' refunded' : ' to claim'}`;
+      const yours = p.status === 'live' || p.status === 'filled' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)} ${p.status === 'filled' ? 'when it seeds' : 'if it seeds'}` : holds ? (isReal() && (state.tokens || {})[id] == null ? `… $${esc(p.ticker)}` : `${fmtTok(heldOf(p))} $${esc(p.ticker)} held`) : p.status === 'seeded' ? `${fmtTok(tokensFor(p, a))} $${esc(p.ticker)}` : `${fmtExact(paidAll || a, p.q)} ${sym}${cl ? ' refunded' : ' to claim'}`;
       const act = p.status === 'live' ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">View</a>` : p.status === 'filled' ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Seeding ${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1}/4</a>` : holds ? `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Trade</a>` : cl ? '<span class="tag">Claimed</span>' : `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
       return `<div class="prow"><span class="c-proj">${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta">${pairTag(p)}</span></span></span>
         <span class="num">${paidAll ? `${fmtExact(paidAll, p.q)} ${sym}` : '–'}</span><span><span class="tag${p.status === 'live' ? ' in' : ''}">${st}</span></span><span class="num">${yours}</span><span>${act}</span></div>`; }).join('')
     : `<div class="empty">${state.wallet ? 'No positions yet. <a href="#">Buy into a raise from the terminal</a>' : 'Connect a wallet to see your positions.'}</div>`;
   $('#pbal').innerHTML = state.wallet ? balRows() + `<div class="bal"><span>Address</span><span class="num">${state.wallet.addr}</span></div>` + xRow() + (isReal() && SEED.network === 'devnet' && !state.wallet.stale && !(balOf('SOL') > 0) ? '<p class="rail-meta">No devnet SOL. Switch the wallet app to Devnet (Phantom: Settings → Developer settings → Testnet mode) and get test SOL at <a href="https://faucet.solana.com" target="_blank" rel="noopener">faucet.solana.com</a>.</p>' : '') : '<p class="rail-meta">No wallet connected.</p>';
-  renderPerf(); syncMove(); renderCreator(); renderHistory();
-  if (isReal() && (!portfolioAdapter.data || portfolioAdapter.wallet !== state.wallet.pk)) portfolioAdapter.load().then(d => { if (d && ui.tab === 'portfolio') renderPortfolio(); });
+  if (isReal() && (!portfolioAdapter.data || portfolioAdapter.wallet !== state.wallet.pk)) portfolioAdapter.load().then(d => { if (d && ui.tab === 'portfolio') renderPortfolio(); });   // first, so a card that throws cannot stop the record loading
+  for (const part of [renderPerf, syncMove, renderCreator, renderHistory]) try { part(); } catch (e) { console.error(e); }   // one card's error leaves the others standing
 }
 /* a real wallet's open positions with their result, and everything it did on Seed, newest first */
 function renderHistory() {
@@ -2236,7 +2238,8 @@ function renderHistory() {
   const d = isReal() ? portfolioAdapter.data : null;
   if (!isReal()) { box.hidden = true; return; } box.hidden = false;
   if (!d) { box.innerHTML = '<section class="panel"><h3 class="card-h">History</h3><div class="empty">Reading this wallet\'s record…</div></section>'; return; }
-  const row = e => { const p = e.p, sym = esc(Q(p).sym), what = { back: `Backed with ${fmtExact(e.pair, p.q)} ${sym}`, refund: `Refund claimed, ${fmtExact(e.pair, p.q)} ${sym} back`, claim: `Claimed ${fmtTok(e.tokens)} $${esc(p.ticker)}`, vested: `Team unlock claimed, ${fmtTok(e.tokens)} $${esc(p.ticker)} to the payout wallet`, buy: `Bought ${fmtTok(e.tokens)} $${esc(p.ticker)} for ${fmtExact(e.pair, p.q)} ${sym}`, sell: `Sold ${fmtTok(e.tokens)} $${esc(p.ticker)} for ${fmtExact(e.pair, p.q)} ${sym}` }[e.kind];
+  const row = e => { const p = e.p, pair = () => `${fmtExact(e.pair, p.q)} ${esc(Q(p).sym)}`, tok = () => `${fmtTok(e.tokens)} $${esc(p.ticker)}`;   // only the event's own figures are formatted: a team unlock has no pair amount
+    const what = e.kind === 'back' ? `Backed with ${pair()}` : e.kind === 'refund' ? `Refund claimed, ${pair()} back` : e.kind === 'claim' ? `Claimed ${tok()}` : e.kind === 'vested' ? `Team unlock claimed, ${tok()} to the payout wallet` : e.kind === 'buy' ? `Bought ${tok()} for ${pair()}` : e.kind === 'sell' ? `Sold ${tok()} for ${pair()}` : e.kind;
     return `<div class="hrow"><span class="c-proj">${avatar(p)}<span class="nm"><b>${esc(what)}</b><span class="meta"><a href="#/presale/${esc(p.id)}">${esc(p.name)}</a></span></span></span><span class="num ${e.pnl > 0 ? 'pos' : e.pnl < 0 ? 'neg' : ''}">${e.pnl != null ? fmtPnl(e.pnl) : ''}</span><span class="num quiet" title="${esc(fmtDate(e.t))}">${fmtAgo(Date.now() - e.t)}</span><span>${e.sig ? `<a href="${esc(explorer(e.sig, 'tx'))}" target="_blank" rel="noopener" aria-label="View transaction">${ICONS.out}</a>` : ''}</span></div>`; };
   const open = d.open.filter(x => x.held > 0);
   const openRows = open.map(x => `<div class="hrow"><span class="c-proj">${avatar(x.p)}<span class="nm"><b>${fmtTok(x.held)} $${esc(x.p.ticker)}</b><span class="meta">${esc(x.p.name)}${x.free ? ' · team tokens' : ''}</span></span></span><span class="num">${fmtExact(x.value, x.p.q)} ${esc(Q(x.p).sym)}</span><span class="num ${x.unrealised > 0 ? 'pos' : x.unrealised < 0 ? 'neg' : ''}">${fmtPnl(x.unrealised)}</span><span class="num ${x.realised > 0 ? 'pos' : x.realised < 0 ? 'neg' : ''}">${x.realised ? fmtPnl(x.realised) : ''}</span></div>`).join('');
@@ -2538,15 +2541,17 @@ async function seedCrank(p, by) {
   save(); renderAll(); if (detailBox) renderDetail(true);
   return true;
 }
+const told = new Set();   // one toast per raise and outcome in this tab, however often another tab's save brings the old status back for a moment
+const tellOnce = (p, msg) => { const k = p.id + ':' + p.status + ':' + (p.refundReason || ''); if (told.has(k)) return; told.add(k); toast(msg); };
 function tick(silent) {
   const now = Date.now(); let changed = false;
   for (const p of state.presales) if (p.status === 'live' && now >= p.endsAt) {
     p.status = 'refunded'; p.refundReason = 'missed'; p.resolvedAt = p.endsAt; changed = true; const pos = state.positions[p.id];
-    if (silent !== true) toast(pos ? `${p.name} missed its target. Your ${fmtAmt(paidFor(pos), p.q)} ${Q(p).sym} refund is ready to claim.` : `${p.name} missed its target. Backers can claim refunds.`);
+    if (silent !== true) tellOnce(p, pos ? `${p.name} missed its target. Your ${fmtAmt(paidFor(pos), p.q)} ${Q(p).sym} refund is ready to claim.` : `${p.name} missed its target. Backers can claim refunds.`);
   }
   for (const p of state.presales) if (p.pendingPayoutWallet && now >= p.payoutEffectiveAt) { p.payoutWallet = p.pendingPayoutWallet; p.pendingPayoutWallet = null; p.payoutEffectiveAt = null; changed = true; }
   for (const p of state.presales) if (p.status === 'filled') {
-    if (now >= seedDeadline(p)) { p.status = 'refunded'; p.refundReason = 'timeout'; p.resolvedAt = now; changed = true; if (silent !== true) toast(`${p.name} did not seed in time. Every backer can claim a refund.`); }
+    if (now >= seedDeadline(p)) { p.status = 'refunded'; p.refundReason = 'timeout'; p.resolvedAt = now; changed = true; if (silent !== true) tellOnce(p, `${p.name} did not seed in time. Every backer can claim a refund.`); }
     else if (!p.live) { const last = p.crankAt || p.filledAt; if (now - last > 30e3 && !document.hidden && !busy) { p.crankAt = now; seedCrank(p); } }   // a demo raise runs its own steps, one every half minute, as the crank does for a live one; the button runs them sooner
   }
   if (chain.ready && !busy && !document.hidden && now - (chain.syncedAt || 0) > 20e3) {   // live raises that can still change are re-read from the chain
@@ -2613,7 +2618,13 @@ let booted = false;
 addEventListener('storage', e => {
   if (e.key !== KEY || busy || !booted) return;
   const typing = document.activeElement && (document.activeElement.id === 'ppAmt' || !!document.activeElement.closest('.chat'));
+  /* a real wallet is this tab's own: a save from a tab with no wallet or another one (the demo book, most often) never replaces it
+     or its book. The same wallet in both tabs is one book, so that save is taken on whole. */
+  let mine = null;
+  if (isReal()) { let other = null; try { other = JSON.parse(e.newValue || 'null'); } catch (x) {}
+    if (!(other && other.wallet && other.wallet.pk === state.wallet.pk)) mine = { wallet: state.wallet, positions: state.positions, claimed: state.claimed, tokens: state.tokens, demoBook: state.demoBook }; }
   load();
+  if (mine) Object.assign(state, mine);
   if (!typing) return renderAll();
   renderWallet(); state.presales.forEach(patchRows); const p = find(ui.sel); if (p) patchDetail(p);
 });

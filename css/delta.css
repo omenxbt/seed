@@ -267,7 +267,8 @@
 /* the Portfolio's four figures and the Backers tab's checks: the same grid */
 #pstats{gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:16px;overflow:hidden}
 #pstats .sum{border:0;border-radius:0;background:var(--well);-webkit-backdrop-filter:none;backdrop-filter:none}
-.sums{gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:12px;overflow:hidden}
+.sums{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:12px;overflow:hidden}   /* as many columns as there are figures: no empty cell */
+@media (max-width:720px){.sums>.sum:last-child:nth-child(odd){grid-column:1/-1}}
 .sum{border-radius:0;border:0;background:var(--well);-webkit-backdrop-filter:none;backdrop-filter:none}
 /* the rail's cards: the deposit, the swap and the position */
 .rail-card .recv{padding:10px 12px;border-radius:10px;background:var(--well);border:1px solid var(--hair)}

@@ -37,7 +37,7 @@ function renderFounder() {
   box.innerHTML = `<div class="fp">
     <section class="panel pp-card fp-head"><a class="back" href="#">&larr; All raises</a>
       <div class="fp-id"><span class="m-av" style="--h:${hashStr(w) % 360}">${initials(name)}</span><div><h1>${esc(name)}</h1>
-        <div class="fp-meta"><span class="num">${esc(walletLabel(w))}</span>${real ? copyBtn(w, 'founder wallet') + `<a class="bar-link" href="${esc(explorer(w))}" target="_blank" rel="noopener">${ICONS.out}</a>` : ''}
+        <div class="fp-meta">${name === walletLabel(w) ? '' : `<span class="num">${esc(walletLabel(w))}</span>`}${real ? copyBtn(w, 'founder wallet') + `<a class="bar-link" href="${esc(explorer(w))}" target="_blank" rel="noopener">${ICONS.out}</a>` : ''}
           ${x && x.handle ? `<a class="x-acct" href="${esc(xUrl(x.handle))}" target="_blank" rel="noopener">${ICONS.x}<span><b>@${esc(x.handle)}</b><span class="num">${x.verified ? 'Verified X' : x.typed ? 'Typed on devnet' : 'Linked'}</span></span></a>` : '<span class="quiet">No X account linked</span>'}
           ${flagged.length ? '<span class="btag bad">Flagged for fraud</span>' : ''}</div></div></div>
       <dl class="pp-stats fp-stats"><div><dt>Raises</dt><dd class="num">${list.length}</dd></div><div><dt>Seeded</dt><dd class="num">${seeded.length}</dd></div><div><dt>Refunded</dt><dd class="num">${refunded.length}</dd></div>
