@@ -1350,11 +1350,11 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-terminal" data-t="Reading the terminal">
       <div class="prose">
         <h2>Reading the terminal</h2>
-        <p>The terminal lists every live and seeded raise, paired with SOL or USDC, as one ranked table. Its tabs cut it by stage: <b>New ideas</b> (under 50% filled), <b>Seeding</b> (half full to seeded), <b>Seeded</b> (trading) and <b>Refunded</b>, which sits apart because those raises are over. Above the table, the featured card follows the most active raise and Trending shows the eight most active, whatever the filters say. Each row carries the numbers needed to judge a raise at a glance; on a phone the same raises are cards.</p>
+        <p>The terminal lists every live and seeded raise, paired with SOL or USDC, as one ranked table. <b>All</b> is every live and seeded raise; the other tabs cut it by stage: <b>New ideas</b> (under 50% filled), <b>Seeding</b> (half full to seeded), <b>Seeded</b> (trading) and <b>Refunded</b>, which sits apart because those raises are over. Above the table, the featured card follows the most active raise and Trending shows the eight most active, whatever the filters say. Each row carries the numbers needed to judge a raise at a glance; on a phone the same raises are cards.</p>
         <ul>
           <li><b>Market cap</b> is in dollars: the pool's price over the whole supply on a seeded raise, at today's SOL price; on a live raise, the market cap it will open at. Hover it for the figure in SOL.</li>
-          <li><b>Change</b> is the pool's price against the raise price on a seeded raise; a filled raise reads Seeding while its pool is being made.</li>
-          <li><b>Raised</b> is what backers have put in against the target, with its bar. Fees ride on top, so they are not part of it. The <b>Fill</b> strip is the same share drawn as bars.</li>
+          <li><b>Change</b> is the pool's price against the raise price on a seeded raise. On a live raise it is the share of the target gained in the last six hours (<b>+10% 6h</b>), or Quiet when nothing came in; a filled raise reads Seeding while its pool is being made.</li>
+          <li><b>Raised</b> is what backers have put in against the target, with its bar. Fees ride on top, so they are not part of it. <b>Backers</b> counts the wallets that bought in. The <b>Fill</b> strip is the same share drawn as bars.</li>
           <li><b>Time</b> is what is left before the deadline on a live raise, when it filled on a filled one (its button counts the seeding steps), and the seeding day on a seeded one.</li>
           <li><b>Quick deposit</b> sends your preset amount in one click, fee on top. Presets are kept per asset. Like any buy, it is trimmed to what fits.</li>
         </ul>
@@ -2620,11 +2620,12 @@ addEventListener('storage', e => {
   const typing = document.activeElement && (document.activeElement.id === 'ppAmt' || !!document.activeElement.closest('.chat'));
   /* a real wallet is this tab's own: a save from a tab with no wallet or another one (the demo book, most often) never replaces it
      or its book. The same wallet in both tabs is one book, so that save is taken on whole. */
-  let mine = null;
+  let mine = null; const had = isReal() ? state.wallet.pk : null;
   if (isReal()) { let other = null; try { other = JSON.parse(e.newValue || 'null'); } catch (x) {}
-    if (!(other && other.wallet && other.wallet.pk === state.wallet.pk)) mine = { wallet: state.wallet, positions: state.positions, claimed: state.claimed, tokens: state.tokens, demoBook: state.demoBook }; }
+    if (!(other && other.wallet && other.wallet.pk === had)) mine = { wallet: state.wallet, positions: state.positions, claimed: state.claimed, tokens: state.tokens, demoBook: state.demoBook }; }
   load();
   if (mine) { Object.assign(state, mine); const me = state.wallet.pk; state.presales.forEach(p => (p.buys || []).forEach(b => { b.you = b.wallet === me; })); }   // the other tab marked no buy as this wallet's: re-mark them, or refunded rows lose their amounts
+  else if (isReal() && state.wallet.pk !== had) resume();   // a wallet another tab connected is a saved session here, not a connection: it stays only if the wallet still trusts this site
   if (!typing) return renderAll();
   renderWallet(); state.presales.forEach(patchRows); const p = find(ui.sel); if (p) patchDetail(p);
 });
