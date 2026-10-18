@@ -195,7 +195,7 @@ var chain = {
       if (d.length < o + 24 || d[40] !== 1) return null;   // only a fully verified update (as the program takes); a partial one carries a signature count that shifts the fields
       const price = Number(dv.getBigInt64(o, true)), expo = dv.getInt32(o + 16, true), at = Number(dv.getBigInt64(o + 20, true));
       if (!(price > 0) || Date.now() / 1000 - at > 3600) return null;
-      const usd = price * 10 ** expo, was = SEED.solUsdLive; SEED.solUsdLive = usd;
+      const usd = price * 10 ** expo, was = SEED.solUsdLive; SEED.solUsdLive = usd; cacheSet('solUsd', usd);   // kept for the next load, so the first paint prices at the last live figure, not the demo one
       if ((!was || Math.abs(usd / was - 1) > 0.002) && typeof renderTerminal === 'function' && ui.tab === 'terminal') renderTerminal();   // the market caps were drawn at the old price
       return usd;
     } catch (e) { console.warn('SOL price:', e.message); return null; }
@@ -417,3 +417,5 @@ function renderFootNote() {
   const cur = typeof find === 'function' && ui.tab === 'presale' ? find(ui.sel) : null;   // a live raise's page has no demo to reset
   $$('[data-reset]').forEach(b => b.hidden = !!(cur && cur.live));
 }
+/* the SOL price from the last visit (an hour at most) prices the first paint until Pyth answers, so the chips and caps never open on the demo figure */
+if (!SEED.solUsdLive && typeof cacheGet === 'function') { const c = cacheGet('solUsd', 3600e3); if (c > 0) SEED.solUsdLive = c; }

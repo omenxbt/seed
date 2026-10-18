@@ -12,6 +12,7 @@ _None open. The Trade-on links and the mainnet checklist shipped in Phase 5; the
 - Optional min buy / max per wallet / whitelist in the program (the site's profile carries them; the program does not enforce them yet).
 
 ## Done
+- The Delta Liquidity redesign (2026-10-17, Josh; seed-qa passes #16–#18): `css/delta.css` restyles the site after Josh's Figma in Seed's colours — the icon rail, hatched gutters, the search/stat-chip/icon-button app bar, a hero (with the Seed mark) beside the featured raise, the board as one table (lanes retired), Delta's chart toolbar and bordered stat grids on the raise page, lit segments and gradient buttons throughout. Merged to main at 0359cff after two clean passes.
 - QA P2-51/52 (seed-qa pass #11): every trade priced from DAMM's swap event `next_sqrt_price` (exact, including backfills); the board's rows and tiles tick per trade over Realtime; a reload keeps each raise's pool price.
 - Market cap by default (2026-10-15, Josh): the chart opens on MCap, lane rows and tiles read MC; a trade's price is where the pool stands after the swap (the pool account's exact sqrt price for the latest, the transaction's vault ratio for older ones), not its average fill; a pool the RPC will not read shows its last indexed trade, marked; QA P2-49 (paged backfill) and P2-50 (each pool's own fee from its account, `raises.pool_fee_bps`).
 - Market caps in dollars (2026-10-15, Josh): rows, tiles, page stat and chart MCap axis in USD at the live Pyth SOL/USD price (`chain.refreshSolUsd`); SOL figure in the tooltip; chart scale clamped at zero.

@@ -1848,10 +1848,10 @@ function renderFeatured(trend) {
 function renderStatChips() {
   const el = $('#statChips'); if (!el) return;
   const real = typeof chain !== 'undefined' && chain.on(), pool = real ? state.presales.filter(p => p.live) : state.presales;   // on the live site the chips count what is on chain, never the demo set
-  const open = pool.filter(p => p.status === 'live'), held = pool.filter(p => p.status !== 'refunded').reduce((a, p) => a + usdNow(p, p.raised), 0), sol = SEED.solUsdLive || SEED.demoSolUsd;
+  const open = pool.filter(p => p.status === 'live'), held = pool.filter(p => p.status !== 'refunded').reduce((a, p) => a + usdNow(p, p.raised), 0), sol = SEED.solUsdLive || (real ? null : SEED.demoSolUsd);   // on the live site, no figure until Pyth (or its cached last reading) has answered
   el.innerHTML = `<span class="statchip" title="Raises open right now${real ? ' on ' + esc(SEED.network) : ''}"><svg viewBox="0 0 24 24"><path d="M3.5 17.5l5.5-6 4 3.5 7.5-8.5"/><path d="M15.5 6.5h5v5"/></svg><b>${open.length}</b><em>live</em></span>
-    <span class="statchip" title="Raised across every ${real ? 'on-chain ' : ''}raise that did not refund, in dollars today"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7.5c0-1.4 2.2-2.5 5-2.5s5 1.1 5 2.5S14.8 10 12 10s-5 1.1-5 2.5 2.2 2.5 5 2.5 5 1.1 5 2.5S14.8 20 12 20s-5-1.1-5-2.5"/></svg><b>${fmtUsd(held)}</b><em>raised</em></span>
-    <span class="statchip" title="${SEED.solUsdLive ? 'SOL in dollars, from Pyth' : 'SOL in dollars, the demo price'}"><svg viewBox="0 0 24 24"><path d="M5 8h12l2-2.5H7zM5 16h12l2 2.5H7zM19 12H7l-2 0"/></svg><b>$${Number(sol.toPrecision(4))}</b><em>SOL</em></span>`;
+    <span class="statchip" title="Raised across every ${real ? 'on-chain ' : ''}raise that did not refund, in dollars today"><svg viewBox="0 0 24 24"><path d="M12 3v18M7 7.5c0-1.4 2.2-2.5 5-2.5s5 1.1 5 2.5S14.8 10 12 10s-5 1.1-5 2.5 2.2 2.5 5 2.5 5 1.1 5 2.5S14.8 20 12 20s-5-1.1-5-2.5"/></svg><b>${sol ? fmtUsd(held) : '—'}</b><em>raised</em></span>
+    <span class="statchip" title="${SEED.solUsdLive ? 'SOL in dollars, from Pyth' : sol ? 'SOL in dollars, the demo price' : 'Reading the SOL price from Pyth'}"><svg viewBox="0 0 24 24"><path d="M5 8h12l2-2.5H7zM5 16h12l2 2.5H7zM19 12H7l-2 0"/></svg><b>${sol ? '$' + Number(sol.toPrecision(4)) : '—'}</b><em>SOL</em></span>`;
 }
 const FEED_NOTE = { all: 'Live and seeded', new: 'Under 50% filled', seeding: 'Past halfway, or filled and seeding', seeded: 'Pool open', refunded: 'Missed, cancelled or timed out' };
 function renderTerminal() {
