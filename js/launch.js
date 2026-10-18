@@ -228,17 +228,17 @@ function validateFields() {
   return out;
 }
 const validateFull = () => { const e = validateFields(); return e.length ? e[0].msg : ''; };
-/* the problems go next to their fields; the first one is scrolled to */
+/* the problems go next to their fields; the first one is scrolled to and its field takes focus */
 function showErrors(list) {
   $$('.ferr', $('#form')).forEach(e => e.remove());
-  let first = null;
+  let first = null, field = null;
   for (const { sel, msg } of list) {
     const el = $(sel); if (!el) continue;
     const box = el.closest('.f') || el.closest('.row-ed') || el; if ($('.ferr', box) && box.matches('.row-ed')) continue;
     const n = document.createElement('div'); n.className = 'ferr'; n.setAttribute('role', 'alert'); n.textContent = msg; box.appendChild(n);
-    if (!first) first = box;
+    if (!first) { first = box; field = el.matches('input,select,textarea') ? el : $('input,select,textarea', el); }
   }
-  if (first) first.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  if (first) { first.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (field) field.focus({ preventScroll: true }); }
   return !!first;
 }
 

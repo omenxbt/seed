@@ -482,6 +482,12 @@ function ppTabs(p) {
 function renderTab(p) {
   const body = detailBox && $('[data-tabbody]', detailBox); if (!body) return;
   $$('[data-ptab]', detailBox).forEach(a => a.setAttribute('aria-selected', String(a.dataset.ptab === pg.tab))); placeTabInd();
+  const tb = $('.tabbar', detailBox);   // the strip fades where it can still scroll, so a cut-off tab reads as more, not as the end
+  if (tb && !tb.dataset.fade) {
+    tb.dataset.fade = '1';
+    const upd = () => { tb.classList.toggle('less', tb.scrollLeft > 2); tb.classList.toggle('more', tb.scrollLeft + tb.clientWidth < tb.scrollWidth - 2); };
+    tb.addEventListener('scroll', upd, { passive: true }); new ResizeObserver(upd).observe(tb); upd();
+  }
   const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, roadmap: tabRoadmap, holders: tabHolders, trades: tabTrades, traders: tabTraders, backers: tabBackers, info: tabInfo, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
   body.innerHTML = fn(p); afterTab(p, body);
   const key = p.id + '/' + pg.tab;   // the tab's content eases in when the tab changes, not when it is redrawn in place
