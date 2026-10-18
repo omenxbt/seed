@@ -191,7 +191,7 @@ function validateFields() {
   if (da.err) err('#fMint', da.err);
   if (isNaN(d.target) || d.target <= 0) err('#fTarget', `Set a target in ${da.a ? da.a.sym : 'the pair asset'}.`);
   else if (da.a && d.target < minTargetIn(da.key) - 1e-9) err('#fTarget', `A raise asks for at least ${fmtC(minTargetIn(da.key), da.key)} ${da.a.sym}${da.key === 'USDC' ? ` (${minTargetSol()} SOL at today's price)` : ''}: that is where a pump.fun token migrates, so the smallest Seed pool opens there. Ask for more to open at a higher market cap.`);
-  else if (usdNow({ q: da.key }, d.target) > SEED.capUsd + 1e-6) err('#fTarget', `${fmtUsd(usdNow({ q: da.key }, d.target))} at today's SOL price. A raise can ask for at most $${SEED.capUsd.toLocaleString('en-US')}.`);
+  else if (usdNow({ q: da.key }, d.target) > SEED.capUsd + 1e-6) err('#fTarget', `${fmtUsd(usdNow({ q: da.key }, d.target))}${da.key === 'USDC' ? '' : " at today's SOL price"}. A raise can ask for at most $${SEED.capUsd.toLocaleString('en-US')}.`);
   const mn = numv($('#fMin').value), mx = numv($('#fMax').value), L = lf.lim;
   if (L.min.on && !(mn > 0)) err('#fMin', 'Set the minimum buy, or switch it off.');
   else if (L.min.on && L.min.unit === 'pct' && mn >= 100) err('#fMin', 'Under 100% of the supply.');

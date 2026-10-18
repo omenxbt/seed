@@ -17,8 +17,9 @@ const solUsdNow = p => SEED.solUsdLive || solUsd(p);                    // the S
 const usdNow = (p, q) => p.q === 'USDC' ? q : q * solUsdNow(p);        // a pair-asset amount in USD today: what a market cap is quoted in
 /* the floor under a target, in SOL: the program's constant, which test mode on devnet brings down to 0.05 SOL */
 const minTargetSol = () => typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode ? SEED.testMinTargetSol : SEED.minTargetSol;
-/* the same floor in the pair asset: SOL as is, USDC as the dollars 81 SOL are worth today */
-const minTargetIn = q => q === 'USDC' ? minTargetSol() * solUsdNow({ q: 'SOL' }) : minTargetSol();
+/* the same floor in the pair asset: SOL as is, USDC as the dollars 81 SOL are worth today, to the cent the program compares in (it
+   rounds the cents down, so the figure shown is one that opens) */
+const minTargetIn = q => q === 'USDC' ? Math.floor(minTargetSol() * solUsdNow({ q: 'SOL' }) * 100) / 100 : minTargetSol();
 
 /* the supply: team share, then backers and the pool get equal halves of the rest */
 function splitOf(teamBps) {
