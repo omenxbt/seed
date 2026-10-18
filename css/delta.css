@@ -1,7 +1,7 @@
 /* ==========================================================================
    The Delta Liquidity redesign, in Seed's colours. Loaded after presale.css, so what is here wins.
    What it borrows from the Figma (Delta Liquidity - Redesign, Pools V2 and Token Details): a thin icon rail down the left
-   with the mark on top and the socials at the foot; hatched gutters either side of the content; a top bar of search, stat
+   with the mark on top and the socials at the foot; a top bar of search, stat
    chips, square icon buttons and a glowing gradient wallet button; a hero beside a featured card; the board as one table
    with muted column heads and barcode fill strips; segmented controls whose chosen segment is a lit, bordered block;
    numbered rank badges and chevron buttons on rows; the chart's toolbar of timeframe pills and a mode switch with a foot
@@ -16,7 +16,6 @@
   --glow:0 0 0 1px rgba(91,140,255,.32),0 10px 28px -10px rgba(46,99,231,.8);
   --glow-sm:0 0 14px -4px rgba(46,99,231,.7);
   --lit:inset 0 1px 0 rgba(255,255,255,.14);                          /* the highlight along the top edge of anything raised */
-  --hatch:repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 1px,transparent 1px 9px);
 }
 
 /* ------------------------------------------------------------------ cards */
@@ -90,11 +89,8 @@
   .rn-foot{margin-top:auto;display:flex;flex-direction:column;gap:6px}
   .rn-foot .rn{width:36px;height:36px;border-radius:10px;background:var(--chip);border-color:var(--hair)}
   .rn-foot .rn[aria-current="page"]{background:var(--grad-seg);border-color:var(--seg-line)}
-  /* the pages sit to the right of the rail; hatched gutters frame the content as the Figma does */
+  /* the pages sit to the right of the rail */
   body.in-app #view-app,body.in-docs #view-docs{padding-left:64px}
-  body.in-app::before,body.in-app::after,body.in-docs::before,body.in-docs::after{content:"";position:fixed;top:0;bottom:0;width:12px;z-index:0;background:var(--hatch);pointer-events:none}
-  body.in-app::before,body.in-docs::before{left:64px}
-  body.in-app::after,body.in-docs::after{right:0}
   .appbar{position:sticky;z-index:100}
   /* the app bar: the brand and the section tabs move to the rail; what is left is the search, the stat chips and the controls */
   #view-app .appbar{grid-template-columns:minmax(0,1fr) auto;gap:16px;height:64px;padding:0 20px 0 20px}
