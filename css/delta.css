@@ -126,7 +126,7 @@
 .xbar{margin-bottom:14px}
 
 /* ------------------------------------------------------- hero and featured */
-/* the Pools page's top: a hero on the left with its staircase of tiles, the most active raise on the right as a card */
+/* the Pools page's top: a hero on the left, the most active raise on the right as a card (the hero's large Seed mark came out, Josh) */
 .hero-row{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:14px;margin:0 0 16px}
 .hero{position:relative;overflow:hidden;padding:30px 32px;min-height:228px;display:flex;flex-direction:column;justify-content:center;gap:12px}
 .hero h1{font-size:clamp(26px,2.4vw,34px);font-weight:500;letter-spacing:-.045em;line-height:1.05;max-width:13em}
@@ -134,11 +134,6 @@
 .hero p{color:var(--muted);font-size:15px;max-width:46ch;line-height:1.55}
 .hero-acts{display:flex;gap:10px;margin-top:8px;flex-wrap:wrap}
 .hero-acts .btn{height:40px;padding:0 20px;font-size:13.5px}
-/* the Seed mark, large, where the Figma's hero has its tile cluster: muted dots, the seed in blue with a soft glow */
-.hero-mark{position:absolute;right:-22px;top:50%;width:232px;height:232px;transform:translateY(-50%);color:rgba(255,255,255,.13);--seed:var(--navy);filter:drop-shadow(0 0 22px rgba(46,99,231,.35));pointer-events:none}
-.hero>*:not(.hero-mark){position:relative;z-index:1}
-.hero h1,.hero p{max-width:calc(100% - 200px)}   /* the text stops short of the mark at every hero width */
-@media (min-width:1440px){.hero-mark{width:272px;height:272px;right:-28px}.hero h1,.hero p{max-width:calc(100% - 236px)}}
 .featured{position:relative;overflow:hidden;padding:22px 24px;display:flex;flex-direction:column;gap:16px;color:inherit;transition:border-color var(--fast) var(--ease-out)}
 .featured:hover{border-color:var(--hair-2)}
 .ft-bg{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:14px 14px;-webkit-mask-image:linear-gradient(90deg,transparent 30%,#000 75%);mask-image:linear-gradient(90deg,transparent 30%,#000 75%)}
@@ -156,7 +151,7 @@
 .ft-stats dt{font-size:12.5px;color:var(--muted)}.ft-stats dd{font-size:15px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ft-stats dd.up{color:var(--ok-ink)}.ft-stats dd.down{color:var(--bad-ink)}
 .ft-empty{position:relative;color:var(--muted);font-size:14px}
-@media (max-width:1100px){.hero-row{grid-template-columns:1fr}.hero{min-height:0}.hero-mark{display:none}.hero h1,.hero p{max-width:none}.ft-stats{max-width:none}.ft-area{opacity:.5}}
+@media (max-width:1100px){.hero-row{grid-template-columns:1fr}.hero{min-height:0}.hero h1,.hero p{max-width:none}.ft-stats{max-width:none}.ft-area{opacity:.5}}
 @media (max-width:700px){.hero{display:none}.hero-row{margin-bottom:12px}}
 
 /* --------------------------------------------------------------- the board */
