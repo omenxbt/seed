@@ -50,7 +50,10 @@ const extOf = name => (/\.([a-z0-9]+)$/i.exec(name || '') || [, ''])[1].toLowerC
 const deckInfo = file => DECK_EXT[extOf(file.name)] || Object.values(DECK_EXT).find(d => d[1] === file.type) || null;
 const MAX_UPLOAD = 10 * 1024 * 1024;
 const numv = v => { const n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : NaN; };
-const isUrl = v => !v || /^https:\/\/[^\s]+\.[^\s]+/i.test(v);   // https only, as the copy says
+/* any link goes in, with or without its scheme (Josh): "x.com/seedraises" is as good as "https://x.com/seedraises". A link
+   still has to look like one (a host with a dot, no spaces), which keeps javascript: and data: out; it is stored with https:// */
+const isUrl = v => !v || /^(https?:\/\/)?[^\s\/:]+\.[^\s]+$/i.test(v);
+const fullUrl = v => { v = (v || '').trim(); return v ? (/^https?:\/\//i.test(v) ? v : 'https://' + v) : null; };
 
 /* ---------------------------------------------------------------- row editors */
 const ROWS = {
@@ -60,13 +63,13 @@ const ROWS = {
       <button type="button" class="x" data-del aria-label="Remove">&times;</button></div>` },
   team: { box: '#teamRows', blank: () => ({ name: '', role: '', x: '', github: '', linkedin: '', wallet: '' }), html: (r, i) => `<div class="row-ed team-row" data-i="${i}">
       <label><span>Name</span><input data-k="name" value="${esc(r.name)}" maxlength="50"></label><label><span>Role</span><input data-k="role" value="${esc(r.role)}" maxlength="50"></label>
-      <label><span>X</span><input data-k="x" value="${esc(r.x)}" placeholder="https://x.com/"></label><label><span>GitHub</span><input data-k="github" value="${esc(r.github)}" placeholder="https://github.com/"></label>
-      <label><span>LinkedIn</span><input data-k="linkedin" value="${esc(r.linkedin)}" placeholder="https://linkedin.com/in/"></label><label><span>Wallet, optional</span><input data-k="wallet" class="num" value="${esc(r.wallet)}" spellcheck="false"></label>
+      <label><span>X</span><input data-k="x" value="${esc(r.x)}" placeholder="x.com/"></label><label><span>GitHub</span><input data-k="github" value="${esc(r.github)}" placeholder="github.com/"></label>
+      <label><span>LinkedIn</span><input data-k="linkedin" value="${esc(r.linkedin)}" placeholder="linkedin.com/in/"></label><label><span>Wallet, optional</span><input data-k="wallet" class="num" value="${esc(r.wallet)}" spellcheck="false"></label>
       <button type="button" class="x" data-del aria-label="Remove">&times;</button></div>` },
   road: { box: '#roadRows', blank: () => ({ title: '', due: '', status: 'planned', proof: '' }), html: (r, i) => `<div class="row-ed road-row" data-i="${i}">
       <label class="wide"><span>Milestone</span><input data-k="title" value="${esc(r.title)}" maxlength="80"></label><label><span>Due</span><input data-k="due" type="date" value="${esc(r.due)}"></label>
       <label><span>Status</span><select data-k="status">${['planned', 'shipped'].map(k => `<option value="${k}"${r.status === k ? ' selected' : ''}>${k[0].toUpperCase() + k.slice(1)}</option>`).join('')}</select></label>
-      <label class="wide"><span>Proof link, for shipped</span><input data-k="proof" value="${esc(r.proof)}" placeholder="https://"></label>
+      <label class="wide"><span>Proof link, for shipped</span><input data-k="proof" value="${esc(r.proof)}" placeholder="A link"></label>
       <button type="button" class="x" data-del aria-label="Remove">&times;</button></div>` }
 };
 function drawRows(kind) { const R = ROWS[kind]; $(R.box).innerHTML = lf[kind].map(R.html).join(''); }
@@ -149,18 +152,18 @@ const posTxt = k => `${lf.pos[k][0].toFixed(1)}% ${lf.pos[k][1].toFixed(1)}%`;
 function draftProfile(d) {
   const on = lf.on, xl = xAdapter.of();
   const founderWallet = state.wallet ? (state.wallet.pk || walletId()) : null;
-  const team = (on.team ? lf.team : []).filter(m => m.name.trim()).map(m => ({ name: m.name.trim(), role: m.role.trim(), x: m.x.trim() || null, github: m.github.trim() || null, linkedin: m.linkedin.trim() || null, wallet: B58.test(m.wallet.trim()) ? m.wallet.trim() : null, verified: { x: false, github: false, domain: false } }));
+  const team = (on.team ? lf.team : []).filter(m => m.name.trim()).map(m => ({ name: m.name.trim(), role: m.role.trim(), x: fullUrl(m.x), github: fullUrl(m.github), linkedin: fullUrl(m.linkedin), wallet: B58.test(m.wallet.trim()) ? m.wallet.trim() : null, verified: { x: false, github: false, domain: false } }));
   if (team[0] && !team[0].wallet && founderWallet) team[0].wallet = founderWallet;
   return {
     description: $('#fDesc').value.trim(),
-    links: { website: $('#lWebsite').value.trim() || null, x: $('#lX').value.trim() || null, telegram: $('#lTelegram').value.trim() || null, discord: $('#lDiscord').value.trim() || null, github: $('#lGithub').value.trim() || null },
+    links: { website: fullUrl($('#lWebsite').value), x: fullUrl($('#lX').value), telegram: fullUrl($('#lTelegram').value), discord: fullUrl($('#lDiscord').value), github: fullUrl($('#lGithub').value) },
     minBuy: limitQ('min', d), maxBuy: limitQ('max', d), minBuyPct: lf.lim.min.on && lf.lim.min.unit === 'pct' ? numv($('#fMin').value) || 0 : 0, maxBuyPct: lf.lim.max.on && lf.lim.max.unit === 'pct' ? numv($('#fMax').value) || 0 : 0,
     team, founder: { name: team[0] ? team[0].name : xl ? '@' + xl.handle : 'Founder', x: xl ? xUrl(xl.handle) : null, xAgeDays: null, wallet: founderWallet, pastLaunches: [] },
     deck: lf.urls.deck || null, deckKind: lf.files.deck ? deckInfo(lf.files.deck)[0] : null, deckName: lf.files.deck ? lf.files.deck.name : null, banner: lf.urls.banner || null, art: lf.urls.art || null, bannerPos: posTxt('banner'), artPos: posTxt('art'),
     roadmap: [], updates: [], chat: [], watchers: 0
   };
 }
-const draftRoadmap = () => lf.road.filter(r => r.title.trim()).map(r => ({ title: r.title.trim(), dueAt: r.due ? Date.parse(r.due) : Date.now(), status: r.status, proofUrl: r.proof.trim() || null }));
+const draftRoadmap = () => lf.road.filter(r => r.title.trim()).map(r => ({ title: r.title.trim(), dueAt: r.due ? Date.parse(r.due) : Date.now(), status: r.status, proofUrl: fullUrl(r.proof) }));
 /* the X account the founder signed in with, as the raise keeps it; past raises are the ones this account opened on Seed */
 function draftX() {
   const l = xAdapter.of(); if (!l) return { handle: '', verified: false, createdAt: null, followers: 0 };
@@ -216,16 +219,16 @@ function validateFields() {
   (lf.on.team ? lf.team : []).forEach((m, i) => {
     if (!Object.values(m).some(v => String(v).trim())) return;
     if (!m.name.trim()) return err(`#teamRows .row-ed:nth-child(${i + 1})`, 'Every team member needs a name.');
-    if (![m.x, m.github, m.linkedin].every(isUrl)) return err(`#teamRows .row-ed:nth-child(${i + 1})`, `${m.name}: links must start with https://.`);
+    if (![m.x, m.github, m.linkedin].every(isUrl)) return err(`#teamRows .row-ed:nth-child(${i + 1})`, `${m.name}: one of the links does not look like a link.`);
     if (m.wallet.trim() && !B58.test(m.wallet.trim())) err(`#teamRows .row-ed:nth-child(${i + 1})`, `${m.name}: the wallet is not a Solana address.`);
   });
   lf.road.forEach((r, i) => {
     if (!r.title.trim() && !r.due) return;
     if (!r.title.trim()) return err(`#roadRows .row-ed:nth-child(${i + 1})`, 'Every milestone needs a title.');
     if (!r.due) return err(`#roadRows .row-ed:nth-child(${i + 1})`, `${r.title}: add a due date.`);
-    if (r.proof && !isUrl(r.proof)) err(`#roadRows .row-ed:nth-child(${i + 1})`, `${r.title}: the proof link must start with https://.`);
+    if (r.proof && !isUrl(r.proof)) err(`#roadRows .row-ed:nth-child(${i + 1})`, `${r.title}: the proof link does not look like a link.`);
   });
-  for (const sel of ['#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub']) if (!isUrl($(sel).value.trim())) err(sel, 'Links start with https://.');
+  for (const sel of ['#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub']) if (!isUrl($(sel).value.trim())) err(sel, 'That does not look like a link.');
   return out;
 }
 const validateFull = () => { const e = validateFields(); return e.length ? e[0].msg : ''; };
@@ -245,13 +248,24 @@ function showErrors(list) {
 
 /* a field's error goes as soon as it is edited */
 document.addEventListener('input', e => { const box = e.target.closest && e.target.closest('.f, .row-ed'); if (box) $$('.ferr', box).forEach(x => x.remove()); });
-/* a tooltip stays inside the viewport: the bubble is centred on the "?" unless that would clip it */
+/* a tooltip stays in view: the bubble is centred on the "?" unless that would clip it, against the viewport and against
+   every ancestor that clips its overflow (the launch page's scrolling columns cut a bubble that crossed their edge), and it
+   opens below the "?" when there is no room above it inside that box */
 document.addEventListener('pointerover', e => { const t = e.target.closest && e.target.closest('.tip'); if (t) clampTip(t); });
 document.addEventListener('focusin', e => { const t = e.target.closest && e.target.closest('.tip'); if (t) clampTip(t); });
 function clampTip(t) {
-  const r = t.getBoundingClientRect(), w = Math.min(250, innerWidth - 24), cx = r.left + r.width / 2; let tx = 0;
-  if (cx - w / 2 < 12) tx = 12 - (cx - w / 2); else if (cx + w / 2 > innerWidth - 12) tx = innerWidth - 12 - (cx + w / 2);
+  const r = t.getBoundingClientRect(), cs = getComputedStyle(t, '::after');
+  const w = parseFloat(cs.width) || Math.min(250, innerWidth - 24), h = parseFloat(cs.height) || 0;
+  let L = 0, R = innerWidth, T = 0;
+  for (let p = t.parentElement; p && p !== document.body; p = p.parentElement) {
+    const o = getComputedStyle(p);
+    if (!/auto|scroll|hidden|clip/.test(o.overflowX + o.overflowY)) continue;
+    const b = p.getBoundingClientRect(); L = Math.max(L, b.left); R = Math.min(R, b.right); T = Math.max(T, b.top);
+  }
+  const cx = r.left + r.width / 2; let tx = 0;
+  if (cx - w / 2 < L + 12) tx = L + 12 - (cx - w / 2); else if (cx + w / 2 > R - 12) tx = R - 12 - (cx + w / 2);
   t.style.setProperty('--tx', tx + 'px');
+  t.classList.toggle('below', r.top - T < h + 20);
 }
 
 /* ---------------------------------------------------------------- preview and live risk */

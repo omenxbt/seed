@@ -209,6 +209,8 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .tip:hover,.tip:focus-visible{color:var(--navy-deep);border-color:var(--navy)}
 .tip::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(calc(-50% + var(--tx,0px)),4px);width:max-content;max-width:min(250px,calc(100vw - 24px));padding:8px 11px;border-radius:10px;background:var(--raised);border:1px solid var(--hair-2);box-shadow:0 10px 30px rgba(0,0,0,.35);color:var(--ink);font-family:var(--sans);font-size:12.5px;font-weight:400;line-height:1.45;text-align:left;white-space:normal;letter-spacing:0;opacity:0;pointer-events:none;z-index:6;transition:opacity var(--fast) var(--ease-out),transform var(--fast) var(--ease-out)}
 .tip:hover::after,.tip:focus-visible::after{opacity:1;transform:translate(calc(-50% + var(--tx,0px)),0)}
+.tip.below::after{bottom:auto;top:calc(100% + 8px);transform:translate(calc(-50% + var(--tx,0px)),-4px)}   /* no room above the "?": the bubble opens under it */
+.tip.below:hover::after,.tip.below:focus-visible::after{transform:translate(calc(-50% + var(--tx,0px)),0)}
 /* the optional limits: a switch in the label, a line while off, the field and its unit while on */
 .lim .lab{display:flex;align-items:center}.lim .lab label{font:inherit;color:inherit}.lim .lab .switch{margin-left:auto}
 .lim-off{font-size:13px;color:var(--faint);padding:9px 0}
@@ -941,11 +943,11 @@ a.ico:hover{color:var(--ink)}
           <div class="f full lim" data-lim="use"><span class="lab"><label for="fUse">What the token does</label><button type="button" class="switch" role="switch" aria-checked="false" data-lim-toggle="use" aria-label="The token has a use"></button></span>
             <p class="lim-off" data-lim-off>None. Backers are told this is a bet on the team, not on a token that does something.</p>
             <div class="lim-body" data-lim-body hidden><textarea id="fUse" class="ta" rows="2" maxlength="280" placeholder="What the token is for, in a line or two. Backers see this as you wrote it."></textarea></div></div>
-          <div class="f"><label for="lWebsite">Website</label><div class="inp"><input id="lWebsite" placeholder="https://"></div></div>
-          <div class="f"><label for="lX">X</label><div class="inp"><input id="lX" placeholder="https://x.com/project"></div></div>
-          <div class="f"><label for="lTelegram">Telegram</label><div class="inp"><input id="lTelegram" placeholder="https://t.me/project"></div></div>
-          <div class="f"><label for="lDiscord">Discord</label><div class="inp"><input id="lDiscord" placeholder="https://discord.gg/"></div></div>
-          <div class="f full"><label for="lGithub">GitHub</label><div class="inp"><input id="lGithub" placeholder="https://github.com/"></div></div>
+          <div class="f"><label for="lWebsite">Website</label><div class="inp"><input id="lWebsite" placeholder="yourproject.xyz"></div></div>
+          <div class="f"><label for="lX">X</label><div class="inp"><input id="lX" placeholder="x.com/project"></div></div>
+          <div class="f"><label for="lTelegram">Telegram</label><div class="inp"><input id="lTelegram" placeholder="t.me/project"></div></div>
+          <div class="f"><label for="lDiscord">Discord</label><div class="inp"><input id="lDiscord" placeholder="discord.gg/"></div></div>
+          <div class="f full"><label for="lGithub">GitHub</label><div class="inp"><input id="lGithub" placeholder="github.com/"></div></div>
         </div></fieldset>
 
         <fieldset><legend><span class="num">06</span>Payout wallet</legend><div class="form">
