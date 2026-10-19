@@ -16,7 +16,7 @@
     pitch: 4,                  // css px between cells
     dot: 2,                    // css px, the square inside each cell
     color: [0x2E, 0x63, 0xE7], // accent blue, the only hue
-    alpha: [0.24, 0.78],       // the lowest tone step .. the densest cores
+    alpha: [0.24, 0.78],       // the lowest tone step .. the densest cores (index.html's setTheme lowers both for the light theme and redraws)
     levels: 4,                 // tone steps above empty
     speed: 6,                  // css px per second of horizontal drift
     evolve: 25,                // seconds for the noise to change shape (its third axis)

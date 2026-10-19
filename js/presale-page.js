@@ -261,6 +261,12 @@ function lwData(lw, series, p) {
   lw.raiseLine = lw.candles.createPriceLine({ price: priceOf(p) * k, color: cssVar('--navy-soft') || '#5B8CFF', lineWidth: 1, lineStyle: 2, axisLabelVisible: true, title: pg.mode === 'mcap' ? 'Raise MC' : 'Raise price' });
   lw.chart.timeScale().fitContent();
 }
+/* the theme changed under a mounted chart: its axes, grid and text re-read the tokens (the candles' green and red are the same in both) */
+function lwTheme() {
+  if (!pg.lw) return;
+  try { pg.lw.chart.applyOptions({ layout: { textColor: cssVar('--muted') }, grid: { vertLines: { color: cssVar('--hair') }, horzLines: { color: cssVar('--hair') } }, rightPriceScale: { borderColor: cssVar('--hair-2') }, timeScale: { borderColor: cssVar('--hair-2') } });
+    if (pg.lw.raiseLine) pg.lw.raiseLine.applyOptions({ color: cssVar('--navy-soft') }); pg.lw.vol.applyOptions({ color: cssVar('--navy-soft') }); } catch (e) {}
+}
 function lwSet(lw, c, p) { const k = lw.k(); lw.candles.update({ time: Math.floor(c[0] / 1000), open: c[1] * k, high: c[2] * k, low: c[3] * k, close: c[4] * k }); lw.vol.update({ time: Math.floor(c[0] / 1000), value: c[5], color: c[4] >= c[1] ? 'rgba(47,191,122,.45)' : 'rgba(240,85,75,.45)' }); }
 /* the pool's price and depth re-read from its vaults after a trade: the header's Price and Market cap, the card and the
    position's worth all move together, from the same source as on load */
@@ -579,7 +585,7 @@ function unlockSVG(p, W) {
     ${dots.map(([x, y, b]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" style="fill:${today != null && x <= X(today) ? 'var(--navy)' : 'var(--panel-solid)'};stroke:var(--navy)" stroke-width="1.5"/>`).join('')}
     <g font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--muted)"><text x="${pl}" y="${Hh - 8}">${at ? 'Seeded ' + fmtDay(at) : 'Seeding'}</text><text x="${W - pr}" y="${Hh - 8}" text-anchor="end">Day ${last}${at ? ', ' + fmtDay(at + last * D) : ''}</text></g></svg>`;
 }
-const KIND_COL = { presale: '#2E63E7', lp: '#8FB4FF', team: '#D9DCE2', other: '#565B66' };
+const KIND_COL = { presale: '#2E63E7', lp: '#8FB4FF', get team() { return cssVar('--team-col') || '#D9DCE2'; }, other: '#565B66' };   // the team's grey follows the theme (light grey on charcoal, mid grey on white)
 function donutSVG(allocs) {
   const R = 70, C = 2 * Math.PI * R; let acc = 0;
   return `<svg viewBox="0 0 180 180" class="donut" role="img" aria-label="Token allocation">${allocs.map((a, i) => { const len = a.pct / 100 * C, s = `<circle cx="90" cy="90" r="${R}" fill="none" stroke="${a.color || KIND_COL[a.kind] || KIND_COL.other}" stroke-width="26" stroke-dasharray="${Math.max(0, len - 1.5).toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}" transform="rotate(-90 90 90)"/>`; acc += len; return s; }).join('')}
