@@ -17,17 +17,9 @@
   --glow-sm:0 0 14px -4px rgba(46,99,231,.7);
   --lit:inset 0 1px 0 rgba(255,255,255,.14);                          /* the highlight along the top edge of anything raised */
 }
-:root[data-theme="light"]{
-  --well:#E9EBF0;
-  --grad-seg:linear-gradient(180deg,rgba(91,140,255,.22),rgba(46,99,231,.12));
-  --seg-line:rgba(46,99,231,.4);
-  --glow:0 0 0 1px rgba(46,99,231,.25),0 10px 28px -10px rgba(46,99,231,.5);
-  --glow-sm:0 0 14px -4px rgba(46,99,231,.4);
-  --lit:inset 0 1px 0 rgba(255,255,255,.7);
-}
 
 /* ------------------------------------------------------------------ cards */
-.panel,.lane,.tile,.lrow,.toc,.doc-hero,.prose,.aside,.pop,.sheet{box-shadow:inset 0 1px 0 var(--lit-line)}
+.panel,.lane,.tile,.lrow,.toc,.doc-hero,.prose,.aside,.pop,.sheet{box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
 .panel,.tile{border-radius:16px}
 
 /* ---------------------------------------------------------------- buttons */
@@ -48,10 +40,6 @@
 .ibtn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .ibtn:hover,.appbar .bell:hover,.appbar .bell.on{color:var(--ink);background:var(--mist);border-color:var(--hair-2)}
 .ibtn.busy svg{animation:spin .9s linear infinite}
-/* the theme button: a moon on charcoal (press for light), a sun on white (press for charcoal); one in each app bar, one at the rail's foot */
-.theme .sun{display:none}
-:root[data-theme="light"] .theme .moon{display:none}
-:root[data-theme="light"] .theme .sun{display:block}
 @keyframes spin{to{transform:rotate(360deg)}}
 .trend-nav .x{width:32px;height:32px;font-size:20px;padding-bottom:2px}
 
@@ -60,13 +48,13 @@
 .seg{padding:3px;border-radius:12px;background:var(--well);border:1px solid var(--hair)}
 .seg .seg-ind{top:3px;bottom:3px;border-radius:9px;background:var(--grad-seg);border:1px solid var(--seg-line);box-shadow:var(--lit),var(--glow-sm)}
 .seg button{border-radius:9px;color:var(--muted)}
-.seg button[aria-pressed="true"]{color:var(--seg-ink)}
+.seg button[aria-pressed="true"]{color:#fff}
 .seg-sm{padding:3px;border-radius:10px}.seg-sm .seg-ind{top:3px;bottom:3px;border-radius:7px}
 .appbar .tabs{border:0;background:none;padding:0}
 .appbar .tabs .seg-ind{top:0;bottom:0;border-radius:999px}
 :is(.pp,.ws) .mini-seg,.mini-seg{padding:3px;border:1px solid var(--hair);border-radius:12px;background:var(--well)}
 .mini-seg button{border-radius:9px}
-.mini-seg button[aria-pressed="true"],.feed-tabs button[aria-selected="true"],.tf-pills button[aria-pressed="true"],.mode-seg button[aria-pressed="true"],.toc a.on{background:var(--grad-seg);color:var(--seg-ink);border:1px solid var(--seg-line);box-shadow:var(--lit),var(--glow-sm)}
+.mini-seg button[aria-pressed="true"],.feed-tabs button[aria-selected="true"],.tf-pills button[aria-pressed="true"],.mode-seg button[aria-pressed="true"],.toc a.on{background:var(--grad-seg);color:#fff;border:1px solid var(--seg-line);box-shadow:var(--lit),var(--glow-sm)}
 .side-seg button[data-v="buy"][aria-pressed="true"]{background:var(--ok-bg);color:var(--ok-ink);border-color:var(--ok-line);box-shadow:var(--lit)}
 .side-seg button[data-v="sell"][aria-pressed="true"]{background:var(--bad-bg);color:var(--bad-ink);border-color:color-mix(in srgb,var(--bad) 40%,transparent);box-shadow:var(--lit)}
 .feed-tabs{gap:3px;padding:3px;border-radius:12px;background:var(--well);border:1px solid var(--hair)}
@@ -78,7 +66,7 @@
 .inp,.mini{background:var(--well);border-color:var(--hair);border-radius:12px}
 .inp:focus-within,.mini:focus-within{border-color:var(--seg-line);box-shadow:0 0 0 4px var(--ring),var(--glow-sm)}
 .rail-card .rail-lab,.rail-card .trade-top .rail-lab{color:var(--navy-deep);font-weight:500}
-:is(.pp,.ws) .rail-card .inp .suf{background:var(--grad-seg);border:1px solid var(--seg-line);color:var(--seg-ink);box-shadow:var(--lit)}
+:is(.pp,.ws) .rail-card .inp .suf{background:var(--grad-seg);border:1px solid var(--seg-line);color:#fff;box-shadow:var(--lit)}
 .rail-card .btn-block{height:48px;font-size:14.5px;border-radius:14px}
 .lsubmit .btn-block{height:48px;border-radius:14px}
 .switch[aria-checked="true"]{background:var(--grad-btn);box-shadow:var(--lit)}
@@ -94,7 +82,7 @@
   .rail-nav .rn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
   .rail-nav .rn svg.fill{fill:currentColor;stroke:none;width:17px;height:17px}
   .rail-nav .rn:hover{color:var(--ink);background:var(--mist)}
-  .rail-nav .rn[aria-current="page"]{color:var(--seg-ink);background:var(--grad-seg);border-color:var(--seg-line);box-shadow:var(--lit),var(--glow-sm)}
+  .rail-nav .rn[aria-current="page"]{color:#fff;background:var(--grad-seg);border-color:var(--seg-line);box-shadow:var(--lit),var(--glow-sm)}
   .rail-nav .rn.off{opacity:.38;cursor:not-allowed}
   .rail-nav .rn .ct{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--navy);color:#fff;font-size:10.5px;line-height:16px;text-align:center}
   .rail-nav .rn .ct:empty{display:none}
@@ -122,7 +110,7 @@
 .appbar .mini.search input{width:100%;font-size:14px}
 .appbar .mini.search svg{width:16px;height:16px;stroke:var(--navy-deep)}
 .statchips{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}
-.statchip{flex:none;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;background:var(--chip);border:1px solid var(--hair);font-size:13px;color:var(--ink-2);white-space:nowrap;box-shadow:inset 0 1px 0 var(--lit-line)}
+.statchip{flex:none;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:10px;background:var(--chip);border:1px solid var(--hair);font-size:13px;color:var(--ink-2);white-space:nowrap;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
 .statchip svg{width:15px;height:15px;fill:none;stroke:var(--navy-deep);stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .statchip svg.fill{fill:var(--navy-deep);stroke:none}   /* the Solana mark: three slanted bars, filled */
 .statchip b{font-weight:500;font-family:var(--mono);letter-spacing:-.03em;color:var(--ink)}
@@ -149,7 +137,7 @@
 .hero-acts .btn{height:40px;padding:0 20px;font-size:13.5px}
 .featured{position:relative;overflow:hidden;padding:22px 24px;display:flex;flex-direction:column;gap:16px;color:inherit;transition:border-color var(--fast) var(--ease-out)}
 .featured:hover{border-color:var(--hair-2)}
-.ft-bg{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(var(--dotgrid) 1px,transparent 1px);background-size:14px 14px;-webkit-mask-image:linear-gradient(90deg,transparent 30%,#000 75%);mask-image:linear-gradient(90deg,transparent 30%,#000 75%)}
+.ft-bg{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px);background-size:14px 14px;-webkit-mask-image:linear-gradient(90deg,transparent 30%,#000 75%);mask-image:linear-gradient(90deg,transparent 30%,#000 75%)}
 .ft-area{position:absolute;right:0;bottom:0;width:44%;height:66%;pointer-events:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 45%);mask-image:linear-gradient(90deg,transparent,#000 45%)}
 .ft-chips{display:flex;gap:6px;align-items:center}
 .ft-area svg{display:block;width:100%;height:100%;overflow:visible}
@@ -215,13 +203,13 @@
 .chg.up{color:var(--ok-ink)}.chg.down{color:var(--bad-ink)}.chg.quiet{color:var(--muted)}
 .chg em{font-style:normal;font-size:11.5px;color:var(--faint);margin-left:2px}
 /* a numbered badge and a chevron, the way Delta ranks rows */
-.rank-badge{flex:none;display:inline-grid;place-items:center;min-width:30px;height:22px;padding:0 8px;border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--seg-ink);background:var(--grad-seg);border:1px solid var(--seg-line);box-shadow:var(--lit)}
-.chev{display:inline-grid;place-items:center;width:38px;height:26px;border-radius:8px;background:var(--grad-seg);border:1px solid var(--seg-line);color:var(--seg-ink);box-shadow:var(--lit)}
+.rank-badge{flex:none;display:inline-grid;place-items:center;min-width:30px;height:22px;padding:0 8px;border-radius:7px;font-family:var(--mono);font-size:12px;color:#fff;background:var(--grad-seg);border:1px solid var(--seg-line);box-shadow:var(--lit)}
+.chev{display:inline-grid;place-items:center;width:38px;height:26px;border-radius:8px;background:var(--grad-seg);border:1px solid var(--seg-line);color:#fff;box-shadow:var(--lit)}
 .chev svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 /* a barcode strip: thin bars, lit up to the share they stand for */
 .strip{position:relative;display:inline-block;width:100%;max-width:150px;height:18px;border-radius:2px;background:repeating-linear-gradient(90deg,var(--hair-2) 0 2px,transparent 2px 5px);vertical-align:middle;overflow:hidden}
 .strip i{position:absolute;left:0;top:0;bottom:0;display:block;background:repeating-linear-gradient(90deg,var(--navy-deep) 0 2px,transparent 2px 5px);transition:width .6s var(--ease-out)}
-.strip i::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,var(--sheen),transparent 60%);mix-blend-mode:overlay}
+.strip i::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.18),transparent 60%);mix-blend-mode:overlay}
 .seeded .strip i{background:repeating-linear-gradient(90deg,var(--ok) 0 2px,transparent 2px 5px)}
 .refunded .strip i{background:repeating-linear-gradient(90deg,var(--faint) 0 2px,transparent 2px 5px)}
 .dtable .strip{max-width:110px;height:14px;margin-left:10px}
@@ -232,7 +220,7 @@
 @media (max-width:1180px){.trow .c-raised em{display:none}}   /* the bar says how far along it is */
 
 /* the Trending row keeps its tiles, with Delta's rank badge */
-.tile .tr-rank{left:8px;top:8px;height:22px;min-width:30px;border-radius:7px;background:var(--grad-seg);border:1px solid var(--seg-line);box-shadow:var(--lit);color:var(--seg-ink);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.tile .tr-rank{left:8px;top:8px;height:22px;min-width:30px;border-radius:7px;background:var(--grad-seg);border:1px solid var(--seg-line);box-shadow:var(--lit);color:#fff;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .tile .tr-pct{height:22px;border-radius:7px}
 
 /* -------------------------------------------------------- the raise page */
@@ -280,7 +268,7 @@
 .sum{border-radius:0;border:0;background:var(--well);-webkit-backdrop-filter:none;backdrop-filter:none}
 /* the rail's cards: the deposit, the swap and the position */
 .rail-card .recv{padding:10px 12px;border-radius:10px;background:var(--well);border:1px solid var(--hair)}
-.seed-steps li.now .num,.steps .num{background:var(--grad-seg);border:1px solid var(--seg-line);color:var(--seg-ink);box-shadow:var(--lit)}
+.seed-steps li.now .num,.steps .num{background:var(--grad-seg);border:1px solid var(--seg-line);color:#fff;box-shadow:var(--lit)}
 
 /* ---------------------------------------------------------------- docs */
 .toc a.on{font-weight:500}

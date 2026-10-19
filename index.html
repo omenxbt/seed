@@ -3,11 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="dark light">
+<meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#16171A">
-<!-- the theme, before anything paints: charcoal unless this browser chose light (seed.theme). The button in the app bar flips it;
-     index.html's setTheme() keeps the dot field, the chart and this meta in step. -->
-<script>(function(){try{var t=localStorage.getItem('seed.theme');if(t==='light'){document.documentElement.dataset.theme='light';document.querySelector('meta[name=theme-color]').content='#EEF0F4'}}catch(e){}})()</script>
 <title>Seed</title>
 <meta name="description" content="Seeded in full, or refunded in full. A launchpad for raises on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL or USDC. If it misses its target by the deadline, every wallet gets back what it paid.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='42.00' cy='56.70' r='6.91' fill='%232E63E7'/%3E%3Ccircle cx='50.27' cy='36.69' r='6.74' fill='%2352668F'/%3E%3Ccircle cx='59.20' cy='63.42' r='6.57' fill='%2352668F'/%3E%3Ccircle cx='30.17' cy='46.87' r='6.39' fill='%2352668F'/%3E%3Ccircle cx='67.19' cy='38.70' r='6.22' fill='%2352668F'/%3E%3Ccircle cx='42.97' cy='72.93' r='6.05' fill='%2352668F'/%3E%3Ccircle cx='37.37' cy='27.67' r='5.88' fill='%2352668F'/%3E%3Ccircle cx='74.59' cy='59.53' r='5.70' fill='%2352668F'/%3E%3Ccircle cx='22.45' cy='61.21' r='5.53' fill='%2352668F'/%3E%3Ccircle cx='61.95' cy='22.72' r='5.36' fill='%2352668F'/%3E%3Ccircle cx='58.61' cy='80.60' r='5.18' fill='%2352668F'/%3E%3Ccircle cx='20.30' cy='33.54' r='5.01' fill='%2352668F'/%3E%3Ccircle cx='82.89' cy='42.79' r='4.84' fill='%2352668F'/%3E%3Ccircle cx='28.42' cy='79.61' r='4.67' fill='%2352668F'/%3E%3Ccircle cx='44.30' cy='13.34' r='4.49' fill='%2352668F'/%3E%3Ccircle cx='78.45' cy='74.97' r='4.32' fill='%2352668F'/%3E%3Ccircle cx='9.52' cy='51.85' r='4.15' fill='%2352668F'/%3E%3Ccircle cx='77.95' cy='21.48' r='3.98' fill='%2352668F'/%3E%3Ccircle cx='47.15' cy='92.03' r='3.80' fill='%2352668F'/%3E%3Ccircle cx='21.57' cy='17.25' r='3.63' fill='%2352668F'/%3E%3Ccircle cx='92.69' cy='56.09' r='3.46' fill='%2352668F'/%3E%3C/svg%3E">
@@ -49,39 +46,8 @@
   --ease:var(--ease-out); --out:var(--ease-out); --soft:var(--ease-out);
   /* how far along a raise is: red, through yellow, to green at the target */
   --progress:linear-gradient(90deg,#F2554C,#F6C445 50%,#34C17B);
-  /* light-over-dark details that flip with the theme: the highlight along a raised edge, the loading shimmer, the dot grid behind
-     the featured card, the sheen on a fill strip, the starred star, the KOL tag, the team's swatch in the allocation chart */
-  --lit-line:rgba(255,255,255,.045); --shimmer:rgba(255,255,255,.05); --dotgrid:rgba(255,255,255,.07); --sheen:rgba(255,255,255,.18);
-  --star:#F5C542; --kol:#D2BBFF; --kol-bg:rgba(180,140,255,.18); --team-col:#D9DCE2;
-  --seg-ink:#fff;   /* text on a chosen segment, a rank badge, the lit rail icon (their blue tint is translucent, so it follows the theme) */
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
-}
-/* light: the same neutral greys turned over (a cool off-white page, white panels, slightly darker wells), the same brand blue for
-   fills, and every accent, state and text tint darkened so it keeps its contrast on white. Chosen with html[data-theme=light],
-   which the head script sets before paint from seed.theme. */
-:root[data-theme="light"]{
-  color-scheme:light;
-  --bg:#EEF0F4;
-  --paper:#FFFFFF; --card:#FFFFFF; --raised:#F6F7FA; --chip:rgba(17,19,24,.05); --mist:rgba(17,19,24,.07); --hover:rgba(17,19,24,.035);
-  --panel:rgba(255,255,255,.64); --panel-solid:#FFFFFF; --bar:rgba(238,240,244,.84);
-  --panel-line:rgba(17,19,24,.1);
-  --scrim:rgba(20,22,28,.45);
-  --ink:#15171C; --ink-2:#2E3240; --muted:#5F6673; --faint:#7B8290;
-  --navy:#2558D6; --navy-deep:#1E4FC9; --navy-soft:#8FA7D8; --navy-wash:rgba(46,99,231,.12);
-  --solid:#2E63E7; --solid-hover:#2558D6; --accent:#2E63E7; --accent-hover:#2558D6;
-  --pill:rgba(46,99,231,.12); --pill-hover:rgba(46,99,231,.2);
-  --hair:rgba(17,19,24,.09); --hair-2:rgba(17,19,24,.17); --ring:rgba(46,99,231,.3); --err:#D23B52;
-  --warn:#B87A10; --warn-line:rgba(184,122,16,.4); --warn-bg:rgba(232,180,92,.16); --warn-ink:#8A5A08; --warn-ink-2:#7A5410; --warn-strong:#6B4600;
-  --ok:#1E9E62; --ok-ink:#157A4B; --ok-bg:rgba(30,158,98,.12); --ok-line:rgba(30,158,98,.35);
-  --caution:#C08A12; --caution-ink:#8F6508; --caution-bg:rgba(243,188,88,.18);
-  --bad:#DC4B41; --bad-ink:#B8372E; --bad-bg:rgba(220,75,65,.12);
-  --tile:rgba(17,19,24,.035); --field:#FFFFFF;
-  --lift:0 14px 40px -16px rgba(20,22,28,.22);
-  --sh-ind:rgba(20,22,28,.18); --sh-pop:rgba(20,22,28,.25); --sh-sheet:rgba(20,22,28,.3); --sh-toast:rgba(20,22,28,.25);
-  --lit-line:rgba(255,255,255,.7); --shimmer:rgba(17,19,24,.04); --dotgrid:rgba(17,19,24,.09); --sheen:rgba(255,255,255,.45);
-  --star:#D99A00; --kol:#6A3FC9; --kol-bg:rgba(140,100,230,.14); --team-col:#6B7280;
-  --seg-ink:#1E4FC9;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 /* no native scrollbars, on the page or on any panel. Everything still scrolls by wheel, touch and keyboard. */
@@ -164,7 +130,7 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
 .rs{display:inline-block;line-height:1}
 /* a loading line shimmers until its data lands */
 .pp-loading{position:relative;overflow:hidden}
-.pp-loading::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,var(--shimmer) 50%,transparent 70%);transform:translateX(-100%);animation:shimmer 1.6s var(--ease-out) infinite}
+.pp-loading::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 30%,rgba(255,255,255,.05) 50%,transparent 70%);transform:translateX(-100%);animation:shimmer 1.6s var(--ease-out) infinite}
 @keyframes shimmer{to{transform:translateX(100%)}}
 /* segmented control: a dark well, a lighter block slides under the chosen segment */
 .seg{position:relative;display:inline-flex;padding:4px;border-radius:12px;background:var(--paper)}
@@ -203,7 +169,7 @@ h2 i{display:block;font-family:var(--serif);font-weight:400;letter-spacing:-.02e
    A buy landing ticks the row: a quick sheen and the percentage pops. */
 .fresh .bar i{animation:barIn 1.2s var(--out) both;animation-delay:calc(var(--i,0)*70ms)}
 @keyframes barIn{from{width:0}}
-.live .bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--sheen),transparent);transform:translateX(-100%);animation:sheen 3.2s ease-in-out infinite;animation-delay:calc(var(--i,0)*.4s)}
+.live .bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);transform:translateX(-100%);animation:sheen 3.2s ease-in-out infinite;animation-delay:calc(var(--i,0)*.4s)}
 @keyframes sheen{0%,55%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 .bump .bar i::after{animation:tick .9s ease-out 1}
 @keyframes tick{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
@@ -508,7 +474,7 @@ a.ico:hover{color:var(--ink)}
 .lr-chips{display:flex;flex-wrap:wrap;gap:4px}.lr-chips>*{white-space:nowrap}.lr-chips .risk-chip,.lr-chips .pace-chip,.lr-chips .xv-chip,.lr-chips .demo-chip{font-size:10.5px;padding:1px 7px}
 .lr-fig{display:flex;flex-direction:column;align-items:flex-end;gap:3px;font-size:11px;color:var(--muted);min-width:76px;white-space:nowrap}.lr-fig b{font-size:14px;color:var(--ink)}.lr-fig .bar{width:76px;height:4px;border-radius:2px;background:var(--hair);overflow:hidden;display:block}.lr-fig .bar i{display:block;height:100%;background:var(--navy);border-radius:2px}
 .star{position:absolute;top:8px;left:8px;z-index:2;width:26px;height:26px;border-radius:8px;border:0;background:transparent;color:var(--faint);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
-.star svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}.star:hover{color:var(--ink);background:var(--hair)}.star.on{color:var(--star)}.star.on svg{fill:var(--star)}
+.star svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linejoin:round}.star:hover{color:var(--ink);background:var(--hair)}.star.on{color:#F5C542}.star.on svg{fill:#F5C542}
 #watchBtn.on{background:var(--hair);color:var(--ink)}
 .col-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 4px 16px}
 .col-side{display:flex;align-items:center;gap:12px;min-width:0}
@@ -814,7 +780,6 @@ a.ico:hover{color:var(--ink)}
     <a class="rn" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
     <span class="rn off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span>
     <a class="rn" href="#/docs" data-rn="docs" aria-label="Docs" title="Docs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8.5L19 8v12.5H6z"/><path d="M14 3.5V8.5h5M9 12.5h7M9 16h7"/></svg></a>
-    <button type="button" class="rn theme" data-theme-toggle aria-label="Switch to light mode" title="Light mode"><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg></button>
   </span>
 </nav>
 
@@ -836,7 +801,6 @@ a.ico:hover{color:var(--ink)}
     <button type="button" class="ibtn" id="refreshBtn" aria-label="Refresh the board" title="Refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/></svg></button>
     <span class="icons"><a class="ico" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><span class="ico off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span><a class="ico" href="#/docs" aria-label="Docs" title="Docs"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8.5L19 8v12.5H6z"/><path d="M14 3.5V8.5h5M9 12.5h7M9 16h7"/></svg></a></span>
     <a class="textlink" href="#/docs">Docs</a>
-    <button type="button" class="ibtn theme" data-theme-toggle aria-label="Switch to light mode" title="Light mode"><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg></button>
     <span class="bell-wrap"><button type="button" class="ico bell" id="bellBtn" aria-haspopup="true" aria-expanded="false" aria-label="Alerts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM9.5 20a2.5 2.5 0 0 0 5 0"/></svg><span class="ct num" id="bellCt" hidden></span></button><div class="pop bell-pop" id="bellPop" hidden></div></span>
     <button class="btn btn-ink" id="walletBtn" aria-haspopup="true" aria-expanded="false">Connect wallet</button>
     <div class="pop" id="walletPop" role="menu">
@@ -1062,7 +1026,7 @@ a.ico:hover{color:var(--ink)}
 <header class="appbar">
   <a href="#" class="brand" aria-label="Seed home"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>Seed <small>docs</small></a>
   <span></span>
-  <div class="right"><span class="icons"><a class="ico" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><span class="ico off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span></span><a class="textlink" href="#">Terminal</a><button type="button" class="ibtn theme" data-theme-toggle aria-label="Switch to light mode" title="Light mode"><svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg><svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/></svg></button></div>
+  <div class="right"><span class="icons"><a class="ico" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><span class="ico off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span></span><a class="textlink" href="#">Terminal</a></div>
 </header>
 <div class="docs">
   <nav class="toc" id="toc" aria-label="Docs sections"></nav>
@@ -1385,7 +1349,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-terminal" data-t="Reading the terminal">
       <div class="prose">
         <h2>Reading the terminal</h2>
-        <p>The terminal lists every live and seeded raise, paired with SOL or USDC, as one ranked table. <b>All</b> is every live and seeded raise; the other tabs cut it by stage: <b>New ideas</b> (under 50% filled), <b>Seeding</b> (half full to seeded), <b>Seeded</b> (trading) and <b>Refunded</b>, which sits apart because those raises are over. Above the table, the featured card follows the most active raise and Trending shows the eight most active, whatever the filters say. The sun-and-moon button in the app bar (and at the foot of the rail) switches the whole site between charcoal and light; the choice is kept in this browser and followed by every open tab. Each row carries the numbers needed to judge a raise at a glance; on a phone the same raises are cards.</p>
+        <p>The terminal lists every live and seeded raise, paired with SOL or USDC, as one ranked table. <b>All</b> is every live and seeded raise; the other tabs cut it by stage: <b>New ideas</b> (under 50% filled), <b>Seeding</b> (half full to seeded), <b>Seeded</b> (trading) and <b>Refunded</b>, which sits apart because those raises are over. Above the table, the featured card follows the most active raise and Trending shows the eight most active, whatever the filters say. Each row carries the numbers needed to judge a raise at a glance; on a phone the same raises are cards.</p>
         <ul>
           <li><b>Market cap</b> is in dollars: the pool's price over the whole supply on a seeded raise, at today's SOL price; on a live raise, the market cap it will open at. Hover it for the figure in SOL.</li>
           <li><b>Change</b> is the pool's price against the raise price on a seeded raise. On a live raise it is the share of the target gained in the last six hours (<b>+10% 6h</b>), or Quiet when nothing came in; a filled raise reads Seeding while its pool is being made.</li>
@@ -2641,7 +2605,6 @@ function boot() {
   });
   $('#qbAmt').addEventListener('input', e => { const n = parseFloat(e.target.value.replace(/,/g, '')); if (n > 0) { state.quick[ui.qbAsset] = r6(n); save(); state.presales.forEach(p => p.status === 'live' && patchRows(p)); } });
   syncQuickUI();
-  initTheme();
   initDocs(); renderPreview(); tick(true); renderAll(); route(); booted = true; watchTrades();
   resume().then(() => xAdapter.finish()).then(() => chain.init()).then(ok => ok && chain.loadLive()).then(got => { if (got) { save(); renderAll(); if (detailBox) renderDetail(true); } if (typeof chain !== 'undefined' && chain.on()) chain.watchRaises(() => { save(); renderAll(); if (detailBox) renderDetail(true); }); });   // back from an X sign-in, the link is made once the wallet is back; then the live raises
   setInterval(() => tick(), 1000); setInterval(simulate, 3600);
@@ -2652,27 +2615,6 @@ function boot() {
    which would let a stale tab overwrite a buy made in another. So a tab takes on whatever another tab saves. If you are mid-amount,
    the page is patched rather than rebuilt so the field keeps its focus and what you typed. Another tab saves every second, so
    this can fire while the adapters' scripts are still loading: nothing to take on before boot has run. */
-/* ---------------------------------------------------------------- the theme */
-/* charcoal or light. The head script applied the saved choice before paint; this flips it, keeps the dot field's alpha, the live
-   chart's axes and the browser's theme-color in step, labels the buttons for the other mode and saves it (seed.theme) for the next
-   visit and for the other tabs, which follow over the storage event. */
-const THEME_KEY = 'seed.theme', DOT_ALPHA = { dark: [0.24, 0.78], light: [0.14, 0.45] }, THEME_BG = { dark: '#16171A', light: '#EEF0F4' };
-const themeNow = () => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
-function setTheme(t, persist = true) {
-  if (t === 'light') document.documentElement.dataset.theme = 'light'; else delete document.documentElement.dataset.theme;
-  const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = THEME_BG[t];
-  const other = t === 'light' ? 'dark' : 'light';
-  $$('[data-theme-toggle]').forEach(b => { b.setAttribute('aria-label', `Switch to ${other} mode`); b.title = other === 'dark' ? 'Dark mode' : 'Light mode'; });
-  if (window.BG_DITHER) { BG_DITHER.config.alpha = DOT_ALPHA[t].slice(); try { BG_DITHER.redraw(); } catch (e) {} }
-  if (typeof lwTheme === 'function') lwTheme();
-  if (persist) try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
-}
-function initTheme() {
-  setTheme(themeNow(), false);
-  $$('[data-theme-toggle]').forEach(b => b.addEventListener('click', () => setTheme(themeNow() === 'light' ? 'dark' : 'light')));
-  addEventListener('storage', e => { if (e.key === THEME_KEY) { const t = e.newValue === 'light' ? 'light' : 'dark'; if (t !== themeNow()) setTheme(t, false); } });
-}
-
 let booted = false;
 addEventListener('storage', e => {
   if (e.key !== KEY || busy || !booted) return;
