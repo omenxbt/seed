@@ -39,7 +39,7 @@ Admin and program
 Treasuries, voting, follow-on raises or reserves, bonding curves, launches without a presale, perps or leverage, custodial wallets, bots that trade without the user's signature, KYC or required X, warnings on founder terms, fake or demo data on real raises, and anything that changes "What Seed is." Copy patterns from Axiom and GMGN, never their branding, logos, names or text.
 
 ## Brand
-Dark UI, Instrument Sans + Instrument Serif italic + JetBrains Mono, accent #2E63E7, the existing Seed logo. Redesign layouts if it's better, and write why in DECISIONS.md.
+Dark UI, Instrument Sans + Instrument Serif italic + IBM Plex Mono, accent #2E63E7, the existing Seed logo. Redesign layouts if it's better, and write why in DECISIONS.md.
 
 ## Target feature set (reference: Axiom Pulse and token pages, GMGN token pages and wallet tools)
 1. Terminal: live columns (New raises / Filling fast / Almost full / Seeding / Seeded & trading). Cards show ticker, fill %, time left, backers, price, Verified X and safety chips. Filters (including Verified X only), sort, search by name, ticker, CA or X handle, and a watchlist.
