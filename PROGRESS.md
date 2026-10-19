@@ -1,3 +1,9 @@
+# Status report (2026-10-19, Josh's polish asks; seed-qa pass #23)
+
+- **`main` = `final-model` = 57128b2**, live. seed-qa's full pass #23 on 36e7fb0 was clean (four in a row with #20–#22): every page at 1440 and 390, a full devnet cycle with the QA keys (QAP23 launch → fill → mint → pool → seed → claim, three swaps, a fee crank split 70/30 to the lamport, a cancel and a miss both refunded). Two P2s, both fixed in 57128b2 (the Portfolio's best and worst day coloured by their own sign; LOOP.md's font line).
+- **Josh's asks this round:** the hero's large Seed mark came out of the Terminal panel (0a51de3); the stat chips carry a coins icon on "raised" and the Solana mark on the SOL price; **IBM Plex Mono replaces JetBrains Mono** everywhere, site and brand kit, the kit regenerated (d015212); **light mode was built (3046afd) and removed the same day on Josh's word (36e7fb0)** — the site is charcoal only, nothing of it remains in the CSS or the JS.
+- **Devnet:** the deployer is at 3.65 SOL after seed-qa's QALT23 test raise (missed, refunded). No program change this round.
+
 # Status report (2026-10-18, the minimum raise)
 
 - **Minimum raise = 81 SOL (Josh's decision):** the size a pump.fun curve collects before it graduates, so the smallest Seed pool opens where those tokens migrate; a bigger target opens at a proportionally higher market cap, and a USDC raise meets the same dollars at the SOL price when it opens. In the program as `MIN_TARGET_LAMPORTS` (0.05 SOL in test mode, so devnet cycles stay cheap) with the `UnderFloor` error; on the site in the Launch form's validation and hint (the chain's config decides which floor applies), the docs and the parameters table. Chosen as a constant rather than a Config field so the devnet program could be upgraded in place with no Config reset (the config's admin is Josh's wallet, not the deployer) and no gap on the live site.
