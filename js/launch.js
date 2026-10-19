@@ -180,7 +180,7 @@ function modelFields(d, da) {
 function draftPresale() {
   const d = readDraft(), da = draftAsset(), now = Date.now();
   return Object.assign({ id: 'draft', name: d.name || 'Your project', ticker: d.ticker || 'TICKER', q: da.key || 'SOL', target: isFinite(d.target) && d.target > 0 ? d.target : 0, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H,
-    status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [], profile: draftProfile(d) }, modelFields(d, da));
+    status: 'live', resolvedAt: null, mine: true, creator: walletId(), live: isReal(), hist: [[now, 0]], buys: [], profile: draftProfile(d) }, modelFields(d, da));   // live follows the wallet connected now: a real wallet's draft is never a demo raise
 }
 
 /* ---------------------------------------------------------------- validation */
@@ -340,7 +340,9 @@ async function openPresale() {
       if (supa.configured()) { b.textContent = `Uploading ${k}…`; profile[k] = await supa.upload(f); } else profile[k] = URL.createObjectURL(f); }
     if (supa.configured() && lf.files.deck) { b.textContent = 'Uploading deck…'; profile.deck = await supa.upload(lf.files.deck); }
     if (da.custom) state.custom[da.key] = da.a;
-    const p = Object.assign({ id, name: d.name, ticker: d.ticker, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, mine: true, creator: walletId(), hist: [[now, 0]], buys: [], profile }, modelFields(d, da));
+    /* the wallet is read again here, at submit: a draft written under the demo wallet opens on the chain when a real wallet is
+       connected now, and the other way round; the adapter decides by the wallet, not by anything the draft carries */
+    const p = Object.assign({ id, name: d.name, ticker: d.ticker, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, mine: true, creator: walletId(), live: isReal(), hist: [[now, 0]], buys: [], profile }, modelFields(d, da));
     /* the token's metadata JSON goes to permanent storage before the raise opens; the program fixes its address at opening and
        the mint step writes it into immutable Token Metadata, so the name, symbol and image can never change afterwards */
     if (isReal()) { b.textContent = 'Uploading token metadata…'; p.metadataUri = await uploadTokenJson(p, profile); }

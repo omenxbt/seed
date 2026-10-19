@@ -367,18 +367,21 @@ function hexBytes(h) { const out = new Uint8Array(h.length / 2); for (let i = 0;
 (function wire() {
   if (!chain.on()) return;
   /* a demo raise is the demo's whatever wallet is connected: its own steps run in the demo adapter, and a real wallet is
-     told it cannot act on one (its balances are the chain's, so a simulated buy would only corrupt what it shows) */
+     told it cannot act on one (its balances are the chain's, so a simulated buy would only corrupt what it shows).
+     onDemo: 'refuse' (the default) throws for a real wallet; 'run' lets the demo adapter run the raise's own steps;
+     'new' means the object is a draft being opened, which is the connected wallet's and never a demo raise — a real
+     wallet's draft goes to the chain whatever it carries (its live flag is set only once the raise exists there) */
   const isDemoRaise = p => !!(p && typeof p === 'object' && p.id && !p.live && p.status);
-  const live = (name, fn, demoOk) => { const demo = adapter[name]; adapter[name] = function (p) {
+  const live = (name, fn, onDemo = 'refuse') => { const demo = adapter[name]; adapter[name] = function (p) {
     if (!isReal()) return demo.apply(adapter, arguments);
-    if (isDemoRaise(p)) { if (demoOk) return demo.apply(adapter, arguments); throw new Error('This is a demo raise. A real wallet acts on live raises; switch to the demo wallet to try this one.'); }
+    if (onDemo !== 'new' && isDemoRaise(p)) { if (onDemo === 'run') return demo.apply(adapter, arguments); throw new Error('This is a demo raise. A real wallet acts on live raises; switch to the demo wallet to try this one.'); }
     return fn.apply(chain, arguments); }; };
-  live('openPresale', p => chain.openRaise(p));
+  live('openPresale', p => chain.openRaise(p), 'new');
   live('contribute', (p, pay) => chain.contribute(p, pay));
   live('claimRefund', p => chain.claimRefund(p));
   live('claimTokens', p => chain.claimTokens(p));
   live('cancelRaise', p => chain.cancelRaise(p));
-  live('seedStep', (p, step) => chain.seedStep(p, step), true);   // a demo raise seeds itself, whoever is connected
+  live('seedStep', (p, step) => chain.seedStep(p, step), 'run');   // a demo raise seeds itself, whoever is connected
   live('claimFees', p => chain.claimFees(p));
   live('claimVested', p => chain.claimVested(p));
   live('requestPayoutChange', (p, to) => chain.requestPayoutChange(p, to));
