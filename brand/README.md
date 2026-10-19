@@ -26,7 +26,7 @@ The wordmark in the lockups is Instrument Sans 600 at −3% tracking, converted 
 All five keep the lower-left clear for X's avatar. Edit the copy or figures in the HTML and re-render.
 
 ## fonts/
-Instrument Sans (variable), Instrument Serif, JetBrains Mono — the site's three families from Google Fonts, kept locally so the HTML sources and the brand book render offline.
+Instrument Sans (variable), Instrument Serif, IBM Plex Mono — the site's three families from Google Fonts, kept locally so the HTML sources and the brand book render offline.
 
 ## _src/
 `build.py` (writes every SVG, banner and the brand book from the tokens), `render.sh` (Chrome renders), `wrap/` (the 1024/512 px PNG wrappers), `manifest.txt`.

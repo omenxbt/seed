@@ -10,7 +10,7 @@ CSS = """
 --grad-btn:linear-gradient(180deg,#5B8CFF 0%,#2E63E7 100%);--grad-seg:linear-gradient(180deg,rgba(91,140,255,.34),rgba(46,99,231,.2));--seg-line:rgba(91,140,255,.42);
 --glow:0 0 0 1px rgba(91,140,255,.32),0 10px 28px -10px rgba(46,99,231,.8);--glow-sm:0 0 14px -4px rgba(46,99,231,.7);--lit:inset 0 1px 0 rgba(255,255,255,.14);
 --hatch:repeating-linear-gradient(135deg,rgba(255,255,255,.045) 0 1px,transparent 1px 9px);--progress:linear-gradient(90deg,#F2554C,#F6C445 50%,#34C17B);
---sans:'Instrument Sans',system-ui,sans-serif;--serif:'Instrument Serif',Georgia,serif;--mono:'JetBrains Mono',ui-monospace,Menlo,monospace}
+--sans:'Instrument Sans',system-ui,sans-serif;--serif:'Instrument Serif',Georgia,serif;--mono:'IBM Plex Mono',ui-monospace,Menlo,monospace}
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--bg)}
 body{color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;background:var(--bg)}
@@ -167,7 +167,7 @@ pages.append(page('construction', f'''
    <rect x="30" y="30" width="100" height="100" fill="none" stroke="{T['navy_deep']}" stroke-width=".6" stroke-dasharray="2 2"/>
    <rect x="5" y="5" width="150" height="150" fill="none" stroke="{T['bad']}" stroke-width=".6" stroke-dasharray="2 2" opacity=".8"/>
    <g transform="translate(30 30)">{dots(T['ink'], T['navy'])}</g>
-   <text x="80" y="20" text-anchor="middle" fill="{T['muted']}" font-family="JetBrains Mono" font-size="7">¼ of the box</text>
+   <text x="80" y="20" text-anchor="middle" fill="{T['muted']}" font-family="IBM Plex Mono" font-size="7">¼ of the box</text>
   </svg>
   <p class="small quiet">Keep a quarter of the mark's width clear on every side. Text, buttons, other marks and the edge of a frame stay outside it. In a lockup the wordmark is the exception: it sits 0.4 em from the box.</p>
  </div>
@@ -308,7 +308,7 @@ pages.append(page('type', f'''
   <div class="row"><small>Scale</small><p class="small quiet num">Hero h1 26–34px · Docs h1 34–54px · Page h1 42–88px (.l1) · h2 20–24px · Body 15.5 · Small 12.5–13.5 · Mono 11.5–13</p></div>
  </div>
  <div class="card type">
-  <h3>JetBrains Mono <span class="quiet small num">400 · 500</span></h3>
+  <h3>IBM Plex Mono <span class="quiet small num">400 · 500</span></h3>
   <div class="row"><small>.num<br>tabular-nums<br>−3% tracking</small><div class="num" style="font-size:20px;letter-spacing:-.05em">$57.08K &nbsp; 220.00 / 220.00 SOL</div></div>
   <div class="row"><small>Every figure</small><p class="small quiet">Prices, market caps, counts, times, addresses, tickers and percentages are mono so columns line up and a tick does not reflow a row. Units sit in sans or muted mono after the number.</p></div>
   <div class="row"><small>Small figures</small><div class="num" style="font-size:12px;color:var(--muted)">1d 02:56:41 &nbsp; 7UVi…jLiE &nbsp; +19% · 6h</div></div>
@@ -423,7 +423,7 @@ pages.append(page('files', f'''
 <div class="grid" style="grid-template-columns:1.15fr 1fr;gap:40px;align-items:start">
  <table><tr><th>Logo source</th><th>Render</th><th>Size</th></tr>{rows}</table>
  <div><table><tr><th>Banner source</th><th>Render</th><th>Size</th></tr>{brow}</table>
- <table style="margin-top:28px"><tr><th>Also</th><th></th><th></th></tr><tr><td><code>fonts/fonts.css</code> + 12 woff2</td><td colspan="2">Instrument Sans (variable), Instrument Serif, JetBrains Mono (variable), from Google Fonts</td></tr><tr><td><code>_src/build.py</code></td><td colspan="2">Regenerates every SVG, banner and this page from the site's tokens</td></tr><tr><td><code>_src/render.sh</code></td><td colspan="2">Renders the PNGs and the PDF with headless Chrome</td></tr></table></div>
+ <table style="margin-top:28px"><tr><th>Also</th><th></th><th></th></tr><tr><td><code>fonts/fonts.css</code> + 16 woff2</td><td colspan="2">Instrument Sans (variable), Instrument Serif, IBM Plex Mono (400 and 500), from Google Fonts</td></tr><tr><td><code>_src/build.py</code></td><td colspan="2">Regenerates every SVG, banner and this page from the site's tokens</td></tr><tr><td><code>_src/render.sh</code></td><td colspan="2">Renders the PNGs and the PDF with headless Chrome</td></tr></table></div>
 </div>''', n=16))
 
 HTML = f'<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Seed brand book</title><link rel="icon" href="../logo/seed-mark-dark.svg"><style>{CSS}</style></head><body>{"".join(pages)}</body></html>\n'

@@ -144,7 +144,7 @@ function raiseSVG(p) {
     ${live ? `<path d="M${ex.toFixed(1)} ${ey.toFixed(1)}L${W} ${Y(p.target)}" style="stroke:var(--navy-soft)" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>` : ''}
     <path class="ln" pathLength="1" d="${line}" fill="none" style="stroke:var(${dead ? '--navy-soft' : '--navy'})" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
     <circle class="tip" cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="4.5" style="fill:var(--ink);stroke:var(--panel-solid)" stroke-width="2.5"/>
-    <g font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)"><text x="0" y="${Hh - 6}">Opened ${fmtDay(t0)}</text><text x="${W}" y="${Hh - 6}" text-anchor="end">Deadline ${fmtDay(t1)}</text><text x="${W}" y="${Y(p.target) - 7}" text-anchor="end">Target ${fmtC(p.target, p.q)}</text></g></svg>`;
+    <g font-family="IBM Plex Mono, monospace" font-size="12" style="fill:var(--muted)"><text x="0" y="${Hh - 6}">Opened ${fmtDay(t0)}</text><text x="${W}" y="${Hh - 6}" text-anchor="end">Deadline ${fmtDay(t1)}</text><text x="${W}" y="${Y(p.target) - 7}" text-anchor="end">Target ${fmtC(p.target, p.q)}</text></g></svg>`;
 }
 /* the bucket the buys chart counts in: the raise's length split into 24 to 72 steps of a round size */
 const BUCKETS = [[10e3, '10 seconds'], [30e3, '30 seconds'], [60e3, 'minute'], [5 * 60e3, '5 minutes'], [15 * 60e3, '15 minutes'], [H, 'hour'], [6 * H, '6 hours'], [D, 'day']];
@@ -154,7 +154,7 @@ function buysSVG(p) {
   for (const b of p.buys || []) { const i = Math.min(n - 1, Math.floor((b.at - t0) / step)); if (i >= 0) c[i]++; }
   const mx = Math.max(1, ...c), bw = W / n, gap = Math.min(bw * 0.3, 4);
   return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Buys per ${unit}, at most ${mx} in one">${c.map((v, i) => v ? `<rect x="${(i * bw + gap / 2).toFixed(1)}" y="${(base - v / mx * (base - 4)).toFixed(1)}" width="${Math.max(1, bw - gap).toFixed(1)}" height="${(v / mx * (base - 4)).toFixed(1)}" rx="1.5" style="fill:var(--navy-soft);--i:${i}"/>` : '').join('')}
-    <path d="M0 ${base}H${W}" style="stroke:var(--hair-2)"/><g font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)"><text x="0" y="${Hh - 4}">Buys per ${unit}</text><text x="${W}" y="${Hh - 4}" text-anchor="end">Peak ${Math.max(0, ...c)}</text></g></svg>`;
+    <path d="M0 ${base}H${W}" style="stroke:var(--hair-2)"/><g font-family="IBM Plex Mono, monospace" font-size="12" style="fill:var(--muted)"><text x="0" y="${Hh - 4}">Buys per ${unit}</text><text x="${W}" y="${Hh - 4}" text-anchor="end">Peak ${Math.max(0, ...c)}</text></g></svg>`;
 }
 function ppChart(p) {
   return `<section class="panel pp-card pp-chart" data-chartcard><div class="pp-card-h"><h2>${p.status === 'seeded' ? 'How it raised' : 'Raised over time'}</h2><span class="legend"><span><i></i>Raised</span>${p.status === 'live' ? '<span><i class="dash"></i>Straight line to target</span>' : ''}<span><i class="bars"></i>Buys per ${bucketOf(p)[1]}</span></span></div>
@@ -205,15 +205,15 @@ function candleSVG(series, mode, supply, quote, raise) {
   const nx = Math.max(2, Math.min(4, Math.floor((W - pr) / 170) + 1)), xt = [...new Set(Array.from({ length: nx }, (_, j) => Math.round((n - 1) * j / (nx - 1))))];   // time labels that fit side by side
   pg.cg = { W, Hh, pr, pt, pb, vH, priceH, lo, span, k, cw, n, series, f };
   return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="${mode === 'mcap' ? 'Market cap' : 'Price'} candles, last ${f(lastV)}">
-    ${ticks.map(v => `<path d="M0 ${Y(v).toFixed(1)}H${W - pr}" style="stroke:var(--hair)"/>${Math.abs(Y(v) - Y(lastV)) < 15 || (rv && Math.abs(Y(v) - Y(rv)) < 15) ? '' : `<text x="${W - pr + 8}" y="${(Y(v) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)">${f(v)}</text>`}`).join('')}
+    ${ticks.map(v => `<path d="M0 ${Y(v).toFixed(1)}H${W - pr}" style="stroke:var(--hair)"/>${Math.abs(Y(v) - Y(lastV)) < 15 || (rv && Math.abs(Y(v) - Y(rv)) < 15) ? '' : `<text x="${W - pr + 8}" y="${(Y(v) + 4).toFixed(1)}" font-family="IBM Plex Mono, monospace" font-size="12" style="fill:var(--muted)">${f(v)}</text>`}`).join('')}
     ${series.map((c, i) => { const x = i * cw + cw / 2, up = c[4] >= c[1], col = up ? CANDLE_UP : CANDLE_DN, yo = Y(c[1] * k), yc = Y(c[4] * k), vh = c[5] / vmax * (vH - 6);
       return `<path d="M${x.toFixed(1)} ${Y(c[2] * k).toFixed(1)}V${Y(c[3] * k).toFixed(1)}" stroke="${col}" stroke-width="1"/><rect x="${(x - cw * 0.35).toFixed(1)}" y="${Math.min(yo, yc).toFixed(1)}" width="${Math.max(1, cw * 0.7).toFixed(1)}" height="${Math.max(1, Math.abs(yc - yo)).toFixed(1)}" fill="${col}" rx=".5"/>
         <rect x="${(x - cw * 0.35).toFixed(1)}" y="${(Hh - pb - vh).toFixed(1)}" width="${Math.max(1, cw * 0.7).toFixed(1)}" height="${vh.toFixed(1)}" fill="${col}" opacity=".28"/>`; }).join('')}
-    ${rv ? `<path d="M0 ${Y(rv).toFixed(1)}H${W - pr}" style="stroke:var(--navy-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>${Math.abs(Y(rv) - Y(lastV)) < 15 ? '' : `<text x="${W - pr + 8}" y="${(Y(rv) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--navy-soft)">${f(rv)}</text><text x="${W - pr - 6}" y="${(Y(rv) - 5).toFixed(1)}" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--navy-soft)">${mode === 'mcap' ? 'Raise MC' : 'Raise price'}</text>`}` : ''}
+    ${rv ? `<path d="M0 ${Y(rv).toFixed(1)}H${W - pr}" style="stroke:var(--navy-soft)" stroke-width="1.2" stroke-dasharray="5 4"/>${Math.abs(Y(rv) - Y(lastV)) < 15 ? '' : `<text x="${W - pr + 8}" y="${(Y(rv) + 4).toFixed(1)}" font-family="IBM Plex Mono, monospace" font-size="12" style="fill:var(--navy-soft)">${f(rv)}</text><text x="${W - pr - 6}" y="${(Y(rv) - 5).toFixed(1)}" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="11" style="fill:var(--navy-soft)">${mode === 'mcap' ? 'Raise MC' : 'Raise price'}</text>`}` : ''}
     <path d="M0 ${Y(lastV).toFixed(1)}H${W - pr}" stroke="${lastUp ? CANDLE_UP : CANDLE_DN}" stroke-width="1" stroke-dasharray="2 4" opacity=".7"/>
     <rect x="${W - pr + 3}" y="${(Y(lastV) - 11).toFixed(1)}" width="${pr - 3}" height="22" rx="7" fill="${lastUp ? CANDLE_UP : CANDLE_DN}"/>
-    <text x="${W - pr + 8}" y="${(Y(lastV) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="12" font-weight="500" fill="#10151A">${f(lastV)}</text>
-    <g font-family="JetBrains Mono, monospace" font-size="12" style="fill:var(--muted)">${xt.map((i, j) => `<text x="${(i * cw + cw / 2).toFixed(1)}" y="${Hh - 6}" text-anchor="${j === 0 ? 'start' : j === xt.length - 1 ? 'end' : 'middle'}">${fmtDate(series[i][0])}</text>`).join('')}</g></svg>`;
+    <text x="${W - pr + 8}" y="${(Y(lastV) + 4).toFixed(1)}" font-family="IBM Plex Mono, monospace" font-size="12" font-weight="500" fill="#10151A">${f(lastV)}</text>
+    <g font-family="IBM Plex Mono, monospace" font-size="12" style="fill:var(--muted)">${xt.map((i, j) => `<text x="${(i * cw + cw / 2).toFixed(1)}" y="${Hh - 6}" text-anchor="${j === 0 ? 'start' : j === xt.length - 1 ? 'end' : 'middle'}">${fmtDate(series[i][0])}</text>`).join('')}</g></svg>`;
 }
 /* hovering (or pressing, on a touch screen) the candles reads one back: a crosshair, the price at the pointer tagged on the axis,
    and the candle's open, high, low, close and volume along the top */
@@ -243,7 +243,7 @@ function lwMount(box, p) {
   if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (e) {} }
   box.innerHTML = '<div class="lw"></div>'; const el = box.firstElementChild, LW = window.LightweightCharts, usd = usdNow(p, 1), k = () => pg.mode === 'mcap' ? SUPPLY * usd : 1;   // MCap: the whole supply, in dollars at the SOL price when the chart was made (one scale for every candle)
   const f = v => (pg.mode === 'mcap' ? fmtMcapAxis(v) : fmtPrice(v));
-  const chart = LW.createChart(el, { width: el.clientWidth || 600, height: innerWidth < 720 ? 300 : 400, layout: { background: { color: 'transparent' }, textColor: cssVar('--muted') || '#8a8f98', fontFamily: 'JetBrains Mono, monospace', fontSize: 11 },
+  const chart = LW.createChart(el, { width: el.clientWidth || 600, height: innerWidth < 720 ? 300 : 400, layout: { background: { color: 'transparent' }, textColor: cssVar('--muted') || '#8a8f98', fontFamily: cssVar('--mono') || 'IBM Plex Mono, monospace', fontSize: 11 },
     grid: { vertLines: { color: cssVar('--hair') || '#1f232b' }, horzLines: { color: cssVar('--hair') || '#1f232b' } }, rightPriceScale: { borderColor: cssVar('--hair-2') || '#2a2f38', scaleMargins: { top: 0.14, bottom: 0.22 } },
     timeScale: { borderColor: cssVar('--hair-2') || '#2a2f38', timeVisible: true, secondsVisible: false, tickMarkFormatter: (t, type) => { const d = new Date(t * 1000); return type >= 2 ? d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : d.toLocaleDateString([], { month: 'short', day: 'numeric' }); } }, localization: { timeFormatter: t => new Date(t * 1000).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }), priceFormatter: f }, crosshair: { mode: LW.CrosshairMode.Normal }, handleScale: { axisPressedMouseMove: true }, handleScroll: true });
   const candles = chart.addCandlestickSeries({ upColor: CANDLE_UP, downColor: CANDLE_DN, borderVisible: false, wickUpColor: CANDLE_UP, wickDownColor: CANDLE_DN, priceFormat: { type: 'custom', formatter: f, minMove: 1e-12 }, autoscaleInfoProvider: orig => { const r = orig(); if (r && r.priceRange) r.priceRange.minValue = Math.max(0, r.priceRange.minValue); return r; } });   // never autoscaled below zero
@@ -579,17 +579,17 @@ function unlockSVG(p, W) {
   d += ` H${X(last).toFixed(1)}`;
   const today = at ? Math.min(last, Math.max(0, (now - at) / D)) : null;
   return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Team unlocks over ${last} days">
-    ${[0, 25, 50, 75, 100].map(v => `<path d="M${pl} ${Y(v * 100).toFixed(1)}H${W - pr}" style="stroke:var(--hair)"/><text x="${W - pr + 8}" y="${(Y(v * 100) + 4).toFixed(1)}" font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--muted)">${v}%</text>`).join('')}
-    ${today != null ? `<path d="M${X(today).toFixed(1)} ${pt}V${Hh - pb}" style="stroke:var(--navy-soft)" stroke-dasharray="3 3"/><text x="${(X(today) + 5).toFixed(1)}" y="${pt + 10}" font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--navy-soft)">Today</text>` : ''}
+    ${[0, 25, 50, 75, 100].map(v => `<path d="M${pl} ${Y(v * 100).toFixed(1)}H${W - pr}" style="stroke:var(--hair)"/><text x="${W - pr + 8}" y="${(Y(v * 100) + 4).toFixed(1)}" font-family="IBM Plex Mono, monospace" font-size="11" style="fill:var(--muted)">${v}%</text>`).join('')}
+    ${today != null ? `<path d="M${X(today).toFixed(1)} ${pt}V${Hh - pb}" style="stroke:var(--navy-soft)" stroke-dasharray="3 3"/><text x="${(X(today) + 5).toFixed(1)}" y="${pt + 10}" font-family="IBM Plex Mono, monospace" font-size="11" style="fill:var(--navy-soft)">Today</text>` : ''}
     <path d="${d}" fill="none" style="stroke:var(--navy)" stroke-width="2" stroke-linejoin="round"/>
     ${dots.map(([x, y, b]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" style="fill:${today != null && x <= X(today) ? 'var(--navy)' : 'var(--panel-solid)'};stroke:var(--navy)" stroke-width="1.5"/>`).join('')}
-    <g font-family="JetBrains Mono, monospace" font-size="11" style="fill:var(--muted)"><text x="${pl}" y="${Hh - 8}">${at ? 'Seeded ' + fmtDay(at) : 'Seeding'}</text><text x="${W - pr}" y="${Hh - 8}" text-anchor="end">Day ${last}${at ? ', ' + fmtDay(at + last * D) : ''}</text></g></svg>`;
+    <g font-family="IBM Plex Mono, monospace" font-size="11" style="fill:var(--muted)"><text x="${pl}" y="${Hh - 8}">${at ? 'Seeded ' + fmtDay(at) : 'Seeding'}</text><text x="${W - pr}" y="${Hh - 8}" text-anchor="end">Day ${last}${at ? ', ' + fmtDay(at + last * D) : ''}</text></g></svg>`;
 }
 const KIND_COL = { presale: '#2E63E7', lp: '#8FB4FF', get team() { return cssVar('--team-col') || '#D9DCE2'; }, other: '#565B66' };   // the team's grey follows the theme (light grey on charcoal, mid grey on white)
 function donutSVG(allocs) {
   const R = 70, C = 2 * Math.PI * R; let acc = 0;
   return `<svg viewBox="0 0 180 180" class="donut" role="img" aria-label="Token allocation">${allocs.map((a, i) => { const len = a.pct / 100 * C, s = `<circle cx="90" cy="90" r="${R}" fill="none" stroke="${a.color || KIND_COL[a.kind] || KIND_COL.other}" stroke-width="26" stroke-dasharray="${Math.max(0, len - 1.5).toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}" transform="rotate(-90 90 90)"/>`; acc += len; return s; }).join('')}
-    <text x="90" y="86" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" style="fill:var(--ink)">1B</text><text x="90" y="104" text-anchor="middle" font-size="11" style="fill:var(--muted)">supply</text></svg>`;
+    <text x="90" y="86" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="15" style="fill:var(--ink)">1B</text><text x="90" y="104" text-anchor="middle" font-size="11" style="fill:var(--muted)">supply</text></svg>`;
 }
 function tabHolders(p) { return tabHead('Holders', '') + '<div data-holders><div class="pp-loading">Loading holders…</div></div>'; }
 function tabTrades(p) { return tabHead('Trades', '') + '<div data-trades><div class="pp-loading">Loading trades…</div></div>'; }

@@ -8,7 +8,7 @@
    Project page. A workspace like the other app pages (index.html has the frame), with its own columns: from 1440px three
    columns that scroll on their own (project and checks, the raise and tabs, the buy rail); from 1024px two columns with
    the rail pinned on the right; below that one column: project, the raise, the rail, chart, tabs, checks.
-   Instrument Sans for text, Instrument Serif italic for the page titles, JetBrains Mono for figures.
+   Instrument Sans for text, Instrument Serif italic for the page titles, IBM Plex Mono for figures.
    ========================================================================== */
 /* panels are 88% glass over the dot field (index.html, --panel and --frost); what sits inside them and has to stay
    exact keeps a solid ground: tables, chart areas and read-only fields */
