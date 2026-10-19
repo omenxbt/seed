@@ -52,7 +52,7 @@ const MAX_UPLOAD = 10 * 1024 * 1024;
 const numv = v => { const n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : NaN; };
 /* any link goes in, with or without its scheme (Josh): "x.com/seedraises" is as good as "https://x.com/seedraises". A link
    still has to look like one (a host with a dot, no spaces), which keeps javascript: and data: out; it is stored with https:// */
-const isUrl = v => !v || /^(https?:\/\/)?[^\s\/:]+\.[^\s]+$/i.test(v);
+const isUrl = v => !(v = String(v || '').trim()) || /^(https?:\/\/)?[^\s\/:]+\.[^\s]+$/i.test(v);   // trimmed: a paste leaves a trailing space (QA P2-83)
 const fullUrl = v => { v = (v || '').trim(); return v ? (/^https?:\/\//i.test(v) ? v : 'https://' + v) : null; };
 
 /* ---------------------------------------------------------------- row editors */
