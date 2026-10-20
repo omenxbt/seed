@@ -288,14 +288,15 @@ function renderPreview() {
   const art = pr.art ? `<img class="pv-art" src="${esc(pr.art)}" alt="" style="object-position:${pr.artPos}">` : `<span class="pv-art glyph-art" style="--h:${hashStr(dp.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(dp)}</svg></span>`;
   $('#pvCard').innerHTML = `${pr.banner ? `<div class="pv-banner"><img src="${esc(pr.banner)}" alt="" style="object-position:${pr.bannerPos}"></div>` : ''}<div class="pv-id">${art}<span class="nm"><b>${esc(dp.name)}<span class="tk">$${esc(dp.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div><div class="c-prog"><span class="bar"><i style="width:0%"></i></span><span class="pct num">0%</span></div>`;
   const label = { 24: '24 hours', 72: '3 days', 168: '7 days', 336: '14 days' }[d.hours], split = splitOf(dp.teamBps), f = n => Number(n.toFixed(C.dp)).toLocaleString('en-US', { maximumFractionDigits: C.dp });
+  const noTarget = d.cap > 0 ? 'The SOL price has not loaded yet' : 'Pick an opening market cap';   // why there is no figure yet (QA P2-90)
   const pc = n => (n / SEED.supply * 100).toFixed(n / SEED.supply * 100 % 1 ? 1 : 0) + '%', fees = v => fmtUsd(feeSplit(v).founder);
   $('#pvFacts').innerHTML = [
-    ['Opens at', ok ? `<span class="num">${fmtMcap(d.cap)}</span> market cap: the raise is ${fmtMcap(d.cap)} × ${pc(SEED.supply - split.team)} ÷ 2 = <span class="num">${fmtUsd(targetUsdForCap(d.cap, dp.teamBps))}</span>` : 'Pick an opening market cap'],
+    ['Opens at', ok ? `<span class="num">${fmtMcap(d.cap)}</span> market cap: the raise is ${fmtMcap(d.cap)} × ${pc(SEED.supply - split.team)} ÷ 2 = <span class="num">${fmtUsd(targetUsdForCap(d.cap, dp.teamBps))}</span>` : noTarget],
     ['The split', `<span class="num">${pc(split.backers)}</span> backers, <span class="num">${pc(split.pool)}</span> pool, <span class="num">${pc(split.team)}</span> team`],
-    ['Raise price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token, fixed` : 'Pick an opening market cap'],
-    ['FDV at the raise', ok ? `<span class="num">${f(fdvOf(dp))} ${sym}</span> (${fmtUsd(usdNow(dp, fdvOf(dp)))})` : 'Pick an opening market cap'],
+    ['Raise price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token, fixed` : noTarget],
+    ['FDV at the raise', ok ? `<span class="num">${f(fdvOf(dp))} ${sym}</span> (${fmtUsd(usdNow(dp, fdvOf(dp)))})` : noTarget],
     ['Pool at seeding', ok ? `<span class="num">${f(d.target)} ${sym}</span> + <span class="num">${fmtTok(split.pool)}</span> $${esc(dp.ticker)}, locked for good` : 'The whole raise, locked for good'],
-    ['Pool depth', ok ? `<span class="num">${f(d.target)} ${sym}</span> each side at opening (${f(d.target * 2)} ${sym}, ${fmtUsd(usdNow(dp, d.target * 2))} in all)` : 'Pick an opening market cap'],
+    ['Pool depth', ok ? `<span class="num">${f(d.target)} ${sym}</span> each side at opening (${f(d.target * 2)} ${sym}, ${fmtUsd(usdNow(dp, d.target * 2))} in all)` : noTarget],
     ['Team unlocks', split.team ? `${esc(fmtSchedule(dp.teamSchedule))}${perUnlockText(dp.teamSchedule, dp.teamBps) ? `: <span class="num">${esc(perUnlockText(dp.teamSchedule, dp.teamBps))}</span>` : ''}${unlockState(dp).next ? `; first unlock ${unlockState(dp).next.dayOffset === 0 ? 'at seeding' : (unlockState(dp).next.dayOffset === 1 ? 'a day' : daysTxt(unlockState(dp).next.dayOffset)) + ' after seeding'}` : ''}` : 'No team tokens'],
     ['Your fee income', `<span class="num">${fees(5000)}</span>, <span class="num">${fees(25000)}</span> or <span class="num">${fees(100000)}</span> a day at $5K, $25K or $100K of daily volume`],
     ['Closes', typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode ? `in ${String(Number((d.hours / 24).toFixed(1)))} min on devnet (test mode: a day is a minute), or the moment it fills` : `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
@@ -312,7 +313,7 @@ function syncOpenBtn() { const b = $('#openBtn'); if (b && !b.disabled) b.textCo
 /* what the raise shows as the price, and the pool it opens: read-only, derived from the target and the team share */
 function drawDerived(dp, ok, sym) {
   const sp = splitOf(dp.teamBps), row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
-  $('#derivedRows').innerHTML = row('Price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token: the raise over the backers' ${fmtTok(sp.backers)} tokens` : `Pick an opening market cap. The price is the raise over the backers' ${fmtTok(sp.backers)} tokens`) +
+  $('#derivedRows').innerHTML = row('Price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token: the raise over the backers' ${fmtTok(sp.backers)} tokens` : `${dp.capUsd > 0 ? 'The SOL price has not loaded yet' : 'Pick an opening market cap'}. The price is the raise over the backers' ${fmtTok(sp.backers)} tokens`) +
     row('Fee', `<span class="num">1%</span> on top of each buy, to Seed; refunded with the buy if the raise does not seed`) +
     row('At seeding', ok ? `<span class="num">${fmtC(dp.target, dp.q)} ${sym}</span> and <span class="num">${fmtTok(sp.pool)}</span> $${esc(dp.ticker)} open a Meteora pool at the raise price, locked for good` : 'The whole raise and the pool tokens open a Meteora pool at the raise price, locked for good');
 }

@@ -66,6 +66,20 @@ Deno.serve(async (req) => {
   for (const r of raises) {
     const id = r.publicKey.toBase58(), a = r.account, status = Object.keys(a.status)[0], step = Object.keys(a.seedStep)[0];   // Anchor enums arrive as { live: {} }
     try {
+      /* the row's progress follows the account when the webhook has fallen behind (a missed delivery, a quota): raised,
+         backers, status and the seeding step, so the board and the totals do not freeze at discovery (QA P2-91) */
+      try {
+        const cur = (await db.from('raises').select('raised, backers, status, seed_step, pair_mint').eq('address', id).maybeSingle()).data as { raised: number; backers: number; status: string; seed_step: string | null; pair_mint: string } | null;
+        if (cur) {
+          const dec = cur.pair_mint === 'So11111111111111111111111111111111111111112' ? 9 : 6, raised = Number(a.raised) / 10 ** dec, backers = Number(a.backers);
+          const patch: Record<string, unknown> = {};
+          if (Math.abs(Number(cur.raised) - raised) > 1e-9) patch.raised = raised;
+          if (Number(cur.backers) !== backers) patch.backers = backers;
+          if (cur.status !== status) patch.status = status;
+          if ((cur.seed_step ?? 'filled') !== step && status !== 'live') patch.seed_step = step;
+          if (Object.keys(patch).length) { await db.from('raises').update({ ...patch, updated_at: new Date(now).toISOString() }).eq('address', id); note(`refreshed ${id} ${Object.keys(patch).join(',')}`); }
+        }
+      } catch (e) { fail(`refresh ${id}`, e); }
       if (status === 'live' && Number(a.endsAt) * 1000 <= now) { await client.settle(r.publicKey); note(`settle ${id}`); continue; }
       if (status === 'filled') {
         if (Number(a.filledAt) * 1000 + seedTimeoutMs <= now) { await client.timeoutRefund(r.publicKey); note(`timeout ${id}`); continue; }
