@@ -1,10 +1,10 @@
 # The Seed program
 
 An Anchor program (`programs/seed`) that holds a raise end to end: buys at a fixed price with a 1% fee on top, the
-minimum raise (`Config.min_target_lamports`, set once at `init_config` and never changed after, like the fee: 81 SOL in
-production, the size a pump.fun curve collects before it graduates, so the smallest pool opens where those tokens
-migrate; a USDC raise meets its worth at the SOL price; if 81 SOL is ever worth more than the cap, the cap is the
-minimum, so a raise is always possible; the devnet test-mode config carries 0.1 SOL) and the $100,000 cap, the deadline, refunds on a miss, a cancel or a stalled seeding, the four seeding steps (mint the supply,
+raise derived from an opening market cap preset (`Config.preset_caps_cents`, set once at `init_config`: $50K, $100K,
+$150K, $200K in production; target = cap × (1 − team share) ÷ 2 at the Pyth price, `math::derive_target`; the presets
+are the floor and the ceiling; a devnet test-mode config also carries a ~$30 test preset that a mainnet build refuses
+at init, `math::check_presets`), the founder's minimum buy and maximum per wallet (enforced in `contribute`), the deadline, refunds on a miss, a cancel or a stalled seeding, the four seeding steps (mint the supply,
 open and lock the Meteora DAMM v2 pool, finish), backers' claims, the pool's fees split 70/30 on a permissionless
 claim, team unlocks on a schedule fixed at opening, payout wallet changes after seven days, and the admin's two
 instructions (flag fraud, approve a takeover). The raise PDA owns the escrow, the vaults and the pool position NFT; no
@@ -23,8 +23,8 @@ npm install && anchor test --skip-local-validator --skip-deploy   # runs tests/s
 ```
 
 Three checks that cost nothing: `cargo test --lib` and `cargo test --lib --features devnet` in `programs/seed` prove the
-minimum raise on both builds (`math.rs`: 80.99 SOL refused, 81 opens, the USDC worth at a price, the cap as the minimum
-when 81 SOL is worth more than $100,000, a lower staging minimum); `npx ts-mocha -p tsconfig.json tests/size.ts`
+presets on both builds (`math.rs`: every preset at 0%, 15% and 50% team at $100, $150 and $250; the mainnet build refusing
+a test preset, the devnet build allowing it only in test mode) and the unlock schedule rules; `npx ts-mocha -p tsconfig.json tests/size.ts`
 measures `open_raise` at its largest (24 tranches, X linked, a 200-character URI, a USDC pair): 1376 bytes as a legacy
 transaction, 1195 as a v0 transaction over the lookup table, under the 1232-byte packet.
 
@@ -36,12 +36,16 @@ Devnet: `3tcuKWXkcGmKRRDLzkBPB1jf5MpnhvM2Xo7NfX8BhLfy`.
 
 **Config layout changes on devnet.** The devnet config's admin is a browser wallet, so `migrate_config` (devnet build
 only, signed by the program's upgrade authority) grows a config of the previous layout in place, once:
-`scripts/migrate-config.ts [minSol]`. Right after an upgrade that changes the layout, before anything reads the config.
+`scripts/migrate-config.ts [testCapUsd]` (today: 228 → 268 bytes, the presets and the test preset). Right after an upgrade
+that changes the layout, before anything reads the config. The whole suite also runs on a local validator with devnet
+clones, admin tests included and at no cost: `PORT=8999 sh scripts/localnet.sh`, then
+`ANCHOR_PROVIDER_URL=http://127.0.0.1:8999 ANCHOR_WALLET=keys/deployer.json npx ts-mocha -p tsconfig.json -t 300000 'tests/**/*.ts'`
+(a fresh ledger each run: the fraud-flag test blacklists the suite's second founder for good).
 
 **The deploy check.** `scripts/check-deploy.ts production|staging|devnet <rpc> [program id]` reads the live Config and
 the program account and exits non-zero unless they carry the profile's terms: production is 81 SOL, 125 bps on the
 pool, 100 bps on buys, 70/30, no test mode (and, with `SEED_PROD_UPGRADE_AUTHORITY` set, the Squads vault as upgrade
-authority). A deploy is not done until it prints OK.
+authority; the four presets and no test preset). A deploy is not done until it prints OK.
 
 The build pins a few transitive crates in `Cargo.lock` (blake3, zeroize, hashbrown, indexmap, proc-macro-crate,
 unicode-segmentation) because the SBF toolchain's rustc 1.84 cannot read edition-2024 manifests; `cargo update` will

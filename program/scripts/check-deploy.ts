@@ -11,10 +11,10 @@ const [profile, rpc, programArg] = process.argv.slice(2);
 if (!['production', 'staging', 'devnet'].includes(profile) || !rpc) { console.error('usage: check-deploy.ts production|staging|devnet <rpc url> [program id]'); process.exit(2); }
 
 const WANT = {
-  production: { minTargetLamports: 81_000_000_000, poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, capUsdCents: 10_000_000, testMode: false },
-  staging: { poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, capUsdCents: 10_000_000, testMode: false },
-  devnet: { poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, capUsdCents: 10_000_000, testMode: true }
-}[profile as 'production' | 'staging' | 'devnet'] as Record<string, number | boolean>;
+  production: { presets: '5000000,10000000,15000000,20000000', testCapCents: 0, poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, testMode: false },   // $50K, $100K, $150K, $200K; no test preset
+  staging: { testCapCents: 0, poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, testMode: false },   // small presets of its own
+  devnet: { testCapCents: 3000, poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, testMode: true }
+}[profile as 'production' | 'staging' | 'devnet'] as Record<string, number | boolean | string>;
 const BPF_UPGRADEABLE = new web3.PublicKey('BPFLoaderUpgradeab1e11111111111111111111111');
 
 (async () => {
@@ -23,11 +23,11 @@ const BPF_UPGRADEABLE = new web3.PublicKey('BPFLoaderUpgradeab1e1111111111111111
   const failures: string[] = [];
   const c: any = await (program.account as any).config.fetch(pda.config(pid)).catch((e: Error) => { failures.push(`config unreadable: ${e.message}`); return null; });
   if (c) {
-    const got: Record<string, number | boolean> = { minTargetLamports: Number(c.minTargetLamports), poolFeeBps: c.poolFeeBps, feeBps: c.feeBps, creatorShareBps: c.creatorShareBps, capUsdCents: Number(c.capUsdCents), testMode: !!c.testMode, minUnlockDays: c.minUnlockDays };
+    const got: Record<string, number | boolean | string> = { presets: (c.presetCapsCents as any[]).map(Number).join(','), testCapCents: Number(c.testCapCents), poolFeeBps: c.poolFeeBps, feeBps: c.feeBps, creatorShareBps: c.creatorShareBps, testMode: !!c.testMode };
     for (const [k, v] of Object.entries(WANT)) if (got[k] !== v) failures.push(`${k}: ${got[k]} (want ${v})`);
-    if (!(Number(got.minTargetLamports) > 0)) failures.push('minTargetLamports is zero');
+    if (!(c.presetCapsCents as any[]).every((x: any, i: number, a: any[]) => Number(x) > 0 && (i === 0 || Number(x) > Number(a[i - 1])))) failures.push('presets must be set and ascending');
     console.log(`${profile} ${pid.toBase58()} on ${rpc.replace(/api-key=[^&]+/, 'api-key=…')}`);
-    console.log(`  min raise ${Number(c.minTargetLamports) / 1e9} SOL · pool fee ${c.poolFeeBps} bps · buy fee ${c.feeBps} bps · founder share ${c.creatorShareBps / 100}% · cap $${Number(c.capUsdCents) / 100} · test mode ${c.testMode}`);
+    console.log(`  presets ${(c.presetCapsCents as any[]).map((x: any) => '$' + (Number(x) / 100).toLocaleString('en-US')).join(' · ')}${Number(c.testCapCents) ? ` · test preset $${Number(c.testCapCents) / 100}` : ''} · pool fee ${c.poolFeeBps} bps · buy fee ${c.feeBps} bps · founder share ${c.creatorShareBps / 100}% · test mode ${c.testMode}`);
     console.log(`  admin ${c.admin.toBase58()} · treasury ${c.seedTreasury.toBase58()} · attestor ${c.attestor.toBase58()} · price feed ${c.solFeed.toBase58()}`);
   }
   // the program account: who may upgrade it (production: the Squads multisig; never a hot wallet)

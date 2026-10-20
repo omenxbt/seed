@@ -6,9 +6,8 @@ const SEED = {
   poolFeeBps: 125,             // the DAMM v2 pool's flat base fee; dynamic fee and the fee scheduler are off. Meteora keeps 20%, so 1% reaches the position
   dammProtocolPct: 20,         // Meteora keeps this share of every pool fee (fixed by its program for customizable pools); the 70/30 split is of the rest
   creatorShareBps: 7000,       // of pool fees: 70% to the founder's payout wallet, 30% to Seed, snapshotted at seeding
-  capUsd: 100000,              // the largest target a raise may set, in USD at the SOL price when it opens
-  minTargetSol: 81,            // the smallest raise, in SOL: what a pump.fun curve collects before it graduates, so the smallest Seed pool opens where those tokens migrate and a bigger target opens at a higher market cap. A USDC raise meets the same dollars at the SOL price. The program's Config carries it (min_target_lamports, set once at init); the live site reads that
-  testMinTargetSol: 0.1,       // the floor the devnet config was made with (test mode), so a test cycle costs cents; shown until the config is read
+  presetCapsUsd: [50000, 100000, 150000, 200000],   // the opening market cap presets a founder picks from; the raise is derived (cap × (1 − team) ÷ 2 at the Pyth price). The program's Config carries the same four, set once at init; the site reads those once the config is in
+  testCapUsd: 30,              // devnet test mode only: a tiny Test preset so a cycle costs cents; a mainnet build refuses it at init (program/math.rs check_presets)
   minDeadlineH: 24, maxDeadlineH: 14 * 24,
   seedTimeoutDays: 3,          // a filled raise that has not seeded by then refunds everyone
   minUnlockDays: 90,           // unused since 2026-10-20 (no minimum on team unlocks); kept for the Config's layout, which still carries the field

@@ -8,16 +8,16 @@ Nothing in stages 2 and 3 runs without Josh's go. Stage 1 costs nothing and runs
 Token Metadata, Pyth's SOL/USD price account and the mainnet USDC mint cloned from mainnet (reads only; the public endpoint
 does it), and the devnet build of Seed loaded under its id. The devnet USDC mint is loaded from a saved snapshot so the
 config can be made in **test mode, where a day is a minute**: that is the warped time. Every other term is production's:
-81 SOL minimum, 1% buy fee, 125 bps pool, 70/30, $100,000 cap, 90-day minimum unlock, 7-day payout delay, 3-day timeout.
+the four presets, 1% buy fee, 125 bps pool, 70/30, no minimum unlock, 7-day payout delay, 3-day timeout.
 
-`scripts/rehearsal/lifecycle.ts` then runs four raises at once and writes `scripts/rehearsal/report-<date>.md`:
+`scripts/rehearsal/lifecycle.ts` then runs four raises at once (re-run it under the presets before stage 2; the 2026-10-20 report is from the 81 SOL rules) and writes `scripts/rehearsal/report-<date>.md`:
 
 | raise | what it proves |
 |---|---|
-| A, 81 SOL, 20% team, one unlock at day 90 | 80.99 refused; opens at exactly 81 at the cloned Pyth price; two buys with 1% on top, the last trimmed to the room; mint (1B, authorities revoked, immutable Metaplex metadata under the raise PDA); DAMM v2 pool with the whole 81 SOL and 400M tokens, position NFT owned by the raise; 0.81 SOL of held fees to the treasury; backers' claims 50/81 and 31/81; buy, sell, buy through Meteora's SDK; the fee crank's 70/30 of the position's fees; a payout change that waits 7 days; the admin's takeover; the whole team share unlocking at day 90 to the takeover wallet, nothing before and nothing after |
-| B, 81 SOL, cancelled after two buys | both refunds exact, fee included |
-| C, 81 SOL, filled and never seeded | `timeout_refund` refused before the 3-day timeout, refunds after it |
-| D, 81 SOL, one-day deadline, one buy | `settle` marks it missed after the deadline; the refund is exact |
+| A, the $100K preset, 20% team (a $40,000 raise), one unlock at day 90 | a preset off the list refused, the Test preset refused on a config without one; the target derived at the cloned Pyth price; two buys with 1% on top, the last trimmed to the room; mint (1B, authorities revoked, immutable Metaplex metadata under the raise PDA); DAMM v2 pool with the whole 81 SOL and 400M tokens, position NFT owned by the raise; 0.81 SOL of held fees to the treasury; backers' claims 50/81 and 31/81; buy, sell, buy through Meteora's SDK; the fee crank's 70/30 of the position's fees; a payout change that waits 7 days; the admin's takeover; the whole team share unlocking at day 90 to the takeover wallet, nothing before and nothing after |
+| B, $100K preset, no team ($50,000), cancelled after two buys | both refunds exact, fee included |
+| C, $50,000, filled and never seeded | `timeout_refund` refused before the 3-day timeout, refunds after it |
+| D, $50,000, one-day deadline, one buy | `settle` marks it missed after the deadline; the refund is exact |
 
 Takes about 100 minutes, almost all of it the 90-minute cliff (`--fast` skips that one wait). **Not covered:** a burn of
 unvested team tokens on a takeover — no such instruction exists; the schedule keeps unlocking to the new payout wallet.
@@ -28,7 +28,8 @@ That policy is open (Needs Josh).
 The staging program is `keys/staging-program.json` → **`3PzTSUPz1Pt37bVhZjtfhue4AJo1oSeYMzDKa1cdXs6J`** (git-ignored key; made
 2026-10-20). Anchor compiles the id in, so `scripts/staging/deploy.sh` builds the same source with the mainnet flags (no
 `devnet` feature: no test mode, no `reset_config`, no `migrate_config`, Arweave URIs only) under that id and puts the source
-back. Its Config is made with **a 0.5 SOL minimum**, every other term as production. Then one seeded raise (SEEDTEST) and
+back. Its Config is made with **tiny presets of its own ($150, $300, $450, $600)**, every other term as production, so a
+no-team raise at the first is about half a SOL. Then one seeded raise (SEEDTEST) and
 one refunded raise (REFUNDME), then the DEX pick-up check.
 
 ```sh
@@ -36,7 +37,7 @@ cd program
 sh scripts/staging/deploy.sh <mainnet rpc>                       # 1. build only: prints the id, the binary size and the rent
 GO=1 sh scripts/staging/deploy.sh <mainnet rpc>                  # 2. deploy with keys/deployer.json (after funding, below)
 GO=1 SEED_PROGRAM_ID=3PzTSUPz… ANCHOR_PROVIDER_URL=<mainnet rpc> ANCHOR_WALLET=keys/deployer.json \
-  npx ts-node -P tsconfig.json scripts/staging/init.ts           # 3. the staging Config: 0.5 SOL minimum, 125 bps, no test mode
+  npx ts-node -P tsconfig.json scripts/staging/init.ts           # 3. the staging Config: tiny presets, 125 bps, no test mode
 SEED_PROGRAM_ID=3PzTSUPz… ANCHOR_PROVIDER_URL=<mainnet rpc> ANCHOR_WALLET=keys/deployer.json \
   npx ts-node -P tsconfig.json scripts/alt.ts mainnet            # 4. the mainnet lookup table (prints its address)
 npx ts-node -P tsconfig.json scripts/check-deploy.ts staging <mainnet rpc> 3PzTSUPz…   # 5. must print OK
@@ -71,18 +72,18 @@ so expect DEXScreener and Meteora to show it, Jupiter's quote to route, Birdeye 
    in `declare_id!` (`8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn`, `target/deploy/seed-keypair.json`), the same as devnet.
 3. **Deploy** with the deployer (≈ 3.95 SOL of rent + fees; fund it with 4.5 SOL):
    `solana program deploy target/deploy/seed.so --program-id target/deploy/seed-keypair.json -u <mainnet rpc> -k keys/deployer.json`
-4. **Init the Config, once, at 81 SOL / 125 bps**, naming the Squads vault as admin and the treasury wallet Seed will use
+4. **Init the Config, once, with the four presets and 125 bps**, naming the Squads vault as admin and the treasury wallet Seed will use
    (a Squads vault too, or a cold wallet), the production attestor's public key, Pyth `7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE`:
-   `minTargetLamports 81_000_000_000, poolFeeBps 125, feeBps 100, creatorShareBps 7000, capUsdCents 10_000_000, minDeadline 86400,
+   `presetCapsCents [5_000_000, 10_000_000, 15_000_000, 20_000_000], testCapCents 0, minTargetLamports 1 (unused), poolFeeBps 125, feeBps 100, creatorShareBps 7000, capUsdCents 10_000_000, minDeadline 86400,
    maxDeadline 1_209_600, seedTimeout 259_200, minUnlockDays 90, payoutDelay 604_800, testMode false` — the test suite's
    `make()` in `tests/seed.ts` has the exact call shape (`c.initConfig(params, payer, null)`). There is no instruction that
-   changes `min_target_lamports`, the fees or the deadlines afterwards; `update_config` moves only the treasury and the attestor.
+   changes the presets, the fees or the deadlines afterwards; `update_config` moves only the treasury and the attestor.
 5. **Lookup table.** `ANCHOR_PROVIDER_URL=<mainnet rpc> ANCHOR_WALLET=keys/deployer.json npx ts-node -P tsconfig.json scripts/alt.ts mainnet`
    → the address goes into `js/config/seed.js` `lookupTable`. (Its authority is the deployer; it can only ever be appended to.)
 6. **Hand the program to Squads:** `solana program set-upgrade-authority 8Kr2… --new-upgrade-authority <squads vault> -u <mainnet rpc> -k keys/deployer.json`
    (and `--skip-new-upgrade-authority-signer-check` only if the vault cannot co-sign; prefer a Squads-initiated accept).
 7. **Verify.** `SEED_PROD_UPGRADE_AUTHORITY=<squads vault> npx ts-node -P tsconfig.json scripts/check-deploy.ts production <mainnet rpc>`
-   must print `OK`: 81 SOL, 125 bps, 100 bps, 70/30, $100,000, no test mode, the vault as upgrade authority. A deploy is not
+   must print `OK`: the four presets, no test preset, 125 bps, 100 bps, 70/30, no test mode, the vault as upgrade authority. A deploy is not
    done until it does.
 8. **Site and backend.** `js/config/seed.js`: `network: 'mainnet'`, the mainnet Helius browser key (domain-locked), `programId`,
    `lookupTable`, `pairMints.USDC = EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`, `xTyped: false`, `admins = [squads vault]`.

@@ -32,6 +32,13 @@ function limitQ(which, d) {
   if (l.unit === 'q') return v;
   return d.target > 0 ? r6(v / 100 * SEED.supply * priceOf({ target: d.target, teamBps: teamBpsNow() })) : 0;
 }
+/* the same limit in tokens: a share of the supply as is, an amount of the pair asset over the raise price */
+function limitTokens(which, d) {
+  const l = lf.lim[which], v = numv($(which === 'min' ? '#fMin' : '#fMax').value);
+  if (!l.on || !(v > 0)) return 0;
+  if (l.unit === 'pct') return v / 100 * SEED.supply;
+  return d.target > 0 ? v / priceOf({ target: d.target, teamBps: teamBpsNow() }) : 0;
+}
 function setLimUnit(which, unit) { lf.lim[which].unit = unit; $('#fErr').textContent = ''; syncLim(); renderPreview(); }
 function syncLim() {
   for (const k of ['min', 'max', 'use']) { const l = lf.lim[k], box = $(`.lim[data-lim="${k}"]`);
@@ -179,7 +186,7 @@ function modelFields(d, da) {
 }
 function draftPresale() {
   const d = readDraft(), da = draftAsset(), now = Date.now();
-  return Object.assign({ id: 'draft', name: d.name || 'Your project', ticker: d.ticker || 'TICKER', q: da.key || 'SOL', target: isFinite(d.target) && d.target > 0 ? d.target : 0, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H,
+  return Object.assign({ id: 'draft', name: d.name || 'Your project', ticker: d.ticker || 'TICKER', q: da.key || 'SOL', target: isFinite(d.target) && d.target > 0 ? d.target : 0, capUsd: d.cap || 0, preset: d.preset, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H,
     status: 'live', resolvedAt: null, mine: true, creator: walletId(), live: isReal(), hist: [[now, 0]], buys: [], profile: draftProfile(d) }, modelFields(d, da));   // live follows the wallet connected now: a real wallet's draft is never a demo raise
 }
 
@@ -192,9 +199,8 @@ function validateFields() {
   if (!/^[A-Z0-9]{1,6}$/.test(d.ticker)) err('#fTicker', 'A ticker is 1 to 6 letters or digits.');
   else if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) err('#fTicker', `$${d.ticker} is in use by a live raise. Pick another.`);
   if (da.err) err('#fMint', da.err);
-  if (isNaN(d.target) || d.target <= 0) err('#fTarget', `Set a target in ${da.a ? da.a.sym : 'the pair asset'}.`);
-  else if (da.a && d.target < minTargetIn(da.key) - 1e-9) err('#fTarget', `A raise asks for at least ${fmtC(minTargetIn(da.key), da.key)} ${da.a.sym}${da.key === 'USDC' ? ` (${minTargetSol()} SOL at today's price)` : ''}: ${minTargetSol() === SEED.minTargetSol ? 'that is where a pump.fun token migrates, so the smallest Seed pool opens there. Ask for more to open at a higher market cap.' : 'the minimum this network\'s config was made with.'}`);
-  else if (usdNow({ q: da.key }, d.target) > SEED.capUsd + 1e-6) err('#fTarget', `${fmtUsd(usdNow({ q: da.key }, d.target))}${da.key === 'USDC' ? '' : " at today's SOL price"}. A raise can ask for at most $${SEED.capUsd.toLocaleString('en-US')}.`);
+  if (!(d.cap > 0) || d.preset < 0) err('#capSeg', 'Pick an opening market cap.');
+  else if (!(d.target > 0)) err('#capSeg', 'The SOL price has not loaded yet; try again in a moment.');
   const mn = numv($('#fMin').value), mx = numv($('#fMax').value), L = lf.lim;
   if (L.min.on && !(mn > 0)) err('#fMin', 'Set the minimum buy, or switch it off.');
   else if (L.min.on && L.min.unit === 'pct' && mn >= 100) err('#fMin', 'Under 100% of the supply.');
@@ -202,8 +208,9 @@ function validateFields() {
   if (L.max.on && !(mx > 0)) err('#fMax', 'Set the maximum per wallet, or switch it off.');
   else if (L.max.on && L.max.unit === 'pct' && mx > 100) err('#fMax', 'No more than the whole supply.');
   else if (L.max.on && L.max.unit === 'q' && mx > d.target) err('#fMax', 'Larger than the target; switch it off to let one wallet fill the raise.');
-  const mnQ = limitQ('min', d), mxQ = limitQ('max', d);
-  if (mnQ > 0 && mxQ > 0 && mnQ > mxQ) err('#fMax', 'The maximum per wallet is below the minimum buy.');
+  // the limits compared in tokens at the raise price, whatever unit each was typed in (0.01 SOL against 2% of the supply works)
+  const mnT = limitTokens('min', d), mxT = limitTokens('max', d);
+  if (mnT > 0 && mxT > 0 && mnT > mxT * (1 + 1e-9)) err('#fMax', `The maximum per wallet (${fmtTok(mxT)} tokens) is below the minimum buy (${fmtTok(mnT)} tokens).`);
   const bps = teamBpsNow();
   if (lf.on.alloc && !(numv($('#fTeam').value) >= 0)) err('#fTeam', 'The team share must be a number.');
   else if (!(bps >= 0 && bps < BPS)) err('#fTeam', 'From 0% to under 100%.');
@@ -270,23 +277,25 @@ function renderPreview() {
   $$('#stockRow [data-stock]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.stock === draft.stock)));
   $('#mintInfo').textContent = draft.pair !== 'any' ? '' : da.wait ? 'Checking on Solana…' : da.bad ? 'Not a token mint.' : da.err ? '' : !da.custom ? `Recognised as ${C.sym}`
     : da.off ? 'Solana could not be reached to check this mint. It will be listed as unverified.' : C.verified ? `${C.name || C.sym} (${C.sym}), verified on Jupiter` : `A real SPL mint${da.a.name ? `, ${da.a.name}` : ''}, but not on Jupiter's verified list. Backers will see a warning.`;
-  $('#fCur').textContent = C.sym; $$('[data-cur]').forEach(e => e.textContent = C.sym); $('#fTarget').placeholder = { SOL: '200', USDC: '50000' }[da.key] || (C.stock ? '300' : '100000');
+  $('#fCur').textContent = C.sym; $$('[data-cur]').forEach(e => e.textContent = C.sym);
   if (typeof chain !== 'undefined' && chain.on() && !SEED.solUsdLive) chain.refreshSolUsd().then(v => { if (v) renderPreview(); });   // the first preview before the feed is read is redrawn at today's price
   if (typeof chain !== 'undefined' && chain.on() && !chain.cfg) chain.init().then(() => { if (chain.cfg) renderPreview(); }).catch(() => {});   // and at the chain's floor once the config is read (test mode brings it down)
-  const usd = ok ? usdNow({ q: da.key }, d.target) : 0, over = usd > SEED.capUsd + 1e-6, floor = da.a ? minTargetIn(da.key) : 0, under = ok && d.target < floor - 1e-9;   // at today's SOL price (the Pyth feed the program opens the raise with), as the program will see it
-  $('#targetUsd').textContent = ok ? `${fmtUsd(usd)}${da.key === 'SOL' ? ` at $${Number(solUsdNow().toPrecision(4))} per SOL` : ''}${over ? `, over the $${SEED.capUsd.toLocaleString('en-US')} cap` : under ? `, under the ${fmtC(floor, da.key)} ${sym} minimum` : ''}` : `${da.a ? `at least ${fmtC(floor, da.key)} ${sym}, ` : ''}at most $${SEED.capUsd.toLocaleString('en-US')}${da.key === 'SOL' ? ', at the SOL price when it opens' : ''}`;
-  $('#targetUsd').classList.toggle('bad', over || under);
+  $('#capTest').hidden = !testCapUsd(); $$('#capSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(draft.cap)))); seg.cap && seg.cap.place();
+  const capUsd = d.cap, tUsd = capUsd > 0 ? targetUsdForCap(capUsd, dp.teamBps) : 0;   // the raise line: what the preset derives at today's SOL price
+  $('#raiseLine').textContent = !capUsd ? (draft.cap === 'test' ? 'The Test preset is not in this network\'s config.' : 'Pick an opening market cap.') : !ok ? `Opens at ${fmtMcap(capUsd)} market cap · the SOL price has not loaded yet` : `Opens at ${fmtMcap(capUsd)} market cap · raise ${fmtC(d.target, da.key)} ${sym} (${fmtUsd(tUsd)}), all into the pool`;
+  $('#targetUsd').textContent = ok && da.key === 'SOL' ? `at $${Number(solUsdNow().toPrecision(4))} per SOL today; fixed at the Pyth price when the raise opens` : '';
   drawSplit(dp); drawDerived(dp, ok, sym);
   const art = pr.art ? `<img class="pv-art" src="${esc(pr.art)}" alt="" style="object-position:${pr.artPos}">` : `<span class="pv-art glyph-art" style="--h:${hashStr(dp.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(dp)}</svg></span>`;
   $('#pvCard').innerHTML = `${pr.banner ? `<div class="pv-banner"><img src="${esc(pr.banner)}" alt="" style="object-position:${pr.bannerPos}"></div>` : ''}<div class="pv-id">${art}<span class="nm"><b>${esc(dp.name)}<span class="tk">$${esc(dp.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div><div class="c-prog"><span class="bar"><i style="width:0%"></i></span><span class="pct num">0%</span></div>`;
   const label = { 24: '24 hours', 72: '3 days', 168: '7 days', 336: '14 days' }[d.hours], split = splitOf(dp.teamBps), f = n => Number(n.toFixed(C.dp)).toLocaleString('en-US', { maximumFractionDigits: C.dp });
   const pc = n => (n / SEED.supply * 100).toFixed(n / SEED.supply * 100 % 1 ? 1 : 0) + '%', fees = v => fmtUsd(feeSplit(v).founder);
   $('#pvFacts').innerHTML = [
+    ['Opens at', ok ? `<span class="num">${fmtMcap(d.cap)}</span> market cap: the raise is ${fmtMcap(d.cap)} × ${pc(SEED.supply - split.team)} ÷ 2 = <span class="num">${fmtUsd(targetUsdForCap(d.cap, dp.teamBps))}</span>` : 'Pick an opening market cap'],
     ['The split', `<span class="num">${pc(split.backers)}</span> backers, <span class="num">${pc(split.pool)}</span> pool, <span class="num">${pc(split.team)}</span> team`],
-    ['Raise price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token, fixed` : 'Set a target'],
-    ['FDV at the raise', ok ? `<span class="num">${f(fdvOf(dp))} ${sym}</span> (${fmtUsd(usdNow(dp, fdvOf(dp)))})` : 'Set a target'],
+    ['Raise price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token, fixed` : 'Pick an opening market cap'],
+    ['FDV at the raise', ok ? `<span class="num">${f(fdvOf(dp))} ${sym}</span> (${fmtUsd(usdNow(dp, fdvOf(dp)))})` : 'Pick an opening market cap'],
     ['Pool at seeding', ok ? `<span class="num">${f(d.target)} ${sym}</span> + <span class="num">${fmtTok(split.pool)}</span> $${esc(dp.ticker)}, locked for good` : 'The whole raise, locked for good'],
-    ['Pool depth', ok ? `<span class="num">${f(d.target)} ${sym}</span> each side at opening (${f(d.target * 2)} ${sym}, ${fmtUsd(usdNow(dp, d.target * 2))} in all)` : 'Set a target'],
+    ['Pool depth', ok ? `<span class="num">${f(d.target)} ${sym}</span> each side at opening (${f(d.target * 2)} ${sym}, ${fmtUsd(usdNow(dp, d.target * 2))} in all)` : 'Pick an opening market cap'],
     ['Team unlocks', split.team ? `${esc(fmtSchedule(dp.teamSchedule))}${perUnlockText(dp.teamSchedule, dp.teamBps) ? `: <span class="num">${esc(perUnlockText(dp.teamSchedule, dp.teamBps))}</span>` : ''}${unlockState(dp).next ? `; first unlock ${unlockState(dp).next.dayOffset === 0 ? 'at seeding' : (unlockState(dp).next.dayOffset === 1 ? 'a day' : daysTxt(unlockState(dp).next.dayOffset)) + ' after seeding'}` : ''}` : 'No team tokens'],
     ['Your fee income', `<span class="num">${fees(5000)}</span>, <span class="num">${fees(25000)}</span> or <span class="num">${fees(100000)}</span> a day at $5K, $25K or $100K of daily volume`],
     ['Closes', typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode ? `in ${String(Number((d.hours / 24).toFixed(1)))} min on devnet (test mode: a day is a minute), or the moment it fills` : `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
@@ -303,7 +312,7 @@ function syncOpenBtn() { const b = $('#openBtn'); if (b && !b.disabled) b.textCo
 /* what the raise shows as the price, and the pool it opens: read-only, derived from the target and the team share */
 function drawDerived(dp, ok, sym) {
   const sp = splitOf(dp.teamBps), row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
-  $('#derivedRows').innerHTML = row('Price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token: the target over the backers' ${fmtTok(sp.backers)} tokens` : `Set a target. The price is the target over the backers' ${fmtTok(sp.backers)} tokens`) +
+  $('#derivedRows').innerHTML = row('Price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token: the raise over the backers' ${fmtTok(sp.backers)} tokens` : `Pick an opening market cap. The price is the raise over the backers' ${fmtTok(sp.backers)} tokens`) +
     row('Fee', `<span class="num">1%</span> on top of each buy, to Seed; refunded with the buy if the raise does not seed`) +
     row('At seeding', ok ? `<span class="num">${fmtC(dp.target, dp.q)} ${sym}</span> and <span class="num">${fmtTok(sp.pool)}</span> $${esc(dp.ticker)} open a Meteora pool at the raise price, locked for good` : 'The whole raise and the pool tokens open a Meteora pool at the raise price, locked for good');
 }
@@ -331,7 +340,7 @@ async function openPresale() {
     if (da.custom) state.custom[da.key] = da.a;
     /* the wallet is read again here, at submit: a draft written under the demo wallet opens on the chain when a real wallet is
        connected now, and the other way round; the adapter decides by the wallet, not by anything the draft carries */
-    const p = Object.assign({ id, name: d.name, ticker: d.ticker, q: da.key, target: d.target, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, mine: true, creator: walletId(), live: isReal(), hist: [[now, 0]], buys: [], profile }, modelFields(d, da));
+    const p = Object.assign({ id, name: d.name, ticker: d.ticker, q: da.key, target: d.target, capUsd: d.cap, preset: d.preset, raised: 0, backers: 0, openedAt: now, endsAt: now + d.hours * H, status: 'live', resolvedAt: null, mine: true, creator: walletId(), live: isReal(), hist: [[now, 0]], buys: [], profile }, modelFields(d, da));
     /* the token's metadata JSON goes to permanent storage before the raise opens; the program fixes its address at opening and
        the mint step writes it into immutable Token Metadata, so the name, symbol and image can never change afterwards */
     if (isReal()) { b.textContent = 'Uploading token metadata…'; p.metadataUri = await uploadTokenJson(p, profile); }
@@ -340,7 +349,7 @@ async function openPresale() {
     await adapter.openPresale(p);   // a real wallet's raise comes back with its chain address and id
     if (supa.configured()) supa.call('register', { presaleId: p.id }).catch(() => {});
     state.presales.unshift(p); save();
-    ['#fName', '#fTicker', '#fTarget', '#fMint', '#fDesc', '#fMin', '#fMax', '#fUse', '#fPayout', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
+    ['#fName', '#fTicker', '#fMint', '#fDesc', '#fMin', '#fMax', '#fUse', '#fPayout', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
     $('#fTeam').value = '10'; lf.sched = 'over'; lf.tr = [{ day: 30, pct: 50 }, { day: 60, pct: 50 }]; drawRows('tr'); if (lf.on.alloc) $('[data-toggle="alloc"]').click(); lf.lim.use = { on: false };
     if (!supa.configured()) lf.urls.deck = '';   // the page keeps showing the local deck, so its preview URL is not released
     lf.lim.min = { on: false, unit: 'q' }; lf.lim.max = { on: false, unit: 'q' }; syncLim();

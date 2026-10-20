@@ -12,6 +12,8 @@ export const DAMM_POOL_AUTHORITY = new PublicKey('HLnpSz9h2S4hiLQ43rnSD9XkcUThA7
 export const TOKEN_2022 = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
 export const SOL_FEED = new PublicKey('7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE');   // Pyth's sponsored SOL/USD price account, the same on mainnet and devnet
 export const WSOL = new PublicKey('So11111111111111111111111111111111111111112');
+export const PRESET_CAPS_CENTS = [5_000_000, 10_000_000, 15_000_000, 20_000_000];   // $50K, $100K, $150K, $200K: the production presets
+export const TEST_PRESET = 4;                                                     // the devnet test preset's index (about $30)
 export const ATTEST_PREFIX = Buffer.from('seed-x-attest:v1');
 
 const le8 = (n: BN | number) => new BN(n).toArrayLike(Buffer, 'le', 8);
@@ -74,11 +76,11 @@ export class SeedClient {
 
   /* open_raise, with the attestation instruction first when an X handle is linked (attestor + handle), else alone.
      The founder's record names its last live raise, which is passed in so the program can see it has ended. */
-  async openRaise(founder: web3.PublicKey, pairMint: web3.PublicKey, attestor: web3.Keypair | null, handle: string | null, p: { nonce: BN | number; name: string; ticker: string; target: BN; deadline: number; teamBps: number; even?: { cliffDays: number; intervalDays: number; count: number } | null; schedule: Tranche[]; payoutWallet: web3.PublicKey; uri?: string }) {
+  async openRaise(founder: web3.PublicKey, pairMint: web3.PublicKey, attestor: web3.Keypair | null, handle: string | null, p: { nonce: BN | number; name: string; ticker: string; preset: number; minBuy?: BN | null; maxBuy?: BN | null; deadline: number; teamBps: number; even?: { cliffDays: number; intervalDays: number; count: number } | null; schedule: Tranche[]; payoutWallet: web3.PublicKey; uri?: string }) {
     const raise = this.raiseKey(founder, p.nonce), expiry = Math.floor(Date.now() / 1000) + 3600, hash = attestor && handle ? handleHash(handle) : null;
     const fs = await (this.program.account as any).founderState.fetchNullable(pda.founderState(this.pid, founder));
     const prevRaise = fs && !fs.liveRaise.equals(PublicKey.default) ? fs.liveRaise : null;
-    const open = await this.program.methods.openRaise({ nonce: new BN(p.nonce), name: p.name, ticker: p.ticker, target: p.target, deadline: new BN(p.deadline), teamBps: p.teamBps, schedule: p.schedule, even: p.even || null, payoutWallet: p.payoutWallet, x: hash ? { handleHash: [...hash], expiry: new BN(expiry) } : null, uri: p.uri ?? 'https://seed.test/meta.json' })
+    const open = await this.program.methods.openRaise({ nonce: new BN(p.nonce), name: p.name, ticker: p.ticker, preset: p.preset, minBuy: p.minBuy || new BN(0), maxBuy: p.maxBuy || new BN(0), deadline: new BN(p.deadline), teamBps: p.teamBps, schedule: p.schedule, even: p.even || null, payoutWallet: p.payoutWallet, x: hash ? { handleHash: [...hash], expiry: new BN(expiry) } : null, uri: p.uri ?? 'https://seed.test/meta.json' })
       .accounts({ config: this.config, solFeed: SOL_FEED, raise, founder, pairMint, escrow: getAssociatedTokenAddressSync(pairMint, raise, true), walletBlacklist: pda.blacklist(this.pid, founder), founderState: pda.founderState(this.pid, founder), prevRaise, raiseMeta: pda.raiseMeta(this.pid, raise), instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
         tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId })
       .remainingAccounts(hash ? [{ pubkey: pda.blacklist(this.pid, hash), isSigner: false, isWritable: false }] : []).instruction();

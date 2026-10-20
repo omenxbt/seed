@@ -3,10 +3,10 @@
 // first 8 bytes are sha256("event:<Name>")[0..8] and the rest the borsh-encoded fields.
 // No dependencies: runs in the Edge Functions (Deno) and in the local test (Node).
 
-export type Field = ['u8' | 'u16' | 'u32' | 'u64' | 'i64' | 'pubkey' | 'string' | 'string?' | 'hash32' | 'opt_hash32' | 'bool' | 'tranches' | 'opt_even?', string];
+export type Field = ['u8' | 'u16' | 'u32' | 'u64' | 'i64' | 'pubkey' | 'string' | 'string?' | 'hash32' | 'opt_hash32' | 'bool' | 'tranches' | 'opt_even?' | 'u64?' | 'u8?', string];
 export const EVENTS: Record<string, Field[]> = {
   RaiseOpened: [['pubkey', 'raise'], ['pubkey', 'founder'], ['opt_hash32', 'xHandleHash'], ['pubkey', 'pairMint'], ['u64', 'target'], ['u64', 'targetUsdCents'], ['u64', 'solUsdCents'],
-    ['u16', 'teamBps'], ['pubkey', 'payoutWallet'], ['i64', 'openedAt'], ['i64', 'endsAt'], ['string', 'name'], ['string', 'ticker'], ['tranches', 'schedule'], ['string?', 'uri'], ['opt_even?', 'even']],   // string?: absent in events from before the metadata step; opt_even?: the even unlock schedule, absent before it existed
+    ['u16', 'teamBps'], ['pubkey', 'payoutWallet'], ['i64', 'openedAt'], ['i64', 'endsAt'], ['string', 'name'], ['string', 'ticker'], ['tranches', 'schedule'], ['string?', 'uri'], ['opt_even?', 'even'], ['u64?', 'capUsdCents'], ['u8?', 'preset'], ['u64?', 'minBuy'], ['u64?', 'maxBuy']],   // the ?-types are absent in events from before they existed
   Contributed: [['pubkey', 'raise'], ['pubkey', 'wallet'], ['u64', 'amount'], ['u64', 'fee'], ['u64', 'raised'], ['u32', 'backers'], ['i64', 'at']],
   RaiseFilled: [['pubkey', 'raise'], ['i64', 'at']],
   RaiseMinted: [['pubkey', 'raise'], ['pubkey', 'mint'], ['i64', 'at']],
@@ -51,6 +51,7 @@ export function decodeFields(fields: Field[], data: Uint8Array): Record<string, 
     out[k] = t === 'u8' ? r.u8() : t === 'u16' ? r.u16() : t === 'u32' ? r.u32() : t === 'u64' ? r.u64() : t === 'i64' ? r.i64() : t === 'bool' ? r.u8() === 1
       : t === 'pubkey' ? base58(r.bytes(32)) : t === 'hash32' ? hex(r.bytes(32)) : t === 'opt_hash32' ? (r.u8() ? hex(r.bytes(32)) : null) : t === 'string' ? r.string() : t === 'string?' ? (r.o < r.b.length ? r.string() : '')
       : t === 'opt_even?' ? (r.o < r.b.length && r.u8() ? { cliffDays: r.u32(), intervalDays: r.u32(), count: r.u16() } : null)
+      : t === 'u64?' ? (r.o + 8 <= r.b.length ? r.u64() : null) : t === 'u8?' ? (r.o < r.b.length ? r.u8() : null)
       : (() => { const n = r.u32(), t2 = []; for (let i = 0; i < n; i++) t2.push({ dayOffset: r.u32(), bps: r.u16() }); return t2; })();
   }
   return out;

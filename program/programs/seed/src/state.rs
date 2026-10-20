@@ -43,13 +43,25 @@ pub struct Config {
     /// a bigger target opens at a higher market cap. A USDC raise meets its worth at the SOL price when it opens. A staging
     /// deployment of the same binary may be made with a lower one (devnet test mode uses 0.1 SOL, so a cycle costs cents).
     /// Last in the layout so a devnet config of the layout before it could be grown in place (migrate_config).
-    pub min_target_lamports: u64,
+    pub min_target_lamports: u64,   // unused since 2026-10-20: the presets below size a raise; kept for the layout
+    /// the opening market cap presets a founder picks from, in cents, set once at init_config: $50K, $100K, $150K, $200K in
+    /// production. The raise is derived from the one chosen (math::derive_target). They are the floor and the ceiling.
+    pub preset_caps_cents: [u64; 4],
+    /// devnet test mode only: a tiny extra preset (about $30) so a cycle costs cents. A mainnet build refuses any value but
+    /// zero at init_config (math::check_presets), so no wallet anywhere has an exemption
+    pub test_cap_cents: u64,
 }
+pub const TEST_PRESET: u8 = 4;   // the index of the test preset in open_raise; 0..3 are the production presets
 impl Config {
     /// one "day" in seconds: 86 400, or 60 in test mode
     pub fn unit(&self) -> i64 { if self.test_mode { 60 } else { DAY } }
     /// a span the terms give in seconds, in this config's time: a day's worth becomes a minute's worth in test mode
     pub fn span(&self, secs: i64) -> i64 { if self.test_mode { secs / (DAY / 60) } else { secs } }
+    /// the opening market cap a preset index names, in cents; None for an index not on the list (the test preset only
+    /// where the config carries one)
+    pub fn cap_for(&self, preset: u8) -> Option<u64> {
+        match preset { 0..=3 => Some(self.preset_caps_cents[preset as usize]), TEST_PRESET if self.test_cap_cents > 0 => Some(self.test_cap_cents), _ => None }
+    }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
@@ -118,6 +130,10 @@ pub struct Raise {
     /// the even schedule, when the founder chose one (then `schedule` is empty). Last in the layout: a raise from before it,
     /// allocated with room for 24 tranches and holding fewer, reads its spare zero bytes as None
     pub even: Option<EvenUnlocks>,
+    pub cap_usd_cents: u64,   // the opening market cap the founder picked (the preset's value when the raise opened)
+    pub preset: u8,           // its index (0..3, or TEST_PRESET on devnet)
+    pub min_buy: u64,         // the smallest buy, in base units of the pair asset; 0 = none. A buy that fills the room may be smaller
+    pub max_buy: u64,         // the most one wallet may put in over the raise, in base units; 0 = none
 }
 
 impl Raise {

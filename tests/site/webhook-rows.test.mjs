@@ -25,5 +25,5 @@ test('no object literal in the webhook has a comment swallowing fields', () => {
 test('the RaiseOpened event layout ends with the optional fields, in the program\'s order', () => {
   const m = /RaiseOpened: \[([\s\S]*?\])\],/.exec(events); assert.ok(m);   // up to the outer array's end, keeping the last entry's bracket
   const names = [...m[1].matchAll(/\['([a-z0-9_?]+)', '(\w+)'\]/g)].map(x => x[2]);
-  assert.deepEqual(names, ['raise', 'founder', 'xHandleHash', 'pairMint', 'target', 'targetUsdCents', 'solUsdCents', 'teamBps', 'payoutWallet', 'openedAt', 'endsAt', 'name', 'ticker', 'schedule', 'uri', 'even']);
+  assert.deepEqual(names, ['raise', 'founder', 'xHandleHash', 'pairMint', 'target', 'targetUsdCents', 'solUsdCents', 'teamBps', 'payoutWallet', 'openedAt', 'endsAt', 'name', 'ticker', 'schedule', 'uri', 'even', 'capUsdCents', 'preset', 'minBuy', 'maxBuy']);
 });

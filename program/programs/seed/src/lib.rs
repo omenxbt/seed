@@ -50,7 +50,9 @@ pub struct ConfigParams {
     pub fee_bps: u16, pub creator_share_bps: u16, pub pool_fee_bps: u16, pub cap_usd_cents: u64,
     pub min_deadline: i64, pub max_deadline: i64, pub seed_timeout: i64, pub min_unlock_days: u32, pub payout_delay: i64,
     pub test_mode: bool,
-    pub min_target_lamports: u64,   // the smallest raise; 81 SOL in production. Set here, once, like the fee
+    pub min_target_lamports: u64,   // unused since 2026-10-20 (kept for the layout); pass 1
+    pub preset_caps_cents: [u64; 4],   // the opening market cap presets, in cents, ascending: 5_000_000, 10_000_000, 15_000_000, 20_000_000 in production
+    pub test_cap_cents: u64,           // 0 everywhere but a devnet test-mode config (about 3_000, $30)
 }
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct ConfigUpdate { pub seed_treasury: Option<Pubkey>, pub attestor: Option<Pubkey> }
@@ -68,6 +70,9 @@ pub struct OpenParams {
     pub x: Option<XAttest>,   // the X account, when the founder links one at opening
     pub uri: String,          // the token metadata JSON (name, symbol, description, image, links), on permanent storage
     pub even: Option<EvenUnlocks>,   // an even unlock schedule for the team share, instead of dated tranches
+    pub preset: u8,           // the opening market cap preset (0..3; TEST_PRESET on devnet): the target is derived from it, never typed
+    pub min_buy: u64,         // optional, base units of the pair asset; 0 = none
+    pub max_buy: u64,         // optional, base units; 0 = none
 }
 /// an X attestation: the attestor signed (founder ‖ handle hash ‖ expiry) in the ed25519 instruction just before
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -92,8 +97,9 @@ pub mod seed {
             }
         }
         require!(p.fee_bps < 1000 && p.creator_share_bps <= 10_000 && p.pool_fee_bps <= 1000 && p.min_target_lamports > 0, SeedError::BadConfig);
+        math::check_presets(&p.preset_caps_cents, p.test_cap_cents, p.test_mode)?;
         let c = &mut ctx.accounts.config;
-        c.min_target_lamports = p.min_target_lamports;
+        c.min_target_lamports = p.min_target_lamports; c.preset_caps_cents = p.preset_caps_cents; c.test_cap_cents = p.test_cap_cents;
         c.admin = p.admin; c.pending_admin = Pubkey::default(); c.attestor = p.attestor; c.seed_treasury = p.seed_treasury; c.sol_feed = p.sol_feed;
         c.fee_bps = p.fee_bps; c.creator_share_bps = p.creator_share_bps; c.pool_fee_bps = p.pool_fee_bps; c.cap_usd_cents = p.cap_usd_cents;
         c.min_deadline = p.min_deadline; c.max_deadline = p.max_deadline; c.seed_timeout = p.seed_timeout; c.min_unlock_days = p.min_unlock_days; c.payout_delay = p.payout_delay;
@@ -122,24 +128,29 @@ pub mod seed {
         Ok(())
     }
 
-    /// devnet builds only: a config of the layout before `min_target_lamports` is grown by the eight bytes and given its
-    /// minimum, once (a config already of this layout is refused). The program's upgrade authority signs, since the devnet
-    /// config's admin is a browser wallet. A mainnet build has no such instruction: its config is made whole at init.
+    /// devnet builds only: a config of the layout before the presets (228 bytes, ending in min_target_lamports) is grown by
+    /// the forty bytes and given its presets and test cap, once (a config already of this layout is refused). The program's
+    /// upgrade authority signs, since the devnet config's admin is a browser wallet. A mainnet build has no such instruction:
+    /// its config is made whole at init.
     #[cfg(feature = "devnet")]
-    pub fn migrate_config(ctx: Context<MigrateConfig>, min_target_lamports: u64) -> Result<()> {
+    pub fn migrate_config(ctx: Context<MigrateConfig>, preset_caps_cents: [u64; 4], test_cap_cents: u64) -> Result<()> {
         {   // the signer is the program's upgrade authority: ProgramData is [3u32][slot u64][Some = 1][authority 32]
             let d = ctx.accounts.program_data.try_borrow_data()?;
             require!(d.len() >= 45 && d[0..4] == 3u32.to_le_bytes() && d[12] == 1 && Pubkey::try_from(&d[13..45]).unwrap() == ctx.accounts.authority.key(), SeedError::NotAdmin);
         }
         let cfg = ctx.accounts.config.to_account_info();
-        let old = 8 + Config::INIT_SPACE - 8;
-        require!(cfg.data_len() == old && min_target_lamports > 0, SeedError::BadConfig);
-        let need = Rent::get()?.minimum_balance(old + 8);
+        let old = 8 + Config::INIT_SPACE - 40;
+        require!(cfg.data_len() == old, SeedError::BadConfig);
+        let test_mode = cfg.try_borrow_data()?[218] == 1;   // the test_mode byte of the previous layout
+        math::check_presets(&preset_caps_cents, test_cap_cents, test_mode)?;
+        let need = Rent::get()?.minimum_balance(old + 40);
         if need > cfg.lamports() {
             anchor_lang::system_program::transfer(CpiContext::new(ctx.accounts.system_program.to_account_info(), anchor_lang::system_program::Transfer { from: ctx.accounts.authority.to_account_info(), to: cfg.clone() }), need - cfg.lamports())?;
         }
-        cfg.resize(old + 8)?;
-        cfg.try_borrow_mut_data()?[old..old + 8].copy_from_slice(&min_target_lamports.to_le_bytes());
+        cfg.resize(old + 40)?;
+        let mut d = cfg.try_borrow_mut_data()?;
+        for (i, cap) in preset_caps_cents.iter().enumerate() { d[old + i * 8..old + i * 8 + 8].copy_from_slice(&cap.to_le_bytes()); }
+        d[old + 32..old + 40].copy_from_slice(&test_cap_cents.to_le_bytes());
         Ok(())
     }
 
@@ -186,14 +197,15 @@ pub mod seed {
         // on mainnet the JSON must be on Arweave, where nobody can edit it; a devnet build takes any https:// address
         #[cfg(not(feature = "devnet"))]
         require!(p.uri.starts_with("ar://") || p.uri.starts_with("https://arweave.net/") || p.uri.starts_with("https://gateway.irys.xyz/"), SeedError::BadUri);
-        require!(p.target > 0, SeedError::ZeroTarget);
         require!(p.deadline >= c.span(c.min_deadline) && p.deadline <= c.span(c.max_deadline), SeedError::BadDeadline);
         let pair = ctx.accounts.pair_mint.key();
         require!(pair == WSOL || pair == USDC || pair == USDC_DEVNET, SeedError::BadPair);
-        // today's SOL price (refused when stale): the $100,000 cap and the minimum raise are both measured with it. The minimum is
-        // the config's (81 SOL in production): a SOL raise in lamports, a USDC raise its worth in dollars; math::check_target
+        require!(p.max_buy == 0 || p.min_buy <= p.max_buy, SeedError::BadLimits);
+        // the raise is derived, never typed: the opening market cap is one of the config's presets, the target is
+        // cap × (1 − team share) ÷ 2, priced in the pair asset at today's SOL price (refused when stale); math::derive_target
+        let cap = c.cap_for(p.preset).ok_or(SeedError::BadPreset)?;
         let cents = pyth::sol_usd_cents(&ctx.accounts.sol_feed.to_account_info(), now)?;
-        let (target_usd_cents, sol_usd_cents) = math::check_target(pair == WSOL, p.target, cents, c.cap_usd_cents, c.min_target_lamports)?;
+        let (target, target_usd_cents, sol_usd_cents) = math::derive_target(cap, p.team_bps, pair == WSOL, cents)?;
         // the team share and its unlocks: any share under 100%, all at seeding or any schedule, as long as it adds up to
         // exactly 100% of the share and its dates increase (math::check_schedule); no minimum length and no maximum
         math::check_schedule(p.team_bps, &p.schedule, p.even.as_ref())?;
@@ -201,7 +213,8 @@ pub mod seed {
         anchor_spl::associated_token::create(CpiContext::new(ctx.accounts.associated_token_program.to_account_info(), anchor_spl::associated_token::Create { payer: ctx.accounts.founder.to_account_info(), associated_token: ctx.accounts.escrow.to_account_info(), authority: ctx.accounts.raise.to_account_info(), mint: ctx.accounts.pair_mint.to_account_info(), system_program: ctx.accounts.system_program.to_account_info(), token_program: ctx.accounts.token_program.to_account_info() }))?;
         let r = &mut ctx.accounts.raise;
         r.founder = founder; r.nonce = p.nonce; r.x_handle_hash = p.x.as_ref().map(|x| x.handle_hash); r.pair_mint = pair;
-        r.target = p.target; r.target_usd_cents = target_usd_cents; r.sol_usd_cents = sol_usd_cents; r.time_unit = c.unit();
+        r.target = target; r.target_usd_cents = target_usd_cents; r.sol_usd_cents = sol_usd_cents; r.time_unit = c.unit();
+        r.cap_usd_cents = cap; r.preset = p.preset; r.min_buy = p.min_buy; r.max_buy = p.max_buy;
         r.fee_bps = c.fee_bps; r.creator_share_bps = c.creator_share_bps; r.team_bps = p.team_bps; r.schedule = if p.team_bps > 0 { p.schedule.clone() } else { vec![] }; r.even = if p.team_bps > 0 { p.even } else { None };
         r.payout_wallet = p.payout_wallet; r.pending_payout = None; r.payout_effective_at = 0;
         r.status = RaiseStatus::Live; r.seed_step = SeedStep::Filled; r.refund_reason = None;
@@ -210,8 +223,8 @@ pub mod seed {
         r.team_claimed = 0; r.blacklisted = false; r.flagged_at = 0; r.takeover_to = None; r.takeover_at = 0;
         r.name = p.name.clone(); r.ticker = p.ticker.clone(); r.bump = ctx.bumps.raise;
         let m = &mut ctx.accounts.raise_meta; m.raise = r.key(); m.uri = p.uri.clone(); m.bump = ctx.bumps.raise_meta;
-        emit!(RaiseOpened { raise: r.key(), founder: r.founder, x_handle_hash: r.x_handle_hash, pair_mint: pair, target: p.target, target_usd_cents, sol_usd_cents,
-            team_bps: p.team_bps, payout_wallet: p.payout_wallet, opened_at: now, ends_at: r.ends_at, name: p.name, ticker: p.ticker, schedule: r.schedule.clone(), uri: p.uri, even: r.even });
+        emit!(RaiseOpened { raise: r.key(), founder: r.founder, x_handle_hash: r.x_handle_hash, pair_mint: pair, target, target_usd_cents, sol_usd_cents,
+            team_bps: p.team_bps, payout_wallet: p.payout_wallet, opened_at: now, ends_at: r.ends_at, name: p.name, ticker: p.ticker, schedule: r.schedule.clone(), uri: p.uri, even: r.even, cap_usd_cents: cap, preset: p.preset, min_buy: p.min_buy, max_buy: p.max_buy });
         Ok(())
     }
 
@@ -240,6 +253,8 @@ pub mod seed {
         require!(amount > 0, SeedError::ZeroAmount);
         let room = r.room(); require!(room > 0, SeedError::Full);
         let amount = amount.min(room);
+        require!(r.min_buy == 0 || amount >= r.min_buy || amount == room, SeedError::UnderMinBuy);   // the buy that fills the raise may be smaller
+        let max_buy = r.max_buy;
         let fee = math::mul_div_ceil(amount, r.fee_bps as u64, BPS).ok_or(SeedError::Overflow)?;
         token::transfer(CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer { from: ctx.accounts.wallet_token.to_account_info(), to: ctx.accounts.escrow.to_account_info(), authority: ctx.accounts.wallet.to_account_info() }), amount + fee)?;
         // the contribution record: created on the wallet's first buy, added to after
@@ -254,6 +269,7 @@ pub mod seed {
             require!(c.raise == raise_key && c.wallet == wallet_key, SeedError::WrongAccount);
             c
         };
+        require!(max_buy == 0 || c.amount + amount <= max_buy, SeedError::OverMaxBuy);
         c.amount += amount; c.fee += fee;
         c.try_serialize(&mut &mut ca.data.borrow_mut()[..])?;
         r.raised += amount; r.fees_held += fee;

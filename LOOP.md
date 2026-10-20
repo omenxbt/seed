@@ -4,8 +4,8 @@
 Seed is a trading terminal for fixed-price presales that test product-market fit, on Solana and Meteora: "Axiom/GMGN for presales." The market decides what gets funded. Seed doesn't gate ideas or judge founder terms.
 
 Raise
-- The founder sets the target (SOL or USDC, at least 81 SOL or its worth in USDC, max $100,000; SOL targets convert at the Pyth SOL/USD price when the raise opens) and a deadline (24h to 14d). Hard cap = target, so there's no partial raise.
-- The founder can also set an optional minimum buy, maximum per wallet and whitelist.
+- The founder picks an opening market cap preset: $50K, $100K, $150K or $200K. No typed target, no custom option. The raise is derived: target = cap × (1 − team share) ÷ 2, priced in the pair asset (SOL or USDC) at the Pyth SOL/USD price when the raise opens, and all of it goes into the pool. The presets are the floor and the ceiling; there is no separate minimum or maximum. The presets live in the program's Config, set once at init; a devnet build in test mode also allows a tiny Test preset (about $30) that no mainnet build has. The founder also sets a deadline (24h to 14d). Hard cap = target, so there's no partial raise.
+- The founder can also set an optional minimum buy and maximum per wallet, enforced by the program. (A whitelist is not built; nothing shows one until the program enforces it.)
 - Price is derived, never typed: price = target ÷ backer tokens.
 - Seed fee: 1% on top of each buy, refunded with the buy if the raise doesn't seed.
 - Miss or founder cancel: every backer claims a full refund (buy + fee), and the token never mints.
@@ -14,7 +14,7 @@ Raise
 Seeding
 - Mint 1,000,000,000 tokens with metadata (name, symbol, image, links), made immutable. Revoke mint and freeze authority. Standard SPL token.
 - Team share: set by the founder, any value from 0 up to (not including) 100%. Backers get (1B − team) ÷ 2 and the pool gets the same.
-- Pool: Meteora DAMM v2 with 100% of the raise + the pool tokens, opening at the raise price, LP permanently locked, position owned by the Seed program PDA. Fees collected in the quote asset only (OnlyB).
+- Pool: Meteora DAMM v2 with 100% of the raise + the pool tokens, opening at the raise price (so the pool opens at the preset market cap), LP permanently locked, position owned by the Seed program PDA. Fees collected in the quote asset only (OnlyB).
 - Backer tokens: pro rata, claimable right after seeding, no lockup.
 
 Founder income

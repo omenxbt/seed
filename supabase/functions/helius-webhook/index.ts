@@ -36,6 +36,7 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
       id: slug(e.ticker as string, e.raise as string), address: e.raise, founder: e.founder, name: e.name, ticker: e.ticker, pair_mint: pairMint,
       target: units(e.target as bigint, d), target_usd: Number(e.targetUsdCents) / 100, sol_usd_at_open: Number(e.solUsdCents) / 100,
       team_bps: e.teamBps, team_schedule: e.even ? e.even : tr.length ? { tranches: tr } : null, payout_wallet: e.payoutWallet, metadata_uri: (e.uri as string) || null,   // team_schedule: { cliffDays, intervalDays, count } for an even schedule
+      cap_usd: e.capUsdCents != null ? Number(e.capUsdCents) / 100 : null, preset: e.preset ?? null, min_buy: e.minBuy ? units(e.minBuy as bigint, d) : null, max_buy: e.maxBuy ? units(e.maxBuy as bigint, d) : null,   // the opening market cap preset and the founder's limits (program-enforced)
       status: 'live', opened_at: ts(e.openedAt as bigint), ends_at: ts(e.endsAt as bigint), updated_at: now
     }, { onConflict: 'address', ignoreDuplicates: true });
     // the X account behind the handle hash, from the attestation log (a raise may open without one)
