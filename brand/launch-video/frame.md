@@ -27,13 +27,18 @@ copies verbatim (`tools/sync-site.mjs`). Where they disagree the code wins; see 
 - Press .97 in 80ms, release in .28s. Fill bar .6s. Sheen every 3.2s. Odometer .55s a digit.
 - Chart: line 1.7s after .3s, area at 1.1s, tip at 1.8s, bars grow from the axis. Sting: 21 dots 40ms apart, rim first,
   the seed last, brightening; wordmark fades in at 1.6s.
+- The camera (after the Axiom films in delta/01-video-hyperframes/_motion-refs/): shots resolve out of a fast move on the
+  curve and settle slowly; push-ins with depth of field on one element; tilts up to 16°; pull backs to the whole app in
+  the screen frame (16px radius, the panel line); motion blur from the camera's own travel. No bloom, no spin.
 
 ## Layout and safe zones
 
-- 1920×1080: 96px in from every edge; captions bottom 144px, two lines at most. Panels at 1.5× the site's CSS px.
-- 1080×1920: 120px sides, 250px top and 320px bottom clear; captions centred, foot at 420px, three lines at most. Panels at 1.6×, one column.
-- 1080×1080: 80px in; captions bottom 120px, two lines at most. Panels at 1.25×.
-- The mark top left in every format with one seed diameter of clear space (hidden during the sting and the end card, where the mark is the subject).
+- 1920×1080: 96px in from every edge; captions bottom 144px, two lines at most. The app at a 1920×1080 window, three columns.
+- 1080×1920: 120px sides, 250px top and 320px bottom clear; captions centred, foot at 420px, three lines at most. The app at its 540px phone layout.
+- 1080×1080: 80px in; captions bottom 120px, two lines at most. The app at a 1080×1080 window, two columns.
+- The element the camera is on sits in the safe zone, clear of the caption pill; the rest of the page runs out of focus to the edge.
+- The mark top left in every format with its clear space kept (the world under it masked away), from 3s, where the
+  sting's mark lands, until the end card, where the mark is the subject.
 
 ## Avoid
 

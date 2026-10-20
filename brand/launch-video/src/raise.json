@@ -1,0 +1,54 @@
+{
+ "note": "The film's demo raise: the site's demo raise Halfmoon (SOL pair) set to these terms by tools/capture-pages.mjs. Times are ms; the raise opens at t0 (2026-10-17 15:36 UTC) for 7 days and fills in eight waves of buys at 82.4% of its window. The other ending stops at 62% and refunds at the deadline.",
+ "name": "Halfmoon",
+ "ticker": "HALF",
+ "target": 85,
+ "backers": 214,
+ "t0": 1792251360000,
+ "window": 604800000,
+ "deadlineLabel": "7 days",
+ "fillFrac": 0.824,
+ "waves": [
+  {
+   "at": 62294400,
+   "frac": 0.0753,
+   "backers": 0.08
+  },
+  {
+   "at": 124588800,
+   "frac": 0.1676,
+   "backers": 0.18
+  },
+  {
+   "at": 186883200,
+   "frac": 0.2812,
+   "backers": 0.29
+  },
+  {
+   "at": 249177600,
+   "frac": 0.4129,
+   "backers": 0.41
+  },
+  {
+   "at": 311472000,
+   "frac": 0.5718,
+   "backers": 0.57
+  },
+  {
+   "at": 373766400,
+   "frac": 0.6965,
+   "backers": 0.71
+  },
+  {
+   "at": 436060800,
+   "frac": 0.8453,
+   "backers": 0.86
+  },
+  {
+   "at": 498355200,
+   "frac": 1,
+   "backers": 1
+  }
+ ],
+ "missFrac": 0.62
+}

@@ -1,0 +1,509 @@
+{
+ "16x9": {
+  "window": [
+   1920,
+   1080
+  ],
+  "states": {
+   "launch-0": {
+    "body": "in-app enter",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 23297
+   },
+   "launch-1": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 23597
+   },
+   "launch-2": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 23569
+   },
+   "launch-3": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 23528
+   },
+   "launch-4": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 23548
+   },
+   "live-0": {
+    "body": "in-app enter",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 21556
+   },
+   "live-1": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 22303
+   },
+   "live-2": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 23186
+   },
+   "live-3": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 24115
+   },
+   "live-4": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 25100
+   },
+   "live-5": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 26302
+   },
+   "live-6": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 27382
+   },
+   "live-7": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 28463
+   },
+   "live-8": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 29417
+   },
+   "seeding-0": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 28704
+   },
+   "seeding-0r": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 28707
+   },
+   "seeding-1": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 28708
+   },
+   "seeding-1r": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 28711
+   },
+   "seeding-2": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 28712
+   },
+   "seeding-2r": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 28715
+   },
+   "seeded": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 33219
+   },
+   "miss-live": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 26283
+   },
+   "refunded": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 1080,
+    "bytes": 24915
+   }
+  }
+ },
+ "1x1": {
+  "window": [
+   1080,
+   1080
+  ],
+  "states": {
+   "launch-0": {
+    "body": "in-app enter",
+    "root": "",
+    "scrollY": 1534,
+    "docH": 3493,
+    "bytes": 22487
+   },
+   "launch-1": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 1534,
+    "docH": 3493,
+    "bytes": 22787
+   },
+   "launch-2": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 1534,
+    "docH": 3471,
+    "bytes": 22759
+   },
+   "launch-3": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 1534,
+    "docH": 3471,
+    "bytes": 22718
+   },
+   "launch-4": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 1534,
+    "docH": 3471,
+    "bytes": 22738
+   },
+   "live-0": {
+    "body": "in-app enter",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3288,
+    "bytes": 20774
+   },
+   "live-1": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3288,
+    "bytes": 21517
+   },
+   "live-2": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3288,
+    "bytes": 22359
+   },
+   "live-3": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3288,
+    "bytes": 23288
+   },
+   "live-4": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3288,
+    "bytes": 24274
+   },
+   "live-5": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3288,
+    "bytes": 25456
+   },
+   "live-6": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3288,
+    "bytes": 26487
+   },
+   "live-7": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3288,
+    "bytes": 27568
+   },
+   "live-8": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3288,
+    "bytes": 28520
+   },
+   "seeding-0": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3334,
+    "bytes": 27807
+   },
+   "seeding-0r": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3334,
+    "bytes": 27810
+   },
+   "seeding-1": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3334,
+    "bytes": 27811
+   },
+   "seeding-1r": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3334,
+    "bytes": 27814
+   },
+   "seeding-2": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3334,
+    "bytes": 27815
+   },
+   "seeding-2r": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3334,
+    "bytes": 27818
+   },
+   "seeded": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3942,
+    "bytes": 32322
+   },
+   "miss-live": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3288,
+    "bytes": 25419
+   },
+   "refunded": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3256,
+    "bytes": 24051
+   }
+  }
+ },
+ "9x16": {
+  "window": [
+   540,
+   960
+  ],
+  "states": {
+   "launch-0": {
+    "body": "in-app enter",
+    "root": "",
+    "scrollY": 2048,
+    "docH": 6129,
+    "bytes": 22071
+   },
+   "launch-1": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 2048,
+    "docH": 6129,
+    "bytes": 22371
+   },
+   "launch-2": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 2048,
+    "docH": 6129,
+    "bytes": 22343
+   },
+   "launch-3": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 2048,
+    "docH": 6129,
+    "bytes": 22302
+   },
+   "launch-4": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 2048,
+    "docH": 6129,
+    "bytes": 22322
+   },
+   "live-0": {
+    "body": "in-app enter",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3997,
+    "bytes": 20357
+   },
+   "live-1": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3997,
+    "bytes": 21100
+   },
+   "live-2": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3997,
+    "bytes": 21933
+   },
+   "live-3": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3997,
+    "bytes": 22867
+   },
+   "live-4": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3997,
+    "bytes": 23853
+   },
+   "live-5": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3997,
+    "bytes": 25035
+   },
+   "live-6": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3997,
+    "bytes": 26066
+   },
+   "live-7": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3997,
+    "bytes": 27147
+   },
+   "live-8": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 4032,
+    "bytes": 28099
+   },
+   "seeding-0": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3886,
+    "bytes": 27386
+   },
+   "seeding-0r": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3886,
+    "bytes": 27389
+   },
+   "seeding-1": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3886,
+    "bytes": 27390
+   },
+   "seeding-1r": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3886,
+    "bytes": 27393
+   },
+   "seeding-2": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3886,
+    "bytes": 27394
+   },
+   "seeding-2r": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3886,
+    "bytes": 27397
+   },
+   "seeded": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 4708,
+    "bytes": 31621
+   },
+   "miss-live": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3997,
+    "bytes": 24998
+   },
+   "refunded": {
+    "body": "in-app",
+    "root": "",
+    "scrollY": 0,
+    "docH": 3467,
+    "bytes": 23630
+   }
+  }
+ }
+}

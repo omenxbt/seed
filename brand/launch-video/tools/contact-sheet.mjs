@@ -16,8 +16,8 @@ fs.mkdirSync(P('out/stills'), { recursive: true });
 
 /* the moment each scene is shown at: its state once its motion has settled */
 const STILLS = {
-  master: [['Logo sting', 2.4], ['Title card', 5.5], ['Trust', 12.6], ['How a raise works', 23.4], ['Seeded', 31.5], ['Refunded', 40.6], ['Numbers', 44.9], ['End card', 54.0]],
-  teaser: [['Logo sting', 2.4], ['Fill', 8.0], ['Seeded in full', 10.2], ['End card', 14.0]]
+  master: [['Logo sting', 2.3], ['Title card', 5.5], ['Trust', 12.6], ['Launch form', 15.7], ['Raise filling', 21.2], ['Seeding', 26.6], ['Seeded', 29.4], ['Refunded', 40.6], ['Numbers', 49.0], ['End card', 54.0]],
+  teaser: [['Logo sting', 2.3], ['Raise filling', 5.4], ['Seeded in full', 10.2], ['End card', 14.0]]
 };
 
 const shots = {};

@@ -14,9 +14,9 @@
         },
         {
           "name": "fill complete",
-          "t": 22.85,
-          "frame": 686,
-          "what": "the last buy fills the target"
+          "t": 23.45,
+          "frame": 704,
+          "what": "the last wave of buys fills the target"
         },
         {
           "name": "seeded",
@@ -32,8 +32,8 @@
         },
         {
           "name": "end card",
-          "t": 52.4,
-          "frame": 1572,
+          "t": 51.9,
+          "frame": 1557,
           "what": "mark, wordmark and URL"
         }
       ]
@@ -52,7 +52,7 @@
           "name": "fill complete",
           "t": 7.45,
           "frame": 224,
-          "what": "the last buy fills the target"
+          "what": "the last wave of buys fills the target"
         },
         {
           "name": "end card",

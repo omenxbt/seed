@@ -1,9 +1,9 @@
 1
-00:00:03,050 --> 00:00:07,700
+00:00:02,720 --> 00:00:07,600
 Back an idea at one fixed price.
 
 2
-00:00:08,100 --> 00:00:10,600
+00:00:07,850 --> 00:00:10,600
 Most launches ask you to trust a founder with your money.
 
 3
@@ -31,25 +31,25 @@ If it misses, every wallet gets back exactly what it paid, fee included.
 Nothing is minted, nothing is held back.
 
 9
-00:00:42,050 --> 00:00:43,720
+00:00:42,050 --> 00:00:43,700
 1% on top
 
 10
-00:00:44,050 --> 00:00:45,720
+00:00:43,850 --> 00:00:45,500
 1,000,000,000 supply
 
 11
-00:00:46,050 --> 00:00:47,720
+00:00:45,650 --> 00:00:47,300
 100% refund
 
 12
-00:00:48,050 --> 00:00:49,720
+00:00:47,450 --> 00:00:49,280
 Locked for good
 
 13
-00:00:50,050 --> 00:00:52,100
+00:00:49,450 --> 00:00:51,600
 Seeded in full, or refunded in full.
 
 14
-00:00:52,450 --> 00:00:55,000
+00:00:53,200 --> 00:00:55,000
 seed-nu-ten.vercel.app

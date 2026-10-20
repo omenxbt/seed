@@ -41,14 +41,17 @@ const program = {
   minDeadlineH: ini('minDeadline') / 3600,
   maxDeadlineH: ini('maxDeadline') / 3600,
   seedTimeoutDays: ini('seedTimeout') / 86400,
-  minUnlockDays: both('minUnlockDays', ini('minUnlockDays')),
+  /* the Config still carries min_unlock_days (90) for its layout, but since 2026-10-20 nothing reads it: no instruction
+     checks a team unlock's length (math::check_schedule checks only the sum and the order), and the production profile
+     no longer names it */
+  unlockMinChecked: /min_unlock_days/.test(lib.replace(/c\.min_unlock_days = p\.min_unlock_days;/, '').replace(/pub min_unlock_days: u32,/, '')) || pd('minUnlockDays') != null,
   seedSteps: (state.match(/pub enum SeedStep \{([^}]*)\}/)[1].split(',').map(s => s.trim()).filter(Boolean)),
   refundIsAmountPlusFee: /let back = c\.amount \+ c\.fee;/.test(lib)
 };
 const siteTerms = {
   supply: js('supply'), minTargetSol: js('minTargetSol'), feeBps: js('feeBps'), creatorShareBps: js('creatorShareBps'),
   poolFeeBps: js('poolFeeBps'), capUsd: js('capUsd'), minDeadlineH: js('minDeadlineH'), maxDeadlineH: js('maxDeadlineH'),
-  seedTimeoutDays: js('seedTimeoutDays'), minUnlockDays: js('minUnlockDays')
+  seedTimeoutDays: js('seedTimeoutDays')
 };
 const stepNames = [...page.match(/names = \[([^\]]+)\]/)[1].matchAll(/'([^']+)'/g)].map(m => m[1]);
 
@@ -61,7 +64,7 @@ const loopSays = {
   poolFee: /Pool fee 1\.25%/.test(loop),
   split: /split 70% to the founder payout wallet and 30% to Seed/.test(loop),
   timeout: /3 days after the fill, everyone is refunded/.test(loop),
-  unlock: /Last unlock at least 90 days after seeding/.test(loop),
+  unlock: /No minimum length, no maximum/.test(loop),
   refund: /full refund \(buy \+ fee\)/.test(loop),
   lockedForGood: /LP permanently locked/.test(loop)
 };
@@ -70,6 +73,7 @@ for (const k of Object.keys(siteTerms)) if (siteTerms[k] !== program[k]) problem
 for (const [k, ok] of Object.entries(loopSays)) if (!ok) problems.push(`LOOP.md no longer states the ${k} the way the film quotes it`);
 if (program.seedSteps.length !== stepNames.length) problems.push(`seed steps: program ${program.seedSteps.length}, raise page ${stepNames.length}`);
 if (!program.refundIsAmountPlusFee) problems.push('claim_refund no longer pays back amount + fee');
+if (program.unlockMinChecked) problems.push('the program or the production profile checks a minimum unlock length again');
 
 const usd = n => '$' + n.toLocaleString('en-US');
 const pct = bps => (bps / 100).toString().replace(/\.0+$/, '') + '%';
@@ -87,7 +91,7 @@ const figures = {
   refund: program.refundIsAmountPlusFee ? '100%' : '?',
   seedingSteps: String(program.seedSteps.length),                   // 4
   seedingTimeout: `${program.seedTimeoutDays} days`,                // 3 days
-  unlockMin: `${program.minUnlockDays} days`,                       // 90 days
+  unlockMin: program.unlockMinChecked ? '?' : 'none',              // no minimum since 2026-10-20
   solUsd: js('demoSolUsd')                                          // the SOL price the site's demo converts at (the launch hint)
 };
 

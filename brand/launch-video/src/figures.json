@@ -12,7 +12,7 @@
     "refund": "100%",
     "seedingSteps": "4",
     "seedingTimeout": "3 days",
-    "unlockMin": "90 days",
+    "unlockMin": "none",
     "solUsd": 148.2
   },
   "stepNames": [
@@ -31,7 +31,7 @@
     "minDeadlineH": 24,
     "maxDeadlineH": 336,
     "seedTimeoutDays": 3,
-    "minUnlockDays": 90,
+    "unlockMinChecked": false,
     "seedSteps": [
       "Filled",
       "Minted",
