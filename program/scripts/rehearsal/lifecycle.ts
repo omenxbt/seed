@@ -169,7 +169,8 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
   log('NOTE  no instruction burns unvested team tokens on a takeover: the schedule keeps unlocking to the new payout wallet. That policy is open (Needs Josh).');
 
   // the unlock: nothing before day 90, everything at it, to the wallet the takeover named
-  try { await c.send([c.ata(me.publicKey, takeoverTo, mint.publicKey), await c.claimVested(A, mint.publicKey, takeoverTo, me.publicKey)]); check(false, 'A: nothing unlocks before the cliff'); } catch (e: any) { check(/NothingToClaim/.test(e.message), 'A: nothing unlocks before the cliff', 'NothingToClaim'); }
+  await c.send([c.ata(me.publicKey, takeoverTo, mint.publicKey)]);   // on its own: a refused claim would roll the account's creation back with it
+  try { await c.send([await c.claimVested(A, mint.publicKey, takeoverTo, me.publicKey)]); check(false, 'A: nothing unlocks before the cliff'); } catch (e: any) { check(/NothingToClaim/.test(e.message), 'A: nothing unlocks before the cliff', 'NothingToClaim'); }
   if (fast) log('SKIP  the 90-day unlock (--fast)');
   else {
     await waitUntil(Number(a.seededAt) + 90 * 60, `the cliff, ${minutes(90)}`);
