@@ -864,7 +864,8 @@ function bindRail(p) {
       go.textContent = !state.wallet ? 'Connect wallet to trade' : `${sell ? 'Sell' : 'Buy'} $${cur.ticker}`;
     } else {
       $('[data-recv]', panel).textContent = `${fmtTok(n > 0 ? tokensFor(cur, Math.min(amountFor(n), leftOf(cur))) : 0)} $${cur.ticker}`;   // the buy inside the payment, capped at the room left
-      if (!msg && n > 0) msg = pr.minBuy && n < pr.minBuy ? `The minimum deposit is ${fmtC(pr.minBuy, cur.q)} ${C.sym}.` : pr.maxBuy && n + (state.positions[cur.id] || 0) > pr.maxBuy ? `A wallet can put in at most ${fmtC(pr.maxBuy, cur.q)} ${C.sym}.`
+      const buy = amountFor(n);   // the limits are on the buy itself, like positions; n is the payment with the 1% fee on top (QA P2-85)
+      if (!msg && n > 0) msg = pr.minBuy && buy < pr.minBuy - 1e-9 ? `The minimum deposit is ${fmtC(pr.minBuy, cur.q)} ${C.sym}.` : pr.maxBuy && buy + (state.positions[cur.id] || 0) > pr.maxBuy + 1e-9 ? `A wallet can put in at most ${fmtC(pr.maxBuy, cur.q)} ${C.sym}.`
         : n > payLeft(cur) ? `Only ${fmtExact(payLeft(cur), cur.q)} ${C.sym} fits in this raise, the 1% fee included.` : state.wallet && n > bal ? `Your wallet holds ${fmtAmt(bal, cur.q)} ${C.sym}.` : '';
       go.textContent = !state.wallet ? 'Connect wallet to deposit' : n > 0 && !msg ? `Deposit ${fmtExact(Math.min(n, payLeft(cur)), cur.q)} ${C.sym}` : 'Deposit';
     }
