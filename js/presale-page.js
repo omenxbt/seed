@@ -352,7 +352,7 @@ function seedingPanel(p) {
     <button class="btn btn-navy btn-block" data-crank>Run the next step</button></section>`;
 }
 function depositPanel(p) {
-  const C = Q(p), sym = esc(C.sym), pr = profileOf(p), maxLeft = p.maxBuy > 0 ? paidFor(Math.max(0, p.maxBuy - ((state.positions && state.positions[p.id]) || 0))) : Infinity, amt = Math.min(quickFor(p), payLeft(p), maxLeft);   // never more than the wallet may still put in (QA P2-85)
+  const C = Q(p), sym = esc(C.sym), pr = profileOf(p), maxLeft = pr.maxBuy > 0 ? paidFor(Math.max(0, pr.maxBuy - ((state.positions && state.positions[p.id]) || 0))) : Infinity, amt = Math.min(quickFor(p), payLeft(p), maxLeft);   // never more than the wallet may still put in: the limits live on the profile (QA P2-85)
   return `<section class="panel rail-card" data-trade="deposit"><h3>Deposit into $${esc(p.ticker)}</h3>
     <div class="trade-top"><label class="rail-lab" for="ppAmt">You deposit</label><span class="rail-bal num" data-bal></span></div>
     <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" value="${amt}" aria-label="Amount in ${sym}"><span class="suf">${sym}</span></div>
@@ -540,7 +540,7 @@ function tabTeam(p) {
   let unlocks = '';
   if (sp.team && t.length) {   // the schedule as one plain sentence, the next unlock and what is out so far; custom dates listed
     const row = (k, v, sub) => `<div><dt>${k}</dt><dd class="num">${v}</dd>${sub ? `<span>${sub}</span>` : ''}</div>`;
-    const nextTxt = !u.next ? 'All released' : at ? fmtDay(u.next.at) : `Day ${u.next.dayOffset} after seeding`;
+    const nextTxt = !u.next ? 'All released' : at ? (u.next.at - now < D ? fmtDate(u.next.at) : fmtDay(u.next.at)) : `Day ${u.next.dayOffset} after seeding`;   // minutes away (test mode): the time, not just the day (QA P2-88)
     const sums = `<dl class="sums unlock-sums">${row('Team tokens', fmtTok(sp.team), `${(p.teamBps / 100).toFixed(p.teamBps % 100 ? 2 : 0)}% of supply`)}${row('Unlocked so far', at ? `${(u.unlockedBps / 100).toFixed(u.unlockedBps % 100 ? 1 : 0)}%` : '0%', at ? `${fmtTok(u.unlocked)} since seeding` : 'the clock starts at seeding')}
       ${row('Next unlock', nextTxt, u.next ? `${fmtTok(u.next.tokens)} tokens, ${(u.next.bps / 100).toFixed(u.next.bps % 100 ? 2 : 0)}% of the team share` : atSeeding(p.teamSchedule) ? 'everything unlocked at seeding' : `last was day ${lastUnlockDay(p.teamSchedule)}`)}</dl>`;
     const per = perUnlockText(p.teamSchedule, p.teamBps);

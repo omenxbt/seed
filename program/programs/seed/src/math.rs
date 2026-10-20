@@ -136,14 +136,14 @@ pub fn check_schedule(team_bps: u16, tranches: &[crate::state::Tranche], even: O
     Ok(())
 }
 
-/// the share of the team tokens unlocked `days` after seeding: the tranches due, or the even schedule's unlocks so far
-/// (floor(10000 / count) bps each, the last one taking the remainder)
+/// the share of the team tokens unlocked `days` after seeding: the tranches due, or the even schedule's unlocks so far,
+/// floor(passed × 10000 / count): each unlock differs from the next by at most one basis point and the last lands on 100%
 pub fn unlocked_bps(days: i64, tranches: &[crate::state::Tranche], even: Option<&crate::state::EvenUnlocks>) -> u64 {
     use crate::state::BPS;
     if let Some(e) = even {
         if days < e.cliff_days as i64 || e.count == 0 { return 0; }
         let passed = (((days - e.cliff_days as i64) / e.interval_days.max(1) as i64) as u64).min(e.count as u64);
-        return if passed == e.count as u64 { BPS } else { passed * (BPS / e.count as u64) };
+        return passed * BPS / e.count as u64;   // even to the basis point: floor(passed × 10000 / count), exactly 10000 at the last
     }
     tranches.iter().filter(|t| (t.day_offset as i64) <= days).map(|t| t.bps as u64).sum()
 }
@@ -171,12 +171,22 @@ mod schedule_tests {
             assert!(check_schedule(1500, &[], Some(&e)).is_ok());
             assert_eq!(unlocked_bps(first as i64 - 1, &[], Some(&e)), 0, "nothing before the first unlock");
             assert_eq!(unlocked_bps(first as i64, &[], Some(&e)), 10000 / e.count as u64, "one slice at the first unlock");
-            assert_eq!(unlocked_bps(last as i64 - 1, &[], Some(&e)), 10000 / e.count as u64 * (e.count as u64 - 1), "all but the last before the last");
+            assert_eq!(unlocked_bps(last as i64 - 1, &[], Some(&e)), 10000 * (e.count as u64 - 1) / e.count as u64, "all but the last before the last");
             assert_eq!(unlocked_bps(last as i64, &[], Some(&e)), 10000, "the remainder goes with the last, so exactly 100%");
             assert_eq!(unlocked_bps(100_000, &[], Some(&e)), 10000);
         }
         assert_eq!(unlocked_bps(89, &[], Some(&even(90, 30, 12))), 0, "nothing during the cliff");
         assert_eq!(unlocked_bps(119, &[], Some(&even(90, 30, 12))), 0, "the first slice is one interval after the cliff");
+    }
+    #[test] fn even_means_even_to_the_basis_point() {
+        // 365 daily unlocks: 27 or 28 bps each, never a lump at the end (QA P2-87)
+        let e = even(0, 1, 365); let mut prev = 0;
+        for k in 1..=365 { let now = unlocked_bps(k, &[], Some(&e)); assert!(now - prev == 27 || now - prev == 28, "day {k}: {} bps", now - prev); prev = now; }
+        assert_eq!(prev, 10000);
+        // more unlocks than basis points: some unlocks release nothing, none releases a lump
+        let e = even(0, 1, 20_000); let mut prev = 0;
+        for k in 1..=20_000 { let now = unlocked_bps(k, &[], Some(&e)); assert!(now - prev <= 1); prev = now; }
+        assert_eq!(prev, 10000);
     }
     #[test] fn an_even_schedule_needs_an_interval_and_a_count() {
         assert!(code(check_schedule(1000, &[], Some(&even(0, 0, 12)))).contains("BadSchedule"));

@@ -31,7 +31,7 @@ test('daily, weekly and monthly, with and without a cliff: the program\'s even s
   for (const [s, first, last, n] of [[even(0, 1, 90), 1, 90, 90], [even(0, 7, 8), 7, 56, 8], [even(0, 30, 12), 30, 360, 12], [even(90, 1, 30), 91, 120, 30], [even(90, 7, 52), 97, 454, 52], [even(90, 30, 12), 120, 450, 12]]) {
     const t = tranchesOf(s);
     assert.equal(t.length, n); assert.equal(t[0].dayOffset, first); assert.equal(t[n - 1].dayOffset, last); assert.equal(sum(t), 10000);
-    assert.equal(t[0].bps, Math.floor(10000 / n), 'each slice is floor(10000 / count)'); assert.equal(scheduleProblem(s, 1500), '');
+    assert.ok(t.every(x => Math.abs(x.bps - 10000 / n) < 1), 'every slice is within a basis point of 10000 / count'); assert.equal(scheduleProblem(s, 1500), '');
   }
   assert.equal(fmtSchedule(even(0, 30, 12)), 'Unlocks evenly every month for 12 months');
   assert.equal(fmtSchedule(even(90, 30, 12)), 'Unlocks evenly every month for 12 months, after a 3-month cliff');
@@ -47,6 +47,8 @@ test('the next unlock follows the chain clock and the raise\'s own day', () => {
   assert.equal(u.unlockedBps, 0, 'the first slice is a month after the cliff'); assert.equal(u.next.dayOffset, 120); assert.equal(u.next.at, at + 120 * day);
   const u2 = unlockState({ teamBps: 1500, teamSchedule: even(90, 30, 12), seededAt: Date.now() - 125 * day, dayMs: day });
   assert.equal(u2.unlockedBps, 833); assert.equal(u2.next.dayOffset, 150);
+  const daily = tranchesOf(even(0, 1, 365)); assert.ok(daily.every(x => x.bps === 27 || x.bps === 28), 'daily for a year: 27 or 28 bps a day, no lump at the end (P2-87)');
+  assert.match(scheduleProblem(even(0, 1, 1001), 1000), /At most 1,000 unlocks/);
 });
 test('custom dates: in order and summing to 100%, or refused', () => {
   assert.equal(scheduleProblem({ tranches: [{ dayOffset: 30, bps: 5000 }, { dayOffset: 60, bps: 5000 }] }, 1000), '');

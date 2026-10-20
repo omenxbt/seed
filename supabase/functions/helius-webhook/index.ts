@@ -11,6 +11,7 @@ import { indexSwap, readPoolFeeBps, type Tx } from '../_shared/swaps.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const SECRET = Deno.env.get('HELIUS_WEBHOOK_SECRET') ?? '', RPC_URL = Deno.env.get('SEED_RPC_URL') ?? '';
+const REPLAY = Deno.env.get('SEED_REPLAY_KEY') ?? '';   // program/scripts/reindex.ts replays transactions through this same handler with it (x-seed-replay)
 /* the fee the pool opened with, kept on the row for the swap reader; null when the node has not got the account yet (the reader then reads it at the first swap) */
 const poolFee = async (pool: string) => { try { return RPC_URL ? await readPoolFeeBps(RPC_URL, pool) : null; } catch (e) { console.error('pool fee', pool, (e as Error).message); return null; } };
 const TOKEN_DEC = Number(Deno.env.get('SEED_TOKEN_DECIMALS') ?? 6);
@@ -34,7 +35,7 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
     await db.from('raises').upsert({
       id: slug(e.ticker as string, e.raise as string), address: e.raise, founder: e.founder, name: e.name, ticker: e.ticker, pair_mint: pairMint,
       target: units(e.target as bigint, d), target_usd: Number(e.targetUsdCents) / 100, sol_usd_at_open: Number(e.solUsdCents) / 100,
-      team_bps: e.teamBps, team_schedule: e.even ? e.even : tr.length ? { tranches: tr } : null,   // { cliffDays, intervalDays, count } for an even schedule payout_wallet: e.payoutWallet, metadata_uri: (e.uri as string) || null,
+      team_bps: e.teamBps, team_schedule: e.even ? e.even : tr.length ? { tranches: tr } : null, payout_wallet: e.payoutWallet, metadata_uri: (e.uri as string) || null,   // team_schedule: { cliffDays, intervalDays, count } for an even schedule
       status: 'live', opened_at: ts(e.openedAt as bigint), ends_at: ts(e.endsAt as bigint), updated_at: now
     }, { onConflict: 'address', ignoreDuplicates: true });
     // the X account behind the handle hash, from the attestation log (a raise may open without one)
@@ -97,7 +98,7 @@ async function watchPool(pool: string) {
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return new Response('POST only', { status: 405 });
-  if (SECRET && req.headers.get('authorization') !== SECRET) return new Response('no', { status: 401 });
+  if (SECRET && req.headers.get('authorization') !== SECRET && !(REPLAY && req.headers.get('x-seed-replay') === REPLAY)) return new Response('no', { status: 401 });
   let items: unknown[]; try { items = await req.json(); } catch { return new Response('not JSON', { status: 400 }); }
   let n = 0; const list = Array.isArray(items) ? items : [items];
   for (const [i, it] of list.entries()) {

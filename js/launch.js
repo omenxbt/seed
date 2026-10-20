@@ -86,7 +86,7 @@ function drawSplit(dp) {
   if (lf.sched === 'custom') { const sum = lf.tr.reduce((a, r) => a + (numv(r.pct) || 0), 0), ok = Math.abs(sum - 100) < 1e-6; $('#trSum').className = 'sum-meter ' + (ok ? 'ok' : 'bad'); $('#trSum').textContent = `${+sum.toFixed(2)}% of 100%`; }
   const u = unlockState(dp), per = perUnlockText(dp.teamSchedule, bps);
   note.className = 'sched-note ' + (problem ? 'bad' : 'ok');
-  note.textContent = problem || `${fmtSchedule(dp.teamSchedule)}${per ? `: ${per}` : ''}. ${fmtTok(sp.team)} tokens to the payout wallet${u.next ? `; first unlock ${u.next.dayOffset === 0 ? 'at seeding' : `${daysTxt(u.next.dayOffset)} after seeding`}` : ''}.`;
+  note.textContent = problem || `${fmtSchedule(dp.teamSchedule)}${per ? `: ${per}` : ''}. ${fmtTok(sp.team)} tokens to the payout wallet${u.next ? `; first unlock ${u.next.dayOffset === 0 ? 'at seeding' : `${u.next.dayOffset === 1 ? 'a day' : daysTxt(u.next.dayOffset)} after seeding`}` : ''}.`;
 }
 
 /* ---------------------------------------------------------------- uploads with crop previews */
@@ -287,7 +287,7 @@ function renderPreview() {
     ['FDV at the raise', ok ? `<span class="num">${f(fdvOf(dp))} ${sym}</span> (${fmtUsd(usdNow(dp, fdvOf(dp)))})` : 'Set a target'],
     ['Pool at seeding', ok ? `<span class="num">${f(d.target)} ${sym}</span> + <span class="num">${fmtTok(split.pool)}</span> $${esc(dp.ticker)}, locked for good` : 'The whole raise, locked for good'],
     ['Pool depth', ok ? `<span class="num">${f(d.target)} ${sym}</span> each side at opening (${f(d.target * 2)} ${sym}, ${fmtUsd(usdNow(dp, d.target * 2))} in all)` : 'Set a target'],
-    ['Team unlocks', split.team ? `${esc(fmtSchedule(dp.teamSchedule))}${perUnlockText(dp.teamSchedule, dp.teamBps) ? `: <span class="num">${esc(perUnlockText(dp.teamSchedule, dp.teamBps))}</span>` : ''}${unlockState(dp).next ? `; first unlock ${unlockState(dp).next.dayOffset === 0 ? 'at seeding' : daysTxt(unlockState(dp).next.dayOffset) + ' after seeding'}` : ''}` : 'No team tokens'],
+    ['Team unlocks', split.team ? `${esc(fmtSchedule(dp.teamSchedule))}${perUnlockText(dp.teamSchedule, dp.teamBps) ? `: <span class="num">${esc(perUnlockText(dp.teamSchedule, dp.teamBps))}</span>` : ''}${unlockState(dp).next ? `; first unlock ${unlockState(dp).next.dayOffset === 0 ? 'at seeding' : (unlockState(dp).next.dayOffset === 1 ? 'a day' : daysTxt(unlockState(dp).next.dayOffset)) + ' after seeding'}` : ''}` : 'No team tokens'],
     ['Your fee income', `<span class="num">${fees(5000)}</span>, <span class="num">${fees(25000)}</span> or <span class="num">${fees(100000)}</span> a day at $5K, $25K or $100K of daily volume`],
     ['Closes', typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode ? `in ${String(Number((d.hours / 24).toFixed(1)))} min on devnet (test mode: a day is a minute), or the moment it fills` : `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
     ['If it misses', `Short of the target when the ${label} are up: every buy and its fee go back to backers, claimable at once. Nothing is minted`]

@@ -44,12 +44,13 @@ const pctOf = p => Math.min(100, p.raised / p.target * 100);
    remainder with the last, as the program computes it) or { tranches: [{ dayOffset, bps }] } (custom dates; "at seeding" is the
    one tranche [{ 0, 10000 }]). Both resolve to tranches for display. */
 const isEven = s => !!(s && s.count);
+const MAX_EVEN = 1000;   // the form's cap on unlocks in an even schedule (daily for nearly three years); the program takes up to 65535
 function tranchesOf(s) {
   if (!s) return [];
   if (s.tranches) return s.tranches.slice().sort((a, b) => a.dayOffset - b.dayOffset);
   if (!isEven(s)) return [];
-  const n = Math.min(Math.max(1, Math.round(s.count)), 65535), each = Math.floor(BPS / n), out = [];
-  for (let k = 1; k <= n && k <= 1000; k++) out.push({ dayOffset: (s.cliffDays || 0) + k * Math.max(1, s.intervalDays || 1), bps: k === n ? BPS - each * (n - 1) : each });
+  const n = Math.min(Math.max(1, Math.round(s.count)), MAX_EVEN), out = [];   // unlock k releases floor(k × 10000 / n) − floor((k − 1) × 10000 / n): even to the basis point, 100% at the last
+  for (let k = 1; k <= n; k++) out.push({ dayOffset: (s.cliffDays || 0) + k * Math.max(1, s.intervalDays || 1), bps: Math.floor(k * BPS / n) - Math.floor((k - 1) * BPS / n) });
   return out;
 }
 const lastUnlockDay = s => { const t = tranchesOf(s); return t.length ? t[t.length - 1].dayOffset : 0; };
@@ -66,7 +67,7 @@ function unlockState(p, now = Date.now()) {
 function scheduleProblem(s, teamBps) {
   if (!teamBps) return '';
   if (!(teamBps < BPS)) return 'The team share must be under 100%.';
-  if (isEven(s)) return s.count >= 1 && s.intervalDays >= 1 ? '' : 'Set how many unlocks, at least one.';
+  if (isEven(s)) return !(s.count >= 1 && s.intervalDays >= 1) ? 'Set how many unlocks, at least one.' : s.count > MAX_EVEN ? `At most ${MAX_EVEN.toLocaleString('en-US')} unlocks.` : '';
   const t = s && s.tranches ? s.tranches : [];
   if (!t.length) return 'Set when the team tokens unlock.';
   if (t.length > 24) return 'At most 24 custom dates. For more unlocks, use an even schedule.';
@@ -90,7 +91,7 @@ function perUnlockText(s, teamBps) {
   if (!s || !teamBps || atSeeding(s)) return '';
   const t = tranchesOf(s); if (!t.length) return '';
   const pct = n => { const v = teamBps / 100 * n / BPS; return `${v >= 1 ? +v.toFixed(2) : +v.toPrecision(2)}%`; };
-  if (isEven(s)) return `${pct(t[0].bps)} of the supply every ${unitName(s.intervalDays)}`;
+  if (isEven(s)) return `${pct(BPS / s.count)} of the supply every ${unitName(s.intervalDays)}`;   // the average slice; each is within a basis point of it
   return `${pct(t[0].bps)} of the supply at the first unlock`;
 }
 

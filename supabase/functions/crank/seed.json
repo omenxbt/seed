@@ -3223,7 +3223,7 @@
       "docs": [
         "an even schedule: `count` equal unlocks, one every `interval_days`, the first `interval_days` after a cliff of `cliff_days`",
         "(unlock k is at day cliff + k × interval). Compact, so \"every day for a year\" fits a transaction where 365 tranches would not.",
-        "Each unlock is floor(10000 / count) bps of the team share and the last one takes the remainder, so the sum is exactly 100%."
+        "Unlock k releases up to floor(k × 10000 / count) bps of the team share in all: even to the basis point, 100% at the last."
       ],
       "type": {
         "kind": "struct",
