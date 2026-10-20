@@ -65,7 +65,10 @@ Deno.serve(async (req) => {
         /* team tokens past their unlock: the schedule's tranches up to now, less what was claimed, with the config's unit (a minute in test mode) */
         if (Number(a.teamBps) > 0) {
           const unit = Number(cfg.testMode ? 60 : 86400), since = (now / 1000 - Number(a.seededAt)) / unit, team = Number(a.teamBps) / 10000 * 1e9 * 1e6;
-          const unlockedBps = (a.schedule as { dayOffset: number; bps: number }[]).filter(t => Number(t.dayOffset) <= since).reduce((s, t) => s + Number(t.bps), 0);
+          const ev = a.even as { cliffDays: number; intervalDays: number; count: number } | null;
+          const unlockedBps = ev   // an even schedule: unlock k at cliff + k × interval, floor(10000 / count) bps each and the remainder with the last (math.rs unlocked_bps)
+            ? (since < Number(ev.cliffDays) ? 0 : (() => { const passed = Math.min(Number(ev.count), Math.floor((since - Number(ev.cliffDays)) / Math.max(1, Number(ev.intervalDays)))); return passed === Number(ev.count) ? 10000 : passed * Math.floor(10000 / Number(ev.count)); })())
+            : (a.schedule as { dayOffset: number; bps: number }[]).filter(t => Number(t.dayOffset) <= since).reduce((s, t) => s + Number(t.bps), 0);
           if (Math.floor(team * unlockedBps / 10000) > Number(a.teamClaimed) + 1) {
             try { await client.claimVested(r.publicKey); note(`vested ${id}`); } catch (e) { if (!String((e as Error).message).includes('NothingToClaim')) throw e; }
           }

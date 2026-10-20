@@ -872,7 +872,7 @@ a.ico:hover{color:var(--ink)}
         <section class="panel pagehead">
           <h1><i>Start</i>a raise</h1>
           <p>Everything backers see on your project page, before you open. The supply is 1B, minted at seeding with mint and freeze revoked; the raise opens a locked pool at a fixed price. Opening is free.</p>
-          <nav class="steps" aria-label="Form sections"><button type="button" data-step="1"><span class="num">01</span>Project</button><button type="button" data-step="2"><span class="num">02</span>Raise</button><button type="button" data-step="3"><span class="num">03</span>Team share and unlocks</button><button type="button" data-step="4"><span class="num">04</span>Roadmap</button><button type="button" data-step="5"><span class="num">05</span>Token and links</button><button type="button" data-step="6"><span class="num">06</span>Payout wallet</button><span class="steps-h">Optional</span><div class="step-opt"><button type="button" data-step="7"><span class="num">07</span>Team members</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></div></nav>
+          <nav class="steps" aria-label="Form sections"><button type="button" data-step="1"><span class="num">01</span>Project</button><button type="button" data-step="2"><span class="num">02</span>Raise</button><div class="step-opt"><button type="button" data-step="3"><span class="num">03</span>Team allocation</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="alloc" aria-label="Team allocation"></button></div><button type="button" data-step="4"><span class="num">04</span>Token and links</button><button type="button" data-step="5"><span class="num">05</span>Payout wallet</button><span class="steps-h">Optional</span><div class="step-opt"><button type="button" data-step="6"><span class="num">06</span>Team members</button><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></div></nav>
         </section>
         <section class="panel"><h3 class="card-h">Your raises</h3><div id="mineList"></div></section>
       </aside>
@@ -917,29 +917,24 @@ a.ico:hover{color:var(--ink)}
             <div class="seg seg-sm" id="maxUnit" role="group" aria-label="Maximum per wallet unit"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="q" aria-pressed="true" data-cur>SOL</button><button type="button" data-v="pct" aria-pressed="false">% of supply</button></div></div></div>
         </div></fieldset>
 
-        <fieldset><legend><span class="num">03</span>Team share and unlocks</legend><div class="form">
-          <p class="fs-note full">Backers and the pool each get half of what the team does not take. Team tokens unlock to the payout wallet on the schedule you set; the last unlock must be at least 90 days after seeding, the shares must add up to 100%, and the schedule is fixed at seeding. Backers see it as it is: a fact, not a warning.</p>
-          <div class="f"><label for="fTeam">Team share<i class="tip" tabindex="0" data-tip="The part of the 1B supply kept for the team. 0% means the whole supply goes to backers and the pool.">?</i></label><div class="inp"><input id="fTeam" inputmode="decimal" class="num" value="0" placeholder="0"><span class="suf">%</span></div></div>
+        <fieldset class="opt" data-opt="alloc"><legend><span class="num">03</span>Team allocation<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="alloc" aria-label="Team allocation"></button></legend><div class="form">
+          <p class="fs-note full" data-off>Off: no team tokens. Backers and the pool each get half of the 1B supply.</p>
+          <div class="full" data-body hidden><div class="form">
+          <p class="fs-note full">Backers and the pool each get half of what the team does not take. Team tokens unlock to the payout wallet all at seeding or on the schedule you set, fixed at opening. Backers see it as it is: a fact, not a warning.</p>
+          <div class="f"><label for="fTeam">Team share<i class="tip" tabindex="0" data-tip="The part of the 1B supply kept for the team: anything from 0% up to, but not including, 100%.">?</i></label><div class="inp"><input id="fTeam" inputmode="decimal" class="num" value="10" placeholder="10"><span class="suf">%</span></div></div>
           <div class="f"><span class="lab">The split</span><div class="split" id="splitBar" aria-hidden="true"></div><p class="split-leg num" id="splitLeg"></p></div>
           <div class="f full" id="schedWrap">
-            <span class="lab">Unlock schedule<span class="hint">for the team share</span></span>
-            <div><div class="seg seg-sm" id="schedSeg" role="group" aria-label="Schedule type"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="every" aria-pressed="true">Cliff, then every N days</button><button type="button" data-v="tranches" aria-pressed="false">Dated tranches</button></div></div>
-            <div class="sched3" data-sched="every">
-              <div class="f"><label for="fCliff">Cliff, days<i class="tip" tabindex="0" data-tip="How long after seeding before the first unlock. Nothing moves until the cliff passes. 0 means the first slice unlocks at seeding.">?</i></label><div class="inp"><input id="fCliff" inputmode="numeric" class="num" value="90" placeholder="90"></div></div>
-              <div class="f"><label for="fEvery">Then every, days<i class="tip" tabindex="0" data-tip="How often a slice unlocks after the cliff. The first slice unlocks at the cliff, the next one this many days later, and so on until 100% is out.">?</i></label><div class="inp"><input id="fEvery" inputmode="numeric" class="num" value="30" placeholder="30"></div></div>
-              <div class="f"><label for="fPer">Each time<i class="tip" tabindex="0" data-tip="The share of the team tokens released at each unlock. 10% every 30 days takes ten unlocks, 300 days.">?</i></label><div class="inp"><input id="fPer" inputmode="decimal" class="num" value="10" placeholder="10"><span class="suf">%</span></div></div>
-            </div>
-            <div data-sched="tranches" hidden><div class="rows" id="trRows"></div><div class="rows-foot"><button type="button" class="qb" data-add="tr">Add a tranche</button><span class="sum-meter" id="trSum"></span></div></div>
-            <div class="pp-svg unlock" id="fUnlock"></div><p class="sched-note" id="schedNote"></p>
+            <span class="lab">Unlocks<span class="hint">for the team share</span></span>
+            <div><div class="seg seg-sm" id="schedSeg" role="group" aria-label="When the team tokens unlock"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="seeding" aria-pressed="false">At seeding</button><button type="button" data-v="over" aria-pressed="true">Over time</button></div></div>
+            <p class="sched-sentence" data-sched="over">Unlock evenly every <select id="fEvery" aria-label="Interval"><option value="1">day</option><option value="7">week</option><option value="30" selected>month</option></select> for <input id="fCount" class="num" inputmode="numeric" value="12" aria-label="How many"> <span data-unit>months</span>, after a <input id="fCliff" class="num" inputmode="numeric" value="0" aria-label="Cliff in months">-month cliff<span class="hint">0 = no cliff</span></p>
+            <div data-sched="custom" hidden><div class="rows" id="trRows"></div><div class="rows-foot"><button type="button" class="qb" data-add="tr">Add a date</button><span class="sum-meter" id="trSum"></span></div></div>
+            <p class="sched-note" id="schedNote"></p>
+            <p class="sched-custom"><button type="button" class="linkbtn" id="schedCustom">Custom dates</button></p>
           </div>
+          </div></div>
         </div></fieldset>
 
-        <fieldset><legend><span class="num">04</span>Roadmap</legend><div class="form">
-          <p class="fs-note full">Optional. Milestones with dates; backers see them as given, Seed does not enforce them, and a backer who sees one slip can report the raise.</p>
-          <div class="full"><div class="rows" id="roadRows"></div><div class="rows-foot"><button type="button" class="qb" data-add="road">Add a milestone</button></div></div>
-        </div></fieldset>
-
-        <fieldset><legend><span class="num">05</span>Token and links</legend><div class="form">
+        <fieldset><legend><span class="num">04</span>Token and links</legend><div class="form">
           <div class="f full lim" data-lim="use"><span class="lab"><label for="fUse">What the token does</label><button type="button" class="switch" role="switch" aria-checked="false" data-lim-toggle="use" aria-label="The token has a use"></button></span>
             <p class="lim-off" data-lim-off>None. Backers are told this is a bet on the team, not on a token that does something.</p>
             <div class="lim-body" data-lim-body hidden><textarea id="fUse" class="ta" rows="2" maxlength="280" placeholder="What the token is for, in a line or two. Backers see this as you wrote it."></textarea></div></div>
@@ -950,12 +945,12 @@ a.ico:hover{color:var(--ink)}
           <div class="f full"><label for="lGithub">GitHub</label><div class="inp"><input id="lGithub" placeholder="github.com/"></div></div>
         </div></fieldset>
 
-        <fieldset><legend><span class="num">06</span>Payout wallet</legend><div class="form">
+        <fieldset><legend><span class="num">05</span>Payout wallet</legend><div class="form">
           <p class="fs-note full">Where your share of the pool's fees and your team's unlocks go. It starts as the wallet you open with; you can move it later, and a change takes effect after 7 days and shows on the page while pending. The raise itself never reaches this wallet: it all goes into the pool.</p>
           <div class="f full"><label for="fPayout">Payout wallet</label><div class="inp"><input id="fPayout" class="num" placeholder="Your connected wallet" spellcheck="false" style="font-size:13px"></div></div>
         </div></fieldset>
 
-        <fieldset class="opt" data-opt="team"><legend><span class="num">07</span>Team members<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></legend>
+        <fieldset class="opt" data-opt="team"><legend><span class="num">06</span>Team members<span class="opt-tag">Optional</span><button type="button" class="switch" role="switch" aria-checked="false" data-toggle="team" aria-label="Add team"></button></legend>
           <p class="fs-note" data-off>Left off, your page lists no team beyond the founder. Turn it on to list the people behind the project.</p>
           <div data-body hidden>
           <p class="fs-note">The connected wallet is the founder wallet. Its funding is read from Solana for the info panel.</p>
@@ -1267,28 +1262,29 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-team" data-t="Team tokens and unlocks">
       <div class="prose">
         <h2>Team tokens and unlocks</h2>
-        <p>The founder sets the team share before the raise opens, anywhere from nothing to just under the whole supply, and a schedule for how those tokens unlock. The schedule is either a cliff followed by the same slice every N days, or a list of dated tranches. Backers see both on the raise page, with a chart, before they buy.</p>
-        <p>Two rules are enforced by the program: the slices must add up to 100%, and the last unlock must be at least 90 days after seeding. Everything else is the founder's call. The schedule is written into the raise at seeding and cannot be changed after that.</p>
+        <p>A team allocation is optional and off by default. Off means 0% to the team: backers and the pool split the supply. When the founder switches it on, the team share can be anything from 0% up to, but not including, 100%, and the team tokens unlock either all at seeding or on a schedule the founder sets: evenly every day, week or month for a number of them, after an optional cliff, or on custom dates with their own shares.</p>
+        <p>There is no minimum length, no maximum, no cap on a slice and no rate limit. The program checks only what matters: the slices add up to exactly 100% of the team share, the dates increase, and the whole schedule is written into the raise when it opens and cannot be changed after that. Backers see it on the raise page as one plain sentence with the next unlock date, as a fact and never as a warning.</p>
         <p>Unlocked tokens are claimed to the payout wallet, by the founder or by anyone else; they go to the payout wallet either way. If a community takeover has moved the payout wallet, the remaining unlocks follow it.</p>
         <p>Backers' tokens are not vested. They are claimable the moment the raise seeds.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
-        <h3>The two shapes</h3>
+        <h3>The three shapes</h3>
         <dl class="kv">
-          <div><dt>Cliff, then every N days</dt><dd class="t">Nothing until the cliff, then the same slice every N days until 100% is out</dd></div>
-          <div><dt>Dated tranches</dt><dd class="t">A list of days after seeding, each with its share</dd></div>
+          <div><dt>At seeding</dt><dd class="t">The whole team share unlocks the moment the raise seeds</dd></div>
+          <div><dt>Over time</dt><dd class="t">Evenly every day, week or month for N of them, after an optional cliff</dd></div>
+          <div><dt>Custom dates</dt><dd class="t">A list of days after seeding, each with its share</dd></div>
         </dl>
         <h3>The two rules</h3>
         <dl class="kv">
-          <div><dt>Adds up</dt><dd class="t">The slices sum to exactly 100%</dd></div>
-          <div><dt>Long enough</dt><dd class="t">The last unlock is at least 90 days after seeding</dd></div>
+          <div><dt>Adds up</dt><dd class="t">The slices sum to exactly 100% of the team share</dd></div>
+          <div><dt>In order</dt><dd class="t">Each unlock comes after the one before</dd></div>
         </dl>
         <h3>Examples</h3>
         <dl class="kv">
-          <div><dt>90-day cliff, 10% monthly</dt><dd class="t">Done at day 360</dd></div>
-          <div><dt>No cliff, 1% weekly</dt><dd class="t">Done at day 693</dd></div>
-          <div><dt>Tranches at 90, 180, 365</dt><dd class="t">Any sizes summing to 100%</dd></div>
-          <div><dt>100% at day 30</dt><dd class="t">Refused: under 90 days</dd></div>
+          <div><dt>15% team, monthly for 12 months, 3-month cliff</dt><dd class="t">1.25% of the supply every month, from month 4 to month 15</dd></div>
+          <div><dt>5% team, at seeding</dt><dd class="t">All 50M tokens to the payout wallet at seeding</dd></div>
+          <div><dt>Custom: day 30 (50%), day 60 (50%)</dt><dd class="t">Two unlocks, in order, summing to 100%</dd></div>
+          <div><dt>Custom: 60% and 60%</dt><dd class="t">Refused: not 100%</dd></div>
         </dl>
       </div>
     </section>
@@ -1321,7 +1317,7 @@ a.ico:hover{color:var(--ink)}
         <h2>Founders, reports and fraud</h2>
         <p><b>A wallet is enough; X is optional.</b> A founder opens a raise with a connected wallet. There is no KYC. A wallet can have one live raise at a time, and a wallet flagged for fraud cannot open another. Linking an X account, at opening or later, adds a verified badge: the account shows on the raise page with its age and follower count. The link is checked by the program: Seed's backend signs a short-lived attestation that ties the wallet to the account, and the instruction verifies that signature on chain. A raise without one shows nothing more than that none is linked.</p>
         <p><b>The payout wallet.</b> Creator fees and team unlocks go to the payout wallet the founder set at opening. A founder can move it, and the change takes effect seven days after the request; the raise page shows the pending change for the whole week.</p>
-        <p><b>Reports.</b> Anyone with a wallet can report a raise. Reports are signed by the wallet, kept off chain and shown publicly on the raise page. Seed acts on fraud; it does not referee disagreements about whether a roadmap is on time.</p>
+        <p><b>Reports.</b> Anyone with a wallet can report a raise. Reports are signed by the wallet, kept off chain and shown publicly on the raise page. Seed acts on fraud; it does not referee disagreements about a founder's promises.</p>
         <p><b>What admins can do.</b> Seed's admin multisig has exactly two instructions. <i>Flag fraud</i> marks the raise, blacklists the founder wallet from opening another (and the X account, when one is linked), and disables buying through Seed. <i>Approve a takeover</i> moves the payout wallet to one the backers chose, so creator fees and the remaining unlocks go to the community instead of the founder. Neither touches the pool, which stays locked, or backers' tokens, which are already theirs.</p>
         <p><b>What admins cannot do.</b> Withdraw liquidity, mint tokens, change a fee split, change a schedule, or take a refund. None of those instructions exist.</p>
       </div>
@@ -1333,16 +1329,15 @@ a.ico:hover{color:var(--ink)}
           <div><dt>Refunds</dt><dd class="t">Miss, cancel or seeding timeout</dd></div>
           <div><dt>Supply</dt><dd class="t">1B, authorities revoked</dd></div>
           <div><dt>Pool</dt><dd class="t">Whole raise, locked for good</dd></div>
-          <div><dt>Unlocks</dt><dd class="t">Sum to 100%, last ≥ 90 days</dd></div>
+          <div><dt>Unlocks</dt><dd class="t">Sum to 100%, dates in order, fixed at opening</dd></div>
           <div><dt>Fee split</dt><dd class="t">70 / 30, fixed at seeding</dd></div>
           <div><dt>Payout change</dt><dd class="t">7-day delay</dd></div>
         </dl>
         <h3>The founder's call</h3>
         <dl class="kv">
           <div><dt>Team share</dt><dd class="t">0% to under 100%</dd></div>
-          <div><dt>Unlock schedule</dt><dd class="t">Within the two rules</dd></div>
+          <div><dt>Team allocation</dt><dd class="t">Optional; at seeding, over time or custom dates</dd></div>
           <div><dt>What the token does</dt><dd class="t">Or none: a bet on the team</dd></div>
-          <div><dt>Roadmap</dt><dd class="t">Optional milestones, not enforced</dd></div>
           <div><dt>Buy limits</dt><dd class="t">Optional minimum and maximum</dd></div>
         </dl>
       </div>
@@ -1461,7 +1456,7 @@ a.ico:hover{color:var(--ink)}
             <tr><td>Token supply, S</td><td>1,000,000,000, minted at seeding, mint and freeze authorities revoked</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Team share, b</td><td>0% to under 100%, set by the founder</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Backers and pool</td><td>Half of the rest each; backers' tokens claimable at seeding, no vesting</td><td class="num"><span class="st set">Set</span></td></tr>
-            <tr><td>Team unlocks</td><td>Cliff and interval, or dated tranches; sum to 100%; last unlock at least 90 days after seeding; fixed at seeding</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Team unlocks</td><td>Optional; at seeding, evenly over time (day, week or month, optional cliff) or custom dates; sum to 100%; dates in order; fixed at opening</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Pool</td><td>DAMM v2, full range, pair asset as token B, flat 1.25% fee collected in token B, dynamic fee and scheduler off, locked at creation</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Pool fee split</td><td>70% to the payout wallet, 30% to Seed, snapshotted at seeding; claims permissionless and scheduled</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Position NFT</td><td>Held by a Seed program account; no instruction can move it</td><td class="num"><span class="st set">Set</span></td></tr>
@@ -2210,7 +2205,7 @@ function validateDraft(d, da) {
   if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) return `$${d.ticker} is already in use by a live raise. Pick another ticker.`;
   if (da.err) return da.err;
   if (isNaN(d.target) || d.target <= 0) return `Set a target in ${da.a.sym}.`;
-  if (d.target < minTargetIn(da.key) - 1e-9) return `A raise asks for at least ${fmtC(minTargetIn(da.key), da.key)} ${da.a.sym}.`;
+  if (d.target < minTargetIn(da.key) - 1e-9) return `A raise asks for at least ${fmtC(minTargetIn(da.key), da.key)} ${da.a.sym}.`;   // the minimum from Config (minTargetIn)
   if (da.a.min && (d.target < da.a.min || d.target > da.a.max)) return `${da.a.sym} targets run from ${da.a.min.toLocaleString('en-US')} to ${da.a.max.toLocaleString('en-US')} ${da.a.sym}.`;
   return '';
 }

@@ -33,7 +33,7 @@ describe('seed', () => {
     // the config, once; the attestor is fixed by it, which is why the key derives from the wallet. A config that cannot
     // be read (an older layout) or that names another attestor is closed and made again when this wallet is its admin.
     const make = async () => c.send([await c.initConfig({ admin: me.publicKey, attestor: attestor.publicKey, seedTreasury: me.publicKey, solFeed: SOL_FEED, feeBps: 100, creatorShareBps: 7000, poolFeeBps: 125, capUsdCents: new BN(10_000_000),
-      minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90, payoutDelay: new BN(7 * 86400), testMode: true, minTargetLamports: sol(0.1) }, me.publicKey, USDC_DEVNET)]);
+      minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90 /* unused since 2026-10-20 */, payoutDelay: new BN(7 * 86400), testMode: true, minTargetLamports: sol(0.1) }, me.publicKey, USDC_DEVNET)]);
     try { cfg = await c.fetchConfig(); } catch { cfg = null; }
     if (!cfg) {
       const raw = await provider.connection.getAccountInfo(c.config);
@@ -58,10 +58,22 @@ describe('seed', () => {
     await expectFail(c.send(ixs), 'BadAttestation');
   });
 
-  it('refuses a schedule that ends before 90 days or does not add up', async () => {
-    const bad = (schedule: any[], teamBps = 1000) => c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 2, name: 'Bad', ticker: 'BAD', target: sol(0.2), deadline: span(86400), teamBps, schedule, payoutWallet: me.publicKey }).then(x => c.send(x.ixs));
-    await expectFail(bad([{ dayOffset: 30, bps: 10000 }]), 'ScheduleTooShort');
+  it('the schedule rules: slices sum to exactly 100% of the share, dates in order, one shape at a time, none without a team share, no minimum length', async () => {
+    const bad = (schedule: any[], teamBps = 1000, even: any = null) => c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 2, name: 'Bad', ticker: 'BAD', uri: KILN_URI, target: sol(0.2), deadline: span(86400), teamBps, schedule, even, payoutWallet: me.publicKey }).then(x => c.send(x.ixs));
     await expectFail(bad([{ dayOffset: 90, bps: 5000 }]), 'ScheduleSum');
+    await expectFail(bad([{ dayOffset: 30, bps: 6000 }, { dayOffset: 60, bps: 6000 }]), 'ScheduleSum');
+    await expectFail(bad([{ dayOffset: 60, bps: 5000 }, { dayOffset: 30, bps: 5000 }]), 'ScheduleOrder');
+    await expectFail(bad([], 1000), 'BadSchedule');                                                        // a share with no schedule
+    await expectFail(bad([{ dayOffset: 0, bps: 10000 }], 0), 'BadSchedule');                               // no share, yet a schedule
+    await expectFail(bad([{ dayOffset: 0, bps: 10000 }], 1000, { cliffDays: 0, intervalDays: 30, count: 12 }), 'BadSchedule');   // two shapes
+    await expectFail(bad([], 1000, { cliffDays: 0, intervalDays: 0, count: 12 }), 'BadSchedule');
+    await expectFail(bad([{ dayOffset: 0, bps: 10000 }], 10000), 'BadTeamShare');                          // 100% is not under 100%
+    // there is no minimum length: 99% of the supply, all at seeding, is the founder's call and opens (then is cancelled)
+    const f = Keypair.generate(); await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL })]);
+    const all = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 16, name: 'All', ticker: 'ALL', uri: KILN_URI, target: sol(0.1), deadline: span(86400), teamBps: 9900, schedule: [{ dayOffset: 0, bps: 10000 }], payoutWallet: f.publicKey });
+    await c.send(all.ixs, [f]); const ra = await c.fetchRaise(all.raise);
+    assert.equal(ra.teamBps, 9900); assert.equal(ra.schedule.length, 1); assert.equal(ra.schedule[0].dayOffset, 0); assert.equal(ra.even, null);
+    await c.send([await c.cancelRaise(all.raise, f.publicKey)], [f]);
   });
 
   it('refuses a metadata URI that is not https:// or ar://, or is too long', async () => {
@@ -72,10 +84,11 @@ describe('seed', () => {
   });
 
   it('opens a raise with a wallet alone, no X account', async () => {
-    const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce, name: 'Kiln', ticker: 'KILN', uri: KILN_URI, target: sol(0.2), deadline: span(86400), teamBps: 1000, schedule: [{ dayOffset: 90, bps: 5000 }, { dayOffset: 180, bps: 5000 }], payoutWallet: me.publicKey });
+    const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce, name: 'Kiln', ticker: 'KILN', uri: KILN_URI, target: sol(0.2), deadline: span(86400), teamBps: 1000, schedule: [], even: { cliffDays: 90, intervalDays: 30, count: 10 }, payoutWallet: me.publicKey });
     assert.equal(ixs.length, 1, 'no attestation instruction without an X account');
     await c.send(ixs); raise = rk; r = await c.fetchRaise(raise);
     assert.equal(r.teamBps, 1000); assert.ok(r.target.eq(sol(0.2))); assert.deepEqual(Object.keys(r.status)[0], 'live');
+    assert.deepEqual(r.schedule, []); assert.equal(r.even.cliffDays, 90); assert.equal(r.even.intervalDays, 30); assert.equal(r.even.count, 10);   // the even schedule, as given
     // the SOL price came from Pyth's sponsored feed: the raise records it, and the USD target is 0.2 SOL at that price
     const px = Number(r.solUsdCents); assert.ok(px > 1000 && px < 100_000, `a SOL price from Pyth, got ${px} cents`);
     assert.ok(r.targetUsdCents.eq(new BN(Math.floor(0.2 * px))), 'a 0.2 SOL target at the Pyth price');

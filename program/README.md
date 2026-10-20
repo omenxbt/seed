@@ -55,6 +55,14 @@ staging account for the pair asset, and the cranker fronts the rent (`POOL_RENT_
 the same instruction. The raise PDA is the pool's creator and the position's owner. `scripts/inspect.ts` prints the
 latest seeded raise and its position's `permanent_locked_liquidity` straight from the cluster.
 
+**Team unlocks.** A team share is optional (0% by default) and anything under 100%. Its unlocks are one of two shapes in
+`open_raise`: dated tranches (`schedule`, at most 24, each with a share, in increasing order, summing to exactly 100% of
+the team share; "at seeding" is the one tranche at day 0) or an even schedule (`even: { cliff_days, interval_days,
+count }`: unlock k at day cliff + k × interval, floor(10000 / count) bps each and the remainder with the last, so "every
+day for a year" fits a transaction). `math::check_schedule` holds the rules, `math::unlocked_bps` the arithmetic, both
+unit-tested; there is no minimum length and no maximum. `Config.min_unlock_days` is unused since 2026-10-20 and kept for
+the layout.
+
 **X is optional.** `open_raise` takes `x: Option<XAttest>`; with one, the attestation instruction rides in front and
 the handle's blacklist account is the first remaining account. `link_x` adds an X account to a live, filled or seeded
 raise later on the same terms. A wallet has one live raise at a time: its `FounderState` names the last one, which is
@@ -122,6 +130,12 @@ not the admin) run end to end, then checked where traders look:
    (Meteora keeps 20% of the pool fee first).
 7. Report which sites did not pick the token up and why (most index a pool once it has a trade and some liquidity;
    DEXScreener and Birdeye usually within minutes, Jupiter's strict list is separate from routing).
+
+## Mainnet
+
+`MAINNET.md` has the three stages: the local rehearsal against mainnet's programs (`scripts/rehearsal/`), the staging
+deployment under a second program id (`scripts/staging/`, with the SOL it needs) and the production runbook with Squads
+and the deploy check.
 
 ## Upgrade authority
 

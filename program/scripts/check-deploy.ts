@@ -11,9 +11,9 @@ const [profile, rpc, programArg] = process.argv.slice(2);
 if (!['production', 'staging', 'devnet'].includes(profile) || !rpc) { console.error('usage: check-deploy.ts production|staging|devnet <rpc url> [program id]'); process.exit(2); }
 
 const WANT = {
-  production: { minTargetLamports: 81_000_000_000, poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, capUsdCents: 10_000_000, testMode: false, minUnlockDays: 90 },
-  staging: { poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, capUsdCents: 10_000_000, testMode: false, minUnlockDays: 90 },
-  devnet: { poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, capUsdCents: 10_000_000, testMode: true, minUnlockDays: 90 }
+  production: { minTargetLamports: 81_000_000_000, poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, capUsdCents: 10_000_000, testMode: false },
+  staging: { poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, capUsdCents: 10_000_000, testMode: false },
+  devnet: { poolFeeBps: 125, feeBps: 100, creatorShareBps: 7000, capUsdCents: 10_000_000, testMode: true }
 }[profile as 'production' | 'staging' | 'devnet'] as Record<string, number | boolean>;
 const BPF_UPGRADEABLE = new web3.PublicKey('BPFLoaderUpgradeab1e11111111111111111111111');
 

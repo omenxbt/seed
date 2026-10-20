@@ -4,7 +4,7 @@
      supply split   team share set by the founder; backers and the pool each get half of the rest
      price          derived: target / backer tokens, in the pair asset
      fee            1% on top of each buy, refunded with it if the raise does not seed
-     unlocks        the team's tokens by schedule: a cliff then a slice every N days, or custom dated tranches
+     unlocks        the team's tokens all at seeding, evenly every N days for a count of unlocks after an optional cliff, or on custom dates
      creator fees   the pool's 1.25% fee (1% after Meteora's share), split 70/30 between the payout wallet and Seed
    Amounts are in the pair asset (q) unless named Usd. Shares are basis points (bps), 10000 = 100%.
    ========================================================================== */
@@ -40,34 +40,59 @@ const payLeft = p => paidFor(leftOf(p));                                 // what
 const pctOf = p => Math.min(100, p.raised / p.target * 100);
 
 /* ---------------------------------------------------------------- team unlocks */
-/* a schedule is either { cliffDays, intervalDays, bpsPerInterval } or { tranches: [{ dayOffset, bps }] }; both resolve to tranches */
+/* a schedule is { cliffDays, intervalDays, count } (even: unlock k at cliff + k × interval, floor(10000 / count) bps each and the
+   remainder with the last, as the program computes it) or { tranches: [{ dayOffset, bps }] } (custom dates; "at seeding" is the
+   one tranche [{ 0, 10000 }]). Both resolve to tranches for display. */
+const isEven = s => !!(s && s.count);
 function tranchesOf(s) {
   if (!s) return [];
   if (s.tranches) return s.tranches.slice().sort((a, b) => a.dayOffset - b.dayOffset);
-  const out = []; let done = 0, day = s.cliffDays || 0, n = 0;
-  while (done < BPS && n++ < 400) { const bps = Math.min(s.bpsPerInterval, BPS - done); day += n === 1 ? 0 : s.intervalDays; out.push({ dayOffset: day, bps }); done += bps; }
+  if (!isEven(s)) return [];
+  const n = Math.min(Math.max(1, Math.round(s.count)), 65535), each = Math.floor(BPS / n), out = [];
+  for (let k = 1; k <= n && k <= 1000; k++) out.push({ dayOffset: (s.cliffDays || 0) + k * Math.max(1, s.intervalDays || 1), bps: k === n ? BPS - each * (n - 1) : each });
   return out;
 }
 const lastUnlockDay = s => { const t = tranchesOf(s); return t.length ? t[t.length - 1].dayOffset : 0; };
+const atSeeding = s => !!(s && s.tranches && s.tranches.length === 1 && s.tranches[0].dayOffset === 0 && s.tranches[0].bps === BPS);
 /* what the schedule has released by `now`, given the seeding time; tokens, bps, the next tranche and the one after */
 function unlockState(p, now = Date.now()) {
   const team = splitOf(p.teamBps).team, t = tranchesOf(p.teamSchedule), at = p.seededAt;
   if (!team || !t.length) return { team, unlockedBps: 0, unlocked: 0, claimable: 0, next: null, done: !team };
   const days = at ? (now - at) / dayOf(p) : -Infinity, doneT = t.filter(x => x.dayOffset <= days), unlockedBps = doneT.reduce((a, x) => a + x.bps, 0);
   const next = t.find(x => x.dayOffset > days) || null;
-  return { team, unlockedBps, unlocked: Math.floor(team * unlockedBps / BPS), next: next && { at: (at || now) + next.dayOffset * dayOf(p), tokens: Math.floor(team * next.bps / BPS), bps: next.bps }, done: !next };
+  return { team, unlockedBps, unlocked: Math.floor(team * unlockedBps / BPS), next: next && { at: (at || now) + next.dayOffset * dayOf(p), tokens: Math.floor(team * next.bps / BPS), bps: next.bps, dayOffset: next.dayOffset }, done: !next };
 }
-/* the rules a schedule must meet before a raise opens */
+/* the rules a schedule must meet before a raise opens: the program's (math.rs check_schedule), said plainly */
 function scheduleProblem(s, teamBps) {
   if (!teamBps) return '';
-  const t = tranchesOf(s);
+  if (!(teamBps < BPS)) return 'The team share must be under 100%.';
+  if (isEven(s)) return s.count >= 1 && s.intervalDays >= 1 ? '' : 'Set how many unlocks, at least one.';
+  const t = s && s.tranches ? s.tranches : [];
   if (!t.length) return 'Set when the team tokens unlock.';
+  if (t.length > 24) return 'At most 24 custom dates. For more unlocks, use an even schedule.';
   if (t.some(x => !(x.bps > 0) || !(x.dayOffset >= 0))) return 'Every unlock needs a share above zero and a day at or after seeding.';
-  const sum = t.reduce((a, x) => a + x.bps, 0); if (Math.abs(sum - BPS) > 0) return `The unlocks add up to ${(sum / 100).toFixed(2)}%. They must add up to exactly 100%.`;
-  if (lastUnlockDay(s) < SEED.minUnlockDays) return `The last unlock is ${lastUnlockDay(s)} days after seeding. It must be at least ${SEED.minUnlockDays}.`;
+  const sorted = t.slice().sort((a, b) => a.dayOffset - b.dayOffset); if (sorted.some((x, i) => i && x.dayOffset === sorted[i - 1].dayOffset)) return 'Two unlocks fall on the same day. Give each its own day.';
+  const sum = t.reduce((a, x) => a + x.bps, 0); if (Math.abs(sum - BPS) > 0) return `The unlocks add up to ${(sum / 100).toFixed(2)}% of the team share. They must add up to exactly 100%.`;
   return '';
 }
-const fmtSchedule = s => { if (!s) return 'No team tokens'; if (s.tranches) return `${s.tranches.length} dated tranche${s.tranches.length > 1 ? 's' : ''}, last at day ${lastUnlockDay(s)}`; return `${s.cliffDays ? `${s.cliffDays}-day cliff, then ` : ''}${(s.bpsPerInterval / 100).toFixed(s.bpsPerInterval % 100 ? 2 : 0)}% every ${s.intervalDays} days, done at day ${lastUnlockDay(s)}`; };
+/* the schedule as one plain sentence, the same on the Launch form, the preview and the raise page */
+const unitName = d => d === 1 ? 'day' : d === 7 ? 'week' : d === 30 ? 'month' : `${d} days`;
+const cliffText = d => !d ? '' : d % 30 === 0 ? `${d / 30}-month` : d % 7 === 0 ? `${d / 7}-week` : `${d}-day`;
+function fmtSchedule(s) {
+  if (!s) return 'No team tokens';
+  if (atSeeding(s)) return 'All at seeding';
+  if (isEven(s)) { const u = unitName(s.intervalDays), many = s.intervalDays === 1 || s.intervalDays === 7 || s.intervalDays === 30 ? `${s.count} ${u}${s.count === 1 ? '' : 's'}` : `${s.count} unlocks ${s.intervalDays} days apart`; return `Unlocks evenly every ${u} for ${many}${s.cliffDays ? `, after a ${cliffText(s.cliffDays)} cliff` : ''}`; }
+  const t = tranchesOf(s), shown = t.slice(0, 4).map(x => `day ${x.dayOffset} (${(x.bps / 100).toFixed(x.bps % 100 ? 2 : 0)}%)`).join(', ');
+  return `Custom dates: ${shown}${t.length > 4 ? ` and ${t.length - 4} more, last at day ${lastUnlockDay(s)}` : ''}`;
+}
+/* the slice each unlock releases, as a share of the supply: "1.25% every month" */
+function perUnlockText(s, teamBps) {
+  if (!s || !teamBps || atSeeding(s)) return '';
+  const t = tranchesOf(s); if (!t.length) return '';
+  const pct = n => { const v = teamBps / 100 * n / BPS; return `${v >= 1 ? +v.toFixed(2) : +v.toPrecision(2)}%`; };
+  if (isEven(s)) return `${pct(t[0].bps)} of the supply every ${unitName(s.intervalDays)}`;
+  return `${pct(t[0].bps)} of the supply at the first unlock`;
+}
 
 /* ---------------------------------------------------------------- creator fees */
 /* the pool's fee on a volume, and how it splits */

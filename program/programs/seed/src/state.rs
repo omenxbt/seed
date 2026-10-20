@@ -57,6 +57,11 @@ pub struct Tranche {
     pub day_offset: u32,   // days after seeding
     pub bps: u16,          // share of the team tokens
 }
+/// an even schedule: `count` equal unlocks, one every `interval_days`, the first `interval_days` after a cliff of `cliff_days`
+/// (unlock k is at day cliff + k × interval). Compact, so "every day for a year" fits a transaction where 365 tranches would not.
+/// Each unlock is floor(10000 / count) bps of the team share and the last one takes the remainder, so the sum is exactly 100%.
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
+pub struct EvenUnlocks { pub cliff_days: u32, pub interval_days: u32, pub count: u16 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]
 pub enum RaiseStatus { Live, Filled, Seeded, Refunded }
@@ -110,6 +115,9 @@ pub struct Raise {
     #[max_len(MAX_TICKER)]
     pub ticker: String,
     pub bump: u8,
+    /// the even schedule, when the founder chose one (then `schedule` is empty). Last in the layout: a raise from before it,
+    /// allocated with room for 24 tranches and holding fewer, reads its spare zero bytes as None
+    pub even: Option<EvenUnlocks>,
 }
 
 impl Raise {
@@ -123,7 +131,7 @@ impl Raise {
     pub fn unlocked_units(&self, now: i64) -> u64 {
         if self.seeded_at == 0 { return 0; }
         let days = (now - self.seeded_at) / self.time_unit.max(1);
-        let bps: u64 = self.schedule.iter().filter(|t| (t.day_offset as i64) <= days).map(|t| t.bps as u64).sum();
+        let bps = crate::math::unlocked_bps(days, &self.schedule, self.even.as_ref());
         (self.team_units() as u128 * bps as u128 / BPS as u128) as u64
     }
 }

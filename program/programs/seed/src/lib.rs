@@ -67,6 +67,7 @@ pub struct OpenParams {
     pub payout_wallet: Pubkey,
     pub x: Option<XAttest>,   // the X account, when the founder links one at opening
     pub uri: String,          // the token metadata JSON (name, symbol, description, image, links), on permanent storage
+    pub even: Option<EvenUnlocks>,   // an even unlock schedule for the team share, instead of dated tranches
 }
 /// an X attestation: the attestor signed (founder ‖ handle hash ‖ expiry) in the ed25519 instruction just before
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -187,26 +188,21 @@ pub mod seed {
         require!(p.uri.starts_with("ar://") || p.uri.starts_with("https://arweave.net/") || p.uri.starts_with("https://gateway.irys.xyz/"), SeedError::BadUri);
         require!(p.target > 0, SeedError::ZeroTarget);
         require!(p.deadline >= c.span(c.min_deadline) && p.deadline <= c.span(c.max_deadline), SeedError::BadDeadline);
-        require!((p.team_bps as u64) < BPS, SeedError::BadTeamShare);
         let pair = ctx.accounts.pair_mint.key();
         require!(pair == WSOL || pair == USDC || pair == USDC_DEVNET, SeedError::BadPair);
         // today's SOL price (refused when stale): the $100,000 cap and the minimum raise are both measured with it. The minimum is
         // the config's (81 SOL in production): a SOL raise in lamports, a USDC raise its worth in dollars; math::check_target
         let cents = pyth::sol_usd_cents(&ctx.accounts.sol_feed.to_account_info(), now)?;
         let (target_usd_cents, sol_usd_cents) = math::check_target(pair == WSOL, p.target, cents, c.cap_usd_cents, c.min_target_lamports)?;
-        if p.team_bps > 0 {
-            require!(!p.schedule.is_empty() && p.schedule.len() <= MAX_TRANCHES && p.schedule.iter().all(|t| t.bps > 0), SeedError::BadSchedule);
-            let sum: u64 = p.schedule.iter().map(|t| t.bps as u64).sum();
-            require!(sum == BPS, SeedError::ScheduleSum);
-            let last = p.schedule.iter().map(|t| t.day_offset).max().unwrap_or(0);
-            require!(last >= c.min_unlock_days, SeedError::ScheduleTooShort);
-        } else { require!(p.schedule.is_empty(), SeedError::BadSchedule); }
+        // the team share and its unlocks: any share under 100%, all at seeding or any schedule, as long as it adds up to
+        // exactly 100% of the share and its dates increase (math::check_schedule); no minimum length and no maximum
+        math::check_schedule(p.team_bps, &p.schedule, p.even.as_ref())?;
 
         anchor_spl::associated_token::create(CpiContext::new(ctx.accounts.associated_token_program.to_account_info(), anchor_spl::associated_token::Create { payer: ctx.accounts.founder.to_account_info(), associated_token: ctx.accounts.escrow.to_account_info(), authority: ctx.accounts.raise.to_account_info(), mint: ctx.accounts.pair_mint.to_account_info(), system_program: ctx.accounts.system_program.to_account_info(), token_program: ctx.accounts.token_program.to_account_info() }))?;
         let r = &mut ctx.accounts.raise;
         r.founder = founder; r.nonce = p.nonce; r.x_handle_hash = p.x.as_ref().map(|x| x.handle_hash); r.pair_mint = pair;
         r.target = p.target; r.target_usd_cents = target_usd_cents; r.sol_usd_cents = sol_usd_cents; r.time_unit = c.unit();
-        r.fee_bps = c.fee_bps; r.creator_share_bps = c.creator_share_bps; r.team_bps = p.team_bps; r.schedule = if p.team_bps > 0 { p.schedule.clone() } else { vec![] };
+        r.fee_bps = c.fee_bps; r.creator_share_bps = c.creator_share_bps; r.team_bps = p.team_bps; r.schedule = if p.team_bps > 0 { p.schedule.clone() } else { vec![] }; r.even = if p.team_bps > 0 { p.even } else { None };
         r.payout_wallet = p.payout_wallet; r.pending_payout = None; r.payout_effective_at = 0;
         r.status = RaiseStatus::Live; r.seed_step = SeedStep::Filled; r.refund_reason = None;
         r.raised = 0; r.fees_held = 0; r.backers = 0; r.opened_at = now; r.ends_at = now + p.deadline; r.filled_at = 0; r.seeded_at = 0;
@@ -215,7 +211,7 @@ pub mod seed {
         r.name = p.name.clone(); r.ticker = p.ticker.clone(); r.bump = ctx.bumps.raise;
         let m = &mut ctx.accounts.raise_meta; m.raise = r.key(); m.uri = p.uri.clone(); m.bump = ctx.bumps.raise_meta;
         emit!(RaiseOpened { raise: r.key(), founder: r.founder, x_handle_hash: r.x_handle_hash, pair_mint: pair, target: p.target, target_usd_cents, sol_usd_cents,
-            team_bps: p.team_bps, payout_wallet: p.payout_wallet, opened_at: now, ends_at: r.ends_at, name: p.name, ticker: p.ticker, schedule: r.schedule.clone(), uri: p.uri });
+            team_bps: p.team_bps, payout_wallet: p.payout_wallet, opened_at: now, ends_at: r.ends_at, name: p.name, ticker: p.ticker, schedule: r.schedule.clone(), uri: p.uri, even: r.even });
         Ok(())
     }
 

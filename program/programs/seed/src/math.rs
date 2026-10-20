@@ -113,3 +113,91 @@ mod target_tests {
         assert!(check_target(true, 82 * SOL, PX, CAP, 82 * SOL).is_ok());
     }
 }
+
+/// The team share and its unlocks, checked at opening. Any share under 100%. With a share: exactly one shape, either dated
+/// tranches (each with a share, in increasing order, summing to exactly 100% of the team share, at most MAX_TRANCHES) or an
+/// even schedule (at least one unlock, at least a day apart). No minimum length, no maximum, no cap on a slice. Without a
+/// share: no schedule at all.
+pub fn check_schedule(team_bps: u16, tranches: &[crate::state::Tranche], even: Option<&crate::state::EvenUnlocks>) -> anchor_lang::Result<()> {
+    use anchor_lang::prelude::*;
+    use crate::errors::SeedError;
+    use crate::state::{BPS, MAX_TRANCHES};
+    require!((team_bps as u64) < BPS, SeedError::BadTeamShare);
+    if team_bps == 0 { require!(tranches.is_empty() && even.is_none(), SeedError::BadSchedule); return Ok(()); }
+    match (tranches.is_empty(), even) {
+        (false, None) => {
+            require!(tranches.len() <= MAX_TRANCHES && tranches.iter().all(|t| t.bps > 0), SeedError::BadSchedule);
+            require!(tranches.windows(2).all(|w| w[0].day_offset < w[1].day_offset), SeedError::ScheduleOrder);
+            require!(tranches.iter().map(|t| t.bps as u64).sum::<u64>() == BPS, SeedError::ScheduleSum);
+        }
+        (true, Some(e)) => require!(e.interval_days >= 1 && e.count >= 1, SeedError::BadSchedule),
+        _ => return Err(SeedError::BadSchedule.into()),
+    }
+    Ok(())
+}
+
+/// the share of the team tokens unlocked `days` after seeding: the tranches due, or the even schedule's unlocks so far
+/// (floor(10000 / count) bps each, the last one taking the remainder)
+pub fn unlocked_bps(days: i64, tranches: &[crate::state::Tranche], even: Option<&crate::state::EvenUnlocks>) -> u64 {
+    use crate::state::BPS;
+    if let Some(e) = even {
+        if days < e.cliff_days as i64 || e.count == 0 { return 0; }
+        let passed = (((days - e.cliff_days as i64) / e.interval_days.max(1) as i64) as u64).min(e.count as u64);
+        return if passed == e.count as u64 { BPS } else { passed * (BPS / e.count as u64) };
+    }
+    tranches.iter().filter(|t| (t.day_offset as i64) <= days).map(|t| t.bps as u64).sum()
+}
+
+#[cfg(test)]
+mod schedule_tests {
+    use super::{check_schedule, unlocked_bps};
+    use crate::state::{EvenUnlocks, Tranche};
+    fn tr(v: &[(u32, u16)]) -> Vec<Tranche> { v.iter().map(|&(d, b)| Tranche { day_offset: d, bps: b }).collect() }
+    fn even(cliff_days: u32, interval_days: u32, count: u16) -> EvenUnlocks { EvenUnlocks { cliff_days, interval_days, count } }
+    fn code(r: anchor_lang::Result<()>) -> String { match r { Ok(()) => "ok".into(), Err(e) => format!("{e:?}") } }
+
+    #[test] fn no_team_share_means_no_schedule() {
+        assert!(check_schedule(0, &[], None).is_ok());
+        assert!(code(check_schedule(0, &tr(&[(0, 10000)]), None)).contains("BadSchedule"));
+        assert!(code(check_schedule(0, &[], Some(&even(0, 30, 12)))).contains("BadSchedule"));
+    }
+    #[test] fn ninety_nine_percent_all_at_seeding_is_fine() {
+        assert!(check_schedule(9900, &tr(&[(0, 10000)]), None).is_ok());
+        assert_eq!(unlocked_bps(0, &tr(&[(0, 10000)]), None), 10000, "everything at seeding");
+    }
+    #[test] fn a_hundred_percent_is_not() { assert!(code(check_schedule(10000, &tr(&[(0, 10000)]), None)).contains("BadTeamShare")); }
+    #[test] fn daily_weekly_monthly_with_and_without_a_cliff() {
+        for (e, first, last) in [(even(0, 1, 90), 1, 90), (even(0, 7, 8), 7, 56), (even(0, 30, 12), 30, 360), (even(90, 1, 30), 91, 120), (even(90, 7, 52), 97, 454), (even(90, 30, 12), 120, 450)] {
+            assert!(check_schedule(1500, &[], Some(&e)).is_ok());
+            assert_eq!(unlocked_bps(first as i64 - 1, &[], Some(&e)), 0, "nothing before the first unlock");
+            assert_eq!(unlocked_bps(first as i64, &[], Some(&e)), 10000 / e.count as u64, "one slice at the first unlock");
+            assert_eq!(unlocked_bps(last as i64 - 1, &[], Some(&e)), 10000 / e.count as u64 * (e.count as u64 - 1), "all but the last before the last");
+            assert_eq!(unlocked_bps(last as i64, &[], Some(&e)), 10000, "the remainder goes with the last, so exactly 100%");
+            assert_eq!(unlocked_bps(100_000, &[], Some(&e)), 10000);
+        }
+        assert_eq!(unlocked_bps(89, &[], Some(&even(90, 30, 12))), 0, "nothing during the cliff");
+        assert_eq!(unlocked_bps(119, &[], Some(&even(90, 30, 12))), 0, "the first slice is one interval after the cliff");
+    }
+    #[test] fn an_even_schedule_needs_an_interval_and_a_count() {
+        assert!(code(check_schedule(1000, &[], Some(&even(0, 0, 12)))).contains("BadSchedule"));
+        assert!(code(check_schedule(1000, &[], Some(&even(0, 30, 0)))).contains("BadSchedule"));
+    }
+    #[test] fn custom_tranches_must_sum_to_exactly_100_percent_of_the_share() {
+        assert!(check_schedule(1000, &tr(&[(30, 5000), (60, 5000)]), None).is_ok());
+        assert!(code(check_schedule(1000, &tr(&[(30, 6000), (60, 6000)]), None)).contains("ScheduleSum"));
+        assert!(code(check_schedule(1000, &tr(&[(30, 5000), (60, 4999)]), None)).contains("ScheduleSum"));
+        assert!(code(check_schedule(1000, &tr(&[(30, 5000), (60, 0), (90, 5000)]), None)).contains("BadSchedule"), "a slice with no share");
+    }
+    #[test] fn custom_dates_must_increase() {
+        assert!(code(check_schedule(1000, &tr(&[(60, 5000), (30, 5000)]), None)).contains("ScheduleOrder"));
+        assert!(code(check_schedule(1000, &tr(&[(30, 5000), (30, 5000)]), None)).contains("ScheduleOrder"));
+    }
+    #[test] fn one_shape_at_a_time() {
+        assert!(code(check_schedule(1000, &tr(&[(0, 10000)]), Some(&even(0, 30, 12)))).contains("BadSchedule"));
+        assert!(code(check_schedule(1000, &[], None)).contains("BadSchedule"), "a share with no schedule");
+    }
+    #[test] fn no_minimum_length() {
+        assert!(check_schedule(1000, &tr(&[(1, 10000)]), None).is_ok(), "all on day one");
+        assert!(check_schedule(1000, &[], Some(&even(0, 1, 1))).is_ok(), "one unlock, one day in");
+    }
+}

@@ -7,8 +7,8 @@
    ========================================================================== */
 /* charts draw at the width of their column, one unit to the pixel, so their labels keep their size however wide the window is */
 const chartW = () => { const b = detailBox && $('[data-dchart],[data-candles]', detailBox), w = b ? Math.floor(b.clientWidth) : 0; return w > 0 ? Math.max(320, w) : innerWidth < 720 ? 400 : 720; };
-const PTABS = ['overview', 'team', 'roadmap', 'holders', 'backers', 'info', 'reports', 'announcements', 'deck'];
-const PTABS_LIVE = ['overview', 'trades', 'traders', 'holders', 'team', 'roadmap', 'backers', 'info', 'reports', 'announcements', 'deck'];
+const PTABS = ['overview', 'team', 'holders', 'backers', 'info', 'reports', 'announcements', 'deck'];
+const PTABS_LIVE = ['overview', 'trades', 'traders', 'holders', 'team', 'backers', 'info', 'reports', 'announcements', 'deck'];
 const tabsOf = p => p.status !== 'seeded' ? PTABS.filter(t => t !== 'holders') : p.live ? PTABS_LIVE : PTABS;   // holders exist once the token does; trades once a pool is indexed
 const PTAB_ALIAS = { updates: 'announcements', tokenomics: 'team', risk: 'info' };   // the tabs' earlier names, so old links still open them
 const pg = { id: null, status: null, tab: 'overview', tf: '1h', mode: 'mcap', side: 'buy', quoteSeq: 0, shownQuote: null, allBackers: false, deck: null, deckPage: 1, walletKey: '' };
@@ -57,8 +57,6 @@ function roleOf(p, w) {
 const artHTML = (p, cls) => { const pr = profileOf(p); return pr.art ? `<img class="${cls}" src="${esc(pr.art)}" alt="" style="object-position:${esc(pr.artPos || '50% 50%')}">` : `<span class="${cls} glyph-art" style="--h:${hashStr(p.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>`; };
 const copyBtn = (val, label, text) => `<button class="copy" data-copy="${esc(val)}" data-copy-label="${esc(label)}" aria-label="Copy ${esc(label)}">${text ? `<span class="num">${esc(text)}</span>` : ''}${ICONS.copy}</button>`;
 const statusPill = p => `<span class="st-pill ${p.blacklisted ? 'flagged' : p.status}">${p.blacklisted ? 'Flagged' : RAISE_STATE[p.status]}</span>`;
-/* the milestones live on the raise; a draft keeps them on the profile until it opens */
-const roadmapOf = p => (p.roadmap && p.roadmap.length ? p.roadmap : profileOf(p).roadmap) || [];
 const isFounder = p => !!state.wallet && (p.mine || roleOf(p, walletId()) === 'founder' || roleOf(p, state.wallet.pk) === 'founder');
 const xUrl = h => 'https://x.com/' + encodeURIComponent(String(h || '').replace(/^@/, ''));
 const fmtDays = d => d < 1 ? 'today' : d < 60 ? `${Math.round(d)} days` : d < 730 ? `${Math.round(d / 30)} months` : `${(d / 365).toFixed(1).replace(/\.0$/, '')} years`;
@@ -354,7 +352,7 @@ function seedingPanel(p) {
     <button class="btn btn-navy btn-block" data-crank>Run the next step</button></section>`;
 }
 function depositPanel(p) {
-  const C = Q(p), sym = esc(C.sym), pr = profileOf(p), amt = Math.min(quickFor(p), payLeft(p));
+  const C = Q(p), sym = esc(C.sym), pr = profileOf(p), maxLeft = p.maxBuy > 0 ? paidFor(Math.max(0, p.maxBuy - ((state.positions && state.positions[p.id]) || 0))) : Infinity, amt = Math.min(quickFor(p), payLeft(p), maxLeft);   // never more than the wallet may still put in (QA P2-85)
   return `<section class="panel rail-card" data-trade="deposit"><h3>Deposit into $${esc(p.ticker)}</h3>
     <div class="trade-top"><label class="rail-lab" for="ppAmt">You deposit</label><span class="rail-bal num" data-bal></span></div>
     <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" value="${amt}" aria-label="Amount in ${sym}"><span class="suf">${sym}</span></div>
@@ -433,7 +431,7 @@ function tabInfo(p) {
   return tabHead('Info', '', riskChip(s)) +
     `<ul class="risk-list risk-grid" data-risk>${checks.filter(c => !isFact(c)).map(li).join('')}</ul>
     <p class="info-h">The founder's choices</p><ul class="risk-list risk-grid">${checks.filter(isFact).map(li).join('')}</ul>
-    <p class="quiet risk-note">Seed enforces the cap, the refunds, the locked pool and the 90-day unlock minimum in its program, and acts on fraud. Everything else here is for you to weigh.${demo ? ` ${DEMO_PILL} Checks run on demo data where no live account exists.` : ''}</p>` + infoAddresses(p);
+    <p class="quiet risk-note">Seed enforces the minimum and the cap, the refunds, the locked pool and the unlock schedule as set in its program, and acts on fraud. Everything else here is for you to weigh.${demo ? ` ${DEMO_PILL} Checks run on demo data where no live account exists.` : ''}</p>` + infoAddresses(p);
 }
 /* the accounts behind a raise that is on chain, each with a copy button and an explorer link */
 function infoAddresses(p) {
@@ -488,7 +486,7 @@ function renderTab(p) {
     const upd = () => { tb.classList.toggle('less', tb.scrollLeft > 2); tb.classList.toggle('more', tb.scrollLeft + tb.clientWidth < tb.scrollWidth - 2); };
     tb.addEventListener('scroll', upd, { passive: true }); new ResizeObserver(upd).observe(tb); upd();
   }
-  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, roadmap: tabRoadmap, holders: tabHolders, trades: tabTrades, traders: tabTraders, backers: tabBackers, info: tabInfo, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
+  const fn = { overview: tabOverview, deck: tabDeck, team: tabTeam, holders: tabHolders, trades: tabTrades, traders: tabTraders, backers: tabBackers, info: tabInfo, reports: tabReports, announcements: tabAnnouncements }[pg.tab] || tabOverview;
   body.innerHTML = fn(p); afterTab(p, body);
   const key = p.id + '/' + pg.tab;   // the tab's content eases in when the tab changes, not when it is redrawn in place
   if (pg.shown !== key) { pg.shown = key; body.classList.remove('swap'); void body.offsetWidth; body.classList.add('swap'); }
@@ -507,17 +505,6 @@ function tabOverview(p) {
       ${row('Team', sp.team ? `<span class="num">${pct(sp.team)}</span>, ${esc(fmtSchedule(p.teamSchedule))}` : '<span class="num">0%</span>, no team tokens')}${row('Raise price', `<span class="num">${fmtPrice(priceOf(p))} ${sym}</span> fixed`)}${row('FDV at the raise', `<span class="num">${fmtC(fdvOf(p), p.q, true)} ${sym}</span> (${fmtUsd(fdvUsdOf(p))})`)}
       ${row('Target', `<span class="num">${fmtC(p.target, p.q)} ${sym}</span> (${fmtUsd(p.targetUsd || usdOf(p, p.target))})`)}</dl>
     <div class="tab-h sub"><h2>Links</h2></div>${links ? `<div class="links">${links}</div>` : '<p class="quiet">No website or socials listed.</p>'}</div></div>`;
-}
-/* the roadmap: milestones the founder listed, shown as given; a planned one past its date reads as late */
-function tabRoadmap(p) {
-  const list = roadmapOf(p), now = Date.now();
-  if (!list.length) return tabHead('Roadmap', '') + quietEmpty('The founder listed no milestones.');
-  const items = list.slice().sort((a, b) => (a.dueAt || 0) - (b.dueAt || 0)).map(r => { const due = r.dueAt || now, late = r.status === 'planned' && due < now - D, proof = safeUrl(r.proofUrl || r.proof), st = r.status === 'shipped' ? 'shipped' : r.status === 'missed' ? 'missed' : late ? 'late' : 'planned';
-    return `<li class="${st}"><span class="rm-dot">${st === 'shipped' ? RISK_ICON.pass : st === 'missed' ? RISK_ICON.fail : st === 'late' ? RISK_ICON.warn : ''}</span>
-      <div><b>${esc(r.title)}</b><span class="num">${st === 'shipped' ? 'Shipped' : st === 'missed' ? 'Missed' : st === 'late' ? `Due ${fmtDay(due)}, ${fmtDays((now - due) / D)} late` : 'Due'}${st === 'late' ? '' : ' ' + fmtDay(due)}</span>${proof ? ` <a href="${esc(proof)}" target="_blank" rel="noopener">Proof ${ICONS.out}</a>` : ''}</div></li>`; }).join('');
-  const done = list.filter(r => r.status === 'shipped').length;
-  return tabHead('Roadmap', prFrom(p), ` <span class="quiet">${done} of ${plural(list.length, 'milestone')} shipped</span>`) + `<ol class="roadmap">${items}</ol>
-    <p class="quiet">Milestones are the founder's own list. Seed shows them as given and does not enforce them; backers who see them slip can report the raise.</p>`;
 }
 /* a deck is a PDF (paged through here), an image (shown) or a slide file such as PowerPoint or Keynote (downloaded) */
 function deckKindOf(pr) {
@@ -551,33 +538,18 @@ function tabTeam(p) {
       ${al.map(a => `<tr><td><i class="sw" style="background:${KIND_COL[a.kind] || KIND_COL.other}"></i>${esc(a.label)}</td><td class="num">${a.pct.toFixed(a.pct % 1 ? 1 : 0)}%</td><td class="num">${fmtTok(a.tokens)}</td>
         <td>${a.kind === 'lp' ? 'Locked for good' : a.kind === 'presale' ? 'Claimable at seeding' : esc(fmtSchedule(p.teamSchedule))}</td></tr>`).join('')}</tbody></table></div>`;
   let unlocks = '';
-  if (sp.team && t.length) {
-    const row = (k, v, sub) => `<div><dt>${k}</dt><dd class="num">${v}</dd>${sub ? `<span>${sub}</span>` : ''}</div>`, days = at ? (now - at) / D : null;
-    const sums = `<dl class="sums unlock-sums">${row('Team tokens', fmtTok(sp.team), `${(p.teamBps / 100).toFixed(p.teamBps % 100 ? 2 : 0)}% of supply`)}${row('Unlocked', at ? `${(u.unlockedBps / 100).toFixed(u.unlockedBps % 100 ? 1 : 0)}%` : '0%', at ? `${fmtTok(u.unlocked)} since seeding` : 'the clock starts at seeding')}
-      ${row('Next unlock', u.next ? `${(u.next.bps / 100).toFixed(u.next.bps % 100 ? 2 : 0)}%` : 'Done', u.next ? (at ? fmtDay(u.next.at) : `day ${t.find(x => x.dayOffset > (days || -1)).dayOffset} after seeding`) : 'all released')}${row('Last unlock', `Day ${lastUnlockDay(p.teamSchedule)}`, at ? fmtDay(at + lastUnlockDay(p.teamSchedule) * D) : 'after seeding, 90 at least')}</dl>`;
-    const rows = t.map(x => { const when = at ? at + x.dayOffset * D : null, st = when && when <= now ? 'done' : (u.next && x.dayOffset === t.find(y => y.dayOffset > (days != null ? days : -1)).dayOffset) ? 'next' : '';
-      return `<tr class="${st}"><td class="num">Day ${x.dayOffset}</td><td class="num">${when ? fmtDay(when) : '—'}</td><td class="num">${(x.bps / 100).toFixed(x.bps % 100 ? 2 : 0)}%</td><td class="num">${fmtTok(Math.floor(sp.team * x.bps / BPS))}</td><td>${st === 'done' ? 'Unlocked' : st === 'next' ? '<b>Next</b>' : 'Later'}</td></tr>`; }).join('');
-    unlocks = `<div class="tab-h sub"><h2>Team unlocks</h2><span class="quiet">${esc(fmtSchedule(p.teamSchedule))}</span></div>${sums}<div class="pp-svg unlock" data-unlock></div>
-      <div class="tscroll"><table class="dtable tranches"><thead><tr><th>When</th><th>Date</th><th class="r">Share</th><th class="r">Tokens</th><th>State</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="quiet">Unlocked team tokens go to the payout wallet${p.takeover ? `, which the community takeover moved to ${esc(p.takeover.label || 'a backer wallet')}` : ''}. The schedule was fixed at seeding and cannot change.</p>`;
-  } else unlocks = `<div class="tab-h sub"><h2>Team unlocks</h2></div><p class="quiet">No team tokens. The founder set the team share to 0%, so the whole supply went to backers and the pool.</p>`;
+  if (sp.team && t.length) {   // the schedule as one plain sentence, the next unlock and what is out so far; custom dates listed
+    const row = (k, v, sub) => `<div><dt>${k}</dt><dd class="num">${v}</dd>${sub ? `<span>${sub}</span>` : ''}</div>`;
+    const nextTxt = !u.next ? 'All released' : at ? fmtDay(u.next.at) : `Day ${u.next.dayOffset} after seeding`;
+    const sums = `<dl class="sums unlock-sums">${row('Team tokens', fmtTok(sp.team), `${(p.teamBps / 100).toFixed(p.teamBps % 100 ? 2 : 0)}% of supply`)}${row('Unlocked so far', at ? `${(u.unlockedBps / 100).toFixed(u.unlockedBps % 100 ? 1 : 0)}%` : '0%', at ? `${fmtTok(u.unlocked)} since seeding` : 'the clock starts at seeding')}
+      ${row('Next unlock', nextTxt, u.next ? `${fmtTok(u.next.tokens)} tokens, ${(u.next.bps / 100).toFixed(u.next.bps % 100 ? 2 : 0)}% of the team share` : atSeeding(p.teamSchedule) ? 'everything unlocked at seeding' : `last was day ${lastUnlockDay(p.teamSchedule)}`)}</dl>`;
+    const per = perUnlockText(p.teamSchedule, p.teamBps);
+    const custom = p.teamSchedule && p.teamSchedule.tranches && !atSeeding(p.teamSchedule) ? `<div class="tscroll"><table class="dtable tranches"><thead><tr><th>When</th><th>Date</th><th class="r">Share</th><th class="r">Tokens</th></tr></thead><tbody>${t.map(x => `<tr class="${at && at + x.dayOffset * dayOf(p) <= now ? 'done' : ''}"><td class="num">Day ${x.dayOffset}</td><td class="num">${at ? fmtDay(at + x.dayOffset * dayOf(p)) : '—'}</td><td class="num">${(x.bps / 100).toFixed(x.bps % 100 ? 2 : 0)}%</td><td class="num">${fmtTok(Math.floor(sp.team * x.bps / BPS))}</td></tr>`).join('')}</tbody></table></div>` : '';
+    unlocks = `<div class="tab-h sub"><h2>Team unlocks</h2></div><p class="sched-line">${esc(fmtSchedule(p.teamSchedule))}${per ? ` <span class="quiet">(${esc(per)})</span>` : ''}.</p>${sums}${custom}
+      <p class="quiet">Unlocked team tokens go to the payout wallet${p.takeover ? `, which the community takeover moved to ${esc(p.takeover.label || 'a backer wallet')}` : ''}. The schedule was fixed when the raise opened and cannot change.</p>`;
+  } else unlocks = `<div class="tab-h sub"><h2>Team unlocks</h2></div><p class="quiet">No team tokens. The whole supply went to backers and the pool.</p>`;
   return tabHead('Supply', '') + supply + `<p class="quiet">Backers and the pool get the same number of tokens, which is what opens the pool at the raise price: ${fmtPrice(priceOf(p))} ${esc(C.sym)}. The team share was set by the founder.</p>` + unlocks +
     `<div class="tab-h sub"><h2>Team</h2>${prFrom(p) ? srcPill('demo') : ''}</div>` + members + (team.length ? `<p class="quiet">A badge appears only for a check that passed.${pr.demo ? ' On demo raises the check results are part of the demo data.' : ' Checks are self-reported until verification is wired up.'}</p>` : '');
-}
-/* the unlock chart: the team's tokens as a step line from seeding to the last tranche, with today marked */
-function unlockSVG(p, W) {
-  const sp = splitOf(p.teamBps), t = tranchesOf(p.teamSchedule), at = p.seededAt, now = Date.now(), Hh = 200, pl = 8, pr = 54, pt = 16, pb = 26, last = lastUnlockDay(p.teamSchedule) || 1;
-  const X = d => pl + d / last * (W - pl - pr), Y = b => pt + (1 - b / BPS) * (Hh - pt - pb);
-  let acc = 0, d = `M${X(0)} ${Y(0)}`; const dots = [];
-  for (const x of t) { d += ` H${X(x.dayOffset).toFixed(1)}`; acc += x.bps; d += ` V${Y(acc).toFixed(1)}`; dots.push([X(x.dayOffset), Y(acc), acc]); }
-  d += ` H${X(last).toFixed(1)}`;
-  const today = at ? Math.min(last, Math.max(0, (now - at) / D)) : null;
-  return `<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Team unlocks over ${last} days">
-    ${[0, 25, 50, 75, 100].map(v => `<path d="M${pl} ${Y(v * 100).toFixed(1)}H${W - pr}" style="stroke:var(--hair)"/><text x="${W - pr + 8}" y="${(Y(v * 100) + 4).toFixed(1)}" font-family="IBM Plex Mono, monospace" font-size="11" style="fill:var(--muted)">${v}%</text>`).join('')}
-    ${today != null ? `<path d="M${X(today).toFixed(1)} ${pt}V${Hh - pb}" style="stroke:var(--navy-soft)" stroke-dasharray="3 3"/><text x="${(X(today) + 5).toFixed(1)}" y="${pt + 10}" font-family="IBM Plex Mono, monospace" font-size="11" style="fill:var(--navy-soft)">Today</text>` : ''}
-    <path d="${d}" fill="none" style="stroke:var(--navy)" stroke-width="2" stroke-linejoin="round"/>
-    ${dots.map(([x, y, b]) => `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" style="fill:${today != null && x <= X(today) ? 'var(--navy)' : 'var(--panel-solid)'};stroke:var(--navy)" stroke-width="1.5"/>`).join('')}
-    <g font-family="IBM Plex Mono, monospace" font-size="11" style="fill:var(--muted)"><text x="${pl}" y="${Hh - 8}">${at ? 'Seeded ' + fmtDay(at) : 'Seeding'}</text><text x="${W - pr}" y="${Hh - 8}" text-anchor="end">Day ${last}${at ? ', ' + fmtDay(at + last * D) : ''}</text></g></svg>`;
 }
 const KIND_COL = { presale: '#2E63E7', lp: '#8FB4FF', team: '#D9DCE2', other: '#565B66' };
 function donutSVG(allocs) {
@@ -725,7 +697,6 @@ function afterTab(p, body) {
     };
   }
   const ab = $('[data-allbackers]', body); if (ab) ab.onclick = () => { pg.allBackers = true; renderTab(p); };
-  const un = $('[data-unlock]', body); if (un) un.innerHTML = unlockSVG(p, Math.max(320, Math.floor(un.clientWidth) || 640));
   const rf = $('[data-repform]', body);
   if (rf) {
     const err = $('[data-reperr]', rf), ct = $('[data-repct]', rf);

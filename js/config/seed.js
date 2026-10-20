@@ -11,9 +11,8 @@ const SEED = {
   testMinTargetSol: 0.1,       // the floor the devnet config was made with (test mode), so a test cycle costs cents; shown until the config is read
   minDeadlineH: 24, maxDeadlineH: 14 * 24,
   seedTimeoutDays: 3,          // a filled raise that has not seeded by then refunds everyone
-  minUnlockDays: 90,           // the last team unlock is at least this long after seeding
+  minUnlockDays: 90,           // unused since 2026-10-20 (no minimum on team unlocks); kept for the Config's layout, which still carries the field
   payoutDelayDays: 7,          // a payout wallet change takes effect after this long and shows while pending
-  minRoadmap: 0,               // milestones a raise must list (none; the roadmap is optional and shown as given)
   admins: ['6xFrba28fk6RyiLREzLPHBP4xPXutDs69Ju69hCixAFZ', '6GTuondHNLSJkYemhVw8GYFTK3ANHPFXdVYUM5JP5zyf'],   // Seed admin wallets (a Squads multisig on mainnet); only they can flag fraud or approve a takeover
   hiddenFounders: ['6GTuondHNLSJkYemhVw8GYFTK3ANHPFXdVYUM5JP5zyf', '47GQX1dFMCz2UapFUbVBnkiyDMmfso7c5Za5Um7tQE57', 'F6BmoJCaGNmQsTTGnRxdvr5KFPMn58QfnXBwSoBHXAhN'],   // raises these wallets open never show on the site: the deployer, the test suite's second founder, and one earlier throwaway test founder
   /* the chain the site talks to. The browser RPC key is a public one locked to this site's domains in the Helius

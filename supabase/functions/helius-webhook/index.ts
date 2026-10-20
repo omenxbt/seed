@@ -34,7 +34,7 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
     await db.from('raises').upsert({
       id: slug(e.ticker as string, e.raise as string), address: e.raise, founder: e.founder, name: e.name, ticker: e.ticker, pair_mint: pairMint,
       target: units(e.target as bigint, d), target_usd: Number(e.targetUsdCents) / 100, sol_usd_at_open: Number(e.solUsdCents) / 100,
-      team_bps: e.teamBps, team_schedule: tr.length ? { tranches: tr } : null, payout_wallet: e.payoutWallet, metadata_uri: (e.uri as string) || null,
+      team_bps: e.teamBps, team_schedule: e.even ? e.even : tr.length ? { tranches: tr } : null,   // { cliffDays, intervalDays, count } for an even schedule payout_wallet: e.payoutWallet, metadata_uri: (e.uri as string) || null,
       status: 'live', opened_at: ts(e.openedAt as bigint), ends_at: ts(e.endsAt as bigint), updated_at: now
     }, { onConflict: 'address', ignoreDuplicates: true });
     // the X account behind the handle hash, from the attestation log (a raise may open without one)
