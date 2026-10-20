@@ -16,11 +16,7 @@ pub const MAX_TRANCHES: usize = 24;
 pub const MAX_NAME: usize = 32;
 pub const MAX_TICKER: usize = 8;
 pub const DAY: i64 = 86_400;
-/// the smallest raise: 81 SOL, the size a pump.fun curve collects before it graduates, so the smallest Seed pool opens where
-/// those tokens migrate and a bigger target opens at a higher market cap. A USDC raise meets the same dollars at the SOL price.
-/// In test mode (devnet) it is 0.05 SOL, so a test cycle costs cents.
-pub const MIN_TARGET_LAMPORTS: u64 = 81_000_000_000;
-pub const TEST_MIN_TARGET_LAMPORTS: u64 = 50_000_000;
+pub const LAMPORTS: u64 = 1_000_000_000;
 
 /// The fixed terms. The site's js/config/seed.js carries the same numbers.
 #[account]
@@ -42,14 +38,18 @@ pub struct Config {
     pub payout_delay: i64,        // seconds, 7d
     pub test_mode: bool,          // devnet only: a day is a minute (see init_config)
     pub bump: u8,
+    /// the smallest raise, in lamports, set once at init_config like the fee and never changed after: 81 SOL in production,
+    /// the size a pump.fun curve collects before it graduates, so the smallest Seed pool opens where those tokens migrate and
+    /// a bigger target opens at a higher market cap. A USDC raise meets its worth at the SOL price when it opens. A staging
+    /// deployment of the same binary may be made with a lower one (devnet test mode uses 0.1 SOL, so a cycle costs cents).
+    /// Last in the layout so a devnet config of the layout before it could be grown in place (migrate_config).
+    pub min_target_lamports: u64,
 }
 impl Config {
     /// one "day" in seconds: 86 400, or 60 in test mode
     pub fn unit(&self) -> i64 { if self.test_mode { 60 } else { DAY } }
     /// a span the terms give in seconds, in this config's time: a day's worth becomes a minute's worth in test mode
     pub fn span(&self, secs: i64) -> i64 { if self.test_mode { secs / (DAY / 60) } else { secs } }
-    /// the floor under a raise's target, in lamports (see MIN_TARGET_LAMPORTS)
-    pub fn min_target(&self) -> u64 { if self.test_mode { TEST_MIN_TARGET_LAMPORTS } else { MIN_TARGET_LAMPORTS } }
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug, InitSpace)]

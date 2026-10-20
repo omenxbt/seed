@@ -16,7 +16,9 @@ const qOf = (p, usd) => p.q === 'USDC' ? usd : usd / solUsd(p);
 const solUsdNow = p => SEED.solUsdLive || solUsd(p);                    // the SOL price today: the Pyth feed (chain.refreshSolUsd), else the raise's at open
 const usdNow = (p, q) => p.q === 'USDC' ? q : q * solUsdNow(p);        // a pair-asset amount in USD today: what a market cap is quoted in
 /* the floor under a target, in SOL: the program's constant, which test mode on devnet brings down to 0.05 SOL */
-const minTargetSol = () => typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode ? SEED.testMinTargetSol : SEED.minTargetSol;
+/* the smallest raise, in SOL: the program's Config carries it (min_target_lamports, set once at init); until it is read, the
+   site's own figure, with test mode's smaller one as a guess once the config says it is in test mode */
+const minTargetSol = () => { const c = typeof chain !== 'undefined' && chain.cfg; return c && c.minTargetLamports ? Number(c.minTargetLamports.toString()) / 1e9 : c && c.testMode ? SEED.testMinTargetSol : SEED.minTargetSol; };
 /* the same floor in the pair asset: SOL as is, USDC as the dollars 81 SOL are worth today, to the cent the program compares in (it
    rounds the cents down, so the figure shown is one that opens) */
 const minTargetIn = q => q === 'USDC' ? Math.floor(minTargetSol() * solUsdNow({ q: 'SOL' }) * 100) / 100 : minTargetSol();

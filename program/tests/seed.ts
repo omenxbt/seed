@@ -33,7 +33,7 @@ describe('seed', () => {
     // the config, once; the attestor is fixed by it, which is why the key derives from the wallet. A config that cannot
     // be read (an older layout) or that names another attestor is closed and made again when this wallet is its admin.
     const make = async () => c.send([await c.initConfig({ admin: me.publicKey, attestor: attestor.publicKey, seedTreasury: me.publicKey, solFeed: SOL_FEED, feeBps: 100, creatorShareBps: 7000, poolFeeBps: 125, capUsdCents: new BN(10_000_000),
-      minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90, payoutDelay: new BN(7 * 86400), testMode: true }, me.publicKey, USDC_DEVNET)]);
+      minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90, payoutDelay: new BN(7 * 86400), testMode: true, minTargetLamports: sol(0.1) }, me.publicKey, USDC_DEVNET)]);
     try { cfg = await c.fetchConfig(); } catch { cfg = null; }
     if (!cfg) {
       const raw = await provider.connection.getAccountInfo(c.config);
@@ -56,9 +56,6 @@ describe('seed', () => {
     const { ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 1, name: 'Fake', ticker: 'FAKE', target: sol(0.2), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
     ixs[0] = attestIx(fake, me.publicKey, hash, expiry);
     await expectFail(c.send(ixs), 'BadAttestation');
-    // the floor: 81 SOL, or 0.05 SOL in test mode; a target under it does not open
-    const low = await c.openRaise(me.publicKey, WSOL, null, null, { nonce: nonce + 12, name: 'Low', ticker: 'LOW', uri: KILN_URI, target: sol(cfg.testMode ? 0.01 : 80), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
-    await expectFail(c.send(low.ixs), 'UnderFloor');
   });
 
   it('refuses a schedule that ends before 90 days or does not add up', async () => {
@@ -83,6 +80,28 @@ describe('seed', () => {
     const px = Number(r.solUsdCents); assert.ok(px > 1000 && px < 100_000, `a SOL price from Pyth, got ${px} cents`);
     assert.ok(r.targetUsdCents.eq(new BN(Math.floor(0.2 * px))), 'a 0.2 SOL target at the Pyth price');
     assert.equal(r.xHandleHash, null, 'no X account yet');
+  });
+
+  it('the minimum raise is the config\'s: a lamport under is refused, exactly it opens, and a USDC raise meets its worth at the Pyth price', async function () {
+    this.timeout(240_000);
+    const min: BN = cfg.minTargetLamports; assert.ok(min.gt(new BN(0)), 'the config carries min_target_lamports');
+    assert.ok(cfg.testMode ? min.eq(sol(0.1)) : min.eq(sol(81)), `0.1 SOL in test mode, 81 SOL otherwise; got ${min.toString()} lamports`);
+    // founders of their own, so what they open does not count as this wallet's live raise (and the one-live-raise check, which
+    // comes before the floor, stays out of the way: each refused attempt is made before that founder has a raise)
+    const f = Keypair.generate(), g = Keypair.generate();
+    await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL }), SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: g.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL })]);
+    const open = (who: web3.Keypair, pair: web3.PublicKey, target: BN, n: number, ticker: string) => c.openRaise(who.publicKey, pair, null, null, { nonce: nonce + n, name: 'Min', ticker, uri: KILN_URI, target, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: who.publicKey });
+    // the USDC floor is the minimum's worth at the price the raise above recorded: well under it is refused, well over it opens
+    const px = Number(r.solUsdCents), floorUsdc = Number(min.toString()) / LAMPORTS_PER_SOL * px / 100;   // dollars
+    const usdc = (d: number) => new BN(Math.round(d * 1e6));
+    await expectFail(open(f, WSOL, min.sub(new BN(1)), 12, 'MIN').then(x => c.send(x.ixs, [f])), 'TargetBelowMinimum');
+    await expectFail(open(f, USDC_DEVNET, usdc(floorUsdc * 0.9), 13, 'MINU').then(x => c.send(x.ixs, [f])), 'TargetBelowMinimum');
+    const at = await open(f, WSOL, min, 14, 'MIN'); await c.send(at.ixs, [f]);
+    const opened = await c.fetchRaise(at.raise); assert.ok(opened.target.eq(min), 'exactly the minimum opens');
+    const over = await open(g, USDC_DEVNET, usdc(floorUsdc * 1.1), 15, 'MINU'); await c.send(over.ixs, [g]);
+    const u = await c.fetchRaise(over.raise); assert.ok(u.targetUsdCents.gte(new BN(Math.floor(floorUsdc * 100))), 'a USDC raise at least the minimum\'s worth opens');
+    // both are cancelled so their founders are free again and nothing is left live
+    for (const [k, rk] of [[f, at.raise], [g, over.raise]] as [web3.Keypair, web3.PublicKey][]) await c.send([await c.cancelRaise(rk, k.publicKey)], [k]);
   });
 
   it('one live raise per wallet: a second open is refused until the first has left Live', async () => {

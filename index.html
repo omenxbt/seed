@@ -1452,7 +1452,7 @@ a.ico:hover{color:var(--ink)}
             <tr><td>Network</td><td>Solana</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Raise engine</td><td>Seed's own program: fixed price, no withdrawals while live, closes at the target</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Pair asset</td><td>SOL or USDC, chosen by the founder</td><td class="num"><span class="st set">Set</span></td></tr>
-            <tr><td>Target floor</td><td>81 SOL (0.05 SOL in test mode on devnet); a USDC raise the same in dollars at the SOL price when it opens</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Target floor</td><td>81 SOL, set once in the program's Config (0.1 SOL in test mode on devnet); a USDC raise the same in dollars at the SOL price when it opens</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Target cap</td><td>$100,000, SOL converted at the price when the raise opens</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Deadline</td><td>24 hours to 14 days</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Seed fee, f</td><td>1% on top of each buy, returned on a refund</td><td class="num"><span class="st set">Set</span></td></tr>
@@ -1501,7 +1501,7 @@ const r6 = n => Math.round(n * 1e6) / 1e6;
    each buy and goes back with it if the raise refunds. The terms are in js/config/seed.js, the arithmetic in js/model.js. */
 const DEX = 'Meteora DAMM v2';
 const ASSETS = {
-  SOL:  { sym: 'SOL',  mint: 'So11111111111111111111111111111111111111112',  dp: 2, chips: [0.5, 2, 10],      min: 0,    max: 5000,    verified: true },   // no floor: any target above 0, under the $100K cap
+  SOL:  { sym: 'SOL',  mint: 'So11111111111111111111111111111111111111112',  dp: 2, chips: [0.5, 2, 10],      min: 0,    max: 5000,    verified: true },   // the floor is the config's minimum raise (81 SOL; see minTargetIn), under the $100K cap
   USDC: { sym: 'USDC', mint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', dp: 2, chips: [50, 250, 1000],   min: 0,    max: 1000000, verified: true },
   JUP:  { sym: 'JUP',  mint: 'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN',  dp: 2, chips: [100, 500, 2500],  verified: true },
   BONK: { sym: 'BONK', mint: 'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263', dp: 0, chips: [1e6, 5e6, 2.5e7], verified: true }

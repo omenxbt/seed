@@ -50,6 +50,7 @@ pub struct ConfigParams {
     pub fee_bps: u16, pub creator_share_bps: u16, pub pool_fee_bps: u16, pub cap_usd_cents: u64,
     pub min_deadline: i64, pub max_deadline: i64, pub seed_timeout: i64, pub min_unlock_days: u32, pub payout_delay: i64,
     pub test_mode: bool,
+    pub min_target_lamports: u64,   // the smallest raise; 81 SOL in production. Set here, once, like the fee
 }
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct ConfigUpdate { pub seed_treasury: Option<Pubkey>, pub attestor: Option<Pubkey> }
@@ -75,10 +76,10 @@ pub struct XAttest { pub handle_hash: [u8; 32], pub expiry: u64 }
 pub mod seed {
     use super::*;
 
-    /// once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks, and the
-    /// 81 SOL floor under a target 0.05 SOL; it is
+    /// once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks; it is
     /// compiled only into devnet builds (`--features devnet`) and, even there, needs the devnet USDC mint as a witness,
-    /// an account that exists on no other cluster. A mainnet build has no code path that sets it.
+    /// an account that exists on no other cluster. A mainnet build has no code path that sets it. `min_target_lamports`
+    /// is the smallest raise (81 SOL in production); like the fee it is set here and no instruction changes it after.
     pub fn init_config(ctx: Context<InitConfig>, p: ConfigParams) -> Result<()> {
         if p.test_mode {
             #[cfg(not(feature = "devnet"))]
@@ -89,8 +90,9 @@ pub mod seed {
                 require!(w.key() == USDC_DEVNET && w.decimals == 6, SeedError::TestModeNotAllowed);   // Account<Mint> already checks the owner
             }
         }
-        require!(p.fee_bps < 1000 && p.creator_share_bps <= 10_000 && p.pool_fee_bps <= 1000, SeedError::BadConfig);
+        require!(p.fee_bps < 1000 && p.creator_share_bps <= 10_000 && p.pool_fee_bps <= 1000 && p.min_target_lamports > 0, SeedError::BadConfig);
         let c = &mut ctx.accounts.config;
+        c.min_target_lamports = p.min_target_lamports;
         c.admin = p.admin; c.pending_admin = Pubkey::default(); c.attestor = p.attestor; c.seed_treasury = p.seed_treasury; c.sol_feed = p.sol_feed;
         c.fee_bps = p.fee_bps; c.creator_share_bps = p.creator_share_bps; c.pool_fee_bps = p.pool_fee_bps; c.cap_usd_cents = p.cap_usd_cents;
         c.min_deadline = p.min_deadline; c.max_deadline = p.max_deadline; c.seed_timeout = p.seed_timeout; c.min_unlock_days = p.min_unlock_days; c.payout_delay = p.payout_delay;
@@ -116,6 +118,27 @@ pub mod seed {
         let c = &mut ctx.accounts.config;
         require!(c.pending_admin != Pubkey::default() && ctx.accounts.new_admin.key() == c.pending_admin, SeedError::NotPendingAdmin);
         c.admin = c.pending_admin; c.pending_admin = Pubkey::default();
+        Ok(())
+    }
+
+    /// devnet builds only: a config of the layout before `min_target_lamports` is grown by the eight bytes and given its
+    /// minimum, once (a config already of this layout is refused). The program's upgrade authority signs, since the devnet
+    /// config's admin is a browser wallet. A mainnet build has no such instruction: its config is made whole at init.
+    #[cfg(feature = "devnet")]
+    pub fn migrate_config(ctx: Context<MigrateConfig>, min_target_lamports: u64) -> Result<()> {
+        {   // the signer is the program's upgrade authority: ProgramData is [3u32][slot u64][Some = 1][authority 32]
+            let d = ctx.accounts.program_data.try_borrow_data()?;
+            require!(d.len() >= 45 && d[0..4] == 3u32.to_le_bytes() && d[12] == 1 && Pubkey::try_from(&d[13..45]).unwrap() == ctx.accounts.authority.key(), SeedError::NotAdmin);
+        }
+        let cfg = ctx.accounts.config.to_account_info();
+        let old = 8 + Config::INIT_SPACE - 8;
+        require!(cfg.data_len() == old && min_target_lamports > 0, SeedError::BadConfig);
+        let need = Rent::get()?.minimum_balance(old + 8);
+        if need > cfg.lamports() {
+            anchor_lang::system_program::transfer(CpiContext::new(ctx.accounts.system_program.to_account_info(), anchor_lang::system_program::Transfer { from: ctx.accounts.authority.to_account_info(), to: cfg.clone() }), need - cfg.lamports())?;
+        }
+        cfg.resize(old + 8)?;
+        cfg.try_borrow_mut_data()?[old..old + 8].copy_from_slice(&min_target_lamports.to_le_bytes());
         Ok(())
     }
 
@@ -167,15 +190,10 @@ pub mod seed {
         require!((p.team_bps as u64) < BPS, SeedError::BadTeamShare);
         let pair = ctx.accounts.pair_mint.key();
         require!(pair == WSOL || pair == USDC || pair == USDC_DEVNET, SeedError::BadPair);
-        let cents = pyth::sol_usd_cents(&ctx.accounts.sol_feed.to_account_info(), now)?;   // today's SOL price: the cap and the floor are both measured with it
-        let (target_usd_cents, sol_usd_cents) = if pair == WSOL {
-            (math::mul_div(p.target, cents, 1_000_000_000).ok_or(SeedError::Overflow)?, cents)   // lamports to cents
-        } else { (p.target / 10_000, 0) };                                                      // USDC base units (6 dp) to cents
-        require!(target_usd_cents <= c.cap_usd_cents, SeedError::OverCap);
-        // the floor: at least 81 SOL (0.05 in test mode), so the smallest pool opens where a pump.fun curve graduates; a bigger target
-        // opens at a higher market cap. A SOL raise is held in lamports, a USDC raise to the same dollars at today's SOL price
-        if pair == WSOL { require!(p.target >= c.min_target(), SeedError::UnderFloor); }
-        else { require!(target_usd_cents >= math::mul_div(c.min_target(), cents, 1_000_000_000).ok_or(SeedError::Overflow)?, SeedError::UnderFloor); }
+        // today's SOL price (refused when stale): the $100,000 cap and the minimum raise are both measured with it. The minimum is
+        // the config's (81 SOL in production): a SOL raise in lamports, a USDC raise its worth in dollars; math::check_target
+        let cents = pyth::sol_usd_cents(&ctx.accounts.sol_feed.to_account_info(), now)?;
+        let (target_usd_cents, sol_usd_cents) = math::check_target(pair == WSOL, p.target, cents, c.cap_usd_cents, c.min_target_lamports)?;
         if p.team_bps > 0 {
             require!(!p.schedule.is_empty() && p.schedule.len() <= MAX_TRANCHES && p.schedule.iter().all(|t| t.bps > 0), SeedError::BadSchedule);
             let sum: u64 = p.schedule.iter().map(|t| t.bps as u64).sum();
@@ -540,6 +558,19 @@ pub struct ResetConfig<'info> {
     /// CHECK: the config PDA, closed by hand so an older layout can go too; the admin is read from its bytes
     #[account(mut, seeds = [CONFIG_SEED], bump)] pub config: UncheckedAccount<'info>,
     #[account(mut)] pub admin: Signer<'info>,
+}
+
+#[cfg(feature = "devnet")]
+#[derive(Accounts)]
+pub struct MigrateConfig<'info> {
+    /// CHECK: the config PDA of the previous layout, grown in place; read and written raw
+    #[account(mut, seeds = [CONFIG_SEED], bump)] pub config: UncheckedAccount<'info>,
+    /// the program's upgrade authority, which pays for the extra bytes
+    #[account(mut)] pub authority: Signer<'info>,
+    /// CHECK: this program's ProgramData account (the loader's PDA over the program id), read raw in the handler so the
+    /// loader's state types stay out of the binary
+    #[account(seeds = [crate::ID.as_ref()], bump, seeds::program = anchor_lang::solana_program::bpf_loader_upgradeable::ID)] pub program_data: UncheckedAccount<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]

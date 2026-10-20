@@ -1775,10 +1775,10 @@
     {
       "name": "init_config",
       "docs": [
-        "once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks, and the",
-        "81 SOL floor under a target 0.05 SOL; it is",
+        "once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks; it is",
         "compiled only into devnet builds (`--features devnet`) and, even there, needs the devnet USDC mint as a witness,",
-        "an account that exists on no other cluster. A mainnet build has no code path that sets it."
+        "an account that exists on no other cluster. A mainnet build has no code path that sets it. `min_target_lamports`",
+        "is the smallest raise (81 SOL in production); like the fee it is set here and no instruction changes it after."
       ],
       "discriminator": [
         23,
@@ -1897,6 +1897,147 @@
               "name": "XAttest"
             }
           }
+        }
+      ]
+    },
+    {
+      "name": "migrate_config",
+      "docs": [
+        "devnet builds only: a config of the layout before `min_target_lamports` is grown by the eight bytes and given its",
+        "minimum, once (a config already of this layout is refused). The program's upgrade authority signs, since the devnet",
+        "config's admin is a browser wallet. A mainnet build has no such instruction: its config is made whole at init."
+      ],
+      "discriminator": [
+        92,
+        131,
+        58,
+        105,
+        210,
+        154,
+        224,
+        193
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "docs": [
+            "the program's upgrade authority, which pays for the extra bytes"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "program_data",
+          "docs": [
+            "loader's state types stay out of the binary"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  213,
+                  178,
+                  198,
+                  98,
+                  36,
+                  207,
+                  140,
+                  2,
+                  121,
+                  85,
+                  252,
+                  77,
+                  168,
+                  252,
+                  72,
+                  58,
+                  69,
+                  109,
+                  132,
+                  199,
+                  135,
+                  151,
+                  128,
+                  104,
+                  207,
+                  189,
+                  7,
+                  184,
+                  228,
+                  137,
+                  191
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                2,
+                168,
+                246,
+                145,
+                78,
+                136,
+                161,
+                176,
+                226,
+                16,
+                21,
+                62,
+                247,
+                99,
+                174,
+                43,
+                0,
+                194,
+                185,
+                61,
+                22,
+                193,
+                36,
+                210,
+                192,
+                83,
+                122,
+                16,
+                4,
+                128,
+                0,
+                0
+              ]
+            }
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "min_target_lamports",
+          "type": "u64"
         }
       ]
     },
@@ -2669,8 +2810,8 @@
     },
     {
       "code": 6009,
-      "name": "UnderFloor",
-      "msg": "The target is under the minimum raise (81 SOL on mainnet, or the same in dollars for a USDC raise)."
+      "name": "TargetBelowMinimum",
+      "msg": "The target is under the minimum raise (81 SOL on mainnet; a USDC raise meets its worth at today's SOL price)."
     },
     {
       "code": 6010,
@@ -2910,6 +3051,17 @@
           {
             "name": "bump",
             "type": "u8"
+          },
+          {
+            "name": "min_target_lamports",
+            "docs": [
+              "the smallest raise, in lamports, set once at init_config like the fee and never changed after: 81 SOL in production,",
+              "the size a pump.fun curve collects before it graduates, so the smallest Seed pool opens where those tokens migrate and",
+              "a bigger target opens at a higher market cap. A USDC raise meets its worth at the SOL price when it opens. A staging",
+              "deployment of the same binary may be made with a lower one (devnet test mode uses 0.1 SOL, so a cycle costs cents).",
+              "Last in the layout so a devnet config of the layout before it could be grown in place (migrate_config)."
+            ],
+            "type": "u64"
           }
         ]
       }
@@ -2974,6 +3126,10 @@
           {
             "name": "test_mode",
             "type": "bool"
+          },
+          {
+            "name": "min_target_lamports",
+            "type": "u64"
           }
         ]
       }

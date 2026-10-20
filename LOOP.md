@@ -4,7 +4,7 @@
 Seed is a trading terminal for fixed-price presales that test product-market fit, on Solana and Meteora: "Axiom/GMGN for presales." The market decides what gets funded. Seed doesn't gate ideas or judge founder terms.
 
 Raise
-- The founder sets the target (SOL or USDC, above 0, max $100,000; SOL targets convert at the Pyth SOL/USD price when the raise opens) and a deadline (24h to 14d). Hard cap = target, so there's no partial raise.
+- The founder sets the target (SOL or USDC, at least 81 SOL or its worth in USDC, max $100,000; SOL targets convert at the Pyth SOL/USD price when the raise opens) and a deadline (24h to 14d). Hard cap = target, so there's no partial raise.
 - The founder can also set an optional minimum buy, maximum per wallet and whitelist.
 - Price is derived, never typed: price = target ÷ backer tokens.
 - Seed fee: 1% on top of each buy, refunded with the buy if the raise doesn't seed.

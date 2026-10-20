@@ -1,9 +1,10 @@
 # The Seed program
 
 An Anchor program (`programs/seed`) that holds a raise end to end: buys at a fixed price with a 1% fee on top, the
-81 SOL floor (`MIN_TARGET_LAMPORTS`: the size a pump.fun curve collects before it graduates, so the smallest pool opens
-where those tokens migrate; 0.05 SOL in test mode; a USDC raise meets the same dollars at the SOL price) and the
-$100,000 cap, the deadline, refunds on a miss, a cancel or a stalled seeding, the four seeding steps (mint the supply,
+minimum raise (`Config.min_target_lamports`, set once at `init_config` and never changed after, like the fee: 81 SOL in
+production, the size a pump.fun curve collects before it graduates, so the smallest pool opens where those tokens
+migrate; a USDC raise meets its worth at the SOL price; if 81 SOL is ever worth more than the cap, the cap is the
+minimum, so a raise is always possible; the devnet test-mode config carries 0.1 SOL) and the $100,000 cap, the deadline, refunds on a miss, a cancel or a stalled seeding, the four seeding steps (mint the supply,
 open and lock the Meteora DAMM v2 pool, finish), backers' claims, the pool's fees split 70/30 on a permissionless
 claim, team unlocks on a schedule fixed at opening, payout wallet changes after seven days, and the admin's two
 instructions (flag fraud, approve a takeover). The raise PDA owns the escrow, the vaults and the pool position NFT; no
@@ -15,11 +16,32 @@ check, `src/math.rs` the pool's opening price and liquidity.
 
 ```sh
 cd program
-anchor build                       # target/deploy/seed.so, target/idl/seed.json
+anchor build -- --features devnet  # the devnet build: target/deploy/seed.so, target/idl/seed.json (plain `anchor build` is the mainnet build)
 cp target/idl/seed.json ../js/idl/seed.json && cp target/idl/seed.json ../supabase/functions/crank/seed.json
-solana program deploy target/deploy/seed.so --program-id target/deploy/seed-keypair.json -u devnet --max-len 500000
-npm install && anchor test --skip-local-validator --skip-deploy   # runs tests/seed.ts against devnet
+solana program deploy target/deploy/seed.so --program-id 8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn -u devnet -k keys/deployer.json
+npm install && anchor test --skip-local-validator --skip-deploy   # runs tests/seed.ts (and tests/size.ts) against devnet; about 0.7 SOL
 ```
+
+Three checks that cost nothing: `cargo test --lib` and `cargo test --lib --features devnet` in `programs/seed` prove the
+minimum raise on both builds (`math.rs`: 80.99 SOL refused, 81 opens, the USDC worth at a price, the cap as the minimum
+when 81 SOL is worth more than $100,000, a lower staging minimum); `npx ts-mocha -p tsconfig.json tests/size.ts`
+measures `open_raise` at its largest (24 tranches, X linked, a 200-character URI, a USDC pair): 1376 bytes as a legacy
+transaction, 1195 as a v0 transaction over the lookup table, under the 1232-byte packet.
+
+**The lookup table.** Every transaction the site sends is v0 over an address lookup table that holds the fixed
+accounts (`client/alt.ts`: the program, its config, the Pyth feed, the pair mints, the token programs, the sysvars, the
+ed25519 and compute-budget programs, Metaplex, DAMM and its authority). `scripts/alt.ts devnet|mainnet [table]` makes
+the table on a cluster, or appends what the list has gained; the address goes into `js/config/seed.js` as `lookupTable`.
+Devnet: `3tcuKWXkcGmKRRDLzkBPB1jf5MpnhvM2Xo7NfX8BhLfy`.
+
+**Config layout changes on devnet.** The devnet config's admin is a browser wallet, so `migrate_config` (devnet build
+only, signed by the program's upgrade authority) grows a config of the previous layout in place, once:
+`scripts/migrate-config.ts [minSol]`. Right after an upgrade that changes the layout, before anything reads the config.
+
+**The deploy check.** `scripts/check-deploy.ts production|staging|devnet <rpc> [program id]` reads the live Config and
+the program account and exits non-zero unless they carry the profile's terms: production is 81 SOL, 125 bps on the
+pool, 100 bps on buys, 70/30, no test mode (and, with `SEED_PROD_UPGRADE_AUTHORITY` set, the Squads vault as upgrade
+authority). A deploy is not done until it prints OK.
 
 The build pins a few transitive crates in `Cargo.lock` (blake3, zeroize, hashbrown, indexmap, proc-macro-crate,
 unicode-segmentation) because the SBF toolchain's rustc 1.84 cannot read edition-2024 manifests; `cargo update` will
