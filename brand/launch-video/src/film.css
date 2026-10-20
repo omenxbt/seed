@@ -1,0 +1,124 @@
+/* The film's own layer over the site's stylesheets: canvas size, safe zones, the video-size type, and the placement of the
+   site's panels in each format. Colours, radii, borders, glass and every UI style come from site/ (the product's CSS);
+   nothing here redraws a component. Values are the brand book's: safe zones and captions from "Captions and safe zones",
+   the wordmark at 500 and -3% with a mark 1.6x its size, the hero's serif-then-sans title. */
+
+html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: var(--bg); }
+#root { position: relative; width: 100%; height: 100%; overflow: hidden; isolation: isolate; }
+#root > svg[width="0"] { position: absolute; }
+
+/* the film draws every motion itself, seekable from the timeline (src/film.js), so the site's CSS clocks are stopped */
+.film *, .film *::before, .film *::after { animation: none !important; transition: none !important; }
+
+/* ------------------------------------------------------------ formats: safe zones and caption specs */
+.f169 { --sl: 96px; --sr: 96px; --st: 96px; --sb: 96px; --mk: 48px; --z: 1.5;  --cap: 48px; --capb: 144px; --uit: 184px; --uib: 380px; }
+.f916 { --sl: 120px; --sr: 120px; --st: 250px; --sb: 320px; --mk: 56px; --z: 1.6; --cap: 56px; --capb: 420px; --uit: 354px; --uib: 805px; }
+.f11  { --sl: 80px; --sr: 80px; --st: 80px; --sb: 80px; --mk: 48px; --z: 1.25; --cap: 48px; --capb: 120px; --uit: 168px; --uib: 354px; }
+
+.clip.scene { position: absolute; inset: 0; }
+.sc { position: absolute; inset: 0; }
+
+/* the mark top left, as the app bar draws it: dots in --navy-soft, the seed in --navy; clear space of one seed diameter */
+.corner { position: absolute; left: var(--sl); top: var(--st); width: var(--mk); height: var(--mk); }
+.corner .mark { width: 100%; height: 100%; color: var(--navy-soft); --seed: var(--navy); }
+
+/* ------------------------------------------------------------ the lockup: wordmark 500, -3%, ink, a mark 1.6x its size */
+.lockup { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: calc(var(--ws) * .4); }
+.lockup .mark { flex: none; width: calc(var(--ws) * 1.6); height: calc(var(--ws) * 1.6); overflow: visible; }
+.lockup .word { font-family: var(--sans); font-weight: 500; font-size: var(--ws); letter-spacing: -.03em; line-height: 1; color: var(--ink); }
+.sting-mark .dot { fill: var(--ink); }
+.sting-mark .seed { fill: var(--solid); }
+.f169 .lockup.sting { --ws: 136px; } .f916 .lockup.sting { --ws: 120px; } .f11 .lockup.sting { --ws: 120px; }
+
+/* ------------------------------------------------------------ titles: the hero's two lines, serif italic then sans 500 */
+.film h1.t { position: absolute; left: var(--sl); right: var(--sr); top: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--ink); }
+.film h1.t .l1, .film h1.t .l2 { display: block; }
+.f169 h1.t .l1 { font-size: 168px; } .f169 h1.t .l2 { font-size: 145px; margin-top: 4px; }
+.f916 h1.t .l1 { font-size: 106px; } .f916 h1.t .l2 { font-size: 92px; margin-top: 3px; }
+.f11 h1.t .l1 { font-size: 118px; } .f11 h1.t .l2 { font-size: 102px; margin-top: 3px; }
+
+/* ------------------------------------------------------------ the trust line and its answer, sans 500 */
+.kin { position: absolute; left: var(--sl); right: var(--sr); top: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5em; text-align: center; }
+.kin p { font-weight: 500; letter-spacing: -.04em; line-height: 1.1; color: var(--ink); text-wrap: balance; }
+.kin .w { display: inline-block; }
+.f169 .kin { font-size: 78px; } .f169 .kin p { max-width: 1500px; }
+.f916 .kin { font-size: 66px; } .f916 .kin p { max-width: 840px; }
+.f11 .kin { font-size: 60px; } .f11 .kin p { max-width: 920px; }
+
+/* ------------------------------------------------------------ the product's panels, at video size */
+.ui-area { position: absolute; left: var(--sl); right: var(--sr); top: var(--uit); bottom: var(--uib); }
+.ui { zoom: var(--z); width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; gap: 18px; position: relative; }
+.film .pp, .film .ws { display: flex; gap: 18px; font-size: 15px; flex: none; align-items: stretch; }
+.film .rc { flex-direction: row; align-items: flex-start; }   /* the raise page's columns, top-aligned, each card its own height */
+.film .rc .rc-id { width: 330px; padding: 22px 0 18px; justify-content: center; }
+.film .rc .pp-idrow { margin-top: 0; }
+.film .rc .pp-fill { width: 620px; }
+.film .launch-col { width: 760px; flex-direction: column; }
+.film .launch-col .lform { width: 100%; }
+.film .seed-col { width: 340px; flex-direction: column; }
+.film .chart-col { width: 640px; flex-direction: column; }
+.film .s-raise .ui > * { position: relative; }
+.film .s-raise .ui > .rc, .film .s-seeded .ui > * { position: absolute; }
+/* the sheen the site's .live bar carries, its clock given to the film (src/film.js sets --sheen) */
+.film .live .bar i::after { transform: translateX(var(--sheen, -100%)); }
+.film .buy-chip { opacity: 0; }
+
+/* 9:16: the panels stack in one column at the site's phone width, and the seeding card and the chart take turns */
+.f916 .rc { flex-direction: column; }
+.f916 .rc .rc-id, .f916 .rc .pp-fill, .f916 .launch-col, .f916 .seed-col, .f916 .chart-col { width: 525px; }
+.f916 .lform .form { grid-template-columns: 1fr; }
+.f916 .lform .f { grid-column: 1 / -1; }
+/* 1:1: the two cards side by side, narrower */
+.f11 .rc .rc-id { width: 290px; } .f11 .rc .pp-fill { width: 468px; }
+/* the two cards at the site's widths need a touch less zoom to fit 920px; the seeded page's pair keeps 1.25 */
+.s-raise[data-f="1x1"], .s-fill[data-f="1x1"], .s-refunded[data-f="1x1"] { --z: 1.18; }
+.f11 .seeded-b .rc-id { width: 290px; }
+.f11 .launch-col { width: 736px; } .f11 .seed-col { width: 520px; } .f11 .chart-col { width: 428px; }
+
+/* the seeded page (identity card and chart, the chart at the width the site drew it for) and the refunded page (the
+   cards and the site's toast under them) take a little less zoom where the site's chart or the toast needs the height */
+.f169 .s-seeded, .f916 .s-seeded { --z: 1; }
+/* scoped by the scene's data-f, not the root's class: HyperFrames' lint reads a zoom under the root's class as canvas zoom */
+.s-seeded[data-f="16x9"] .seed-col { zoom: 1.5; } .s-seeded[data-f="16x9"] .seeded-b { zoom: 1.15; }
+.s-seeded[data-f="9x16"] .seed-col { zoom: 1.6; } .s-seeded[data-f="9x16"] .seeded-b { zoom: 1.35; }
+.f11 .s-seeded { --z: 1.25; }
+.seeded-b .chart-col { order: 2; }   /* after the identity card, which the site's CSS puts first (.pp-id{order:1}) */
+.f916 .s-seeded .ui-area { bottom: 684px; }
+.film .s-refunded .ui { flex-direction: column; }
+.f916 .s-refunded { --z: 1.35; }
+.toast-slot { display: flex; justify-content: center; padding-bottom: 12px; }
+.toast-slot .toast { position: relative; }
+
+/* a stat's digits and signs on one line: the odometer's strips align to the top of the line, not to its baseline */
+.stat .rd, .stat .rs { vertical-align: top; }
+
+/* ------------------------------------------------------------ captions: Sans 500 on a --bar pill, one clause a line */
+.cap { position: absolute; left: var(--sl); right: var(--sr); bottom: var(--capb); display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+.cap .ln { display: block; font-family: var(--sans); font-weight: 500; font-size: var(--cap); line-height: 1.3; letter-spacing: -.011em; color: var(--ink); background: var(--bar); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border-radius: 999px; padding: 20px 28px; white-space: nowrap; }
+
+/* ------------------------------------------------------------ the numbers: one figure at a time, mono, its label muted */
+.stat { position: absolute; left: var(--sl); right: var(--sr); top: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; opacity: 0; }
+.stat .fig { line-height: 1; color: var(--ink); white-space: nowrap; }
+.stat .fig.num { font-weight: 400; letter-spacing: -.03em; }
+.stat .fig.word { font-weight: 500; letter-spacing: -.05em; }
+.stat .lab { color: var(--muted); font-weight: 400; letter-spacing: -.011em; line-height: 1.2; }
+.f169 .stat .fig { font-size: 220px; } .f169 .stat[data-stat="1"] .fig { font-size: 190px; } .f169 .stat .fig.word { font-size: 160px; } .f169 .stat .lab { font-size: 46px; }
+.f916 .stat .fig { font-size: 220px; } .f916 .stat[data-stat="1"] .fig { font-size: 104px; } .f916 .stat .fig.word { font-size: 104px; } .f916 .stat .lab { font-size: 42px; }
+.f11 .stat .fig { font-size: 220px; } .f11 .stat[data-stat="1"] .fig { font-size: 118px; } .f11 .stat .fig.word { font-size: 112px; } .f11 .stat .lab { font-size: 42px; }
+
+/* ------------------------------------------------------------ the end card: mark, wordmark, URL, network line */
+.endcard { position: absolute; left: var(--sl); right: var(--sr); top: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.endcard .lockup { position: relative; inset: auto; }
+.endcard .lockup .mark { color: var(--ink); --seed: var(--navy); }
+.endcard .url { color: var(--ink-2); letter-spacing: -.03em; line-height: 1.2; }
+.endcard .net { color: var(--muted); line-height: 1.3; }
+.f169 .endcard .lockup { --ws: 104px; } .f169 .endcard .url { font-size: 40px; margin-top: 56px; } .f169 .endcard .net { font-size: 26px; margin-top: 14px; }
+.f916 .endcard .lockup { --ws: 96px; } .f916 .endcard .url { font-size: 36px; margin-top: 52px; } .f916 .endcard .net { font-size: 26px; margin-top: 14px; }
+.f11 .endcard .lockup { --ws: 96px; } .f11 .endcard .url { font-size: 36px; margin-top: 52px; } .f11 .endcard .net { font-size: 24px; margin-top: 12px; }
+
+/* a chip the site would not draw in this state */
+.film .gone { display: none; }
+
+/* the raise page's stats grid as the site draws it on a desktop window (two abreast); the film's 1080px-wide canvases
+   would otherwise pick up the site's 720 to 1439px rule of three */
+.film .rc-id .pp-stats { grid-template-columns: 1fr 1fr; }

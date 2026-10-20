@@ -1,0 +1,45 @@
+/* verbatim: the :root blocks of index.html and css/delta.css */
+:root{
+  /* charcoal, the one theme: every page sits on a flat charcoal grey, panels are a step lighter, wells (fields, segmented controls)
+     a step darker, and surfaces get lighter as they come forward. The greys are neutral; blue is the only colour that is not
+     data: fills are the brand blue (#2E63E7, hover #4377F5), lines and accent text a lighter tint of it.
+     --paper is the well, --ink the text, --tile a quiet surface inside a panel, --field a text field. */
+  color-scheme:dark;
+  --bg:#16171A;
+  --paper:#121316; --card:#25272C; --raised:#30333A; --chip:rgba(255,255,255,.06); --mist:rgba(255,255,255,.07); --hover:rgba(255,255,255,.04);
+  --panel:rgba(31,33,37,.18); --panel-solid:#1F2125; --bar:rgba(22,23,26,.8);   /* frosted glass: panels at 18% over the dot field, which shows through the blur; --panel-solid stays opaque for sticky bars, art frames, inputs */
+  --panel-line:rgba(255,255,255,.1); --panel-shadow:none; --frost:blur(26px) saturate(130%);
+  --scrim:rgba(0,0,0,.6);
+  --ink:#F3F4F6; --ink-2:#D3D6DC; --muted:#9DA2AC; --faint:#868B95;
+  --navy:#5B8CFF; --navy-deep:#A4C0FF; --navy-soft:#52668F; --navy-wash:rgba(91,140,255,.15);
+  --solid:#2E63E7; --solid-hover:#4377F5; --accent:#2E63E7; --accent-hover:#4377F5;
+  --pill:rgba(46,99,231,.24); --pill-hover:rgba(46,99,231,.38);   /* the blue tint of the wallet button, also under every chosen segment */
+  --hair:rgba(255,255,255,.08); --hair-2:rgba(255,255,255,.17); --ring:rgba(91,140,255,.3); --err:#FF8B9C;
+  --warn:#E8B45C; --warn-line:rgba(232,180,92,.36); --warn-bg:rgba(232,180,92,.1); --warn-ink:#F3CB8A; --warn-ink-2:#EBD2A4; --warn-strong:#FFE1B0;
+  /* check results and the chips that carry them: pass, caution, fail */
+  --ok:#45DB93; --ok-ink:#7BE8B2; --ok-bg:rgba(69,219,147,.14); --ok-line:rgba(69,219,147,.3);
+  --caution:#F3BC58; --caution-ink:#F7D08A; --caution-bg:rgba(243,188,88,.14);
+  --bad:#FF7268; --bad-ink:#FF9B93; --bad-bg:rgba(255,114,104,.15);
+  --tile:rgba(255,255,255,.045); --field:#121316;
+  --lift:0 14px 40px -16px rgba(0,0,0,.6);
+  --sh-ind:rgba(0,0,0,.4); --sh-pop:rgba(0,0,0,.6); --sh-sheet:rgba(0,0,0,.65); --sh-toast:rgba(0,0,0,.6);
+  --col-side:clamp(330px,19vw,390px); --col-rail:clamp(370px,21vw,430px);   /* the side columns of a workspace */
+  --sans:'Instrument Sans',ui-sans-serif,system-ui,-apple-system,'Segoe UI',sans-serif;
+  --serif:'Instrument Serif','Iowan Old Style',Georgia,'Times New Roman',serif;
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --ease-out:cubic-bezier(.22,1,.36,1); --fast:.18s; --dur:.28s;   /* one curve and two lengths for every hover, press, slide and entrance */
+  --ease:var(--ease-out); --out:var(--ease-out); --soft:var(--ease-out);
+  /* how far along a raise is: red, through yellow, to green at the target */
+  --progress:linear-gradient(90deg,#F2554C,#F6C445 50%,#34C17B);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+:root{
+  --well:#111215;                                                       /* a dark well: inputs, the search box, the seg track */
+  --grad-btn:linear-gradient(180deg,#5B8CFF 0%,#2E63E7 100%);          /* the primary button */
+  --grad-seg:linear-gradient(180deg,rgba(91,140,255,.34),rgba(46,99,231,.2));   /* a chosen segment, a rank badge */
+  --seg-line:rgba(91,140,255,.42);
+  --glow:0 0 0 1px rgba(91,140,255,.32),0 10px 28px -10px rgba(46,99,231,.8);
+  --glow-sm:0 0 14px -4px rgba(46,99,231,.7);
+  --lit:inset 0 1px 0 rgba(255,255,255,.14);                          /* the highlight along the top edge of anything raised */
+}

@@ -1,0 +1,66 @@
+{
+  "fps": 30,
+  "note": "Beat points for scoring. Times are from the start of each cut and are the same in every format.",
+  "cuts": {
+    "master": {
+      "duration": 55,
+      "frames": 1650,
+      "markers": [
+        {
+          "name": "sting hit",
+          "t": 1.5,
+          "frame": 45,
+          "what": "the seed lands and brightens"
+        },
+        {
+          "name": "fill complete",
+          "t": 22.85,
+          "frame": 686,
+          "what": "the last buy fills the target"
+        },
+        {
+          "name": "seeded",
+          "t": 27.48,
+          "frame": 824,
+          "what": "the last seeding step lands and the page turns seeded"
+        },
+        {
+          "name": "refunded",
+          "t": 37.2,
+          "frame": 1116,
+          "what": "the deadline passes and the raise turns refunded"
+        },
+        {
+          "name": "end card",
+          "t": 52.4,
+          "frame": 1572,
+          "what": "mark, wordmark and URL"
+        }
+      ]
+    },
+    "teaser": {
+      "duration": 15,
+      "frames": 450,
+      "markers": [
+        {
+          "name": "sting hit",
+          "t": 1.5,
+          "frame": 45,
+          "what": "the seed lands and brightens"
+        },
+        {
+          "name": "fill complete",
+          "t": 7.45,
+          "frame": 224,
+          "what": "the last buy fills the target"
+        },
+        {
+          "name": "end card",
+          "t": 11.4,
+          "frame": 342,
+          "what": "mark, wordmark and URL"
+        }
+      ]
+    }
+  }
+}

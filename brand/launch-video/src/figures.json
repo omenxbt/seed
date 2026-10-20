@@ -1,0 +1,52 @@
+{
+  "figures": {
+    "fee": "1%",
+    "feeLabel": "on top",
+    "minTarget": "81 SOL",
+    "maxTarget": "$100,000",
+    "deadlineMin": "24 hours",
+    "deadlineMax": "14 days",
+    "supply": "1,000,000,000",
+    "poolFee": "1.25%",
+    "poolSplit": "70/30",
+    "refund": "100%",
+    "seedingSteps": "4",
+    "seedingTimeout": "3 days",
+    "unlockMin": "90 days",
+    "solUsd": 148.2
+  },
+  "stepNames": [
+    "Target reached",
+    "Token minted, authorities revoked",
+    "Pool opened and locked",
+    "Seeded"
+  ],
+  "program": {
+    "supply": 1000000000,
+    "minTargetSol": 81,
+    "feeBps": 100,
+    "creatorShareBps": 7000,
+    "poolFeeBps": 125,
+    "capUsd": 100000,
+    "minDeadlineH": 24,
+    "maxDeadlineH": 336,
+    "seedTimeoutDays": 3,
+    "minUnlockDays": 90,
+    "seedSteps": [
+      "Filled",
+      "Minted",
+      "Pooled",
+      "Seeded"
+    ],
+    "refundIsAmountPlusFee": true
+  },
+  "sources": [
+    "program/programs/seed/src/state.rs",
+    "program/scripts/check-deploy.ts (production profile, when present)",
+    "program/tests/seed.ts (initConfig)",
+    "program/programs/seed/src/lib.rs (claim_refund)",
+    "js/config/seed.js",
+    "js/presale-page.js (seeding step names)",
+    "LOOP.md"
+  ]
+}
