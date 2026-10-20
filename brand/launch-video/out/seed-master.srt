@@ -1,55 +1,39 @@
 1
-00:00:02,720 --> 00:00:07,600
-Back an idea at one fixed price.
-
-2
-00:00:07,850 --> 00:00:10,600
+00:00:02,400 --> 00:00:04,400
 Most launches ask you to trust a founder with your money.
 
-3
-00:00:10,700 --> 00:00:13,700
-Seed asks you to back an idea at one fixed price.
+2
+00:00:04,550 --> 00:00:06,300
+Back an idea at one fixed price.
 
-4
-00:00:14,300 --> 00:00:17,900
+3
+00:00:06,380 --> 00:00:07,750
 A founder sets a target and a deadline.
 
-5
-00:00:18,600 --> 00:00:23,700
+4
+00:00:10,270 --> 00:00:11,500
 You buy in with SOL or USDC.
 
+5
+00:00:14,520 --> 00:00:16,250
+If the target is met, the whole raise opens a Meteora pool,
+
 6
-00:00:24,300 --> 00:00:33,700
-If the target is met, the whole raise opens a Meteora pool, locked for good.
+00:00:18,920 --> 00:00:19,650
+locked for good.
 
 7
-00:00:34,300 --> 00:00:39,300
-If it misses, every wallet gets back exactly what it paid, fee included.
+00:00:19,760 --> 00:00:21,550
+If it misses, every wallet gets back exactly what it paid,
 
 8
-00:00:39,400 --> 00:00:41,700
-Nothing is minted, nothing is held back.
+00:00:24,220 --> 00:00:24,950
+fee included.
 
 9
-00:00:42,050 --> 00:00:43,700
-1% on top
-
-10
-00:00:43,850 --> 00:00:45,500
-1,000,000,000 supply
-
-11
-00:00:45,650 --> 00:00:47,300
-100% refund
-
-12
-00:00:47,450 --> 00:00:49,280
-Locked for good
-
-13
-00:00:49,450 --> 00:00:51,600
+00:00:25,050 --> 00:00:26,950
 Seeded in full, or refunded in full.
 
-14
-00:00:53,200 --> 00:00:55,000
+10
+00:00:28,200 --> 00:00:30,000
 seed-nu-ten.vercel.app

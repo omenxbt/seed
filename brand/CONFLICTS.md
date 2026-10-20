@@ -73,8 +73,7 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     all)", "Oct 20, 3:36 PM, or the moment it fills", "a day at $5K, $25K or $100K of daily volume"); and every line of
     running text that carries a figure: the pace line (`.pp-pace`), the filled and refunded raises' notes (`.pp-note`,
     "by Oct 26, 10:01 AM", "the 1% fee included"), the seeding card's note, the Creator fees text ("70% … 30% …") and
-    the About text ("Stake SOL once…"). The video shows the site's pages as the site draws them; the film's own figures,
-    in the numbers strip and the captions, are in IBM Plex Mono.
+    the About text ("Stake SOL once…"). The video shows the site's pages as the site draws them; the film's own tickers, in the text frames ("SOL or USDC"), are in IBM Plex Mono.
 12. **Glyphs the site's font files leave out.** The site loads Google Fonts' latin subsets of IBM Plex Mono and
     Instrument Sans, which have no subscript digits and no left arrow, so the zero count in a raise price ("0.0₆17 SOL",
     U+2080 to U+2089) and the back link ("← All raises", U+2190) fall back to a system face on the site. The film draws
@@ -113,23 +112,26 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
 
 ## Video specifics
 
-19. **One clause a line against the line limits.** At the book's caption sizes some clauses are wider than a line: in
-    9:16 "A founder sets a target / and a deadline.", "the whole raise opens / a Meteora pool," and "every wallet gets
-    back / exactly what it paid,", and the same in 1:1. Such a clause wraps at a phrase inside its own card, and a
-    sentence with more clauses than the format has lines runs across cards, each card holding whole clauses (16:9
-    "If the target is met, / the whole raise opens a Meteora pool," then "locked for good."; 1:1 "If the target is
-    met," then "the whole raise opens / a Meteora pool," then "locked for good.").
+19. **Text frames, not captions.** The book's caption spec (Sans 500 on a `--bar` pill, the lower third kept clear) is
+    not used: at the user's direction (2026-10-20) each line of the script is a full-screen frame of its own, between
+    the pages, not a pill over them. A line is Sans 500 at one size per format (128px in 16:9, 100px in 9:16, 86px in
+    1:1, at the camera's scale 1, a little smaller where a phrase is wider than the safe width), wrapped with balanced lines inside the safe zone, its clauses one to a block ("If the
+    target is met, / the whole raise opens a Meteora pool,"); a sentence runs on across the page that proves it
+    ("…a Meteora pool," then the pool, then "locked for good."). The two short ends, "locked for good." and "fee
+    included.", come in huge and settle. The SRTs carry every line as it is on screen.
 20. **The seeding note** is the site's own, dated on the raise's clock ("by Oct 26, 10:01 AM").
-21. **"Locked for good" in the numbers strip** is not a figure, so it is set in Sans 500 with the label "the pool".
+21. **No numbers strip.** The 30-second cut has no room for the strip (1% on top, 1,000,000,000 supply, 100% refund,
+    locked for good). The figures stay composition variables, and the pages carry them as the site draws them: the 1%
+    fee in the Launch form's "What backers pay" and in the refunded note, the supply in the seeding note.
 22. **Music volume.** HyperFrames' mixer reads the `data-volume` written in the HTML, not one set by script, so
     `musicVolume` takes effect through `tools/render.mjs`, which writes it into each page before rendering.
 23. **The book's video kit is Remotion in `brand/video/`; this video is HyperFrames,** per the brief.
 24. **Frosted panels never fade,** as the site's `rise` keyframe has it (a fading card cannot blur what is behind it).
     Scenes of panels begin and end on a camera move (a whip, a push through an element); type fades, and at a handoff
-    the film's own type flies past, clearing, over the scene coming in under it (the title comes up under the sting's
-    flying mark from 2.68s, a little before the brief's 3s, so the mark hands straight on to it). Marks never fade
-    either: the sting's dots grow in at full opacity, its mark flies to the corner and becomes the corner mark, and at
-    the end the corner mark flies home to the centre and becomes the end card's mark.
+    the film's own type flies past, clearing, over the scene coming in under it, or comes in from the right over a page
+    whipping away (the first line comes up under the sting's flying mark from 2.45s, so the mark hands straight on to
+    it). Marks never fade either: the sting's dots grow in at full opacity, its mark flies to the corner and becomes the
+    corner mark, and at the end the corner mark flies home to the centre and becomes the end card's mark.
 25. **The pages are the site's own, at each beat.** `tools/capture-pages.mjs` runs `index.html` on its demo data and
     keeps the DOM the site draws: the Launch form as it is typed into, the raise page after each of eight waves of buys,
     each seeding step, seeded, and the other ending at 62% with three seconds left, then refunded. The film's raise is
@@ -140,63 +142,63 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     the demo raise Halfmoon is held out of the site's list, so the ticker check has no live $HALF to clash with. The
     site's own demo mode is held still (no simulated buys, no demo crank), its clock is fixed, and outside requests are
     refused, so the pages show the site's figures (81 SOL minimum, the $148.2 demo SOL price) and repeat exactly.
-26. **A faster clock.** Each wave of buys lands hours later in the raise's time, so it fills at 82.4% of its window, and
-    the refund countdown runs its last three seconds in real time. The Launch form's "Confirm in wallet…" holds .4s of
-    the site's 1s before the camera pushes through into the page; each seeding step's "Running…" holds the site's 700ms.
+26. **A faster clock.** Each wave of buys lands hours later in the raise's time, so it fills at 82.4% of its window, and the refund countdown shows its last second, reaching zero as the page turns refunded (the capture has three
+    left; the film's odometer shows the last one). The raise page opens two waves in, and its last six waves land .4s apart. The Launch form's "Confirm in
+    wallet…" holds .3s of the site's 1s before the form whips away; each seeding step's "Running…" holds the site's 700ms.
     The site's buy chip (`floatChip`) floats one buy; a wave is many buys, so the film shows no chips, and the odometer
     rolls the raised figure, the percentage and the backers count at each wave as `patchDetail` rolls them. The refunded
     page's "Refunds claimed", plain text on the site that changes when the page is drawn again, rolls on the same
-    odometer as every backer claims, from the moment the camera reaches it, in under two seconds of the film's clock.
+    odometer as every backer claims, from the moment the camera reaches it, in about a second of the film's clock.
 27. **The seeded page's price chart.** The demo's stand-in pool (`demoSeries`) draws hourly candles forward from the
     moment a raise seeds, days past the page's own clock, for a pool that has just opened. The film's pool has just
     opened, so `tools/capture-pages.mjs` gives it no trades, and the site's chart draws its own empty state ("No trades
-    in this window."), as the pool card's "24h volume 0" has it. The camera cuts from the rail to the pool's line below
-    it ("Meteora DAMM v2 pool … Liquidity locked for good") rather than crossing the page (in 9:16, where the pool's
-    card lands just under the rail's, it moves there).
+    in this window."), as the pool card's "24h volume 0" has it. The camera cuts from the seeding card to the pool's
+    line ("Meteora DAMM v2 pool … Liquidity locked for good") rather than crossing the page.
 28. **The last seeding step is never shown ticked.** When the fourth step lands the site turns the raise seeded and the
     seeding card becomes the trade card ("Trade $HALF"), so no page the site draws has all four steps done. The film
     holds on the card through that change, then cuts to the pool.
-29. **The raise chart's entrance.** The site plays an entrance when a raise page opens (`playEnter`: the raise line
-    draws in 1.7s after .3s, its area fades in at 1.1s and its tip at 1.8s, the buy bars grow from the axis); a page
-    that turns seeded while it is open draws its charts again at once, complete. The brief asks for that reveal in the
-    seeded beat, so the film plays the site's entrance on the seeded page's "How it raised" as the camera arrives on it,
-    as when the seeded page is opened, on the brand curve.
+29. **The raise chart's entrance** (`playEnter`: the raise line in 1.7s, the area at 1.1s, the tip at 1.8s) is not in
+    the 30-second cut; the pages draw their charts complete, as the site does on a page drawn again.
 30. **Left out of the pages:** the app's foot note ("Prototype. Raise data is simulated…" in demo mode), the site's
     toasts ("Opened Halfmoon. It is live until Oct 24, 3:36 PM", "Halfmoon missed its target. Backers can claim
-    refunds."; the captions carry those lines), Halfmoon's demo announcement, its demo chat (a raise just opened has
+    refunds."; the text frames carry those lines), Halfmoon's demo announcement, its demo chat (a raise just opened has
     none; the demo's avatars are pastel gradients) and the demo's own "Yours" raise (Tidewater) in "Your raises", since
     this is the founder's first raise. Everything else on the pages is as the site draws it: the "Demo data" pills, the
     deposit panel's "Simulated on the demo wallet. No transaction is sent.", and the app's own 21-dot mark in its icon
-    rail, about 15 to 20px in the pull-backs (under the book's 40px for 21 dots; it is the site's rail as drawn, beside
-    the film's corner mark).
-31. **The script** is "Thirty seconds, spoken" as the brief places it; "and your tokens are yours the same day" and
-    "That is Seed." are left out (the end card's wordmark says the last).
+    rail (34px at the full-page views in 16:9 and 1:1, under the book's 40px for 21 dots; it is the site's rail as
+    drawn).
+31. **The script** is "Thirty seconds, spoken", one line a frame. The title "Back an idea / at one fixed price." answers
+    "Most launches ask you to trust a founder with your money." in place of "Seed asks you to back an idea at one fixed
+    price." (the hero's two lines say it); "and your tokens are yours the same day", "Nothing is minted, nothing is held
+    back." and "That is Seed." are left out (the end card's wordmark says the last).
 32. **The camera.** The film flies one camera over the pages and its own type, after the Axiom films in
     `delta/01-video-hyperframes/_motion-refs/` (the motion only; the README maps each move). The book has no camera, so
-    these are the video's own choices, kept inside its rules: every move eases on the one curve, panels tilt (up to 16°)
+    these are the video's own choices, kept inside its rules: every move eases on the one curve, panels tilt (up to 11°)
     but never spin or bounce, depth of field and motion blur are blurs over the page (`#dof`, `#mb`), not glows or
     gradients on a surface. Moves over type have no motion blur, since blurred white letters read as bloom (the book:
     no glow on surfaces).
-33. **The pages play in the screen frame.** The book's video kit puts a UI recording "inside a 16px-radius panel with
-    the panel line, over the dot field", and the film does so: while the camera is on the site's pages they show through
-    a frame of that kind (16:9 x 96–1824, y 168–984; 9:16 x 120–960, y 330–1600; 1:1 x 80–1000, y 152–1000), the field
-    around it, so the corner mark stays top left with its clear space from 3s, where the sting's mark lands, to the end
-    card. The frame is the site's window, not a frosted panel: the site draws its pages with no ground of their own,
-    over the dot field, so inside the frame the field runs crisp between the site's panels as it does on the site, and
-    runs on outside it. Where the camera pulls back past the app's own edges (16:9 and 9:16), the app's window keeps its
-    16px corners and panel line inside the frame, a window floating in it. The camera's pushes, tilts and pull-backs
-    happen inside the frame. Where the film's own type grows past the mark (the pushes through the title and the trust
-    line), the type's stage fades away round the mark into the same field.
-34. **Safe zones.** The element the camera is on sits inside its format's focus box, which lies inside the safe zone and
-    the screen frame: a cut resolves onto it from no closer than the box allows, and the camera goes past the box only
-    where it pushes through a button, a figure or a line of type on its way out of a scene, or whips an element in from
-    the side. The rest of the page runs to the frame's edge, out of focus, as a recording would; in 1:1 the pull-backs
-    frame the app's window a little wider than the frame, so it fills the frame as a recording does rather than floating
-    with strips of field at its sides. In 16:9 and 1:1 a two-line caption pill can sit over the lower edge of a card.
+33. **The pages fill the screen.** The book's video kit puts a UI recording "inside a 16px-radius panel with the panel
+    line, over the dot field" (ScreenFrame). At the user's direction (2026-10-20) the film shows the site's pages full
+    screen instead, as the browser draws them: the page has no ground of its own, so the dot field runs crisp between
+    its panels and blurs behind their glass, as on the site. The camera never shows a page's edge: every pose, tilted or
+    not, is kept where the page covers the whole frame (`cover` in `src/film.js`), until the whip that takes the page
+    away. The corner mark rides with the film's own type and is not over the pages (at the full-page views the app bar's
+    own mark is there; elsewhere the page would run inside its clear space): it is up from where the sting's mark lands
+    and with each text frame that follows a page, and goes as the next page comes in. In 1:1 the full-page views show the site's 1080 layout as drawn, its rail
+    column emptier than the main one. Where the film's own type grows
+    past the mark (the pushes through a line), the type's stage fades away round the mark into the same field.
+34. **Safe zones.** The element the camera is on sits inside its format's focus box, which lies inside the safe zone
+    (16:9 x 160–1760, y 140–940; 9:16 x 120–960, y 300–1620; 1:1 x 100–980, y 120–960): a cut resolves onto it from no
+    closer than the box allows, and the camera goes past the box only where it pushes through a button, a figure or a
+    line of type on its way out of a scene. The rest of the page runs to the frame's edge, out of focus. Where the box
+    and the page disagree (the seeding card at the page's right edge in 16:9), the page wins and the card sits off
+    centre rather than show the page's edge.
 35. **Software rendering.** Chrome's software compositor clips a frosted panel's blur to its untilted box under a 3D
     transform. HyperFrames renders on the GPU here, where the glass is whole as long as no ancestor of a panel is
     masked; a `--no-browser-gpu` render would not be.
-36. **Captions** are a --bar pill per line, each 20px 28px, so a two-line caption is two pills, not one rounded block.
+36. **Frame rate and length.** The brief asks for a master of about 55s at 30fps. At the user's direction (2026-10-20)
+    the master is 30s, the length of the book's script, and every cut renders at 60fps. Motion blur is measured over a
+    thirtieth of a second, so it is the length it was at 30fps. The teaser stays 15s.
 37. **The odometer's digits** sit on the baseline in the film (`.rd` as an inline flex box). On the site its
     inline-block with `overflow:hidden` takes its bottom edge as its baseline, so the digits ride above the signs beside
     them ("28%"); worth fixing in `index.html`'s `.rd`.

@@ -18,27 +18,30 @@ copies verbatim (`tools/sync-site.mjs`). Where they disagree the code wins; see 
 - Instrument Sans 400 and 500 for text and the wordmark (500, -3%). Instrument Serif 400 italic only on a title's first
   line ("Back an idea", "Seeded in full,"), never the name. IBM Plex Mono 400 and 500 with tabular numerals for figures,
   tickers and addresses. Local files from `brand/fonts/`, no substitutes.
-- Captions: Sans 500, 48px (16:9, 1:1) or 56px (9:16) on 1.3, `--ink` on a `--bar` pill, 20px 28px padding.
+- Text frames (no captions): each line of the script full screen, Sans 500 on 1.1, -4%, `--ink`, at one size per format
+  (128px in 16:9, 100px in 9:16, 86px in 1:1), balanced lines inside the safe zone; tickers in Plex Mono. "locked for
+  good." and "fee included." come in huge and settle.
 
 ## Motion
 
 - One curve, cubic-bezier(.22,1,.36,1), in `src/film.js` as an exact solver. No bounces, spins or other curves.
-- Entrances rise 10px in .5s, 60ms a column, 45ms a card (and a word, a caption line). Titles sharpen in .6s (6px).
+- Entrances rise 10px in .5s, 60ms a column, 45ms a card (and a word of a line). Titles sharpen in .6s (6px).
 - Press .97 in 80ms, release in .28s. Fill bar .6s. Sheen every 3.2s. Odometer .55s a digit.
 - Chart: line 1.7s after .3s, area at 1.1s, tip at 1.8s, bars grow from the axis. Sting: 21 dots 40ms apart, rim first,
   the seed last, brightening; wordmark fades in at 1.6s.
 - The camera (after the Axiom films in delta/01-video-hyperframes/_motion-refs/): shots resolve out of a fast move on the
-  curve and settle slowly; push-ins with depth of field on one element; tilts up to 16°; pull backs to the whole app in
-  the screen frame (16px radius, the panel line); motion blur from the camera's own travel. No bloom, no spin.
+  curve and settle slowly; push-ins with depth of field on one element; tilts up to 11°; pull backs to the whole page,
+  which always fills the screen (no edge of it shows until the whip that takes it away); into a page through the type
+  of a line, out of it on a whip left; motion blur from the camera's own travel. No bloom, no spin. 60fps.
 
 ## Layout and safe zones
 
-- 1920×1080: 96px in from every edge; captions bottom 144px, two lines at most. The app at a 1920×1080 window, three columns.
-- 1080×1920: 120px sides, 250px top and 320px bottom clear; captions centred, foot at 420px, three lines at most. The app at its 540px phone layout.
-- 1080×1080: 80px in; captions bottom 120px, two lines at most. The app at a 1080×1080 window, two columns.
-- The element the camera is on sits in the safe zone, clear of the caption pill; the rest of the page runs out of focus to the edge.
-- The mark top left in every format with its clear space kept (the world under it masked away), from 3s, where the
-  sting's mark lands, until the end card, where the mark is the subject.
+- 1920×1080: 96px in from every edge. The app at a 1920×1080 window, three columns, filling the screen.
+- 1080×1920: 120px sides, 250px top and 320px bottom clear. The app at its 540px phone layout, filling the screen at 2×.
+- 1080×1080: 80px in. The app at a 1080×1080 window, two columns, filling the screen.
+- The element the camera is on sits in the safe zone; the rest of the page runs out of focus to the edge.
+- The mark top left with its clear space kept (the type under it masked away) over the film's own type: from where the
+  sting's mark lands and with each line that follows a page, until the end card, where the mark is the subject.
 
 ## Avoid
 

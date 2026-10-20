@@ -6,7 +6,7 @@ message: "Seeded in full, or refunded in full."
 destination: youtube
 aspect: 1920x1080
 language: en
-length: 55s
+length: 30s
 angle: product
 ---
 
@@ -28,7 +28,9 @@ case is listed in `brand/CONFLICTS.md`.
 
 ## Customizations
 
-- Formats: 1920×1080 master, 1080×1920 and 1080×1080 recomposed (not cropped), the brand book's safe zones and caption specs.
+- Formats: 1920×1080 master, 1080×1920 and 1080×1080 recomposed (not cropped), the brand book's safe zones.
+- 2026-10-20, from the user: the master 30s at most and 60fps; shorter text frames; the UI full screen; the caption
+  pills over the UI replaced by full-screen text frames of their own, separate from the UI.
 - A 15s teaser per format: sting, fill, "Seeded in full, or refunded in full", end card.
 - Every figure, the URL and the network line are composition variables, read from the program config and LOOP.md.
 - Audio slot (music track, volume variable) and markers.json with the beat points; one render with no audio.

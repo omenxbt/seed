@@ -10,7 +10,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { CUTS, FORMATS } from '../src/story.mjs';
+import { CUTS, FORMATS, FPS } from '../src/story.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const proj = path.resolve(here, '..');
@@ -29,7 +29,7 @@ for (const name of targets) {
   const dir = P('build', name), page = path.join(dir, 'index.html');
   if (vars.musicVolume != null) fs.writeFileSync(page, fs.readFileSync(page, 'utf8').replace(/(<audio id="music"[^>]*data-volume=")[^"]*"/, `$1${+vars.musicVolume}"`));
   const out = P('out', `seed-${name}.mp4`);
-  const args = [...cli.slice(1), 'render', dir, '--fps', '30', '--quality', draft ? 'draft' : 'delivery', '-o', out];
+  const args = [...cli.slice(1), 'render', dir, '--fps', String(FPS), '--quality', draft ? 'draft' : 'delivery', '-o', out];
   if (Object.keys(vars).length) args.push('--variables', JSON.stringify(vars));
   console.log(`\n▸ ${name}`);
   const r = spawnSync(cli[0], args, { stdio: 'inherit' });

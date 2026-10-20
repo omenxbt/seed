@@ -6,7 +6,9 @@
    The camera's keys (story.mjs) are solved against the page's real layout at load: an element's box, the scale that makes
    it fill the format's focus box, a tilt. Each key eases from wherever the camera is to its pose on the brand's one curve,
    cubic-bezier(.22,1,.36,1): fast off the mark, then a long settle, so a cut reads as a whip and a hold is still a slow
-   push. Text scenes fly the same camera over their type. From the camera's own path each frame gets
+   push. A page fills the screen: every pose is kept where the page covers the whole frame, tilt and all, so no edge of it
+   shows until the whip that takes it away. Text frames fly the same camera over their type. From the camera's own path
+   each frame gets
    - depth of field: a blur over everything outside an ellipse round the element in focus (#dof, a masked backdrop blur);
    - motion blur: the camera's travel since the last frame, as a directional blur (#mb, an SVG blur on the backdrop).
    Both sit over the page, so a frosted panel keeps its glass (a filter on its ancestor would take it away).
@@ -102,7 +104,7 @@
   drivers.push(function (t) { var ph = ((t % 3.2) + 3.2) % 3.2 / 3.2, x = ph < 0.55 ? -100 : -100 + 200 * E((ph - 0.55) / 0.45); root.style.setProperty('--sheen', x.toFixed(2) + '%'); });
   /* the dot field, js/bg-dither.js in its fixed-seed mode: the field at second 370 + t. A page's stage gets the same field
      under its pages, as the site has it under its panels (a panel's glass blurs the stage's own backdrop), drawn on the
-     ground as #mat is, so it covers the field under the stage rather than doubling its dots; the film's own type has no
+     ground, so it covers the field under the stage rather than doubling its dots; the film's own type has no
      glass and plays straight over #bg-dither, so two type scenes can overlap on one field */
   var field = document.getElementById('bg-dither'), GROUND = css('--bg');
   drivers.push(function (t) {
@@ -127,26 +129,61 @@
     return new DOMMatrix().translate(FW / 2, FH / 2).multiply(persp).translate(-FW / 2, -FH / 2).multiply(m);
   }
   function project(M, x, y) { var q = M.transformPoint(new DOMPoint(x, y, 0, 1)); return [q.x / q.w, q.y / q.w]; }
+  /* a point of the frame back on the page's own plane: the camera's matrix on that plane is a homography, inverted */
+  function onPage(M, X, Y) {
+    var a = M.m11, b = M.m21, c = M.m41, d = M.m12, e = M.m22, f = M.m42, g = M.m14, h = M.m24, i = M.m44;
+    var u = (e * i - f * h) * X + (c * h - b * i) * Y + (b * f - c * e), v = (f * g - d * i) * X + (a * i - c * g) * Y + (c * d - a * f), w = (d * h - e * g) * X + (b * g - a * h) * Y + (a * e - b * d);
+    return [u / w, v / w];
+  }
+  /* a page fills the screen: the pose moves its focus point, or past that goes closer, until every corner of the frame
+     lands on the page (the page and the frame are both convex, so the whole frame does) */
+  function cover(p, W, H) {
+    var q = Object.assign({}, p), m = 2;
+    for (var n = 0; n < 24; n++) {
+      var M = matrixOf(q), cs = [[-m, -m], [FW + m, -m], [-m, FH + m], [FW + m, FH + m]].map(function (c) { return onPage(M, c[0], c[1]); });
+      var us = cs.map(function (c) { return c[0]; }), vs = cs.map(function (c) { return c[1]; });
+      var u0 = Math.min.apply(null, us), u1 = Math.max.apply(null, us), v0 = Math.min.apply(null, vs), v1 = Math.max.apply(null, vs);
+      var over = Math.max((u1 - u0) / W, (v1 - v0) / H);
+      if (over > 1) { q.s *= over * 1.002; continue; }
+      var du = u0 < 0 ? -u0 : u1 > W ? W - u1 : 0, dv = v0 < 0 ? -v0 : v1 > H ? H - v1 : 0;
+      if (Math.abs(du) < 0.05 && Math.abs(dv) < 0.05) break;
+      q.fx += du; q.fy += dv;
+    }
+    return q;
+  }
   /* a camera over a world (a page, or a scene's type): keys are solved once, in order, each from the pose the camera has
      when it starts */
   function camera(o) {
     var c = { el: o.el, world: o.world, keys: [], t0: o.t0, t1: o.t1, cuts: [], noMb: !!o.noMb };
+    /* over a page, every pose but a free one (the whip out) is kept inside it */
+    var fit = function (p, t, k) { return o.size && !(k && k.free) ? cover(p, o.size(t)[0], o.size(t)[1]) : p; };
     c.at = function (t) {
-      var p = c.keys[0].from;
-      for (var i = 0; i < c.keys.length; i++) { var k = c.keys[i]; if (t < k.t - 1e-6) break; p = mixPose(k.from, k.to, prog(t, k.t, k.d)); }
-      return p;
+      var p = c.keys[0].from, kk = null;
+      for (var i = 0; i < c.keys.length; i++) { var k = c.keys[i]; if (t < k.t - 1e-6) break; p = mixPose(k.from, k.to, prog(t, k.t, k.d)); kk = k; }
+      return fit(p, t, kk);
     };
     var prev = null;
     o.keys.forEach(function (k, i) {
-      var R = o.rect(k, prev), box = k.box === 'frame' ? [S.frame[0] + 24, S.frame[1] + 24, S.frame[0] + S.frame[2] - 24, S.frame[1] + S.frame[3] - 24] : FOCUS, bw = box[2] - box[0], bh = box[3] - box[1];
-      var fit = Math.min(bw / R[2], bh / R[3]), f0 = k.fill * (k.win || k.sel === '.scr' ? 1 : (o.fillK || 1));
-      var s = k.s != null ? k.s : clamp((k.fill <= 1 ? Math.min(f0, 1) : f0) * fit, 0.2, 3.6);   // inside the focus box, unless it pushes through
+      /* the whip out: from wherever the camera is, sideways until the page's right edge has left the frame */
+      if (k.away) {
+        var fp = c.at(k.t), sz = o.size(k.t), M0 = matrixOf(fp);
+        var xr = Math.max.apply(null, [[0, 0], [sz[0], 0], [0, sz[1]], [sz[0], sz[1]]].map(function (q) { return project(M0, q[0], q[1])[0]; }));
+        var away = Object.assign({}, fp, { sx: fp.sx - (xr + 80) * 1.1 });
+        c.keys.push({ t: k.t, d: k.d, from: fp, to: away, free: true, push: false });
+        prev = away; return;
+      }
+      if (k.full) k = Object.assign({ sel: '.scr', win: true, fill: 1 }, k);
+      var R = o.rect(k, prev), box = k.full ? [0, 0, FW, FH] : FOCUS, bw = box[2] - box[0], bh = box[3] - box[1];
+      var fill = Math.min(bw / R[2], bh / R[3]), f0 = k.fill * (k.win || k.sel === '.scr' ? 1 : (o.fillK || 1));
+      var s = k.s != null ? k.s : clamp((k.fill <= 1 ? Math.min(f0, 1) : f0) * fill, 0.2, 3.6);   // inside the focus box, unless it pushes through
+      if (k.smax != null) s = Math.min(s, k.smax);
       var cx = k.center ? FW / 2 : box[0] + bw / 2, cy = k.center ? FH / 2 : box[1] + bh / 2;
       var to = { s: s, fx: R[0] + R[2] * (k.ax != null ? k.ax : 0.5), fy: R[1] + R[3] * (k.ay != null ? k.ay : 0.5), sx: cx + (k.dx || 0), sy: cy + (k.dy || 0), rx: k.rx || 0, ry: k.ry || 0, dof: k.dof || 0, rect: R };
+      to = fit(to, k.t + (k.d || 0), k);
       var from;
-      if (k.cut || !i) { var f = k.from || {}; from = Object.assign({}, to, { s: to.s * (f.k || 1), sx: to.sx + (f.dx || 0), sy: to.sy + (f.dy || 0), rx: to.rx + (f.rx || 0), ry: to.ry + (f.ry || 0) }); c.cuts.push(k.t); }
+      if (k.cut || !i) { var f = k.from || {}; from = fit(Object.assign({}, to, { s: to.s * (f.k || 1), sx: to.sx + (f.dx || 0), sy: to.sy + (f.dy || 0), rx: to.rx + (f.rx || 0), ry: to.ry + (f.ry || 0) }), k.t, k); c.cuts.push(k.t); }
       else from = c.at(k.t);
-      c.keys.push({ t: k.t, d: k.d, from: from, to: to, push: k.fill > 1.5 || !!k.nomb });   // no motion blur on a push or where a key says
+      c.keys.push({ t: k.t, d: k.d, from: from, to: to, free: !!k.free, push: k.fill > 1.5 || !!k.nomb });   // no motion blur on a push or where a key says
       prev = to;
     });
     c.shotStart = function (t) { var s = c.t0; c.cuts.forEach(function (x) { if (x <= t + 1e-6) s = x; }); return s; };
@@ -158,33 +195,30 @@
     cams.push(c);
     return c;
   }
-  /* the screen frame the pages play in (the brand book's, a 16px-radius panel over the dot field): outside it, over the
-     page, the same field again (#mat, drawn each frame with the frame cut out), and the panel line round it (#matline) */
-  var mat = document.getElementById('mat'), matline = document.getElementById('matline'), FR = S.frame, BG = css('--bg');   // the field draws on the ground, which is #root's
-  var pageWindows = S.scenes.filter(function (s) { return /^(launch|page|refund)$/.test(s.kind); }).map(function (s) { return [s.start, s.end]; });
-  drivers.push(function (t) {
-    var on = pageWindows.some(function (w) { return t >= w[0] - 1e-6 && t < w[1] - 1e-6; });
-    mat.style.display = matline.style.display = on ? 'block' : 'none';
-    if (!on) return;
-    if (mat.width !== field.width || mat.height !== field.height) { mat.width = field.width; mat.height = field.height; }
-    var g = mat.getContext('2d'), k = mat.width / FW;
-    g.globalCompositeOperation = 'source-over'; g.fillStyle = BG; g.fillRect(0, 0, mat.width, mat.height); g.drawImage(field, 0, 0);
-    g.globalCompositeOperation = 'destination-out'; g.beginPath(); g.roundRect(FR[0] * k, FR[1] * k, FR[2] * k, FR[3] * k, 16 * k); g.fill();
-    g.globalCompositeOperation = 'source-over';
-  });
   /* the corner mark's clear space over the film's own type: a type stage is masked away round the mark while it is up (a
-     page stage never is: a masked ancestor takes the glass off its panels, and the pages stay inside the frame) */
+     page stage never is: a masked ancestor takes the glass off its panels, and the mark is never up over a page) */
   drivers.push(function (t) { root.style.setProperty('--cma', S.corner.some(function (w) { return t >= w[0] - 1e-6 && t < w[1] - 1e-6; }) ? '0' : '1'); });
 
   /* depth of field and motion blur from the camera on screen */
   var dof = document.getElementById('dof'), mb = document.getElementById('mb'), mbg = document.getElementById('mbg');
   var lastDof = null, lastMb = null;
   drivers.push(function (t) {
-    /* every camera on screen moves (two scenes overlap at a handoff); depth of field and motion blur come from the one
-       coming in */
-    var c = null, p = null;
-    cams.forEach(function (x) { if (t >= x.t0 - 1e-6 && t < x.t1 - 1e-6) { p = x.apply(t); c = x; } });
-    var dv = 'none', mv = 'none';
+    /* every camera on screen moves (two scenes overlap at a handoff); depth of field comes from the one coming in, motion
+       blur from whichever is travelling (a page whipping away under the next line) */
+    var c = null, p = null, on = [];
+    cams.forEach(function (x) { if (t >= x.t0 - 1e-6 && t < x.t1 - 1e-6) { p = x.apply(t); c = x; on.push([x, p]); } });
+    var dv = 'none', mv = 'none', mbx = 0, mby = 0;
+    on.forEach(function (e) {
+      var x = e[0], q = e[1], R = q.rect, tp = Math.max(t - DT, x.shotStart(t));
+      var kNow = null; x.keys.forEach(function (k) { if (k.t <= t + 1e-6) kNow = k; });
+      if (x.noMb || (kNow && kNow.push) || tp >= t - 1e-6) return;
+      /* the camera's travel over the last frame, inside the shot (a cut is not travel): how far the element in focus moved
+         across the frame, taken over a thirtieth of a second, so the blur is the length it was at 30fps. A zoom moves its
+         corners apart, not across, and a directional blur cannot draw that, so it leaves none */
+      var a1 = project(matrixOf(q), R[0] + R[2] / 2, R[1] + R[3] / 2), a0 = project(matrixOf(x.at(tp)), R[0] + R[2] / 2, R[1] + R[3] / 2);
+      mbx = Math.max(mbx, Math.min(16, Math.abs(a1[0] - a0[0]) * 0.2 * FPS / 30)); mby = Math.max(mby, Math.min(16, Math.abs(a1[1] - a0[1]) * 0.2 * FPS / 30));
+    });
+    if (Math.max(mbx, mby) > 0.8) mv = mbx.toFixed(1) + ' ' + mby.toFixed(1);
     if (c) {
       var M = matrixOf(p), R = p.rect;
       var pts = [[R[0], R[1]], [R[0] + R[2], R[1]], [R[0], R[1] + R[3]], [R[0] + R[2], R[1] + R[3]], [R[0] + R[2] / 2, R[1] + R[3] / 2]].map(function (q) { return project(M, q[0], q[1]); });
@@ -194,16 +228,6 @@
         var cx = pts[4][0], cy = pts[4][1], rx = (Math.max.apply(null, xs) - Math.min.apply(null, xs)) / 2 * 1.5 + 120, ry = (Math.max.apply(null, ys) - Math.min.apply(null, ys)) / 2 * 1.6 + 110;
         dv = [cx.toFixed(0), cy.toFixed(0), rx.toFixed(0), ry.toFixed(0), db.toFixed(1)].join(' ');
         if (dv !== lastDof) { dof.style.display = 'block'; dof.style.setProperty('--dx', cx.toFixed(0) + 'px'); dof.style.setProperty('--dy', cy.toFixed(0) + 'px'); dof.style.setProperty('--rx', rx.toFixed(0) + 'px'); dof.style.setProperty('--ry', ry.toFixed(0) + 'px'); dof.style.backdropFilter = dof.style.webkitBackdropFilter = 'blur(' + db.toFixed(1) + 'px)'; }
-      }
-      /* the camera's travel over the last frame, inside the shot (a cut is not travel): how far the element in focus moved
-         across the frame. A zoom moves its corners apart, not across, and a directional blur cannot draw that, so it
-         leaves none */
-      var tp = Math.max(t - DT, c.shotStart(t));
-      var kNow = null; c.keys.forEach(function (k) { if (k.t <= t + 1e-6) kNow = k; });
-      if (!c.noMb && !(kNow && kNow.push) && tp < t - 1e-6) {
-        var a0 = project(matrixOf(c.at(tp)), R[0] + R[2] / 2, R[1] + R[3] / 2);
-        var sx = Math.min(16, Math.abs(pts[4][0] - a0[0]) * 0.2), sy = Math.min(16, Math.abs(pts[4][1] - a0[1]) * 0.2);
-        if (Math.max(sx, sy) > 0.8) mv = sx.toFixed(1) + ' ' + sy.toFixed(1);
       }
     }
     if (dv === 'none' && lastDof !== 'none') dof.style.display = 'none';
@@ -279,7 +303,8 @@
     solveScrolls();
     drivers.push(function (t) { if (t >= s.start - 1e-6 && t < s.end - 1e-6) api.show(t); });
     var keys = (s.cam || []).map(function (k) { var o = Object.assign({}, k, (k.f || {})[S.format] || {}); return o; });
-    api.camera = camera({ el: cam, world: scr, keys: keys, t0: s.start, t1: s.end, rect: api.rect, fillK: S.fillK });
+    var size = function (t) { var m = META.states[stateAt(t)] || {}; return [META.window[0], m.docH || META.window[1]]; };
+    api.camera = camera({ el: cam, world: scr, keys: keys, t0: s.start, t1: s.end, rect: api.rect, size: size, fillK: S.fillK });
     return api;
   }
   /* the page's cards rising into place as it opens: 10px in .5s, 60ms a column, 45ms a card down each column */
@@ -301,20 +326,9 @@
     return ev;
   }
 
-  /* a figure rolling in as the site's odometer rolls a change, by one place: each digit's strip slides from blank to its
-     digit in .55s, the signs coming up with it. No other digit is on its strip, so no frame shows a figure but the real one */
-  function rollIn(el, text, t0) {
-    el.innerHTML = text.split('').map(function (c) { return /\d/.test(c) ? '<span class="rd"><span class="rd-s"><span>' + c + '</span><span>&nbsp;</span></span></span>' : '<span class="rs">' + c.replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span>'; }).join('');
-    var strips = $$('.rd-s', el), signs = $$('.rs', el);
-    drivers.push(function (t) {
-      var u = prog(t, t0, 0.55);
-      strips.forEach(function (st) { st.style.transform = 'translateY(-' + (1 - u).toFixed(4) + 'em)'; st.children[1].setAttribute('data-layout-ignore', ''); });
-      signs.forEach(function (g) { g.style.opacity = u.toFixed(3); });
-    });
-  }
-
   /* ------------------------------------------------------------ the film's own type, flown by the same camera */
-  function typeCamera(sec, s, keys) { return camera({ el: $('.cam', sec), world: $('.tw', sec), noMb: true, keys: keys.map(function (k) { return Object.assign({ center: true }, k); }), t0: s.start, t1: s.end, rect: function (k) { var w = $('.tw', sec), e = k.sel ? $(k.sel, sec) : w, cam = $('.cam', sec); var keep = cam.style.transform; cam.style.transform = 'none'; var wr = w.getBoundingClientRect(), b = e.getBoundingClientRect(); cam.style.transform = keep; return [b.left - wr.left, b.top - wr.top, b.width, b.height]; } }); }
+  /* (a selector matching several elements frames them together: a line's words, not the box they wrap in) */
+  function typeCamera(sec, s, keys) { return camera({ el: $('.cam', sec), world: $('.tw', sec), noMb: true, keys: keys.map(function (k) { return Object.assign({ center: true }, k); }), t0: s.start, t1: s.end, rect: function (k) { var w = $('.tw', sec), es = k.sel ? $$(k.sel, sec) : [w], cam = $('.cam', sec); var keep = cam.style.transform; cam.style.transform = 'none'; var wr = w.getBoundingClientRect(), bs = es.map(function (e) { return e.getBoundingClientRect(); }); cam.style.transform = keep; var x0 = Math.min.apply(null, bs.map(function (b) { return b.left; })), y0 = Math.min.apply(null, bs.map(function (b) { return b.top; })), x1 = Math.max.apply(null, bs.map(function (b) { return b.right; })), y1 = Math.max.apply(null, bs.map(function (b) { return b.bottom; })); return [x0 - wr.left, y0 - wr.top, x1 - x0, y1 - y0]; } }); }
 
   /* ------------------------------------------------------------ figures */
   var feePct = parseFloat(V.fee) || 0;
@@ -360,28 +374,33 @@
       // the hero's two lines: the first huge, sharpening in; then it settles to its size as the second comes under it
       sharpen($('.l1', sec), s.start + 0.05); sharpen($('.l2', sec), s.l2in);
       typeCamera(sec, s, [
-        { t: s.start, cut: true, sel: '.l1', fill: 0.97, d: 1.1, from: { k: 0.9 } },   // in from a little further out: the huge word never passes the safe zone
-        { t: s.shrink, sel: 'h1.t', s: 1, d: 0.8 },
-        { t: s.shrink + 0.8, sel: 'h1.t', s: 1.045, d: s.out - s.shrink - 0.8 },
+        { t: s.start, cut: true, sel: '.l1', fill: 0.97, d: 0.9, from: { k: 0.9 } },   // in from a little further out: the huge word never passes the safe zone
+        { t: s.shrink, sel: 'h1.t', s: 1, d: 0.7 },
+        { t: s.shrink + 0.7, sel: 'h1.t', s: 1.045, d: s.out - s.shrink - 0.7 },
         // out: the camera pushes through the title, the lines flying past it and gone before the cut, as the next scene
-        // comes in under them
-        { t: s.out, sel: 'h1.t', s: 4.4, d: 0.6 }
+        // comes in under them; or the title whips away left as the next line comes in from the right
+        s.exit === 'whip' ? { t: s.out, sel: 'h1.t', s: 1.045, dx: -FW * 1.1, d: 0.45 } : { t: s.out, sel: 'h1.t', s: 4.4, d: 0.6 }
       ]);
-      fadeOut($('h1.t', sec), s.out + 0.1);
+      if (s.exit === 'whip') fadeOut($('h1.t', sec), s.out + 0.02, 0.2); else fadeOut($('h1.t', sec), s.out + 0.1);
     },
-    trust: function (s, sec) {
-      rise($$('.ka .w', sec), s.a, { stagger: 0.045, fade: true });
-      tl.fromTo($('.ka', sec), { color: css('--ink') }, { color: css('--muted'), duration: FAST, ease: E, immediateRender: false }, s.b - 0.1);
-      rise($$('.kb .w', sec), s.b, { stagger: 0.045, fade: true });
-      fadeOut($('.ka', sec), s.out - 0.3);
-      fadeOut($('.kb', sec), s.out + 0.04);
-      typeCamera(sec, s, [
-        { t: s.start, cut: true, sel: '.ka', fill: 0.94, d: 1.2, from: { k: 0.55 } },
-        { t: s.b - 0.1, sel: '.kin', fill: 0.94, d: 1.1 },
-        { t: s.b + 1.0, sel: '.kb', fill: 0.97, d: s.out - s.b - 1.0 },
-        // out: through the line and into the Launch form, which resolves under it
-        { t: s.out, sel: '.kb', fill: 3.8, d: 0.6 }
-      ]);
+    line: function (s, sec) {
+      // a line of the script, full screen: its words rise in 45ms apart as the camera arrives, it holds on a slow push,
+      // and it leaves the way the next shot comes in. A big line comes in huge and settles (Axiom's title pattern)
+      var blk = $('.lb', sec), whip = s.in === 'whip', from = whip ? { dx: FW * 0.32 } : { k: s.big ? 0.9 : 0.55 }, keys, end;
+      rise($$('.w', sec), s.start + 0.04, { stagger: 0.045, fade: true });
+      if (s.big) {
+        end = 0.64;
+        keys = [{ t: s.start, cut: true, sel: '.lb .w', fill: 0.98, d: 0.5, from: from }, { t: s.start + 0.4, sel: '.lb .w', fill: end, d: 0.6 }];
+      } else {
+        // every other line at one size, the type's own (scale 1), or smaller where a set line is wider than the focus box
+        // (a line wider than the box comes in a little inside it, so the hold's slow push ends on its edge, not past it)
+        keys = [{ t: s.start, cut: true, sel: '.lb .w', fill: 0.94, smax: 1, d: whip ? 0.7 : 1.0, from: from }, { t: s.start + 0.9, sel: '.lb .w', fill: 0.98, smax: 1.04, d: s.out - s.start - 0.9 }];
+      }
+      // out: through the type into the next shot, which resolves under it, or a whip away left as the next comes in
+      var hold = s.big ? { fill: end } : { fill: 0.98, smax: 1.04 };
+      if (s.exit === 'whip') { keys.push(Object.assign({ t: s.out, sel: '.lb .w', dx: -FW * 1.1, d: 0.45 }, hold)); fadeOut(blk, s.out + 0.02, 0.2); }
+      else { keys.push(Object.assign({ t: s.out, sel: '.lb .w', d: 0.6 }, s.big ? { fill: 3.8 } : { s: 4.4 })); fadeOut(blk, s.out + 0.04); }
+      typeCamera(sec, s, keys);
     },
     launch: function (s, sec) {
       var sc = screen(sec, s);
@@ -396,7 +415,7 @@
     },
     page: function (s, sec) {
       var sc = screen(sec, s);
-      opening(sc, ['.pp-side > *', '.pp-main > *', '.pp-rail > *'], s.open);
+      if (s.open != null) opening(sc, ['.pp-side > *', '.pp-main > *', '.pp-rail > *'], s.open);
       var q = function (sel) { return function () { return sc.q(sel); }; };
       ['[data-draised]', '[data-dpct]', '[data-dbackers]', '[data-sraised]', '[data-spct]', '[data-sbackers]', '[data-dtime]', '[data-stime]'].forEach(function (sel) { var ev = beatTexts(s, sel); if (ev.length) odo(q(sel), ev); });
       bar(q('[data-dbar]'), beatWidths(s, '[data-dbar]'));
@@ -445,37 +464,14 @@
       var claimsEl = function () { var dts = $$('.pp-stats dt', sc.body).filter(function (d) { return /Refunds claimed/.test(d.textContent); }); if (!dts.length) return null; var dd = dts[0].nextElementSibling; var sp = dd.querySelector('.hf-claims'); if (!sp) { var em = dd.querySelector('em'); dd.innerHTML = '<span class="hf-claims">0</span> '; if (em) dd.appendChild(em); sp = dd.querySelector('.hf-claims'); } return sp; };
       odo(claimsEl, [[-1, '0']].concat(s.claims.map(function (c) { return [c[0], String(Math.round(n * c[1]))]; })));
     },
-    numbers: function (s, sec) {
-      var stats = $$('.stat', sec), seps = $$('.nrow .sep', sec);
-      stats.forEach(function (st, i) {
-        var T = s.items[i], fig = $('.fig', st);
-        // one figure at a time: it comes up as the camera reaches it, its digits rolling in as its label rises, and goes as
-        // the camera leaves (type fades), so no figure is cut by the frame's edge while it is held; on the pull back the
-        // whole strip comes up in one line
-        tl.fromTo(st, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: E }, T - 0.05);
-        if (i < stats.length - 1) tl.fromTo(st, { opacity: 1 }, { opacity: 0, duration: DUR, ease: E, immediateRender: false }, s.items[i + 1] - 0.1);
-        if (i < stats.length - 1) tl.fromTo(st, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: E, immediateRender: false }, s.pull + 0.1);
-        if (fig.dataset.fig) rollIn(fig, String(V[fig.dataset.fig]), T - 0.05);
-      });
-      if (seps.length) tl.fromTo(seps, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: E }, s.pull + 0.1);
-      typeCamera(sec, s, [
-        { t: s.items[0], cut: true, sel: '.stat[data-stat="0"]', fill: 0.62, d: 0.9, from: { dx: FW * 0.32 } },
-        { t: s.items[1], sel: '.stat[data-stat="1"]', fill: 0.86, d: 0.6 },
-        { t: s.items[2], sel: '.stat[data-stat="2"]', fill: 0.62, d: 0.6 },
-        { t: s.items[3], sel: '.stat[data-stat="3"]', fill: 0.7, d: 0.6 },
-        { t: s.pull, sel: '.nrow', fill: 0.96, d: 0.9 },
-        // out: the strip whips away left, clearing as it goes, and the closing line comes up under it
-        { t: s.out, sel: '.nrow', fill: 0.96, dx: -FW * 1.1, d: 0.5 }
-      ]);
-      fadeOut($('.nrow', sec), s.out + 0.02, 0.2);
-    },
     close: function (s, sec) {
       var h = $('h1.t', sec), ec = $('.endcard', sec), lk = $('.endcard .lockup', ec), mk = $('.mark', lk), wd = $('.word', lk);
       sharpen($('.l1', sec), s.start); sharpen($('.l2', sec), s.shrink + 0.2);
       fadeOut(h, s.lineOut);
       var cam = typeCamera(sec, s, [
-        { t: s.start, cut: true, sel: '.l1', fill: 0.97, d: 1.0, from: { k: 0.6 } },
-        { t: s.shrink, sel: 'h1.t', s: 1, d: 0.8 },
+        // in under the line before it, or from the right as the page before it whips away
+        { t: s.start, cut: true, sel: '.l1', fill: 0.97, d: 0.9, from: s.in === 'whip' ? { dx: FW * 0.32 } : { k: 0.6 } },
+        { t: s.shrink, sel: 'h1.t', s: 1, d: 0.7 },
         { t: s.end_, sel: '.endcard', s: 1, d: 0.01 },
         { t: s.end_ + 0.02, sel: '.endcard', s: 1.035, d: s.end - s.end_ }
       ]);
@@ -491,17 +487,15 @@
       tl.fromTo(home, { x: 0, y: 0, scale: 1, transformOrigin: '0 0' }, { x: a[0] - C[0], y: a[1] - C[1], scale: (b[0] - a[0]) / C[2], duration: T1 - T0, ease: E, immediateRender: false }, T0);
       tl.fromTo(home, { color: css('--navy-soft') }, { color: css('--ink'), duration: DUR, ease: E, immediateRender: false }, T0);
       tl.set(ec, { opacity: 0 }, 0); tl.set(ec, { opacity: 1 }, T1);
-      tl.fromTo(mk, { x: gap }, { x: 0, duration: 0.6, ease: E }, s.end_ + 0.9);
-      tl.fromTo(wd, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.6, ease: E }, s.end_ + 1.15);
-      rise($('.url', ec), s.end_ + 1.3, { fade: true });
-      rise($('.net', ec), s.end_ + 1.4, { fade: true });
+      tl.fromTo(mk, { x: gap }, { x: 0, duration: 0.6, ease: E }, T1 + 0.08);
+      tl.fromTo(wd, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.6, ease: E }, T1 + 0.3);
+      rise($('.url', ec), T1 + 0.42, { fade: true });
+      rise($('.net', ec), T1 + 0.52, { fade: true });
     }
   };
 
   function build() {
     S.scenes.forEach(function (s) { var sec = document.getElementById('s-' + s.id); if (sec && B[s.kind]) B[s.kind](s, sec); });
-    // captions sit on a frosted --bar pill, so they rise without a fade, and leave when their clip ends (a pill never fades)
-    $$('.cap').forEach(function (c) { rise($$('.ln', c), +c.dataset.start, { stagger: 0.045 }); });
     var clock = { t: 0 };
     tl.fromTo(clock, { t: 0 }, { t: S.duration, duration: S.duration, ease: 'none', onUpdate: function () { var t = tl.time(); drivers.forEach(function (d) { d(t); }); } }, 0);
     drivers.forEach(function (d) { d(0); });

@@ -20,11 +20,12 @@ if (!fs.existsSync(P('site/pages/pages.json'))) run('capture-pages.mjs');
 const { figures } = JSON.parse(fs.readFileSync(P('src/figures.json'), 'utf8'));
 const PAGES = JSON.parse(fs.readFileSync(P('site/pages/pages.json'), 'utf8'));
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const words = s => s.split(' ').map(w => `<span class="w">${esc(w)}</span>`).join(' ');
+/* a line's words, each its own box to rise; tickers and figures in IBM Plex Mono, as the book sets them */
+const words = s => s.split(' ').map(w => `<span class="w">${esc(w).replace(/^(SOL|USDC|\d[\d,.%]*\d%?)/, '<span class="num">$1</span>')}</span>`).join(' ');
 
 /* ------------------------------------------------------------------ variables: the URL, the network line, every figure.
-   The figures drive the film's own type (the numbers strip, the SRT); the pages carry the same figures because the site
-   drew them from the same code (js/config/seed.js), so a figure changed in the code reaches both on the next capture. */
+   The pages carry the figures because the site drew them from the same code (js/config/seed.js), so a figure changed in
+   the code reaches them on the next capture; the SRT reads the URL from here. */
 const VARS = [
   { id: 'url', type: 'string', label: 'Site URL', default: 'seed-nu-ten.vercel.app' },
   { id: 'networkLine', type: 'string', label: 'Network line', default: 'Live on Solana devnet' },
@@ -54,30 +55,24 @@ const lockup = (cls, dotsSvg) => `<div class="lockup ${cls}">${dotsSvg}<span cla
 /* the 21-dot mark as circles, so the sting and the end card can bring its dots in one by one */
 const markDots = cls => `<svg class="mark ${cls}" viewBox="0 0 100 100" aria-hidden="true">${dots.map(([x, y, r], i) => `<circle class="${i ? 'dot' : 'seed'}" data-n="${i}" cx="${x}" cy="${y}" r="${r}"></circle>`).join('')}</svg>`;
 
-let F = null;   // the format page() is writing
+let F = null, FK = null;   // the format page() is writing
 /* scenes alternate between two tracks, so Studio shows where one comes in under the one going out */
 const sec = (s, cls, inner) => `  <section id="s-${s.id}" class="clip scene ${cls}" data-start="${s.start}" data-duration="${+(s.end - s.start).toFixed(3)}" data-track-index="${s.track}">
     <div class="sc">${inner}</div>
   </section>`;
 /* a stage with the camera over the film's own type (the frame's size, straight over the dot field), or over a page of the
-   site (the app's window, with the field under its panels for their glass to blur) */
+   site (the app's window, filling the screen, with the field under its panels for their glass to blur) */
 const field = '<canvas class="field" aria-hidden="true"></canvas>';
 const typeStage = inner => `<div class="stage type"><div class="cam" style="width:${F.w}px;height:${F.h}px"><div class="tw">${inner}</div></div></div>`;
 const pageStage = () => `<div class="stage" data-layout-ignore>${field}<div class="cam" style="width:${F.win[0]}px;height:${F.win[1]}px"><div class="scr hf-html" style="width:${F.win[0]}px;height:${F.win[1]}px"><div class="hf-body"></div></div></div></div>`;
-const stat = (i, fig, lab, labVar) => `<div class="stat" data-stat="${i}">${fig}<div class="lab"${labVar ? ` data-var-text="${labVar}"` : ''}>${esc(lab)}</div></div>`;
 const SCENES = {
   sting: s => sec(s, 's-sting', lockup('sting', markDots('sting-mark'))),
   title: s => sec(s, 's-title', typeStage(`<h1 class="t"><span class="l1">${esc(s.l1)}</span><span class="l2">${esc(s.l2)}</span></h1>`)),
-  trust: s => sec(s, 's-trust', typeStage(`<div class="kin"><p class="ka">${words('Most launches ask you to trust a founder with your money.')}</p><p class="kb">${words('Seed asks you to back an\u00a0idea at one fixed price.')}</p></div>`)),
+  /* a line's clauses one to a block, wrapped with balanced lines, or broken where the story sets them for this format */
+  line: s => { const set = s.f && s.f[FK] && s.f[FK].lines; return sec(s, 's-line' + (s.big ? ' big' : ''), typeStage(`<div class="kin"><div class="lb${set ? ' set' : ''}">${(set || s.lines).map(l => `<p>${words(l)}</p>`).join('')}</div></div>`)); },
   launch: s => sec(s, 's-launch', pageStage()),
   page: s => sec(s, 's-page', pageStage()),
   refund: s => sec(s, 's-refund', pageStage()),
-  numbers: s => sec(s, 's-numbers', typeStage(`<div class="nrow" data-layout-allow-overflow>${[
-    stat(0, `<div class="fig num" data-fig="fee">${esc(V.fee)}</div>`, V.feeLabel, 'feeLabel'),
-    stat(1, `<div class="fig num" data-fig="supply">${esc(V.supply)}</div>`, 'supply'),
-    stat(2, `<div class="fig num" data-fig="refund">${esc(V.refund)}</div>`, 'refund'),
-    stat(3, `<div class="fig word">Locked for good</div>`, 'the pool')
-  ].join('<span class="sep" aria-hidden="true">·</span>')}</div>`)),
   close: s => sec(s, 's-close', typeStage(`<h1 class="t"><span class="l1">${esc(s.l1)}</span><span class="l2">${esc(s.l2)}</span></h1>
       <div class="endcard">${lockup('end', markDots('end-mark'))}<p class="url num" data-var-text="url">${esc(V.url)}</p><p class="net" data-var-text="networkLine">${esc(V.networkLine)}</p></div>`))
 };
@@ -85,15 +80,12 @@ const SCENES = {
 /* ------------------------------------------------------------------ one root */
 function page(cut, fk) {
   const f = FORMATS[fk], c = CUTS[cut], id = `seed-${cut}-${fk}`;
-  F = f;
-  /* a caption's tickers and figures are set in IBM Plex Mono, as the book's caption rule has it */
-  const mono = l => esc(l).replace(/\b(SOL|USDC|\d[\d,.%]*)\b/g, '<span class="num">$1</span>');
-  const caps = c.captions[fk].map(([a, b, lines], i) => `  <div id="cap-${i}" class="clip cap" data-start="${a}" data-duration="${+(b - a).toFixed(3)}" data-track-index="3">${lines.map(l => `<span class="ln">${mono(l)}</span>`).join('')}</div>`).join('\n');
+  F = f; FK = fk;
   /* the site's pages this cut mounts, each beat once */
   const used = [...new Set(c.scenes.flatMap(s => (s.states || []).map(x => x[1])))];
   const pages = used.map(n => `<template data-page="${n}">${fs.readFileSync(P('site/pages', fk, n + '.html'), 'utf8').trim()}</template>`).join('\n');
   const meta = { window: PAGES[fk].window, states: Object.fromEntries(used.map(n => [n, { body: PAGES[fk].states[n].body, docH: PAGES[fk].states[n].docH }])) };
-  const story = { cut, format: fk, fps: FPS, duration: c.duration, size: [f.w, f.h], persp: f.persp, focus: f.focus, frame: f.frame, fillK: f.fillK || 1, cornerBox: [f.safe.l, f.safe.t, f.mark], corner: c.corner, scenes: c.scenes, raise: { name: RAISE.name, ticker: RAISE.ticker, target: RAISE.target } };
+  const story = { cut, format: fk, fps: FPS, duration: c.duration, size: [f.w, f.h], persp: f.persp, focus: f.focus, fillK: f.fillK || 1, cornerBox: [f.safe.l, f.safe.t, f.mark], corner: c.corner, scenes: c.scenes, raise: { name: RAISE.name, ticker: RAISE.ticker, target: RAISE.target } };
   const music = cut === 'master' ? 'assets/music.wav' : 'assets/music-teaser.wav';
   return `<!doctype html>
 <html lang="en" data-composition-variables='${JSON.stringify(VARS).replace(/'/g, '&#39;')}'>
@@ -110,17 +102,15 @@ function page(cut, fk) {
 <script src="vendor/gsap.min.js"></script>
 </head>
 <body>
-<div id="root" class="film ${f.cls}" style="--persp:${f.persp}px;--frx:${f.frame[0]}px;--fry:${f.frame[1]}px;--frw:${f.frame[2]}px;--frh:${f.frame[3]}px" data-composition-id="${id}" data-start="0" data-duration="${c.duration}" data-width="${f.w}" data-height="${f.h}">
+<div id="root" class="film ${f.cls}" style="--persp:${f.persp}px" data-composition-id="${id}" data-start="0" data-duration="${c.duration}" data-width="${f.w}" data-height="${f.h}">
   ${symbols}
   <svg width="0" height="0" aria-hidden="true"><filter id="mbf" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB"><feGaussianBlur id="mbg" stdDeviation="0 0" edgeMode="duplicate"></feGaussianBlur></filter></svg>
   <div id="world">
   <canvas id="bg-dither" aria-hidden="true"></canvas>
 ${c.scenes.map((s, i) => SCENES[s.kind]({ ...s, track: i % 2 ? 4 : 1 })).join('\n')}
   <div id="dof" aria-hidden="true"></div><div id="mb" aria-hidden="true"></div>
-  <canvas id="mat" aria-hidden="true"></canvas><div id="matline" aria-hidden="true"></div>
   </div>
 ${c.corner.map(([a, b], i) => `  <div id="corner-${i}" class="clip corner" data-start="${a}" data-duration="${+(b - a).toFixed(3)}" data-track-index="2"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"></use></svg></div>`).join('\n')}
-${caps}
   <audio id="music" src="${music}" data-start="0" data-duration="${c.duration}" data-track-index="10" data-volume="${V.musicVolume}"></audio>
 </div>
 <script type="application/json" id="story">${JSON.stringify(story)}</script>

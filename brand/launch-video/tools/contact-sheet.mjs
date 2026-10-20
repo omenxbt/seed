@@ -7,7 +7,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { CUTS, FORMATS } from '../src/story.mjs';
+import { CUTS, FORMATS, FPS } from '../src/story.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const proj = path.resolve(here, '..');
@@ -16,8 +16,8 @@ fs.mkdirSync(P('out/stills'), { recursive: true });
 
 /* the moment each scene is shown at: its state once its motion has settled */
 const STILLS = {
-  master: [['Logo sting', 2.3], ['Title card', 5.5], ['Trust', 12.6], ['Launch form', 15.7], ['Raise filling', 21.2], ['Seeding', 26.6], ['Seeded', 29.4], ['Refunded', 40.6], ['Numbers', 49.0], ['End card', 54.0]],
-  teaser: [['Logo sting', 2.3], ['Raise filling', 5.4], ['Seeded in full', 10.2], ['End card', 14.0]]
+  master: [['Logo sting', 1.9], ['Trust line', 3.9], ['Title card', 5.9], ['A founder sets', 7.4], ['Launch form', 8.8], ['You buy in', 11.2], ['Raise filling', 13.0], ['Target met', 15.8], ['Seeding', 17.3], ['The pool', 18.5], ['Locked for good', 19.5], ['If it misses', 21.2], ['Countdown', 22.3], ['Refunded', 23.7], ['Fee included', 24.7], ['Seeded in full', 26.5], ['End card', 29.5]],
+  teaser: [['Logo sting', 1.9], ['Title card', 3.9], ['Raise filling', 6.0], ['Filled', 8.3], ['Seeded in full', 10.3], ['End card', 14.0]]
 };
 
 const shots = {};
@@ -40,7 +40,7 @@ const puppeteer = require(pup);
 const browser = await puppeteer.launch({ executablePath: exe, args: ['--no-sandbox', '--allow-file-access-from-files'] });
 try {
   for (const [cut, list] of Object.entries(shots)) {
-    const cols = STILLS[cut].length, cell = 300;
+    const cols = STILLS[cut].length, cell = 260;
     const rows = Object.keys(FORMATS).map(fk => `<div class="row"><div class="fk num">${fk.replace('x', ':')}</div>${list.filter(s => s.fk === fk).map(s => `<figure><div class="frame"><img src="${pathToFileURL(s.png)}"></div><figcaption><span>${s.label}</span><span class="num">${s.t.toFixed(1)}s</span></figcaption></figure>`).join('')}</div>`).join('');
     const html = `<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="${pathToFileURL(P('site/fonts/fonts.css'))}"><link rel="stylesheet" href="${pathToFileURL(P('site/tokens.css'))}"><style>
       body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);letter-spacing:-.011em;padding:40px 44px}
@@ -51,7 +51,7 @@ try {
       figure{margin:0}.frame{width:${cell}px;height:${cell}px;display:block;background:var(--paper);border:1px solid var(--panel-line);border-radius:12px;overflow:hidden}
       img{width:100%;height:100%;object-fit:contain;display:block}
       figcaption{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2);margin-top:8px}figcaption .num{color:var(--faint)}
-    </style></head><body><h1>Seed launch video, ${cut === 'master' ? 'master, 55s' : 'teaser, 15s'}</h1><p>One still per scene per format, from the rendered files in out/.</p>${rows}</body></html>`;
+    </style></head><body><h1>Seed launch video, ${cut}, ${CUTS[cut].duration}s at ${FPS}fps</h1><p>One still per scene per format, from the rendered files in out/.</p>${rows}</body></html>`;
     const file = P('out', `contact-sheet-${cut}.html`);
     fs.writeFileSync(file, html);
     const page = await browser.newPage();

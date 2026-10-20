@@ -1,63 +1,63 @@
 {
-  "fps": 30,
+  "fps": 60,
   "note": "Beat points for scoring. Times are from the start of each cut and are the same in every format.",
   "cuts": {
     "master": {
-      "duration": 55,
-      "frames": 1650,
+      "duration": 30,
+      "frames": 1800,
       "markers": [
         {
           "name": "sting hit",
           "t": 1.5,
-          "frame": 45,
+          "frame": 90,
           "what": "the seed lands and brightens"
         },
         {
           "name": "fill complete",
-          "t": 23.45,
-          "frame": 704,
+          "t": 14.1,
+          "frame": 846,
           "what": "the last wave of buys fills the target"
         },
         {
           "name": "seeded",
-          "t": 27.48,
-          "frame": 824,
+          "t": 17.63,
+          "frame": 1058,
           "what": "the last seeding step lands and the page turns seeded"
         },
         {
           "name": "refunded",
-          "t": 37.2,
-          "frame": 1116,
+          "t": 22.75,
+          "frame": 1365,
           "what": "the deadline passes and the raise turns refunded"
         },
         {
           "name": "end card",
-          "t": 51.9,
-          "frame": 1557,
+          "t": 27.2,
+          "frame": 1632,
           "what": "mark, wordmark and URL"
         }
       ]
     },
     "teaser": {
       "duration": 15,
-      "frames": 450,
+      "frames": 900,
       "markers": [
         {
           "name": "sting hit",
           "t": 1.5,
-          "frame": 45,
+          "frame": 90,
           "what": "the seed lands and brightens"
         },
         {
           "name": "fill complete",
-          "t": 7.45,
-          "frame": 224,
+          "t": 7.6,
+          "frame": 456,
           "what": "the last wave of buys fills the target"
         },
         {
           "name": "end card",
-          "t": 11.4,
-          "frame": 342,
+          "t": 11,
+          "frame": 660,
           "what": "mark, wordmark and URL"
         }
       ]
