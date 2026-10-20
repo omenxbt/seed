@@ -11,7 +11,7 @@ if (cluster !== 'devnet' && cluster !== 'mainnet') throw new Error('cluster: dev
 
 (async () => {
   const provider = anchor.AnchorProvider.env(); anchor.setProvider(provider);
-  const conn = provider.connection, authority = provider.wallet.publicKey, pid = new web3.PublicKey((idl as any).address);
+  const conn = provider.connection, authority = provider.wallet.publicKey, pid = new web3.PublicKey(process.env.SEED_PROGRAM_ID || (idl as any).address);   // SEED_PROGRAM_ID: a staging deployment's id
   const want = fixedAddresses(pid, cluster);
   const ixs: web3.TransactionInstruction[] = []; let table: web3.PublicKey;
   if (existing) {

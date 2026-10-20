@@ -84,7 +84,6 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
   await c.send([await c.contribute(B, WSOL, backer2.publicKey, sol(5))], [backer2]);
   await c.send([await c.contribute(C, WSOL, backer1.publicKey, sol(81))], [backer1]);
   await c.send([await c.contribute(D, WSOL, backer2.publicKey, sol(20))], [backer2]);
-  const cFilledAt = Date.now();
 
   // A seeds: mint, pool, seed
   const mint = Keypair.generate(), nft = Keypair.generate();
@@ -109,7 +108,8 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
   await c.send([c.ata(backer1.publicKey, backer1.publicKey, mint.publicKey), await c.claimTokens(A, mint.publicKey, backer1.publicKey)], [backer1]);
   await c.send([c.ata(backer2.publicKey, backer2.publicKey, mint.publicKey), await c.claimTokens(A, mint.publicKey, backer2.publicKey)], [backer2]);
   const t1 = (await getAccount(conn, getAssociatedTokenAddressSync(mint.publicKey, backer1.publicKey))).amount, t2 = (await getAccount(conn, getAssociatedTokenAddressSync(mint.publicKey, backer2.publicKey))).amount;
-  check(t1 + t2 === 400_000_000_000_000n && t1 === 400_000_000_000_000n * 50n / 81n, 'A: backers claim 400M tokens in proportion', `${Number(t1) / 1e6} + ${Number(t2) / 1e6}`);
+  // each claim rounds down, so the two together may leave a base unit or two of dust in the vault
+  check(t1 === 400_000_000_000_000n * 50n / 81n && t2 === 400_000_000_000_000n * 31n / 81n && 400_000_000_000_000n - (t1 + t2) <= 2n, 'A: backers claim 400M tokens in proportion (50/81 and 31/81, rounded down)', `${Number(t1) / 1e6} + ${Number(t2) / 1e6}`);
 
   // trades on the pool through Meteora's SDK, as the site's trade panel does
   const amm = new CpAmm(conn);
@@ -140,7 +140,10 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
   check(await wsolOf(backer1.publicKey) - b1 === 10.1 * LAMPORTS_PER_SOL && await wsolOf(backer2.publicKey) - b2 === 5.05 * LAMPORTS_PER_SOL, 'B: cancel refunds 10.1 and 5.05 SOL exactly (deposit plus the 1%)');
 
   // D misses its one-day deadline: settle, then the refund
-  log(`\nwaiting for D's deadline, ${minutes(1)}…`); await sleep(Math.max(0, 75_000 - (Date.now() - t0)));
+  // the waits go by the chain's own clock (the validator's), not this machine's
+  const chainNow = async () => (await conn.getBlockTime(await conn.getSlot('confirmed'))) || Math.floor(Date.now() / 1000);
+  const waitUntil = async (unix: number, what: string) => { log(`waiting for ${what}: due ${new Date(unix * 1000).toISOString()}…`); while (await chainNow() < unix + 8) await sleep(5_000); };
+  await waitUntil(Number((await c.fetchRaise(D)).endsAt), `D's deadline, ${minutes(1)}`);
   const d2 = await wsolOf(backer2.publicKey);
   await c.send([await c.settle(D)]); const d = await c.fetchRaise(D);
   check(Object.keys(d.status)[0] === 'refunded' && Object.keys(d.refundReason)[0] === 'missed', 'D: settled as missed after the deadline');
@@ -148,7 +151,7 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
 
   // C never seeds: after the 3-day timeout anyone refunds it
   try { await c.send([await c.timeoutRefund(C)]); check(false, 'C: timeout_refund before the timeout is refused'); } catch (e: any) { check(/TimeoutNotPassed/.test(e.message), 'C: timeout_refund before the timeout is refused', 'TimeoutNotPassed'); }
-  log(`waiting for C's seeding timeout, ${minutes(3)}…`); await sleep(Math.max(0, 3 * 60_000 + 15_000 - (Date.now() - cFilledAt)));
+  await waitUntil(Number((await c.fetchRaise(C)).filledAt) + span(Number(cfg.seedTimeout)), `C's seeding timeout, ${minutes(3)}`);
   const c1 = await wsolOf(backer1.publicKey);
   await c.send([await c.timeoutRefund(C)]); const cr = await c.fetchRaise(C);
   check(Object.keys(cr.status)[0] === 'refunded' && Object.keys(cr.refundReason)[0] === 'timeout', 'C: refunded on the seeding timeout');
@@ -158,7 +161,7 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
   const newPayout = Keypair.generate().publicKey, takeoverTo = Keypair.generate().publicKey;
   await c.send([await c.requestPayoutChange(A, founder.publicKey, newPayout)], [founder]);
   try { await c.send([await c.applyPayoutChange(A)]); check(false, 'A: a payout change cannot apply early'); } catch (e: any) { check(/ChangeNotDue/.test(e.message), 'A: a payout change cannot apply early', 'ChangeNotDue'); }
-  log(`waiting for the payout delay, ${minutes(7)}…`); const reqAt = Date.now(); await sleep(7 * 60_000 + 15_000);
+  await waitUntil(Number((await c.fetchRaise(A)).payoutEffectiveAt), `the payout delay, ${minutes(7)}`);
   await c.send([await c.applyPayoutChange(A)]); a = await c.fetchRaise(A); check(a.payoutWallet.equals(newPayout), 'A: the payout wallet moved after 7 days');
   try { await c.send([await c.adminApproveTakeover(A, backer1.publicKey, takeoverTo)], [backer1]); check(false, 'A: only the admin approves a takeover'); } catch (e: any) { check(/NotAdmin/.test(e.message), 'A: only the admin approves a takeover', 'NotAdmin'); }
   await c.send([await c.adminApproveTakeover(A, me.publicKey, takeoverTo)]); a = await c.fetchRaise(A);
@@ -169,14 +172,12 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
   try { await c.send([c.ata(me.publicKey, takeoverTo, mint.publicKey), await c.claimVested(A, mint.publicKey, takeoverTo, me.publicKey)]); check(false, 'A: nothing unlocks before the cliff'); } catch (e: any) { check(/NothingToClaim/.test(e.message), 'A: nothing unlocks before the cliff', 'NothingToClaim'); }
   if (fast) log('SKIP  the 90-day unlock (--fast)');
   else {
-    const seededAt = Number(a.seededAt) * 1000, due = seededAt + 90 * 60_000 + 20_000;
-    log(`waiting for the cliff, ${minutes(90)}: due ${new Date(due).toISOString()}…`); while (Date.now() < due) await sleep(30_000);
+    await waitUntil(Number(a.seededAt) + 90 * 60, `the cliff, ${minutes(90)}`);
     await c.send([await c.claimVested(A, mint.publicKey, takeoverTo, me.publicKey)]);
     const got = (await getAccount(conn, getAssociatedTokenAddressSync(mint.publicKey, takeoverTo, true))).amount;
     check(got === 200_000_000_000_000n, 'A: at day 90 the whole team share (200M) unlocks to the takeover wallet', `${Number(got) / 1e6} tokens`);
     try { await c.send([await c.claimVested(A, mint.publicKey, takeoverTo, me.publicKey)]); check(false, 'A: nothing left after the last unlock'); } catch (e: any) { check(/NothingToClaim/.test(e.message), 'A: nothing left after the last unlock'); }
   }
-  void reqAt;
 
   log(`\n${fails ? `${fails} FAILED` : 'ALL PASSED'} · ${((Date.now() - t0) / 60_000).toFixed(1)} minutes · pool ${pool.toBase58()} · mint ${mint.publicKey.toBase58()}`);
   const file = `scripts/rehearsal/report-${new Date().toISOString().slice(0, 10)}.md`; writeFileSync(file, lines.join('\n') + '\n'); console.log('written', file);
