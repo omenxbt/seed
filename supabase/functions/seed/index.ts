@@ -140,7 +140,9 @@ Deno.serve(async (req) => {
         const type = str(body.type, 60), size = Number(body.size);
         if (!TYPES[type]) throw new Refusal(400, 'Only PDF, PNG, JPEG, WebP, slide files (PowerPoint, Keynote, OpenDocument) and the token metadata JSON can be uploaded.');
         if (!(size > 0 && size <= MAX_BYTES)) throw new Refusal(400, 'Files can be at most 10 MB.');
-        const path = `uploads/${wallet}/${crypto.randomUUID()}.${TYPES[type]}`;
+        // the token's metadata JSON gets a short path: its address goes on chain in open_raise, where every byte counts
+        // against the 1232-byte transaction (uploads/<wallet>/<uuid>.json was 174 characters; m/<10 chars>.json is 95)
+        const path = TYPES[type] === 'json' ? `m/${crypto.randomUUID().replace(/-/g, '').slice(0, 10)}.json` : `uploads/${wallet}/${crypto.randomUUID()}.${TYPES[type]}`;
         const { data, error } = await db.storage.from(BUCKET).createSignedUploadUrl(path);
         if (error) throw new Refusal(400, error.message);
         const { data: pub } = db.storage.from(BUCKET).getPublicUrl(path);

@@ -69,19 +69,28 @@ var chain = {
   raiseKey(p) { return this.pk(p.address); },
 
   /* ---- sending. The wallet app signs; confirmation is by polling, so any RPC works. */
+  /* the lookup table from js/config/seed.js, read once: with it a transaction is v0 and every fixed account costs one byte,
+     which is what lets open_raise at its largest (24 tranches, X linked, a 200-character URI) fit the 1232-byte packet */
+  async table() {
+    if (!SEED.lookupTable) return null;
+    if (this.alt === undefined) { try { this.alt = (await this.conn.getAddressLookupTable(this.pk(SEED.lookupTable))).value || null; } catch (e) { this.alt = null; console.warn('lookup table not read:', e.message); } }
+    return this.alt;
+  },
   async send(ixs, signers = [], units = 0) {
     const prov = providerOf(state.wallet.kind); if (!this.dry && !(prov && prov.signTransaction)) throw new Error('This wallet cannot sign transactions here.');
-    const me = this.me(), { blockhash, lastValidBlockHeight } = await this.conn.getLatestBlockhash('confirmed');
-    const tx = new this.w.Transaction({ feePayer: me, blockhash, lastValidBlockHeight });
-    if (units) tx.add(this.w.ComputeBudgetProgram.setComputeUnitLimit({ units }));
-    tx.add(...ixs);
-    if (signers.length) tx.partialSign(...signers);
+    const me = this.me(), [{ blockhash, lastValidBlockHeight }, table] = await Promise.all([this.conn.getLatestBlockhash('confirmed'), this.table()]);
+    const all = units ? [this.w.ComputeBudgetProgram.setComputeUnitLimit({ units }), ...ixs] : ixs;
+    const msg = new this.w.TransactionMessage({ payerKey: me, recentBlockhash: blockhash, instructions: all });
+    const tx = new this.w.VersionedTransaction(table ? msg.compileToV0Message([table]) : msg.compileToLegacyMessage());   // legacy only if the table could not be read
+    if (signers.length) tx.sign(signers);
     if (this.dry) {   // a rehearsal: the chain simulates the transaction as this wallet, nothing is signed or sent
-      const sim = await this.conn.simulateTransaction(new this.w.VersionedTransaction(tx.compileMessage()), { sigVerify: false, replaceRecentBlockhash: true });
+      const sim = await this.conn.simulateTransaction(tx, { sigVerify: false, replaceRecentBlockhash: true });
       if (sim.value.err) throw new Error(this.explain((sim.value.logs || []).join('\n')) + ' [dry run]');
       return 'dry-run:' + (sim.value.unitsConsumed || 0) + 'cu';
     }
-    const signed = await prov.signTransaction(tx);
+    let signed;
+    try { signed = await prov.signTransaction(tx); }
+    catch (e) { throw new Error(e && (e.code === 4001 || /rejected/i.test(e.message || '')) ? 'Cancelled in the wallet. Nothing was sent.' : (e && e.message) || 'The wallet did not sign.'); }   // Phantom's "User rejected the request." said plainly (QA P2-84)
     let sig;
     try { sig = await this.conn.sendRawTransaction(signed.serialize(), { preflightCommitment: 'confirmed' }); }
     catch (e) { throw new Error(this.explain(e)); }
@@ -230,7 +239,7 @@ var chain = {
   async resetConfig() {
     await this.init(); const me = this.me(), c = this.cfg, BN = this.lib.BN;
     const params = { admin: c.admin, attestor: c.attestor, seedTreasury: c.seedTreasury, solFeed: c.solFeed, feeBps: SEED.feeBps, creatorShareBps: SEED.creatorShareBps, poolFeeBps: SEED.poolFeeBps, capUsdCents: new BN(SEED.capUsd * 100),
-      minDeadline: new BN(SEED.minDeadlineH * 3600), maxDeadline: new BN(SEED.maxDeadlineH * 3600), seedTimeout: new BN(SEED.seedTimeoutDays * 86400), minUnlockDays: SEED.minUnlockDays, payoutDelay: new BN(SEED.payoutDelayDays * 86400), testMode: !!c.testMode };
+      minDeadline: new BN(SEED.minDeadlineH * 3600), maxDeadline: new BN(SEED.maxDeadlineH * 3600), seedTimeout: new BN(SEED.seedTimeoutDays * 86400), minUnlockDays: SEED.minUnlockDays, payoutDelay: new BN(SEED.payoutDelayDays * 86400), testMode: !!c.testMode, minTargetLamports: c.minTargetLamports || new BN(Math.round(SEED.testMinTargetSol * 1e9)) };   // the minimum raise it has, kept
     const reset = await this.program.methods.resetConfig().accounts({ config: this.pda.config(), admin: me }).instruction();
     const init = await this.program.methods.initConfig(params).accounts({ config: this.pda.config(), payer: me, systemProgram: this.pk(PROG.SYSTEM), devnetWitness: c.testMode ? this.pk(SEED.pairMints.USDC) : null }).instruction();
     await this.send([reset, init]); this.cfg = await this.program.account.config.fetch(this.pda.config());
