@@ -1551,8 +1551,10 @@ function save() { try { state.at = state.at || Date.now(); const s = JSON.string
 const RPCS = SEED.network === 'devnet' ? [...new Set([SEED.rpc, 'https://api.devnet.solana.com'])] : [SEED.rpc, 'https://public.rpc.solanavibestation.com'];   // a fallback on the same network only
 const JUP_SEARCH = 'https://lite-api.jup.ag/tokens/v2/search?query=';
 const TOKEN_PROGRAMS = ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'];
+let rpcQuietUntil = 0;   // after a rate limit, the page's polling stands down for a while instead of piling up retries (QA P1-F16)
 async function rpc(method, params) {
   let last;
+  if (Date.now() < rpcQuietUntil) throw new Error('RPC rate limited; waiting');
   for (const url of RPCS) for (let i = 0; i < 3; i++) {
     try {
       const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) });
@@ -1560,6 +1562,8 @@ async function rpc(method, params) {
       if (!j.error) return j.result;
       last = new Error(j.error.message || 'RPC error');
       if (r.status !== 429 && j.error.code !== -32005) break;          // only a rate limit is worth retrying
+      if (/max usage/i.test(j.error.message || '')) break;               // a quota, not a burst: the next RPC, no retries here
+      rpcQuietUntil = Date.now() + 20e3;
       await wait(800 * (i + 1));
     } catch (e) { last = e; break; }
   }

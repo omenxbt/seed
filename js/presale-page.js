@@ -356,7 +356,7 @@ function depositPanel(p) {
   return `<section class="panel rail-card" data-trade="deposit"><h3>Deposit into $${esc(p.ticker)}</h3>
     <div class="trade-top"><label class="rail-lab" for="ppAmt">You deposit</label><span class="rail-bal num" data-bal></span></div>
     <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" value="${amt}" aria-label="Amount in ${sym}"><span class="suf">${sym}</span></div>
-    <div class="chips">${chipsFor(p).map(c => `<button type="button" data-chip="${c}">${fmtC(c, p.q)}</button>`).join('')}<button type="button" data-chip="max">Max</button></div>
+    <div class="chips">${chipsFor(p).filter(c => c <= Math.min(payLeft(p), maxLeft) + 1e-9).map(c => `<button type="button" data-chip="${c}">${fmtC(c, p.q)}</button>`).join('')}<button type="button" data-chip="max">${maxLeft < payLeft(p) ? 'Max' : 'Fill'}</button></div>
     <div class="recv"><span>You receive if it seeds</span><b class="num" data-recv></b></div>
     <p class="rail-meta num">${pr.minBuy ? `Min ${fmtC(pr.minBuy, p.q)} ${sym}${pr.minBuyPct ? ` (${pr.minBuyPct}% of supply)` : ''}` : 'No minimum'} · ${pr.maxBuy ? `Max ${fmtC(pr.maxBuy, p.q)} ${sym}${pr.maxBuyPct ? ` (${pr.maxBuyPct}% of supply)` : ''} per wallet` : 'No maximum per wallet'}</p>
     <p class="rail-err" data-buyerr role="alert"></p>
@@ -830,7 +830,9 @@ function floatChip(p, amt) {
 }
 function bindRail(p) {
   const box = detailBox, dc = $('[data-dclaim]', box); if (dc) dc.onclick = () => claim(p, dc);
-  const cb = $('[data-cancel]', box); if (cb) cb.onclick = async () => { if (!confirm(`Cancel the ${p.name} raise? Every backer gets a refund, fee included, and the raise cannot reopen.`)) return; cb.disabled = true; await cancelRaise(find(p.id) || p); };
+  const cb = $('[data-cancel]', box); if (cb) cb.onclick = async () => { if (!confirm(`Cancel the ${p.name} raise? Every backer gets a refund, fee included, and the raise cannot reopen.`)) return; cb.disabled = true; const was = cb.textContent; cb.textContent = 'Confirm in wallet…';
+    const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('The cancel did not confirm in 90 seconds. Check the wallet and the raise; try again if it is still live.')), 90e3));
+    try { await Promise.race([cancelRaise(find(p.id) || p), timeout]); } catch (e) { toast(e.message); } finally { if (cb.isConnected) { cb.disabled = false; cb.textContent = was; } } };
   const lx = $('[data-linkx]', box); if (lx) lx.onclick = async () => {   // the founder links an X account to a raise that is already open
     const cur = find(p.id) || p, l = xAdapter.of();
     if (!l) { openXDialog(); return; }
@@ -865,7 +867,8 @@ function bindRail(p) {
     } else {
       $('[data-recv]', panel).textContent = `${fmtTok(n > 0 ? tokensFor(cur, Math.min(amountFor(n), leftOf(cur))) : 0)} $${cur.ticker}`;   // the buy inside the payment, capped at the room left
       const buy = amountFor(n);   // the limits are on the buy itself, like positions; n is the payment with the 1% fee on top (QA P2-85)
-      if (!msg && n > 0) msg = pr.minBuy && buy < pr.minBuy - 1e-9 ? `The minimum deposit is ${fmtC(pr.minBuy, cur.q)} ${C.sym}.` : pr.maxBuy && buy + (state.positions[cur.id] || 0) > pr.maxBuy + 1e-9 ? `A wallet can put in at most ${fmtC(pr.maxBuy, cur.q)} ${C.sym}.`
+      // the minimum does not apply to the buy that fills the raise, as the program allows (QA P1-F18)
+      if (!msg && n > 0) msg = pr.minBuy && buy < pr.minBuy - 1e-9 && buy < leftOf(cur) - 1e-9 ? `The minimum deposit is ${fmtC(pr.minBuy, cur.q)} ${C.sym}.` : pr.maxBuy && buy + (state.positions[cur.id] || 0) > pr.maxBuy + 1e-9 ? `A wallet can put in at most ${fmtC(pr.maxBuy, cur.q)} ${C.sym}.`
         : n > payLeft(cur) ? `Only ${fmtExact(payLeft(cur), cur.q)} ${C.sym} fits in this raise, the 1% fee included.` : state.wallet && n > bal ? `Your wallet holds ${fmtAmt(bal, cur.q)} ${C.sym}.` : '';
       go.textContent = !state.wallet ? 'Connect wallet to deposit' : n > 0 && !msg ? `Deposit ${fmtExact(Math.min(n, payLeft(cur)), cur.q)} ${C.sym}` : 'Deposit';
     }

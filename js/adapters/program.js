@@ -27,13 +27,27 @@ var chain = {
     return this.loading || (this.loading = (async () => {
       try {
         const [lib, idl] = await Promise.all([import(ANCHOR_URL), fetch('js/idl/seed.json').then(r => r.json())]);
-        this.lib = lib; this.w = lib.web3; this.conn = new lib.web3.Connection(SEED.rpc, 'confirmed');
-        this.program = new lib.Program(idl, { connection: this.conn });
-        this.pid = this.program.programId;
-        this.cfg = await this.program.account.config.fetch(this.pda.config());
+        this.lib = lib; this.w = lib.web3; this.idl = idl;
+        // the config from the first RPC on the list that answers: a browser key at its quota (429 "max usage reached") is not the end (QA P1-F16)
+        let lastErr = null;
+        for (const url of this.rpcs()) {
+          try { this.useRpc(url); this.cfg = await this.program.account.config.fetch(this.pda.config()); lastErr = null; break; }
+          catch (e) { lastErr = e; console.warn('RPC', url.replace(/api-key=[^&]+/, 'api-key=…'), 'failed:', e.message); }
+        }
+        if (lastErr) throw lastErr;
         this.ready = true; return true;
       } catch (e) { console.warn('Seed program unavailable:', e.message); this.program = null; this.loading = null; return false; }
     })());
+  },
+  /* the RPCs to try, in order: the site's, then the network's public one (index.html's RPCS) */
+  rpcs() { return typeof RPCS !== 'undefined' ? RPCS : [SEED.rpc]; },
+  useRpc(url) { this.rpcUrl = url; this.conn = new this.w.Connection(url, 'confirmed'); this.program = new this.lib.Program(this.idl, { connection: this.conn }); this.pid = this.program.programId; },
+  /* after a quota or rate-limit error: the next RPC on the list, at most once a minute */
+  rotate(e) {
+    if (!/429|max usage|rate/i.test(String(e && e.message || e)) || !this.lib) return false;
+    if (this.rotatedAt && Date.now() - this.rotatedAt < 60e3) return false;
+    const list = this.rpcs(), i = list.indexOf(this.rpcUrl), next = list[(i + 1) % list.length]; if (next === this.rpcUrl) return false;
+    this.rotatedAt = Date.now(); this.useRpc(next); console.warn('RPC moved to', next.replace(/api-key=[^&]+/, 'api-key=…')); return true;
   },
   pk(s) { return new this.w.PublicKey(s); },
   find(seeds, pid) { return this.w.PublicKey.findProgramAddressSync(seeds, pid || this.pid)[0]; },
@@ -78,7 +92,7 @@ var chain = {
   },
   async send(ixs, signers = [], units = 0) {
     const prov = providerOf(state.wallet.kind); if (!this.dry && !(prov && prov.signTransaction)) throw new Error('This wallet cannot sign transactions here.');
-    const me = this.me(), [{ blockhash, lastValidBlockHeight }, table] = await Promise.all([this.conn.getLatestBlockhash('confirmed'), this.table()]);
+    const me = this.me(), [{ blockhash, lastValidBlockHeight }, table] = await this.viaRpc(() => Promise.all([this.conn.getLatestBlockhash('confirmed'), this.table()]));
     const all = units ? [this.w.ComputeBudgetProgram.setComputeUnitLimit({ units }), ...ixs] : ixs;
     const msg = new this.w.TransactionMessage({ payerKey: me, recentBlockhash: blockhash, instructions: all });
     const tx = new this.w.VersionedTransaction(table ? msg.compileToV0Message([table]) : msg.compileToLegacyMessage());   // legacy only if the table could not be read
@@ -146,6 +160,8 @@ var chain = {
     return p;
   },
   /* the live raises: rows, their profiles and their buys, merged into the page's list (a live raise replaces its own older copy) */
+  /* a chain read that moves to the next RPC and tries once more when the current one is at its quota */
+  async viaRpc(fn) { try { return await fn(); } catch (e) { if (this.rotate(e)) return fn(); throw e; } },
   async loadLive() {
     if (!supa.configured() || !(await supa.init())) return false;
     const [rs, ps, cs] = await Promise.all([supa.client.from('raises').select('*').order('opened_at', { ascending: false }).limit(200), supa.client.from('raise_profiles').select('address,founder,profile'), supa.client.from('contributions').select('raise_id,wallet,amount,fee,at,refunded_at,claimed_at').order('at')]);
@@ -249,7 +265,7 @@ var chain = {
   /* the raise, fresh from the chain, plus this wallet's own record on it */
   async sync(p) {
     if (!p.address || !(await this.init())) return p;
-    const a = await this.program.account.raise.fetch(this.raiseKey(p)); this.apply(p, a);
+    const a = await this.viaRpc(() => this.program.account.raise.fetch(this.raiseKey(p))); this.apply(p, a);
     if (isReal()) {
       const c = await this.program.account.contribution.fetchNullable(this.pda.contribution(this.raiseKey(p), this.me()));
       if (c) { state.positions[p.id] = Number(c.amount.toString()) / 10 ** PAIR_DP[p.q]; delete state.claimed[p.id]; }

@@ -26,7 +26,10 @@ const presetIndex = cap => cap === 'test' ? (testCapUsd() ? 4 : -1) : presetCaps
 /* the raise, derived from the opening market cap: cap × (1 − team share) ÷ 2, in the pair asset at today's SOL price (the
    program does the same at the Pyth price the moment the raise opens, so a draft's figure can drift a little by then) */
 const targetUsdForCap = (capUsd, teamBps) => capUsd * (BPS - teamBps) / BPS / 2;
-const targetForCap = (capUsd, teamBps, q) => { const usd = targetUsdForCap(capUsd, teamBps); return q === 'USDC' ? Math.floor(usd * 100) / 100 : solUsdNow({ q: 'SOL' }) > 0 ? Math.floor(usd / solUsdNow({ q: 'SOL' }) * 1e9) / 1e9 : NaN; };
+/* the SOL price today, live only: the Pyth read, or nothing. On a chain-connected site the demo figure never stands in for it
+   (QA P1-F17); the demo site, with no chain, keeps its fixed price */
+const liveSolUsd = () => SEED.solUsdLive || (typeof chain !== 'undefined' && chain.on() ? 0 : SEED.demoSolUsd);
+const targetForCap = (capUsd, teamBps, q) => { const usd = targetUsdForCap(capUsd, teamBps); return q === 'USDC' ? Math.floor(usd * 100) / 100 : liveSolUsd() > 0 ? Math.floor(usd / liveSolUsd() * 1e9) / 1e9 : NaN; };
 const capOf = p => p.capUsd || fdvUsdOf(p);   // the market cap a raise opened at: the preset for a live raise; the FDV at the raise price otherwise (demo data)
 
 /* the supply: team share, then backers and the pool get equal halves of the rest */

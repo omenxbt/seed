@@ -182,7 +182,7 @@ const payoutNow = () => $('#fPayout').value.trim() || (state.wallet && (state.wa
 function modelFields(d, da) {
   const x = draftX();
   return { teamBps: teamBpsNow(), teamSchedule: scheduleNow(), tokenUseCase: lf.lim.use.on && $('#fUse').value.trim() ? $('#fUse').value.trim() : 'none', xAccount: x, pastRaises: pastRaisesOf(x.handle), reports: [], payoutWallet: payoutNow(),
-    targetUsd: d.target > 0 ? r6(usdNow({ q: da.key || 'SOL' }, d.target)) : 0, solUsdAtOpen: solUsdNow(), feeBps: SEED.feeBps, creatorShareBps: SEED.creatorShareBps };
+    targetUsd: d.target > 0 ? r6(usdNow({ q: da.key || 'SOL' }, d.target)) : 0, solUsdAtOpen: liveSolUsd() || solUsdNow(), feeBps: SEED.feeBps, creatorShareBps: SEED.creatorShareBps };
 }
 function draftPresale() {
   const d = readDraft(), da = draftAsset(), now = Date.now();
@@ -283,7 +283,7 @@ function renderPreview() {
   $('#capTest').hidden = !testCapUsd(); $$('#capSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(draft.cap)))); seg.cap && seg.cap.place();
   const capUsd = d.cap, tUsd = capUsd > 0 ? targetUsdForCap(capUsd, dp.teamBps) : 0;   // the raise line: what the preset derives at today's SOL price
   $('#raiseLine').textContent = !capUsd ? (draft.cap === 'test' ? 'The Test preset is not in this network\'s config.' : 'Pick an opening market cap.') : !ok ? `Opens at ${fmtMcap(capUsd)} market cap · the SOL price has not loaded yet` : `Opens at ${fmtMcap(capUsd)} market cap · raise ${fmtC(d.target, da.key)} ${sym} (${fmtUsd(tUsd)}), all into the pool`;
-  $('#targetUsd').textContent = ok && da.key === 'SOL' ? `at $${Number(solUsdNow().toPrecision(4))} per SOL today; fixed at the Pyth price when the raise opens` : '';
+  $('#targetUsd').textContent = ok && da.key === 'SOL' ? `at $${Number(liveSolUsd().toPrecision(4))} per SOL today; fixed at the Pyth price when the raise opens` : !ok && capUsd ? 'the SOL price has not loaded yet' : '';
   drawSplit(dp); drawDerived(dp, ok, sym);
   const art = pr.art ? `<img class="pv-art" src="${esc(pr.art)}" alt="" style="object-position:${pr.artPos}">` : `<span class="pv-art glyph-art" style="--h:${hashStr(dp.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(dp)}</svg></span>`;
   $('#pvCard').innerHTML = `${pr.banner ? `<div class="pv-banner"><img src="${esc(pr.banner)}" alt="" style="object-position:${pr.bannerPos}"></div>` : ''}<div class="pv-id">${art}<span class="nm"><b>${esc(dp.name)}<span class="tk">$${esc(dp.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div><div class="c-prog"><span class="bar"><i style="width:0%"></i></span><span class="pct num">0%</span></div>`;
