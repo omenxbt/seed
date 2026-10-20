@@ -2,7 +2,7 @@
    THE INFO PANEL. What a backer should know about a raise, computed from the raise and the adapters, never typed by hand.
    Two kinds of row:
      checks   facts Seed can check and grade: the founder's X account age, past raises, the crowd (top 10, bundles, fresh
-              wallets), a name or ticker clash, a missing roadmap or website. level: pass | warn | fail | pending.
+              wallets), a name or ticker clash, a missing website. level: pass | warn | fail | pending.
      info     the founder's own choices, shown plainly and never graded: the team share and its unlocks, what the token does.
               level: info.
    Thresholds are in js/config/risk.js. `pending` is only used by the Launch form, for checks that need a live raise.
@@ -60,9 +60,7 @@ function riskChecks(p, opts = {}) {
   add('clash', 'Name and ticker', 'info',
     seedHit ? `${seedHit.ticker === tk ? '$' + tk : p.name} is already used by ${seedHit.name}, a live Seed raise.` : topHit ? `${topHit[0] === tk ? '$' + tk : p.name} matches ${topHit[1]} ($${topHit[0]}), one of the 500 largest Solana tokens.` : 'No clash with a live Seed raise or a top-500 Solana token.');
 
-  // 7 and 8. what a backer can check for themselves
-  const road = (typeof roadmapOf === 'function' ? roadmapOf(p) : p.roadmap || pr.roadmap || []);
-  add('roadmap', 'Roadmap', road.length ? 'pass' : 'info', road.length ? `${road.length} milestone${road.length > 1 ? 's' : ''} listed, ${road.filter(r => r.status === 'shipped').length} shipped.` : 'None listed. Optional.', fromPr);
+  // 7. what a backer can check for themselves
   add('website', 'Website', 'info', pr.links && pr.links.website ? `${hostOf(pr.links.website)}` : 'None listed. Optional.', fromPr);
 
   // the founder's choices, as facts

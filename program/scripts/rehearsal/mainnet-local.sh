@@ -10,10 +10,10 @@
 set -e
 cd "$(dirname "$0")/../.."
 RPC="${1:-https://api.mainnet-beta.solana.com}"
-PORT="${PORT:-8999}"   # its own ports, so a validator another session runs on 8899 is left alone
+PORT="${PORT:-8999}"   # its own ports (the websocket is PORT+1, so the faucet takes PORT+2), so a validator another session runs on 8899 is left alone
 LEDGER="${TMPDIR:-/tmp}/seed-mainnet-rehearsal"
 rm -rf "$LEDGER"
-solana-test-validator -r --ledger "$LEDGER" --url "$RPC" --rpc-port "$PORT" --faucet-port "$((PORT + 1))" --gossip-port "$((PORT + 2))" --dynamic-port-range "$((PORT + 100))-$((PORT + 200))" \
+solana-test-validator -r --ledger "$LEDGER" --url "$RPC" --rpc-port "$PORT" --faucet-port "$((PORT + 2))" --gossip-port "$((PORT + 3))" --dynamic-port-range "$((PORT + 100))-$((PORT + 200))" \
   --clone-upgradeable-program cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG \
   --clone-upgradeable-program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s \
   --clone 7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE \

@@ -49,7 +49,7 @@ document.addEventListener('click', e => {
 /* ---------------------------------------------------------------- the filters */
 const FILTER_KEY = 'seed.filters.v1', COLS = ['new', 'seeding', 'seeded'], COL_NAME = { new: 'New ideas', seeding: 'Seeding', seeded: 'Seeded' };
 const SOCIAL_OPTS = [['website', 'Website'], ['x', 'X'], ['telegram', 'Telegram'], ['discord', 'Discord'], ['github', 'GitHub']];
-const blankFilter = () => ({ q: '', not: '', pairs: [], verified: false, pass: false, noFail: false, maxWarn: '', onPace: false, filled: ['', ''], backers: ['', ''], hours: ['', ''], top10: '', fresh: '', bundled: '', socials: [], deck: false, team: false, roadmap: false, ann: false, xOnly: false });
+const blankFilter = () => ({ q: '', not: '', pairs: [], verified: false, pass: false, noFail: false, maxWarn: '', onPace: false, filled: ['', ''], backers: ['', ''], hours: ['', ''], top10: '', fresh: '', bundled: '', socials: [], deck: false, team: false, ann: false, xOnly: false });
 const filters = (() => { let s = null; try { s = JSON.parse(localStorage.getItem(FILTER_KEY) || 'null'); } catch (e) {} return Object.fromEntries(COLS.map(k => [k, Object.assign(blankFilter(), s && s[k])])); })();
 function saveFilters() { try { localStorage.setItem(FILTER_KEY, JSON.stringify(filters)); } catch (e) {} }
 const hasRange = r => r[0] !== '' || r[1] !== '';
@@ -57,7 +57,7 @@ const hasRange = r => r[0] !== '' || r[1] !== '';
 function ruleCounts(f) {
   const c = { pair: (f.pairs.length ? 1 : 0) + (f.verified ? 1 : 0), checks: (f.pass ? 1 : 0) + (f.noFail ? 1 : 0) + (f.maxWarn !== '' ? 1 : 0) + (f.onPace ? 1 : 0),
     metrics: ['filled', 'backers', 'hours'].filter(k => hasRange(f[k])).length + ['top10', 'fresh', 'bundled'].filter(k => f[k] !== '').length,
-    socials: (f.socials.length ? 1 : 0) + ['deck', 'team', 'roadmap', 'ann', 'xOnly'].filter(k => f[k]).length, words: (f.q.trim() ? 1 : 0) + (f.not.trim() ? 1 : 0) };
+    socials: (f.socials.length ? 1 : 0) + ['deck', 'team', 'ann', 'xOnly'].filter(k => f[k]).length, words: (f.q.trim() ? 1 : 0) + (f.not.trim() ? 1 : 0) };
   c.all = c.pair + c.checks + c.metrics + c.socials + c.words; return c;
 }
 const filterTotal = () => COLS.reduce((a, k) => a + ruleCounts(filters[k]).all, 0);
@@ -79,7 +79,7 @@ function boardPass(k, p) {
   if (f.top10 !== '' || f.fresh !== '' || f.bundled !== '') { const s = backersAdapter.summary(p); if (f.top10 !== '' && s.top10 > +f.top10) return false; if (f.fresh !== '' && s.fresh > +f.fresh) return false; if (f.bundled !== '' && s.bundled > +f.bundled) return false; }
   const l = pr.links || {};
   if (f.socials.some(s => !safeUrl(l[s]))) return false;
-  if ((f.deck && !pr.deck) || (f.team && !(pr.team || []).length) || (f.roadmap && !(pr.roadmap || []).length) || (f.ann && !updatesAdapter.list(p).length)) return false;
+  if ((f.deck && !pr.deck) || (f.team && !(pr.team || []).length) || (f.ann && !updatesAdapter.list(p).length)) return false;
   return true;
 }
 /* the raises a column shows: the toolbar's search and pair filter, the column's own rules, unsorted */
@@ -112,7 +112,7 @@ function sectionHTML() {
     return `<p class="fs-lab">Pair asset. Nothing chosen means any.</p><div class="fs-chips">${keys.map(k => `<button type="button" class="fchip" data-fp="${esc(k)}" aria-pressed="${f.pairs.includes(k)}">${esc(asset(k).sym)}</button>`).join('')}</div>${fsw('verified', 'Verified pairs only', 'The pair asset is on Jupiter’s verified list')}`; }
   if (fd.sec === 'checks') return fsw('pass', 'All checks pass', 'No warning and no fail on the info panel') + fsw('noFail', 'No fails', 'Warnings are fine') + fmax('maxWarn', 'Warnings at most', 'Leave empty for any number') + (live ? fsw('onPace', 'On pace only', 'Filling fast enough to seed before the deadline') : '');
   if (fd.sec === 'metrics') return frange('filled', 'Filled', '% of target') + frange('backers', 'Backers') + (live ? frange('hours', 'Time left', 'hours') : '') + fmax('top10', 'Top 10 share at most', '% of the raise held by the ten largest backers') + fmax('fresh', 'Fresh wallets at most', '% of backers whose wallet is under a week old') + fmax('bundled', 'Bundled at most', '% of the raise from wallets sharing a funder');
-  return `<p class="fs-lab">Must link to</p><div class="fs-chips">${SOCIAL_OPTS.map(([k, l]) => `<button type="button" class="fchip" data-fs="${k}" aria-pressed="${f.socials.includes(k)}">${l}</button>`).join('')}</div>` + fsw('xOnly', 'Verified X only', 'The founder linked an X account by signing in') + fsw('deck', 'Deck attached') + fsw('team', 'Team listed') + fsw('roadmap', 'Roadmap listed') + fsw('ann', 'Has announcements');
+  return `<p class="fs-lab">Must link to</p><div class="fs-chips">${SOCIAL_OPTS.map(([k, l]) => `<button type="button" class="fchip" data-fs="${k}" aria-pressed="${f.socials.includes(k)}">${l}</button>`).join('')}</div>` + fsw('xOnly', 'Verified X only', 'The founder linked an X account by signing in') + fsw('deck', 'Deck attached') + fsw('team', 'Team listed') + fsw('ann', 'Has announcements');
 }
 function drawFilters() {
   const f = filters[fd.col], rc = ruleCounts(f), body = $('#filterBody');

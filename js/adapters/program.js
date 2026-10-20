@@ -3,7 +3,7 @@
    keeps its simulation; a real wallet sends real transactions, signed in its own wallet app, and the page is then
    refreshed from the chain (the Raise account) and from Supabase (the indexed tables, for the lists and the buys).
    Anchor's browser build arrives through esm.sh the first time it is needed; the IDL is js/idl/seed.json.
-   What a raise says about itself (description, links, roadmap, art) is not on chain: it lives in raise_profiles,
+   What a raise says about itself (description, links, art) is not on chain: it lives in raise_profiles,
    written by the founder's wallet through the seed function.
    ========================================================================== */
 const ANCHOR_URL = 'https://esm.sh/@coral-xyz/anchor@0.30.1?bundle';
@@ -118,7 +118,7 @@ var chain = {
     p.target = f(a.target); p.raised = f(a.raised); p.backers = Number(a.backers); p.status = key(a.status); p.seedStep = key(a.seedStep);
     p.refundReason = key(a.refundReason); p.openedAt = t(a.openedAt); p.endsAt = t(a.endsAt); p.filledAt = Number(a.filledAt) ? t(a.filledAt) : null; p.seededAt = Number(a.seededAt) ? t(a.seededAt) : null;
     p.dayMs = Number(a.timeUnit) * 1000 || D; p.teamBps = a.teamBps; p.feeBps = a.feeBps; p.creatorShareBps = a.creatorShareBps;
-    p.teamSchedule = a.teamBps ? { tranches: a.schedule.map(x => ({ dayOffset: x.dayOffset, bps: x.bps })) } : null;
+    p.teamSchedule = !a.teamBps ? null : a.even ? { cliffDays: a.even.cliffDays, intervalDays: a.even.intervalDays, count: a.even.count } : { tranches: a.schedule.map(x => ({ dayOffset: x.dayOffset, bps: x.bps })) };
     p.payoutWallet = a.payoutWallet.toBase58(); p.pendingPayoutWallet = a.pendingPayout ? a.pendingPayout.toBase58() : null; p.payoutEffectiveAt = a.pendingPayout ? t(a.payoutEffectiveAt) : null;
     p.targetUsd = Number(a.targetUsdCents) / 100; p.solUsdAtOpen = Number(a.solUsdCents) ? Number(a.solUsdCents) / 100 : p.solUsdAtOpen;
     p.teamClaimed = Number(a.teamClaimed.toString()) / 1e6; p.blacklisted = !!a.blacklisted;
@@ -136,7 +136,7 @@ var chain = {
     const q = r.pair_mint === SEED.pairMints.USDC ? 'USDC' : 'SOL', me = state.wallet && state.wallet.pk, pr = prof && prof.profile || {}, m = pr.model || {};
     const p = { id: r.id, address: r.address, live: true, name: r.name, ticker: r.ticker, q, target: Number(r.target), targetUsd: Number(r.target_usd), solUsdAtOpen: r.sol_usd_at_open ? Number(r.sol_usd_at_open) : SEED.demoSolUsd,
       raised: Number(r.raised), backers: r.backers, openedAt: Date.parse(r.opened_at), endsAt: Date.parse(r.ends_at), status: r.status, seedStep: r.seed_step, refundReason: r.refund_reason, filledAt: r.filled_at ? Date.parse(r.filled_at) : null, seededAt: r.seeded_at ? Date.parse(r.seeded_at) : null, resolvedAt: r.resolved_at ? Date.parse(r.resolved_at) : null,
-      feeBps: r.fee_bps, creatorShareBps: r.creator_share_bps, teamBps: r.team_bps, teamSchedule: r.team_schedule, roadmap: m.roadmap || [], tokenUseCase: m.tokenUseCase || 'none', xAccount: r.x_id ? (m.xAccount && m.xAccount.handle ? m.xAccount : { handle: String(r.x_id).replace(/^dev:/, ''), verified: !String(r.x_id).startsWith('dev:'), typed: String(r.x_id).startsWith('dev:'), createdAt: null, followers: null }) : { handle: '', verified: false, createdAt: null, followers: null }, pastRaises: [],
+      feeBps: r.fee_bps, creatorShareBps: r.creator_share_bps, teamBps: r.team_bps, teamSchedule: r.team_schedule, tokenUseCase: m.tokenUseCase || 'none', xAccount: r.x_id ? (m.xAccount && m.xAccount.handle ? m.xAccount : { handle: String(r.x_id).replace(/^dev:/, ''), verified: !String(r.x_id).startsWith('dev:'), typed: String(r.x_id).startsWith('dev:'), createdAt: null, followers: null }) : { handle: '', verified: false, createdAt: null, followers: null }, pastRaises: [],
       payoutWallet: r.payout_wallet, pendingPayoutWallet: r.pending_payout, payoutEffectiveAt: r.payout_effective_at ? Date.parse(r.payout_effective_at) : null, reports: [], blacklisted: r.blacklisted, flag: r.flag, takeover: r.takeover,
       mint: r.mint, pool: r.pool, position: r.position, fees: r.status === 'seeded' ? { volume: Number(r.fees_volume), founderClaimed: Number(r.fees_founder_claimed), seedClaimed: Number(r.fees_seed_claimed) } : undefined, teamClaimed: Number(r.team_claimed),
       founderWallet: r.founder, mine: !!me && r.founder === me, creator: r.founder, metadataUri: r.metadata_uri || '', hist: [], buys: [], profile: pr.profile || { description: '', links: {}, team: [], founder: { name: 'Founder', wallet: r.founder, pastLaunches: [] }, updates: [], chat: [] }, dayMs: m.dayMs || (this.cfg && this.cfg.testMode ? 60e3 : D) };   // a raise without a saved page record still keeps the config's unit
@@ -271,18 +271,20 @@ var chain = {
     await this.init(); const me = this.me(), att = await this.attestation();
     const nonce = Date.now(), raise = this.pda.raise(me, nonce), pairMint = this.pairMint(p), scale = this.cfg.testMode ? 1440 : 1;
     const deadline = Math.max(1, Math.round((p.endsAt - Date.now()) / 1000 / scale));
-    const schedule = p.teamBps ? tranchesOf(p.teamSchedule).map(t => ({ dayOffset: t.dayOffset, bps: t.bps })) : [];
+    // the schedule as the program takes it: an even schedule compact, custom dates as tranches, nothing without a team share
+    const even = p.teamBps && isEven(p.teamSchedule) ? { cliffDays: p.teamSchedule.cliffDays || 0, intervalDays: p.teamSchedule.intervalDays, count: p.teamSchedule.count } : null;
+    const schedule = p.teamBps && !even ? tranchesOf(p.teamSchedule).map(t => ({ dayOffset: t.dayOffset, bps: t.bps })) : [];
     if (!/^(https:\/\/|ar:\/\/)/.test(p.metadataUri || '')) throw new Error('The token metadata was not uploaded, so the raise cannot open.');
     const fs = await this.program.account.founderState.fetchNullable(this.pda.founderState(me));   // the wallet's last live raise, which must have ended
     const prevRaise = fs && !fs.liveRaise.equals(this.w.PublicKey.default) ? fs.liveRaise : null;
-    const ix = await this.program.methods.openRaise({ nonce: new this.lib.BN(nonce), name: p.name, ticker: p.ticker, target: this.units(p, p.target), deadline: new this.lib.BN(deadline), teamBps: p.teamBps, schedule, payoutWallet: this.pk(p.payoutWallet), x: att ? att.arg : null, uri: p.metadataUri || '' })
+    const ix = await this.program.methods.openRaise({ nonce: new this.lib.BN(nonce), name: p.name, ticker: p.ticker, target: this.units(p, p.target), deadline: new this.lib.BN(deadline), teamBps: p.teamBps, schedule, payoutWallet: this.pk(p.payoutWallet), x: att ? att.arg : null, uri: p.metadataUri || '', even })
       .accounts({ config: this.pda.config(), solFeed: this.pk(PROG.SOL_FEED), raise, founder: me, pairMint, escrow: this.ata(raise, pairMint), walletBlacklist: this.pda.blacklist(me), founderState: this.pda.founderState(me), prevRaise, raiseMeta: this.pda.raiseMeta(raise), instructions: this.pk(PROG.INSTRUCTIONS), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) })
       .remainingAccounts(att ? att.remaining : []).instruction();
     await this.send(att ? [att.ix, ix] : [ix]); if (this.dry) return;
     p.address = raise.toBase58(); p.live = true; p.id = `${p.ticker.toLowerCase()}-${p.address.slice(0, 8).toLowerCase()}`; p.founderWallet = state.wallet.pk; p.creator = state.wallet.pk;
     p.xAccount = att ? Object.assign({}, p.xAccount, { handle: att.handle, verified: !att.typed, typed: att.typed }) : { handle: '', verified: false, createdAt: null, followers: null };
     // the page's own words go beside the chain's facts; the founder's wallet signs them
-    const model = { roadmap: p.roadmap, tokenUseCase: p.tokenUseCase, xAccount: p.xAccount, dayMs: this.cfg.testMode ? 60e3 : D };
+    const model = { tokenUseCase: p.tokenUseCase, xAccount: p.xAccount, dayMs: this.cfg.testMode ? 60e3 : D };
     try { await supa.call('raise-profile', { address: p.address, profile: { profile: p.profile, model } }); this.profiles[p.address] = { address: p.address, founder: state.wallet.pk, profile: { profile: p.profile, model } }; } catch (e) { console.warn('profile not saved:', e.message); }
     await this.sync(p);
   },

@@ -1,7 +1,7 @@
 /* ==========================================================================
    LAUNCH FORM. Every field the project page shows: identity and media, the raise terms (pair, target under the cap, deadline,
-   the derived price), the team share and its unlock schedule with a live chart, the roadmap, what the token does, links, the
-   payout wallet, and a team list a founder can switch on. Founders sign in with X before opening. The side panel shows the
+   the derived price), an optional team allocation (its share and when it unlocks: at seeding, evenly over time, or on custom
+   dates), what the token does, links, the payout wallet, and a team list a founder can switch on. Founders sign in with X before opening. The side panel shows the
    card backers will see, the numbers the model derives from the draft, and the info panel, all from the same code the
    project page uses, so a founder sees their page before opening.
    Uploads go to Supabase Storage (signed upload URL from the Edge Function) when it is configured; until then they are a
@@ -11,19 +11,19 @@
    ========================================================================== */
 const lf = {
   team: [{ name: '', role: 'Founder', x: '', github: '', linkedin: '', wallet: '' }],
-  road: [{ title: '', due: '', status: 'planned', proof: '' }],
-  tr: [{ day: 90, pct: 50 }, { day: 180, pct: 50 }],   // dated tranches, when that schedule type is chosen
-  sched: 'every',                                        // 'every': a cliff then a slice every N days; 'tranches': dated tranches
+  tr: [{ day: 30, pct: 50 }, { day: 60, pct: 50 }],   // custom dates, when the founder opens that editor
+  sched: 'over',                                       // 'seeding': all at seeding; 'over': evenly every N days for a count, after an optional cliff; 'custom': dated tranches
   files: { banner: null, art: null, deck: null }, urls: { banner: '', art: '', deck: '' }, pos: { banner: [50, 50], art: [50, 50] }, descPv: false,
-  on: { team: false },   // the optional section; off until the founder switches it on
+  on: { alloc: false, team: false },   // the optional sections (the team allocation, the team list); off until the founder switches them on
   lim: { min: { on: false, unit: 'q' }, max: { on: false, unit: 'q' }, use: { on: false } }   // the buy limits and the token's use, off by default; limits in the pair asset or as a share of the supply
 };
 /* the team share and its schedule as the model reads them */
-const teamBpsNow = () => Math.round((numv($('#fTeam').value) || 0) * 100);
+const teamBpsNow = () => lf.on.alloc ? Math.round((numv($('#fTeam').value) || 0) * 100) : 0;   // the allocation off is 0% team
 function scheduleNow() {
   if (!teamBpsNow()) return null;
-  if (lf.sched === 'tranches') return { tranches: lf.tr.filter(t => t.day !== '' || t.pct !== '').map(t => ({ dayOffset: Math.round(numv(t.day) || 0), bps: Math.round((numv(t.pct) || 0) * 100) })) };
-  return { cliffDays: Math.max(0, Math.round(numv($('#fCliff').value) || 0)), intervalDays: Math.max(0, Math.round(numv($('#fEvery').value) || 0)), bpsPerInterval: Math.round((numv($('#fPer').value) || 0) * 100) };
+  if (lf.sched === 'seeding') return { tranches: [{ dayOffset: 0, bps: BPS }] };
+  if (lf.sched === 'custom') return { tranches: lf.tr.filter(t => t.day !== '' || t.pct !== '').map(t => ({ dayOffset: Math.round(numv(t.day) || 0), bps: Math.round((numv(t.pct) || 0) * 100) })) };
+  return { cliffDays: Math.max(0, Math.round(numv($('#fCliff').value) || 0)) * 30, intervalDays: +$('#fEvery').value || 30, count: Math.max(0, Math.round(numv($('#fCount').value) || 0)) };   // the cliff is in months of 30 days
 }
 /* a limit as an amount of the pair asset: a share of the supply is worth that many tokens at the raise price */
 function limitQ(which, d) {
@@ -65,27 +65,28 @@ const ROWS = {
       <label><span>Name</span><input data-k="name" value="${esc(r.name)}" maxlength="50"></label><label><span>Role</span><input data-k="role" value="${esc(r.role)}" maxlength="50"></label>
       <label><span>X</span><input data-k="x" value="${esc(r.x)}" placeholder="x.com/"></label><label><span>GitHub</span><input data-k="github" value="${esc(r.github)}" placeholder="github.com/"></label>
       <label><span>LinkedIn</span><input data-k="linkedin" value="${esc(r.linkedin)}" placeholder="linkedin.com/in/"></label><label><span>Wallet, optional</span><input data-k="wallet" class="num" value="${esc(r.wallet)}" spellcheck="false"></label>
-      <button type="button" class="x" data-del aria-label="Remove">&times;</button></div>` },
-  road: { box: '#roadRows', blank: () => ({ title: '', due: '', status: 'planned', proof: '' }), html: (r, i) => `<div class="row-ed road-row" data-i="${i}">
-      <label class="wide"><span>Milestone</span><input data-k="title" value="${esc(r.title)}" maxlength="80"></label><label><span>Due</span><input data-k="due" type="date" value="${esc(r.due)}"></label>
-      <label><span>Status</span><select data-k="status">${['planned', 'shipped'].map(k => `<option value="${k}"${r.status === k ? ' selected' : ''}>${k[0].toUpperCase() + k.slice(1)}</option>`).join('')}</select></label>
-      <label class="wide"><span>Proof link, for shipped</span><input data-k="proof" value="${esc(r.proof)}" placeholder="A link"></label>
       <button type="button" class="x" data-del aria-label="Remove">&times;</button></div>` }
 };
 function drawRows(kind) { const R = ROWS[kind]; $(R.box).innerHTML = lf[kind].map(R.html).join(''); }
-/* the split bar, the schedule's chart and its verdict follow the team share and the schedule fields */
+/* the split bar and the schedule's sentence follow the team share and the schedule controls */
 function drawSplit(dp) {
   const bps = teamBpsNow(), sp = splitOf(bps), pc = n => n / SEED.supply * 100, f = n => pc(n).toFixed(pc(n) % 1 ? 1 : 0) + '%';
   $('#splitBar').innerHTML = `<i class="s-b" style="width:${pc(sp.backers)}%"></i><i class="s-p" style="width:${pc(sp.pool)}%"></i><i class="s-t" style="width:${pc(sp.team)}%"></i>`;
   $('#splitLeg').innerHTML = `<span><i class="s-b"></i>Backers ${f(sp.backers)}</span><span><i class="s-p"></i>Pool ${f(sp.pool)}</span><span><i class="s-t"></i>Team ${f(sp.team)}</span>`;
   const wrap = $('#schedWrap'); wrap.classList.toggle('off', !bps);
   $$('[data-sched]', wrap).forEach(e => e.hidden = !bps || e.dataset.sched !== lf.sched);
-  const chart = $('#fUnlock'), note = $('#schedNote');
-  if (!bps) { chart.innerHTML = ''; note.className = 'sched-note'; note.textContent = 'No team tokens. Backers and the pool get 50% each.'; return; }
+  $$('#schedSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === lf.sched)));
+  $('#schedSeg').classList.toggle('none', lf.sched === 'custom');
+  $('#schedCustom').textContent = lf.sched === 'custom' ? 'Back to a simple schedule' : 'Custom dates';
+  const n = Math.max(0, Math.round(numv($('#fCount').value) || 0)), every = +$('#fEvery').value || 30, unit = every === 1 ? 'day' : every === 7 ? 'week' : 'month';
+  $('[data-unit]', wrap).textContent = `${unit}${n === 1 ? '' : 's'}`;
+  const note = $('#schedNote');
+  if (!bps) { note.className = 'sched-note'; note.textContent = lf.on.alloc ? 'A team share of 0% means no team tokens: backers and the pool get 50% each.' : ''; return; }
   const problem = scheduleProblem(dp.teamSchedule, bps);
-  if (lf.sched === 'tranches') { const sum = lf.tr.reduce((a, r) => a + (numv(r.pct) || 0), 0), ok = Math.abs(sum - 100) < 1e-6; $('#trSum').className = 'sum-meter ' + (ok ? 'ok' : 'bad'); $('#trSum').textContent = `${+sum.toFixed(2)}% of 100%`; }
-  chart.innerHTML = problem ? '' : unlockSVG(dp, Math.max(320, (Math.floor(wrap.clientWidth) || 664) - 24));   // the wrapper's width: the chart itself is hidden while empty
-  note.className = 'sched-note ' + (problem ? 'bad' : 'ok'); note.textContent = problem || `${fmtSchedule(dp.teamSchedule)}. ${fmtTok(sp.team)} tokens to the payout wallet over ${daysTxt(lastUnlockDay(dp.teamSchedule))}.`;
+  if (lf.sched === 'custom') { const sum = lf.tr.reduce((a, r) => a + (numv(r.pct) || 0), 0), ok = Math.abs(sum - 100) < 1e-6; $('#trSum').className = 'sum-meter ' + (ok ? 'ok' : 'bad'); $('#trSum').textContent = `${+sum.toFixed(2)}% of 100%`; }
+  const u = unlockState(dp), per = perUnlockText(dp.teamSchedule, bps);
+  note.className = 'sched-note ' + (problem ? 'bad' : 'ok');
+  note.textContent = problem || `${fmtSchedule(dp.teamSchedule)}${per ? `: ${per}` : ''}. ${fmtTok(sp.team)} tokens to the payout wallet${u.next ? `; first unlock ${u.next.dayOffset === 0 ? 'at seeding' : `${u.next.dayOffset === 1 ? 'a day' : daysTxt(u.next.dayOffset)} after seeding`}` : ''}.`;
 }
 
 /* ---------------------------------------------------------------- uploads with crop previews */
@@ -160,10 +161,9 @@ function draftProfile(d) {
     minBuy: limitQ('min', d), maxBuy: limitQ('max', d), minBuyPct: lf.lim.min.on && lf.lim.min.unit === 'pct' ? numv($('#fMin').value) || 0 : 0, maxBuyPct: lf.lim.max.on && lf.lim.max.unit === 'pct' ? numv($('#fMax').value) || 0 : 0,
     team, founder: { name: team[0] ? team[0].name : xl ? '@' + xl.handle : 'Founder', x: xl ? xUrl(xl.handle) : null, xAgeDays: null, wallet: founderWallet, pastLaunches: [] },
     deck: lf.urls.deck || null, deckKind: lf.files.deck ? deckInfo(lf.files.deck)[0] : null, deckName: lf.files.deck ? lf.files.deck.name : null, banner: lf.urls.banner || null, art: lf.urls.art || null, bannerPos: posTxt('banner'), artPos: posTxt('art'),
-    roadmap: [], updates: [], chat: [], watchers: 0
+    updates: [], chat: [], watchers: 0
   };
 }
-const draftRoadmap = () => lf.road.filter(r => r.title.trim()).map(r => ({ title: r.title.trim(), dueAt: r.due ? Date.parse(r.due) : Date.now(), status: r.status, proofUrl: fullUrl(r.proof) }));
 /* the X account the founder signed in with, as the raise keeps it; past raises are the ones this account opened on Seed */
 function draftX() {
   const l = xAdapter.of(); if (!l) return { handle: '', verified: false, createdAt: null, followers: 0 };
@@ -174,7 +174,7 @@ const payoutNow = () => $('#fPayout').value.trim() || (state.wallet && (state.wa
 /* the model's fields a draft and an opened raise share */
 function modelFields(d, da) {
   const x = draftX();
-  return { teamBps: teamBpsNow(), teamSchedule: scheduleNow(), roadmap: draftRoadmap(), tokenUseCase: lf.lim.use.on && $('#fUse').value.trim() ? $('#fUse').value.trim() : 'none', xAccount: x, pastRaises: pastRaisesOf(x.handle), reports: [], payoutWallet: payoutNow(),
+  return { teamBps: teamBpsNow(), teamSchedule: scheduleNow(), tokenUseCase: lf.lim.use.on && $('#fUse').value.trim() ? $('#fUse').value.trim() : 'none', xAccount: x, pastRaises: pastRaisesOf(x.handle), reports: [], payoutWallet: payoutNow(),
     targetUsd: d.target > 0 ? r6(usdNow({ q: da.key || 'SOL' }, d.target)) : 0, solUsdAtOpen: solUsdNow(), feeBps: SEED.feeBps, creatorShareBps: SEED.creatorShareBps };
 }
 function draftPresale() {
@@ -193,7 +193,7 @@ function validateFields() {
   else if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) err('#fTicker', `$${d.ticker} is in use by a live raise. Pick another.`);
   if (da.err) err('#fMint', da.err);
   if (isNaN(d.target) || d.target <= 0) err('#fTarget', `Set a target in ${da.a ? da.a.sym : 'the pair asset'}.`);
-  else if (da.a && d.target < minTargetIn(da.key) - 1e-9) err('#fTarget', `A raise asks for at least ${fmtC(minTargetIn(da.key), da.key)} ${da.a.sym}${da.key === 'USDC' ? ` (${minTargetSol()} SOL at today's price)` : ''}: that is where a pump.fun token migrates, so the smallest Seed pool opens there. Ask for more to open at a higher market cap.`);
+  else if (da.a && d.target < minTargetIn(da.key) - 1e-9) err('#fTarget', `A raise asks for at least ${fmtC(minTargetIn(da.key), da.key)} ${da.a.sym}${da.key === 'USDC' ? ` (${minTargetSol()} SOL at today's price)` : ''}: ${minTargetSol() === SEED.minTargetSol ? 'that is where a pump.fun token migrates, so the smallest Seed pool opens there. Ask for more to open at a higher market cap.' : 'the minimum this network\'s config was made with.'}`);
   else if (usdNow({ q: da.key }, d.target) > SEED.capUsd + 1e-6) err('#fTarget', `${fmtUsd(usdNow({ q: da.key }, d.target))}${da.key === 'USDC' ? '' : " at today's SOL price"}. A raise can ask for at most $${SEED.capUsd.toLocaleString('en-US')}.`);
   const mn = numv($('#fMin').value), mx = numv($('#fMax').value), L = lf.lim;
   if (L.min.on && !(mn > 0)) err('#fMin', 'Set the minimum buy, or switch it off.');
@@ -205,7 +205,7 @@ function validateFields() {
   const mnQ = limitQ('min', d), mxQ = limitQ('max', d);
   if (mnQ > 0 && mxQ > 0 && mnQ > mxQ) err('#fMax', 'The maximum per wallet is below the minimum buy.');
   const bps = teamBpsNow();
-  if ($('#fTeam').value && !(numv($('#fTeam').value) >= 0)) err('#fTeam', 'The team share must be a number.');
+  if (lf.on.alloc && !(numv($('#fTeam').value) >= 0)) err('#fTeam', 'The team share must be a number.');
   else if (!(bps >= 0 && bps < BPS)) err('#fTeam', 'From 0% to under 100%.');
   else if (bps) { const sp = scheduleProblem(scheduleNow(), bps); if (sp) err('#schedWrap', sp); }
   if (lf.lim.use.on && !$('#fUse').value.trim()) err('#fUse', 'Say what the token does, or switch it off.');
@@ -221,12 +221,6 @@ function validateFields() {
     if (!m.name.trim()) return err(`#teamRows .row-ed:nth-child(${i + 1})`, 'Every team member needs a name.');
     if (![m.x, m.github, m.linkedin].every(isUrl)) return err(`#teamRows .row-ed:nth-child(${i + 1})`, `${m.name}: one of the links does not look like a link.`);
     if (m.wallet.trim() && !B58.test(m.wallet.trim())) err(`#teamRows .row-ed:nth-child(${i + 1})`, `${m.name}: the wallet is not a Solana address.`);
-  });
-  lf.road.forEach((r, i) => {
-    if (!r.title.trim() && !r.due) return;
-    if (!r.title.trim()) return err(`#roadRows .row-ed:nth-child(${i + 1})`, 'Every milestone needs a title.');
-    if (!r.due) return err(`#roadRows .row-ed:nth-child(${i + 1})`, `${r.title}: add a due date.`);
-    if (r.proof && !isUrl(r.proof)) err(`#roadRows .row-ed:nth-child(${i + 1})`, `${r.title}: the proof link does not look like a link.`);
   });
   for (const sel of ['#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub']) if (!isUrl($(sel).value.trim())) err(sel, 'That does not look like a link.');
   return out;
@@ -292,7 +286,8 @@ function renderPreview() {
     ['Raise price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token, fixed` : 'Set a target'],
     ['FDV at the raise', ok ? `<span class="num">${f(fdvOf(dp))} ${sym}</span> (${fmtUsd(usdNow(dp, fdvOf(dp)))})` : 'Set a target'],
     ['Pool at seeding', ok ? `<span class="num">${f(d.target)} ${sym}</span> + <span class="num">${fmtTok(split.pool)}</span> $${esc(dp.ticker)}, locked for good` : 'The whole raise, locked for good'],
-    ['Pool depth', ok ? `<span class="num">${f(d.target)} ${sym}</span> each side at opening (${f(d.target * 2)} ${sym}, ${fmtUsd(usdNow(dp, d.target * 2))} in all). ${impactRow(dp, sym)}` : 'Set a target'],
+    ['Pool depth', ok ? `<span class="num">${f(d.target)} ${sym}</span> each side at opening (${f(d.target * 2)} ${sym}, ${fmtUsd(usdNow(dp, d.target * 2))} in all)` : 'Set a target'],
+    ['Team unlocks', split.team ? `${esc(fmtSchedule(dp.teamSchedule))}${perUnlockText(dp.teamSchedule, dp.teamBps) ? `: <span class="num">${esc(perUnlockText(dp.teamSchedule, dp.teamBps))}</span>` : ''}${unlockState(dp).next ? `; first unlock ${unlockState(dp).next.dayOffset === 0 ? 'at seeding' : (unlockState(dp).next.dayOffset === 1 ? 'a day' : daysTxt(unlockState(dp).next.dayOffset)) + ' after seeding'}` : ''}` : 'No team tokens'],
     ['Your fee income', `<span class="num">${fees(5000)}</span>, <span class="num">${fees(25000)}</span> or <span class="num">${fees(100000)}</span> a day at $5K, $25K or $100K of daily volume`],
     ['Closes', typeof chain !== 'undefined' && chain.cfg && chain.cfg.testMode ? `in ${String(Number((d.hours / 24).toFixed(1)))} min on devnet (test mode: a day is a minute), or the moment it fills` : `${fmtDate(Date.now() + d.hours * H)}, or the moment it fills`],
     ['If it misses', `Short of the target when the ${label} are up: every buy and its fee go back to backers, claimable at once. Nothing is minted`]
@@ -303,12 +298,6 @@ function renderPreview() {
   const fw = pr.founder.wallet;
   if (fw && isRealAddr(fw) && founderLooked !== fw) { founderLooked = fw; founderAdapter.refresh(dp).then(learned => { if (learned) renderPreview(); }); }
   $('#upNote').textContent = supa.configured() ? 'Uploads go to Seed’s storage when you open the raise.' : 'Uploads are previewed in this browser only until Supabase storage is configured.';
-}
-/* what a buy does to the price of a pool that just opened: a constant-product pool with the raise on one side moves by
-   (1 + in/raise)² − 1, so the chart's first candle is in the founder's hands to foresee */
-function impactRow(dp, sym) {
-  const x0 = dp.target, buys = dp.q === 'SOL' ? [1, 10, 100] : [100, 1000, 10000], part = b => { const m = Math.pow(1 + b * (1 - SEED.poolFeeBps / BPS) / x0, 2), pc = (m - 1) * 100; /* the fee stays out of the price */ return `<span class="num">${fmtC(b, dp.q)} ${sym}</span> <span class="num">${pc >= 1000 ? '×' + Math.round(m).toLocaleString('en-US') : '+' + (pc >= 10 ? Math.round(pc) : pc.toFixed(1)) + '%'}</span>`; };
-  return `A buy moves the price: ${buys.map(part).join(', ')}`;
 }
 function syncOpenBtn() { const b = $('#openBtn'); if (b && !b.disabled) b.textContent = !state.wallet ? 'Connect wallet to open' : 'Open raise'; }
 /* what the raise shows as the price, and the pool it opens: read-only, derived from the target and the team share */
@@ -352,7 +341,7 @@ async function openPresale() {
     if (supa.configured()) supa.call('register', { presaleId: p.id }).catch(() => {});
     state.presales.unshift(p); save();
     ['#fName', '#fTicker', '#fTarget', '#fMint', '#fDesc', '#fMin', '#fMax', '#fUse', '#fPayout', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
-    $('#fTeam').value = '0'; lf.road = [ROWS.road.blank()]; drawRows('road'); lf.lim.use = { on: false };
+    $('#fTeam').value = '10'; lf.sched = 'over'; lf.tr = [{ day: 30, pct: 50 }, { day: 60, pct: 50 }]; drawRows('tr'); if (lf.on.alloc) $('[data-toggle="alloc"]').click(); lf.lim.use = { on: false };
     if (!supa.configured()) lf.urls.deck = '';   // the page keeps showing the local deck, so its preview URL is not released
     lf.lim.min = { on: false, unit: 'q' }; lf.lim.max = { on: false, unit: 'q' }; syncLim();
     ['banner', 'art', 'deck'].forEach(k => { if (lf.files[k]) clearFile(k); }); renderPreview();   // the cleared form, in the preview too
@@ -400,6 +389,8 @@ function renderMine() {
   $('#descToggle').onclick = () => { lf.descPv = !lf.descPv; $('#descPv').hidden = !lf.descPv; $('#fDesc').hidden = lf.descPv; $('#descToggle').textContent = lf.descPv ? 'Edit' : 'Preview'; if (lf.descPv) $('#descPv').innerHTML = md($('#fDesc').value) || '<p class="quiet">Nothing to preview yet.</p>'; };
   $$('.drop').forEach(bindDrop);
   seg.sched = initSeg($('#schedSeg'), v => { lf.sched = v; $('#fErr').textContent = ''; renderPreview(); });
+  $('#schedCustom').onclick = () => { lf.sched = lf.sched === 'custom' ? 'over' : 'custom'; $('#fErr').textContent = ''; if (lf.sched === 'over') seg.sched.set('over'); renderPreview(); if (lf.sched === 'custom') { const first = $('#trRows input'); first && first.focus(); } };
+  $('#fEvery').addEventListener('change', () => renderPreview());
   $('#xGate').addEventListener('click', e => { if (e.target.closest('[data-gate-connect]')) connect(); else if (e.target.closest('[data-gate-x]')) openXDialog(); });
   /* the switches for the optional sections: one in the section's heading and one in the list beside the form */
   const syncOpt = () => Object.keys(lf.on).forEach(k => { const on = lf.on[k], fs = $(`fieldset[data-opt="${k}"]`, form);

@@ -19,15 +19,15 @@ Seeding
 
 Founder income
 - Pool fee 1.25% (Meteora's protocol keeps 20% of it, so 1% of volume reaches the locked position), split 70% to the founder payout wallet and 30% to Seed, snapshotted at seeding. Anyone can trigger a claim, and Seed auto-claims on a schedule.
-- Team tokens unlock on the founder's own schedule: an optional cliff then an amount per interval, or custom dated tranches. Last unlock at least 90 days after seeding, no maximum, fixed at seeding, paid to the payout wallet.
+- Team allocation is optional and off by default (0% team: backers and the pool split the supply). When on, the team share is anything from 0% up to (not including) 100%, and the team tokens unlock either all at seeding or on the founder's own schedule: evenly every day, week or month for N of them, after an optional cliff, or custom dated tranches. No minimum length, no maximum, no cap on a slice, no rate limit. The program checks only what matters: the slices add up to exactly 100% of the team share, the dates increase, and everything is fixed at seeding. Paid to the payout wallet.
 - Payout wallet changes wait 7 days and show on the raise page while pending.
 
 Identity and trust
 - A wallet is enough to launch. Linking X is optional and adds a Verified X badge with handle, age and followers. No KYC.
 - One live raise per wallet.
 - Anyone can file a report, and reports are public. Seed admins act only on fraud: blacklist the founder wallet, plus the X account if linked, and flag the page. Admins can also approve a community takeover, which moves the payout wallet.
-- Team share, unlock schedule, roadmap and token use case are always shown as plain information, never styled as warnings. Safety checks cover only on-chain facts: mint and freeze authority, LP lock, metadata immutability, holder concentration, fresh and bundled wallets.
-- The roadmap is dated milestones, shown but not enforced. The token use case is optional, with "None, this is a bet on the team" allowed.
+- Team share, unlock schedule and token use case are always shown as plain information, never styled as warnings: the schedule reads as one plain sentence plus the next unlock date, with no warning and no impact figure. Safety checks cover only on-chain facts: mint and freeze authority, LP lock, metadata immutability, holder concentration, fresh and bundled wallets.
+- There is no roadmap or milestones section. The token use case is optional, with "None, this is a bet on the team" allowed.
 - Launch form: no tagline field, no minimum text lengths, only name, ticker, target, deadline and pair required.
 
 Admin and program
