@@ -38,7 +38,7 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
   const treasury = Keypair.generate(), founder = Keypair.generate(), founderB = Keypair.generate(), founderC = Keypair.generate(), founderD = Keypair.generate();
   const backer1 = Keypair.generate(), backer2 = Keypair.generate(), trader = Keypair.generate();
   const t0 = Date.now();
-  log(`# Mainnet rehearsal, ${new Date().toISOString()}\n`);
+  log(`# Mainnet rehearsal, started ${new Date().toISOString()} (the end time is on the last line)\n`);
   log(`Local validator with mainnet's DAMM v2, Metaplex, Pyth SOL/USD and USDC cloned; Seed devnet build ${(idl as any).address}; time warped by test mode (a day = a minute).\n`);
 
   // SOL for everyone (the local faucet), and wrapped SOL for the backers and the trader
@@ -102,7 +102,7 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
   a = await c.fetchRaise(A); const pool = pda.dammPool(mint.publicKey, WSOL);
   check(a.pool.equals(pool) && Object.keys(a.seedStep)[0] === 'pooled', 'A: DAMM v2 pool opened (mainnet cp-amm program)', pool.toBase58());
   const vaultB = await getAccount(conn, pda.dammVault(WSOL, pool)), vaultA = await getAccount(conn, pda.dammVault(mint.publicKey, pool));
-  check(Number(vaultB.amount) >= Number(T) * 0.999999 && Number(vaultA.amount) >= 400_000_000_000_000 * 0.999999, 'A: the pool holds the whole raise and the 400M pool tokens', `${Number(vaultB.amount) / 1e9} SOL, ${Number(vaultA.amount) / 1e6} tokens`);
+  check(Number(vaultB.amount) >= Number(T) * 0.999999 && Number(vaultA.amount) >= 400_000_000_000_000 * 0.999999, 'A: the pool holds the whole raise and the 400M pool tokens, to within DAMM\'s deposit rounding', `${Number(vaultB.amount) / 1e9} SOL of ${Number(T) / 1e9} (${Number(T) - Number(vaultB.amount)} lamports stay in the raise\'s staging account, the pool\'s rounding), ${Number(vaultA.amount) / 1e6} tokens`);
   const nftAcc = await getAccount(conn, pda.dammPositionNftAccount(nft.publicKey), 'confirmed', TOKEN_2022_PROGRAM_ID); check(nftAcc.owner.equals(A) && nftAcc.amount === 1n, 'A: the position NFT is the raise PDA\'s');
   const treBefore = await wsolOf(treasury.publicKey);
   await c.send([await c.crankSeed(A, WSOL, treasury.publicKey)]);
@@ -136,7 +136,7 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
   const payBefore = await wsolOf(founder.publicKey), tre2Before = await wsolOf(treasury.publicKey);
   await c.send([await c.claimCreatorFees(A, { mint: mint.publicKey, pairMint: WSOL, pool, position: a.position, positionNftMint: nft.publicKey, payoutWallet: a.payoutWallet }, treasury.publicKey, me.publicKey)]);
   const toFounder = await wsolOf(founder.publicKey) - payBefore, toTreasury = await wsolOf(treasury.publicKey) - tre2Before, feeTotal = toFounder + toTreasury;
-  check(feeTotal > 0 && Math.abs(toFounder / feeTotal - 0.7) < 0.001, 'A: fee crank splits 70/30', `${feeTotal / 1e9} SOL of fees: founder ${toFounder / 1e9}, treasury ${toTreasury / 1e9} (volume ${(20 + 8 + sold / 1e9).toFixed(3)} SOL × 1.25% × 80%)`);
+  check(feeTotal > 0 && Math.abs(toFounder / feeTotal - 0.7) < 0.001, 'A: fee crank splits 70/30', `${feeTotal / 1e9} SOL of fees: founder ${toFounder / 1e9} (${(toFounder / feeTotal * 100).toFixed(2)}%), treasury ${toTreasury / 1e9} (${(toTreasury / feeTotal * 100).toFixed(2)}%); the pool's 1.25% on each swap's quote side, less Meteora's 20%`);
 
   // B is cancelled: both backers get back exactly what they paid, fee included
   const b1 = await wsolOf(backer1.publicKey), b2 = await wsolOf(backer2.publicKey);
@@ -185,7 +185,7 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
     try { await c.send([await c.claimVested(A, mint.publicKey, takeoverTo, me.publicKey)]); check(false, 'A: nothing left after the last unlock'); } catch (e: any) { check(/NothingToClaim/.test(e.message), 'A: nothing left after the last unlock'); }
   }
 
-  log(`\n${fails ? `${fails} FAILED` : 'ALL PASSED'} · ${((Date.now() - t0) / 60_000).toFixed(1)} minutes · pool ${pool.toBase58()} · mint ${mint.publicKey.toBase58()}`);
+  log(`\n${fails ? `${fails} FAILED` : 'ALL PASSED'} · ${lines.filter(l => l.startsWith('PASS')).length} checks · ${((Date.now() - t0) / 60_000).toFixed(1)} minutes · ended ${new Date().toISOString()} · pool ${pool.toBase58()} · mint ${mint.publicKey.toBase58()}`);
   const file = `scripts/rehearsal/report-${new Date().toISOString().slice(0, 10)}.md`; writeFileSync(file, lines.join('\n') + '\n'); console.log('written', file);
   process.exit(fails ? 1 : 0);
 })().catch(e => { log(`ABORTED  ${e.message}`); writeFileSync(`scripts/rehearsal/report-${new Date().toISOString().slice(0, 10)}.md`, lines.join('\n') + '\n'); process.exit(1); });
