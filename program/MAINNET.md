@@ -10,7 +10,7 @@ does it), and the devnet build of Seed loaded under its id. The devnet USDC mint
 config can be made in **test mode, where a day is a minute**: that is the warped time. Every other term is production's:
 the four presets, 1% buy fee, 125 bps pool, 70/30, no minimum unlock, 7-day payout delay, 3-day timeout.
 
-`scripts/rehearsal/lifecycle.ts` then runs four raises at once (re-run it under the presets before stage 2; the 2026-10-20 report is from the 81 SOL rules) and writes `scripts/rehearsal/report-<date>.md`:
+`scripts/rehearsal/lifecycle.ts` then runs four raises at once and writes `scripts/rehearsal/report-<date>.md`:
 
 | raise | what it proves |
 |---|---|
@@ -19,7 +19,8 @@ the four presets, 1% buy fee, 125 bps pool, 70/30, no minimum unlock, 7-day payo
 | C, $50,000, filled and never seeded | `timeout_refund` refused before the 3-day timeout, refunds after it |
 | D, $50,000, one-day deadline, one buy | `settle` marks it missed after the deadline; the refund is exact |
 
-Takes about 100 minutes, almost all of it the 90-minute cliff (`--fast` skips that one wait). **Not covered:** a burn of
+Takes about 90 minutes, almost all of it the 90-minute cliff (`--fast` skips that one wait). Last run 2026-10-20 under the
+presets: 34 checks, all passed (SOL at $106.92 from the cloned feed; A's $40,000 raise was 374.11 SOL). **Not covered:** a burn of
 unvested team tokens on a takeover — no such instruction exists; the schedule keeps unlocking to the new payout wallet.
 That policy is open (Needs Josh).
 
