@@ -7,18 +7,24 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { CUTS, FORMATS, FPS } from '../src/story.mjs';
+import { CUTS, FADE, FORMATS, FPS } from '../src/story.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const proj = path.resolve(here, '..');
 const P = (...a) => path.join(proj, ...a);
 fs.mkdirSync(P('out/stills'), { recursive: true });
 
-/* the moment each scene is shown at: its state once its motion has settled */
-const STILLS = {
-  master: [['Logo sting', 1.9], ['Title card', 3.6], ['A founder sets', 5.26], ['Launch form', 6.66], ['You buy in', 9.06], ['Raise filling', 10.86], ['Target met', 13.66], ['Seeding', 15.16], ['The pool', 16.36], ['If it misses', 18.22], ['Countdown', 19.32], ['Refunded', 20.72], ['Seeded in full', 22.9], ['End card', 26.0]],
-  teaser: [['Logo sting', 1.9], ['Title card', 3.6], ['Raise filling', 5.9], ['Filled', 8.2], ['Seeded in full', 10.2], ['End card', 13.5]]
-};
+/* the moment each scene is shown at, read off the story: its state once its motion has settled, just before it leaves */
+const NAME = { title: 'Title card', pmf: 'Product-market fit', presetline: 'Market cap presets', presets: 'Presets', target: 'Target, deadline', launch: 'Launch form', buy: 'Buy with', met: 'Raises seed', misses: 'If it misses' };
+const leaves = s => { const a = (s.cam || []).find(k => k.away); return +((a ? a.t : s.out) - 0.25).toFixed(2); };
+const stillsOf = c => c.scenes.flatMap(s =>
+  s.kind === 'sting' ? [['Logo sting', 1.9]]
+  : s.kind === 'close' ? [['Seeded in full', +(s.lineOut - 0.3).toFixed(2)], ['End card', +(s.end - FADE.out - 0.3).toFixed(2)]]
+  : s.id === 'fill' ? [['Raise filling', +(s.buys[Math.floor(s.buys.length / 2)] + 0.3).toFixed(2)], ['Filled', leaves(s)]]
+  : s.id === 'seeding' ? [['Seeded', +(s.seeded + 0.45).toFixed(2)], ['The pool', leaves(s)]]
+  : s.kind === 'refund' ? [['Countdown', +(s.ticks[1] - 0.05).toFixed(2)], ['Refunded', leaves(s)]]
+  : [[NAME[s.id] || s.id, leaves(s)]]);
+const STILLS = Object.fromEntries(Object.entries(CUTS).map(([k, c]) => [k, stillsOf(c)]));
 
 const shots = {};
 for (const cut of Object.keys(CUTS)) for (const fk of Object.keys(FORMATS)) {

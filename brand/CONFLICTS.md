@@ -5,23 +5,19 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
 
 ## Figures
 
-1. **Minimum target: 81 SOL or $2,000.** The launch video brief says the decision was $2,000. The code enforces **81
-   SOL**: at `a218c97` as `MIN_TARGET_LAMPORTS = 81_000_000_000` in `program/programs/seed/src/state.rs`, checked in
-   `open_raise` (`UnderFloor`; a USDC raise must meet the same dollars at the SOL price). Commit `6d687c6` (2026-10-19)
-   moved it into the Config (`min_target_lamports`, set once at `init_config`, refused as `TargetBelowMinimum`), with 81
-   SOL in the production profile of `program/scripts/check-deploy.ts` and 0.1 SOL on devnet. The site agrees:
-   `minTargetSol: 81` in `js/config/seed.js`, the Launch form's hint "at least 81 SOL, at most $100,000", and LOOP.md
-   ("at least 81 SOL or its worth in USDC"). The devnet test floor was 0.05 SOL at `a218c97`
-   (`TEST_MIN_TARGET_LAMPORTS`) and is 0.1 SOL from `6d687c6`. History: PROGRESS.md listed "minimum raise target
-   ≈$2,000" as an open decision, then commit `ef86848` set "The minimum raise is 81 SOL (Josh)". The brand book agrees
-   with the code. **The video uses 81 SOL** (variable `minTarget`, shown in the launch card's hint). A $2,000 floor
-   would need a program change and an upgrade on devnet; then re-render with `--variables '{"minTarget":"$2,000"}'` or
-   rerun `tools/build.mjs`, which rereads the program. On devnet the site's Launch form, connected to the chain, reads
-   its floor from the Config (`minTargetSol()` in `js/model.js`: 0.1 SOL from
-   `initConfig`); the film's pages are the site's demo mode, which shows `SEED.minTargetSol`, the production 81 SOL.
+1. **Raise sizing: presets, not a minimum target.** The launch video brief says the minimum target was decided at
+   $2,000; the code later enforced 81 SOL. Since `10e9d7a` (2026-10-20, merged into this branch 2026-10-21) neither
+   exists: the founder picks an opening market cap from the Config's four presets (`preset_caps_cents`, set once at
+   `init_config`: $50K, $100K, $150K, $200K in the production profile of `program/scripts/check-deploy.ts` and in
+   `PRESET_CAPS_CENTS`, `program/client/seed.ts`), and `open_raise` derives the raise, cap × (1 − team share) ÷ 2, in
+   the pair asset at the Pyth price; the presets are the floor and the ceiling, so there is no minimum and no $100,000
+   cap. The site (`presetCapsUsd` in `js/config/seed.js`, `targetForCap` in `js/model.js`) and LOOP.md agree. The video
+   follows the code: its founder picks the $50K preset with no team share, so its raise is $25,000, 168.69 SOL at the
+   site's demo SOL price ($148.2), and its pool opens at a $50K market cap (variables `presets` and `raiseRule`). The
+   brand book's copy still speaks of a target and "Back the idea, at one fixed price."; the raise price is still fixed.
 2. Every other figure agrees across the program, `program/tests/seed.ts` (the devnet `initConfig`), `js/config/seed.js`
-   and LOOP.md: fee 1% on top, maximum target $100,000, deadline 24 hours to 14 days, supply 1,000,000,000, pool fee
-   1.25% split 70/30, refund 100% (`claim_refund` pays amount + fee), 4 seeding steps, 3-day seeding timeout.
+   and LOOP.md: fee 1% on top, deadline 24 hours to 14 days, supply 1,000,000,000, pool fee 1.25% split 70/30, refund
+   100% (`claim_refund` pays amount + fee), 4 seeding steps, 3-day seeding timeout.
    `brand/launch-video/tools/read-figures.mjs` checks this on every build and fails on a mismatch.
 3. **The last team unlock: at least 90 days, or no minimum.** The brand book's terms table still says "Last unlock
    ≥ 90 days". Since `fc15d6c` (2026-10-20, "Team restrictions scrapped") there is no minimum: LOOP.md says "No minimum
@@ -55,22 +51,24 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     (`css/delta.css`) to more than the chosen segment: the current seeding step's number, the Launch form's section
     numbers (`nav.steps .num`, 01 to 06), the icon rail's current item (`.rail-nav .rn[aria-current]`, which also takes
     `--glow-sm`) and the deposit and trade boxes' pair chip ("SOL", `.rail-card .inp .suf`); and the raise chart's area
-    is a `#5B8CFF` fade. A focused field's ring carries `--glow-sm` too (`.inp:focus-within`, `css/delta.css`), as the
-    Launch form's Target has while it is typed. The video shows them as the site draws them.
+    is a `#5B8CFF` fade. A focused field's ring carries `--glow-sm` too (`.inp:focus-within`, `css/delta.css`); no field
+    is focused in the film. The video shows them as the site draws them.
 11. **Figures and tickers the site sets in sans.** The site sets in IBM Plex Mono its figure cells (`.num`: the raised
     figure and its odometer, the stats, prices, the pool's figures, addresses, countdowns) and everything else in
     Instrument Sans, figures and tickers included, wherever they sit in a control, a chip, a label or a sentence. On the
     pages the film shows (every beat, scanned in all three formats) those are: the Launch form's pair segment ("SOL",
-    "USDC") and deadline segment ("24h", "3 days", "7 days", "14 days"); the chips and pills "SOL pair", "Pairs with
+    "USDC"), opening market cap segment ("$50K", "$100K", "$150K", "$200K") and deadline segment ("24h", "3 days",
+    "7 days", "14 days"); the chips and pills "SOL pair", "Pairs with
     SOL", "1 of 4 steps" and "1 warning", and the unit in the app bar's chips and the deposit box ("SOL"); the titles
     and labels "Deposit into $HALF", "Seeding $HALF", "Trade $HALF", "Top 10 backers", "24h volume", "Founder's 70%",
     the pool card's pair ("HALF/SOL", a `dd` without `.num`), the chart legend "Buys per 6 hours", the filled card's
     "Filled 1m ago" and backers count ("214 backers") and "Deadline passed Oct 24, 3:36 PM"; the Launch form's hints
-    (the target's "at least 81 SOL, at most $100,000, at the SOL price when it opens", "$1,185.6 at $148.2 per SOL,
-    under the 81 SOL minimum" while it is typed and "$12.6K at $148.2 per SOL"; the uploads' "1500 × 500 px", "1:1,
-    square" and "10 MB at most"; the ticker check's "top-500 Solana token"; the team and payout notes) and its "What
-    backers pay" rows (`#derivedRows`: "500,000,000 tokens", "($25.19K)", "each side at opening (170 SOL, $25.19K in
-    all)", "Oct 20, 3:36 PM, or the moment it fills", "a day at $5K, $25K or $100K of daily volume"); and every line of
+    (the opening market cap's "at $148.2 per SOL today; fixed at the Pyth price when the raise opens"; the uploads'
+    "1500 × 500 px", "1:1, square" and "10 MB at most"; the ticker check's "top-500 Solana token"; the team and payout
+    notes, "1B" and "7 days" among them; the intro's "The supply is 1B") and its preview and "What backers pay" rows
+    (`#pvFacts`, `#derivedRows`: "the raise is $50K × 100% ÷ 2 =", "500,000,000 tokens", "($50K)", "each side at
+    opening (337.38 SOL, $50K in all)", "Oct 24, 3:36 PM, or the moment it fills", "when the 7 days are up", "a day at
+    $5K, $25K or $100K of daily volume"); the app bar's chips ("1", "$232.69K", "$148.2"); and every line of
     running text that carries a figure: the pace line (`.pp-pace`), the filled and refunded raises' notes (`.pp-note`,
     "by Oct 26, 10:01 AM", "the 1% fee included"), the seeding card's note, the Creator fees text ("70% … 30% …") and
     the About text ("Stake SOL once…"). The video shows the site's pages as the site draws them; the film's own tickers, in the text frames ("SOL or USDC"), are in IBM Plex Mono.
@@ -114,8 +112,8 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
 19. **Text frames, not captions.** The book's caption spec (Sans 500 on a `--bar` pill, the lower third kept clear) is
     not used: at the user's direction (2026-10-20) each line of the script is a full-screen frame of its own, between
     the pages, not a pill over them. A line is Sans 500 at one size per format (128px in 16:9, 100px in 9:16, 86px in
-    1:1, at the camera's scale 1, a little smaller where a phrase is wider than the safe width), wrapped with balanced lines inside the safe zone, its clauses one to a block ("If the
-    target is met, / the raise seeds as a tradeable token."). The SRTs carry every line as it is on screen.
+    1:1, at the camera's scale 1, a little smaller where a phrase is wider than the safe width), wrapped with balanced lines inside the safe zone, its clauses one to a block ("If it
+    misses, / every wallet gets back exactly what it paid."). The SRTs carry every line as it is on screen.
 20. **The seeding note** is the site's own, dated on the raise's clock ("by Oct 26, 10:01 AM").
 21. **No numbers strip.** The 30-second cut has no room for the strip (1% on top, 1,000,000,000 supply, 100% refund,
     locked for good). The figures stay composition variables, and the pages carry them as the site draws them: the 1%
@@ -131,18 +129,20 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     the same way. The one exception is the film's own fade to black at its very end, which takes the end card down
     with the whole frame (42).
 25. **The pages are the site's own, at each beat.** `tools/capture-pages.mjs` runs `index.html` on its demo data and
-    keeps the DOM the site draws: the Launch form as it is typed into, the raise page after each of eight waves of buys,
-    each seeding step, seeded, and the other ending at 62% with three seconds left, then refunded. The film's raise is
-    the demo raise Halfmoon set to 85 SOL, 7 days and 214 backers (`src/raise.json`); the refund ending stops at 52.70
-    SOL and 122 backers. The founder is the demo wallet (7xKp…9fQa): it fills the Launch form connected, and the raise
+    keeps the DOM the site draws: the Launch form as it opens and as its presets and deadline are pressed, the raise page
+    after each of eight waves of buys, each seeding step, seeded, and the other ending at 62% with three seconds left,
+    then refunded. The film's raise is the demo raise Halfmoon set to the $50K preset (168.69 SOL, the site's own
+    derivation, which the capture checks against the page), 7 days and 214 backers (`src/raise.json`); the refund ending
+    stops at 104.59 SOL and 122 backers. The founder is the demo wallet (7xKp…9fQa): it fills the Launch form connected, and the raise
     page it opens names it as founder and payout wallet with no X linked, as the form had it. The raise page is shown as
     any visitor sees it, with no wallet connected (a founder's own view adds founder controls). While the form is filled
     the demo raise Halfmoon is held out of the site's list, so the ticker check has no live $HALF to clash with. The
     site's own demo mode is held still (no simulated buys, no demo crank), its clock is fixed, and outside requests are
-    refused, so the pages show the site's figures (81 SOL minimum, the $148.2 demo SOL price) and repeat exactly.
+    refused, so the pages show the site's figures (the presets, the $148.2 demo SOL price) and repeat exactly. With no
+    chain the site prices at its demo SOL price (`liveSolUsd`), as its demo mode does.
 26. **A faster clock.** Each wave of buys lands hours later in the raise's time, so it fills at 82.4% of its window, and the refund countdown shows its last second, reaching zero as the page turns refunded (the capture has three
-    left; the film's odometer shows the last one). The raise page opens two waves in, and its last six waves land .4s apart. The Launch form's "Confirm in
-    wallet…" holds .3s of the site's 1s before the form whips away; each seeding step's "Running…" holds the site's 700ms.
+    left; the film's odometer shows the last one). The raise page opens two waves in, and its last six waves land .4s apart (.35s in the teaser, all eight). The Launch form's "Confirm in
+    wallet…" holds about .7s of the site's 1s before the form whips away; each seeding step's "Running…" holds the site's 700ms.
     The site's buy chip (`floatChip`) floats one buy; a wave is many buys, so the film shows no chips, and the odometer
     rolls the raised figure, the percentage and the backers count at each wave as `patchDetail` rolls them. The refunded
     page's "Refunds claimed", plain text on the site that changes when the page is drawn again, rolls on the same
@@ -165,15 +165,17 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     deposit panel's "Simulated on the demo wallet. No transaction is sent.", and the app's own 21-dot mark in its icon
     rail (34px at the full-page views in 16:9 and 1:1, under the book's 40px for 21 dots; it is the site's rail as
     drawn).
-31. **The script** is "Thirty seconds, spoken", one line a frame, as the user rewrote it (2026-10-21): the title is
-    "Start an idea, / fund it on-chain." in place of "Seed asks you to back an idea at one fixed price." (the hero's
-    "Back the idea, at one fixed price."), and nothing comes before it ("Most launches ask you to trust a founder with
-    your money." is cut); the met line is "If the target is met, the raise seeds as a tradeable token." in place of
-    "…the whole raise opens a Meteora pool, locked for good."; the miss line ends "…exactly what it paid." without
-    "fee included." The pages still show both: the seeded page's pool line says "liquidity locked for good" and the
-    refunded note "the 1% fee included", as the site draws them. "and your tokens are yours the same day", "Nothing is
-    minted, nothing is held back." and "That is Seed." are left out (the end card's wordmark says the last). The master
-    is 27.4s.
+31. **The script** is "Thirty seconds, spoken", one line a frame, as the user rewrote it (2026-10-21): "Start an idea, /
+    fund it on-chain." (in place of "Seed asks you to back an idea at one fixed price."), "Find product-market fit",
+    "Market cap presets", "Set a target and deadline", "Buy with SOL or USDC", "Raises seed as tradeable tokens", "If it
+    misses, every wallet gets back exactly what it paid." and "Seeded in full, or refunded in full." The book's "Most
+    launches…", "locked for good." and "fee included." frames are cut (the pages still say "liquidity locked for good"
+    and "the 1% fee included" where the site draws them), and so are "and your tokens are yours the same day", "Nothing
+    is minted, nothing is held back." and "That is Seed." (the end card's wordmark says the last). Six of the lines are
+    the user's short phrases, not the book's full sentences, and carry no full stop, as the user wrote them; "Market
+    cap" and "product-market" are spelled as the book's vocabulary and common usage have them (the user's message wrote
+    "Marketcap" and "product market"). "Set a target and deadline" follows the presets shot: the target is the one the
+    preset derived, which the raise line shows beside the deadline. The master is 36.4s.
 32. **The camera.** The film flies one camera over the pages and its own type, after the Axiom films in
     `delta/01-video-hyperframes/_motion-refs/` (the motion only; the README maps each move). The book has no camera, so
     these are the video's own choices, kept inside its rules: every move eases on the one curve, panels tilt (up to 11°)
@@ -193,13 +195,15 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     closer than the box allows, and the camera goes past the box only where it pushes through a button, a figure or a
     line of type on its way out of a scene. The rest of the page runs to the frame's edge, out of focus. Where the box
     and the page disagree (the seeding card at the page's right edge in 16:9), the page wins and the card sits off
-    centre rather than show the page's edge.
+    centre rather than show the page's edge. In 9:16 the Launch form's raise line is a column wide, wider than the focus
+    box at the closest the page can be shown while it fills the screen, so it runs past the box at both ends; the
+    line's figures ("$50K", "168.69 SOL ($25K)") stay inside the safe zone.
 35. **Software rendering.** Chrome's software compositor clips a frosted panel's blur to its untilted box under a 3D
     transform. HyperFrames renders on the GPU here, where the glass is whole as long as no ancestor of a panel is
     masked; a `--no-browser-gpu` render would not be.
 36. **Frame rate and length.** The brief asks for a master of about 55s at 30fps. At the user's direction (2026-10-20)
-    the master was cut to 30s, the length of the book's script, and every cut renders at 60fps; with three lines cut
-    (2026-10-21, 31) it is 27.4s. Motion blur is measured over a
+    the master was cut to 30s, the length of the book's script, and every cut renders at 60fps. On 2026-10-21 the user
+    cut three lines, then asked for the pace slowed slightly and two more frames (31): it is 36.4s, the teaser 15s. Motion blur is measured over a
     thirtieth of a second, so it is the length it was at 30fps. The teaser stays 15s.
 37. **The odometer's digits** sit on the baseline in the film (`.rd` as an inline flex box). On the site its
     inline-block with `overflow:hidden` takes its bottom edge as its baseline, so the digits ride above the signs beside

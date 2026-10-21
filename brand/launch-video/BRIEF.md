@@ -6,7 +6,7 @@ message: "Seeded in full, or refunded in full."
 destination: youtube
 aspect: 1920x1080
 language: en
-length: 27s
+length: 36s
 angle: product
 ---
 
@@ -35,6 +35,9 @@ case is listed in `brand/CONFLICTS.md`.
   on-chain."; "Most launches ask you to trust a founder with your money." cut; the met line "If the target is met, the
   raise seeds as a tradeable token."; "locked for good." and "fee included." cut; no corner mark; the film fades in and
   out; digital sound effects, then, the same day, no sound effects after all. CONFLICTS 31, 41 and 42.
+- 2026-10-21, later, from the user: the pace slowed slightly; the lines "Set a target and deadline", "Buy with SOL or
+  USDC" and "Raises seed as tradeable tokens"; two new frames, "Market cap presets" and "Find product-market fit"
+  (after the title); the Launch beat rebuilt on final-model's opening market cap presets (merged in). CONFLICTS 1, 31.
 - A 15s teaser per format: sting, fill, "Seeded in full, or refunded in full", end card.
 - Every figure, the URL and the network line are composition variables, read from the program config and LOOP.md.
   (2026-10-20: at the user's direction the end card is the mark and the wordmark alone, so the URL and the network line

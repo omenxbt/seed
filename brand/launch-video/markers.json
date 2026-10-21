@@ -3,8 +3,8 @@
   "note": "Beat points for scoring. Times are from the start of each cut and are the same in every format.",
   "cuts": {
     "master": {
-      "duration": 27.4,
-      "frames": 1644,
+      "duration": 36.38,
+      "frames": 2183,
       "markers": [
         {
           "name": "sting hit",
@@ -14,32 +14,32 @@
         },
         {
           "name": "fill complete",
-          "t": 11.96,
-          "frame": 718,
+          "t": 19.74,
+          "frame": 1184,
           "what": "the last wave of buys fills the target"
         },
         {
           "name": "seeded",
-          "t": 15.49,
-          "frame": 929,
+          "t": 23.7,
+          "frame": 1422,
           "what": "the last seeding step lands and the page turns seeded"
         },
         {
           "name": "refunded",
-          "t": 19.77,
-          "frame": 1186,
+          "t": 28.5,
+          "frame": 1710,
           "what": "the deadline passes and the raise turns refunded"
         },
         {
           "name": "end card",
-          "t": 23.57,
-          "frame": 1414,
+          "t": 32.68,
+          "frame": 1961,
           "what": "the mark builds, then the wordmark"
         },
         {
           "name": "fade out",
-          "t": 26.5,
-          "frame": 1590,
+          "t": 35.48,
+          "frame": 2129,
           "what": "the picture and the sound go down to black"
         }
       ]
@@ -56,14 +56,14 @@
         },
         {
           "name": "fill complete",
-          "t": 7.5,
-          "frame": 450,
+          "t": 7.88,
+          "frame": 473,
           "what": "the last wave of buys fills the target"
         },
         {
           "name": "end card",
-          "t": 10.9,
-          "frame": 654,
+          "t": 11.51,
+          "frame": 691,
           "what": "the mark builds, then the wordmark"
         },
         {

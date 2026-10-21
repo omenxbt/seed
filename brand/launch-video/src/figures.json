@@ -2,8 +2,8 @@
   "figures": {
     "fee": "1%",
     "feeLabel": "on top",
-    "minTarget": "81 SOL",
-    "maxTarget": "$100,000",
+    "presets": "$50K, $100K, $150K, $200K",
+    "raiseRule": "cap × (1 − team share) ÷ 2",
     "deadlineMin": "24 hours",
     "deadlineMax": "14 days",
     "supply": "1,000,000,000",
@@ -23,11 +23,15 @@
   ],
   "program": {
     "supply": 1000000000,
-    "minTargetSol": 81,
+    "presetsUsd": [
+      50000,
+      100000,
+      150000,
+      200000
+    ],
     "feeBps": 100,
     "creatorShareBps": 7000,
     "poolFeeBps": 125,
-    "capUsd": 100000,
     "minDeadlineH": 24,
     "maxDeadlineH": 336,
     "seedTimeoutDays": 3,

@@ -7,10 +7,10 @@
      raise page after each buy, while seeding, seeded, at 62% with seconds left, refunded), with every hidden element
      dropped and input values and scroll positions kept;
    - site/pages/pages.json: per state, the scroll positions and the document height.
-   The film's raise is the demo raise Halfmoon set to the film's terms (an 85 SOL target, 7 days, 214 backers), drawn by
-   renderDetail(); the clock is fixed (the raise opens 2026-10-17 15:36 UTC) and every request off this machine is refused,
-   so the site runs on its demo data and its own figures (81 SOL minimum, the demo SOL price), and two runs write the same
-   files. Usage: node tools/capture-pages.mjs [16x9 9x16 1x1] */
+   The film's raise is the demo raise Halfmoon set to the film's terms (the $50K opening market cap preset, no team share,
+   so a $25,000 raise in SOL at the demo SOL price; 7 days, 214 backers), drawn by renderDetail(); the clock is fixed (the
+   raise opens 2026-10-17 15:36 UTC) and every request off this machine is refused, so the site runs on its demo data and
+   its own figures (the presets, the demo SOL price), and two runs write the same files. Usage: node tools/capture-pages.mjs [16x9 9x16 1x1] */
 import fs from 'node:fs';
 import http from 'node:http';
 import os from 'node:os';
@@ -22,6 +22,11 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const proj = path.resolve(here, '..');
 const repo = path.resolve(proj, '../..');
 const story = JSON.parse(fs.readFileSync(path.join(proj, 'src/raise.json'), 'utf8'));
+/* the raise its preset derives, as the site does it (js/model.js targetForCap): cap × (1 − team share) ÷ 2 in dollars, in
+   SOL at the demo price, floored to the lamport; checked against the page's own figure once the site is loaded */
+const demoSolUsd = Number(fs.readFileSync(path.join(repo, 'js/config/seed.js'), 'utf8').match(/demoSolUsd: ([\d.]+)/)[1]);
+story.targetUsd = story.cap * (10000 - story.teamBps) / 10000 / 2;
+story.target = Math.floor(story.targetUsd / demoSolUsd * 1e9) / 1e9;
 
 const WINDOWS = { '16x9': [1920, 1080], '1x1': [1080, 1080], '9x16': [540, 960] };
 const only = process.argv.slice(2).filter(a => WINDOWS[a]);
@@ -157,7 +162,7 @@ function setRaise(o) {
   const me = '7xKpHm3vQ8sYc2RkT9bW4nJdLz6uFgE5aXq1PrNt9fQa';
   pr.founder = Object.assign({}, pr.founder, { name: 'Founder', x: null, xAgeDays: null, wallet: me, pastLaunches: [] });
   Object.assign(x, { xAccount: null, creator: me, payoutWallet: me, pendingPayoutWallet: null, payoutEffectiveAt: null, pastRaises: [] });
-  Object.assign(x, { target: o.target, targetUsd: o.target * SEED.demoSolUsd, solUsdAtOpen: SEED.demoSolUsd, q: 'SOL', openedAt: o.t0, endsAt: o.t0 + o.window, raised: o.raised, backers: o.backers, buys: o.buys, hist: o.hist, status: o.status, teamBps: 0 });
+  Object.assign(x, { target: o.target, targetUsd: o.targetUsd, capUsd: o.cap, preset: presetIndex(o.cap), solUsdAtOpen: SEED.demoSolUsd, q: 'SOL', openedAt: o.t0, endsAt: o.t0 + o.window, raised: o.raised, backers: o.backers, buys: o.buys, hist: o.hist, status: o.status, teamBps: o.teamBps });
   for (const k of ['filledAt', 'resolvedAt', 'seedStep', 'refundReason', 'crankAt']) delete x[k];
   if (o.filledAt) x.filledAt = o.filledAt;
   if (o.resolvedAt) x.resolvedAt = o.resolvedAt;
@@ -192,13 +197,14 @@ function wave(i) {   // the buys of waves 0..i, and the history the chart draws
 }
 function beats(fk) {
   const B = [];
-  /* the Launch form: the project named, the Raise section in view, the target typed a digit at a time, the deadline picked */
-  B.push({ name: 'launch-0', page: '#/launch', wallet: true, now: R.t0, launch: { name: R.name, ticker: R.ticker, target: '', deadline: null } });
-  B.push({ name: 'launch-1', page: '#/launch', wallet: true, now: R.t0, focus: '#fTarget', launch: { name: R.name, ticker: R.ticker, target: String(R.target).slice(0, 1), deadline: null } });
-  B.push({ name: 'launch-2', page: '#/launch', wallet: true, now: R.t0, focus: '#fTarget', launch: { name: R.name, ticker: R.ticker, target: String(R.target), deadline: null } });
-  B.push({ name: 'launch-3', page: '#/launch', wallet: true, now: R.t0, blur: true, launch: { name: R.name, ticker: R.ticker, target: String(R.target), deadline: R.deadlineLabel } });
+  /* the Launch form: the project named, the Raise section in view as the form opens (the site's own $100K preset and 3
+     days chosen), the film's preset pressed, the deadline picked */
+  const L = { name: R.name, ticker: R.ticker, cap: 100000, deadline: null };
+  B.push({ name: 'launch-0', page: '#/launch', wallet: true, now: R.t0, blur: true, launch: L });
+  B.push({ name: 'launch-1', page: '#/launch', wallet: true, now: R.t0, blur: true, launch: Object.assign({}, L, { cap: R.cap }) });
+  B.push({ name: 'launch-2', page: '#/launch', wallet: true, now: R.t0, blur: true, launch: Object.assign({}, L, { cap: R.cap, deadline: R.deadlineLabel }) });
   /* Open raise pressed: the site's openPresale disables the button and asks for the wallet (js/launch.js) */
-  B.push({ name: 'launch-4', page: '#/launch', wallet: true, now: R.t0, blur: true, launch: { name: R.name, ticker: R.ticker, target: String(R.target), deadline: R.deadlineLabel }, then: PRESS_OPEN });
+  B.push({ name: 'launch-3', page: '#/launch', wallet: true, now: R.t0, blur: true, launch: Object.assign({}, L, { cap: R.cap, deadline: R.deadlineLabel }), then: PRESS_OPEN });
   /* the raise page as it opens and after each wave of buys */
   /* a backer is a wallet that bought: the count the page shows is the wallets in the buy list, as the site's backers tab counts them */
   const live = i => { const w = i < 0 ? { buys: [], hist: [], raised: 0 } : wave(i); return { status: 'live', raised: w.raised, backers: w.buys.length, buys: w.buys, hist: w.hist }; };
@@ -248,6 +254,8 @@ try {
        simulated buys landing on their own and no demo crank running a seeding step every half minute; the tool moves
        every state itself */
     await page.evaluate(() => { window.tick = () => {}; window.simulate = () => {}; if (window.chain) chain.on = () => false; renderAll(); });
+    const siteTarget = await page.evaluate(R => targetForCap(R.cap, R.teamBps, 'SOL'), R);
+    if (Math.abs(siteTarget - R.target) > 1e-9) throw new Error(`the site derives ${siteTarget} SOL for the $${R.cap} preset; the film has ${R.target}`);
     /* the film's pool has just opened, so no trade has landed on it: the site's chart draws its own empty state ("No trades
        in this window.") in place of the demo's stand-in pool, whose hourly walk runs forward from the moment of seeding */
     await page.evaluate(() => { const c = presaleAdapter.candles; presaleAdapter.candles = (p, tf) => p.id === 'halfmoon' ? Promise.resolve(withSrc([], 'demo')) : c.call(presaleAdapter, p, tf); });
@@ -283,7 +291,8 @@ try {
         await page.evaluate(h => { if (location.hash !== h) location.hash = h; }, b.page); await sleep(900);
         await page.evaluate(L => {
           const set = (sel, v) => { const e = document.querySelector(sel); if (!e) return; e.value = v; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); };
-          set('#fName', L.name); set('#fTicker', L.ticker); set('#fTarget', L.target);
+          set('#fName', L.name); set('#fTicker', L.ticker);
+          const cap = document.querySelector(`#capSeg button[data-v="${L.cap}"]`); if (cap) cap.click();
           if (L.deadline) { const btn = [...document.querySelectorAll('#timeSeg button')].find(x => x.textContent.trim() === L.deadline); if (btn) btn.click(); }
           /* the founder has given the raise its art and banner (the form's own upload slots), so the preview is not the
              site's pastel stand-in glyph */
@@ -294,7 +303,7 @@ try {
         await sleep(900);
       } else {
         await page.evaluate(h => { if (location.hash !== h) location.hash = h; }, b.page); await sleep(700);
-        await page.evaluate((o, t0, win, target) => { if (window.__hm && !state.presales.includes(window.__hm)) state.presales.push(window.__hm); setRaise(Object.assign({ t0, window: win, target, banner: 'brand/launch-video/site/assets/film/banner.png', art: 'brand/launch-video/site/assets/film/art.png' }, o)); renderDetail(true); if (typeof renderStatChips === 'function') renderStatChips(); }, b.raise, R.t0, R.window, R.target).catch(e => { throw new Error(b.name + ': ' + e.message); });
+        await page.evaluate((o, R) => { if (window.__hm && !state.presales.includes(window.__hm)) state.presales.push(window.__hm); setRaise(Object.assign({ t0: R.t0, window: R.window, target: R.target, targetUsd: R.targetUsd, cap: R.cap, teamBps: R.teamBps, banner: 'brand/launch-video/site/assets/film/banner.png', art: 'brand/launch-video/site/assets/film/art.png' }, o)); renderDetail(true); if (typeof renderStatChips === 'function') renderStatChips(); }, b.raise, R).catch(e => { throw new Error(b.name + ': ' + e.message); });
         await sleep(1400);
       }
       if (b.focus) await page.evaluate(q => { const e = document.querySelector(q); if (e) e.focus({ preventScroll: true }); }, b.focus);

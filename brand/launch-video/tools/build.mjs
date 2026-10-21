@@ -29,8 +29,8 @@ const words = s => s.split(' ').map(w => `<span class="w">${esc(w).replace(/^(SO
 const VARS = [
   { id: 'fee', type: 'string', label: 'Seed fee on each buy', default: figures.fee },
   { id: 'feeLabel', type: 'string', label: 'Fee label', default: figures.feeLabel },
-  { id: 'minTarget', type: 'string', label: 'Minimum target', default: figures.minTarget },
-  { id: 'maxTarget', type: 'string', label: 'Maximum target', default: figures.maxTarget },
+  { id: 'presets', type: 'string', label: 'Opening market cap presets', default: figures.presets },
+  { id: 'raiseRule', type: 'string', label: 'The raise a preset derives', default: figures.raiseRule },
   { id: 'deadlineMin', type: 'string', label: 'Shortest deadline', default: figures.deadlineMin },
   { id: 'deadlineMax', type: 'string', label: 'Longest deadline', default: figures.deadlineMax },
   { id: 'supply', type: 'string', label: 'Supply', default: figures.supply },

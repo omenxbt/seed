@@ -1,5 +1,6 @@
 /* Reads every figure the film shows from the code, never from memory: the program's constants (state.rs), the production
-   Config the deploy check expects (scripts/check-deploy.ts), the devnet initConfig (tests/seed.ts), the site's copy of the terms (js/config/seed.js) and LOOP.md's text.
+   Config the deploy check expects (scripts/check-deploy.ts), the devnet initConfig (tests/seed.ts) and the client's preset
+   list (client/seed.ts), the site's copy of the terms (js/config/seed.js) and LOOP.md's text.
    Writes src/figures.json, which tools/build.mjs turns into the composition variables' defaults. Exits 1 when two sources
    disagree on a figure, so a change in the program cannot slip past the film. */
 import fs from 'node:fs';
@@ -17,27 +18,30 @@ const lib = read('program/programs/seed/src/lib.rs');
 const site = read('js/config/seed.js');
 const loop = read('LOOP.md');
 const page = read('js/presale-page.js');
+const client = read('program/client/seed.ts');
 
 const rs = name => { const m = state.match(new RegExp(`pub const ${name}: \\w+ = ([\\d_]+)`)); if (!m) throw new Error(`state.rs: no ${name}`); return num(m[1]); };
-/* the production Config the deploy check holds a mainnet deployment to (program/scripts/check-deploy.ts), when the code
-   carries one: the minimum target moved from a state.rs constant into the Config, set once at init_config */
-const deployPath = path.join(repo, 'program/scripts/check-deploy.ts');
-const prod = fs.existsSync(deployPath) ? (fs.readFileSync(deployPath, 'utf8').match(/production: \{([^}]*)\}/) || [])[1] || '' : '';
+/* the production Config the deploy check holds a mainnet deployment to (program/scripts/check-deploy.ts). Since
+   2026-10-20 a raise is sized by preset: the founder picks an opening market cap from the Config's four
+   (preset_caps_cents) and open_raise derives the target, cap × (1 − team share) ÷ 2; there is no minimum target and no cap */
+const prod = (read('program/scripts/check-deploy.ts').match(/production: \{([^}]*)\}/) || [])[1] || '';
 const pd = name => { const m = prod.match(new RegExp(`${name}: ([\\d_]+|true|false)`)); return m ? (m[1] === 'true' ? true : m[1] === 'false' ? false : num(m[1])) : null; };
-const minLamports = /pub const MIN_TARGET_LAMPORTS/.test(state) ? rs('MIN_TARGET_LAMPORTS') : pd('minTargetLamports');
-if (minLamports == null) throw new Error('no minimum target: neither MIN_TARGET_LAMPORTS in state.rs nor a production minTargetLamports in check-deploy.ts');
+const prodPresets = ((prod.match(/presets: '([\d,]+)'/) || [])[1] || '').split(',').filter(Boolean).map(Number);
+const clientPresets = ((client.match(/export const PRESET_CAPS_CENTS = \[([^\]]+)\]/) || [])[1] || '').split(',').map(num);
+if (!prodPresets.length) throw new Error('check-deploy.ts: no production presets');
+if (!/pub preset_caps_cents: \[u64; 4\]/.test(state)) throw new Error('state.rs: no preset_caps_cents in the Config');
 const both = (name, v) => { const p = pd(name); if (p != null && p !== v) problems.push(`${name}: devnet initConfig ${v}, production profile ${p}`); return p != null ? p : v; };
 const problems = [];
 const ini = name => { const m = init.match(new RegExp(`${name}: (?:new BN\\()?([\\d_ *]+)`)); if (!m) throw new Error(`tests/seed.ts: no ${name}`); return m[1].split('*').map(num).reduce((a, b) => a * b, 1); };
 const js = name => { const m = site.match(new RegExp(`${name}: ([\\d.e* ]+)`)); if (!m) throw new Error(`seed.js: no ${name}`); return m[1].split('*').map(Number).reduce((a, b) => a * b, 1); };
+const jsList = name => { const m = site.match(new RegExp(`${name}: \\[([\\d, ]+)\\]`)); if (!m) throw new Error(`seed.js: no ${name}`); return m[1].split(',').map(Number); };
 
 const program = {
   supply: rs('SUPPLY'),
-  minTargetSol: minLamports / 1e9,
+  presetsUsd: prodPresets.map(c => c / 100),
   feeBps: both('feeBps', ini('feeBps')),
   creatorShareBps: both('creatorShareBps', ini('creatorShareBps')),
   poolFeeBps: both('poolFeeBps', ini('poolFeeBps')),
-  capUsd: both('capUsdCents', ini('capUsdCents')) / 100,
   minDeadlineH: ini('minDeadline') / 3600,
   maxDeadlineH: ini('maxDeadline') / 3600,
   seedTimeoutDays: ini('seedTimeout') / 86400,
@@ -49,8 +53,8 @@ const program = {
   refundIsAmountPlusFee: /let back = c\.amount \+ c\.fee;/.test(lib)
 };
 const siteTerms = {
-  supply: js('supply'), minTargetSol: js('minTargetSol'), feeBps: js('feeBps'), creatorShareBps: js('creatorShareBps'),
-  poolFeeBps: js('poolFeeBps'), capUsd: js('capUsd'), minDeadlineH: js('minDeadlineH'), maxDeadlineH: js('maxDeadlineH'),
+  supply: js('supply'), presetsUsd: jsList('presetCapsUsd'), feeBps: js('feeBps'), creatorShareBps: js('creatorShareBps'),
+  poolFeeBps: js('poolFeeBps'), minDeadlineH: js('minDeadlineH'), maxDeadlineH: js('maxDeadlineH'),
   seedTimeoutDays: js('seedTimeoutDays')
 };
 const stepNames = [...page.match(/names = \[([^\]]+)\]/)[1].matchAll(/'([^']+)'/g)].map(m => m[1]);
@@ -58,7 +62,8 @@ const stepNames = [...page.match(/names = \[([^\]]+)\]/)[1].matchAll(/'([^']+)'/
 /* LOOP.md says it in words; each figure must appear there as the program has it */
 const loopSays = {
   fee: /Seed fee: 1% on top of each buy, refunded with the buy/.test(loop),
-  cap: /max \$100,000/.test(loop),
+  presets: /opening market cap preset: \$50K, \$100K, \$150K or \$200K/.test(loop),
+  derived: /target = cap × \(1 − team share\) ÷ 2/.test(loop),
   deadline: /deadline \(24h to 14d\)/.test(loop),
   supply: /Mint 1,000,000,000 tokens/.test(loop),
   poolFee: /Pool fee 1\.25%/.test(loop),
@@ -69,20 +74,21 @@ const loopSays = {
   lockedForGood: /LP permanently locked/.test(loop)
 };
 
-for (const k of Object.keys(siteTerms)) if (siteTerms[k] !== program[k]) problems.push(`${k}: program ${program[k]}, js/config/seed.js ${siteTerms[k]}`);
+for (const k of Object.keys(siteTerms)) if (String(siteTerms[k]) !== String(program[k])) problems.push(`${k}: program ${program[k]}, js/config/seed.js ${siteTerms[k]}`);
+if (String(clientPresets) !== String(prodPresets)) problems.push(`presets: production profile ${prodPresets}, client/seed.ts ${clientPresets}`);
 for (const [k, ok] of Object.entries(loopSays)) if (!ok) problems.push(`LOOP.md no longer states the ${k} the way the film quotes it`);
 if (program.seedSteps.length !== stepNames.length) problems.push(`seed steps: program ${program.seedSteps.length}, raise page ${stepNames.length}`);
 if (!program.refundIsAmountPlusFee) problems.push('claim_refund no longer pays back amount + fee');
 if (program.unlockMinChecked) problems.push('the program or the production profile checks a minimum unlock length again');
 
-const usd = n => '$' + n.toLocaleString('en-US');
+const k = n => '$' + (n / 1000) + 'K';
 const pct = bps => (bps / 100).toString().replace(/\.0+$/, '') + '%';
 const days = h => h % 24 ? `${h} hours` : h / 24 === 1 ? '24 hours' : `${h / 24} days`;
 const figures = {
   fee: pct(program.feeBps),                                       // 1%
   feeLabel: 'on top',
-  minTarget: `${program.minTargetSol} SOL`,                         // 81 SOL
-  maxTarget: usd(program.capUsd),                                   // $100,000
+  presets: program.presetsUsd.map(k).join(', '),                  // $50K, $100K, $150K, $200K
+  raiseRule: 'cap × (1 − team share) ÷ 2',                          // the raise each preset derives, all into the pool
   deadlineMin: days(program.minDeadlineH),                          // 24 hours
   deadlineMax: days(program.maxDeadlineH),                          // 14 days
   supply: program.supply.toLocaleString('en-US'),                   // 1,000,000,000

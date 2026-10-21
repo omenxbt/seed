@@ -1,8 +1,9 @@
 {
- "note": "The film's demo raise: the site's demo raise Halfmoon (SOL pair) set to these terms by tools/capture-pages.mjs. Times are ms; the raise opens at t0 (2026-10-17 15:36 UTC) for 7 days and fills in eight waves of buys at 82.4% of its window. The other ending stops at 62% and refunds at the deadline.",
+ "note": "The film's demo raise: the site's demo raise Halfmoon (SOL pair) set to these terms by tools/capture-pages.mjs. The founder picks the $50K opening market cap preset with no team share, so the raise is $25,000, priced in SOL at the site's demo SOL price (tools/capture-pages.mjs derives `target` as the site does and checks it against the page). Times are ms; the raise opens at t0 (2026-10-17 15:36 UTC) for 7 days and fills in eight waves of buys at 82.4% of its window. The other ending stops at 62% and refunds at the deadline.",
  "name": "Halfmoon",
  "ticker": "HALF",
- "target": 85,
+ "cap": 50000,
+ "teamBps": 0,
  "backers": 214,
  "t0": 1792251360000,
  "window": 604800000,

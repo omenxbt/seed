@@ -287,7 +287,8 @@
         var sr = scr.getBoundingClientRect(), r;
         if (k.sel === '.scr') r = [0, 0, sr.width, sr.height];
         else {
-          var bs = [].concat(k.sel).map(function (q) { var e = $(q, body); if (!e) throw new Error('no ' + q + ' in ' + cur); return e.getBoundingClientRect(); });
+          /* `text` frames the words an element holds rather than its box (a line of copy is a paragraph the column's width) */
+          var bs = [].concat(k.sel).map(function (q) { var e = $(q, body); if (!e) throw new Error('no ' + q + ' in ' + cur); if (!k.text || !e.textContent.trim()) return e.getBoundingClientRect(); var rg = document.createRange(); rg.selectNodeContents(e); return rg.getBoundingClientRect(); });
           var x0 = Math.min.apply(null, bs.map(function (b) { return b.left; })), y0 = Math.min.apply(null, bs.map(function (b) { return b.top; }));
           var x1 = Math.max.apply(null, bs.map(function (b) { return b.right; })), y1 = Math.max.apply(null, bs.map(function (b) { return b.bottom; }));
           r = [x0 - sr.left, y0 - sr.top, x1 - x0, y1 - y0];
@@ -396,14 +397,17 @@
     },
     launch: function (s, sec) {
       var sc = screen(sec, s);
-      opening(sc, ['.ws-side > *', '.ws-main > *', '.ws-rail > *'], s.start);
-      // the deadline: the chosen segment slides across in --dur after the press (the site's indicator, from beat to beat)
-      var seg = function () { return sc.q('#timeSeg .seg-ind'); };
-      var pos = function (name) { var e = doc(name).querySelector('#timeSeg .seg-ind'), m = /translateX\(([-\d.]+)px\)/.exec(e.getAttribute('style') || ''); return [m ? +m[1] : 0, parseFloat(e.style.width) || 0]; };
-      var before = s.states.filter(function (x) { return x[0] < s.seg; }).pop()[1], after = s.states.filter(function (x) { return x[0] > s.seg; })[0][1], a = pos(before), b = pos(after);
-      drivers.push(function (t) { if (t < s.seg + 0.08 - 1e-6 || t > s.seg + 0.6) return; var e = seg(); if (!e) return; var u = prog(t, s.seg + 0.08, DUR); e.style.transform = 'translateX(' + (a[0] + (b[0] - a[0]) * u).toFixed(2) + 'px)'; e.style.width = (a[1] + (b[1] - a[1]) * u).toFixed(2) + 'px'; });
-      press(function () { return sc.q('#timeSeg button[data-v="168"]'); }, s.seg);
-      press(function () { return sc.q('#openBtn'); }, s.open);
+      if (s.enter) opening(sc, ['.ws-side > *', '.ws-main > *', '.ws-rail > *'], s.start);   // the form as it opens; a later shot of it is the same page, on
+      // a segment pressed (the opening market cap, the deadline): its chosen mark slides across in --dur after the press
+      // (the site's indicator, from beat to beat)
+      (s.segs || []).forEach(function (g) {
+        var ind = function () { return sc.q(g.seg + ' .seg-ind'); };
+        var pos = function (name) { var e = doc(name).querySelector(g.seg + ' .seg-ind'), m = /translateX\(([-\d.]+)px\)/.exec(e.getAttribute('style') || ''); return [m ? +m[1] : 0, parseFloat(e.style.width) || 0]; };
+        var before = s.states.filter(function (x) { return x[0] < g.t; }).pop()[1], after = s.states.filter(function (x) { return x[0] > g.t; })[0][1], a = pos(before), b = pos(after);
+        drivers.push(function (t) { if (t < g.t + 0.08 - 1e-6 || t > g.t + 0.6) return; var e = ind(); if (!e) return; var u = prog(t, g.t + 0.08, DUR); e.style.transform = 'translateX(' + (a[0] + (b[0] - a[0]) * u).toFixed(2) + 'px)'; e.style.width = (a[1] + (b[1] - a[1]) * u).toFixed(2) + 'px'; });
+        press(function () { return sc.q(g.seg + ' button[data-v="' + g.v + '"]'); }, g.t);
+      });
+      if (s.open != null) press(function () { return sc.q('#openBtn'); }, s.open);
     },
     page: function (s, sec) {
       var sc = screen(sec, s);

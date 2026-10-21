@@ -55,127 +55,166 @@ const RUN = 0.78;
 const OUT = { away: true, d: 0.45 };   // the whip out: the page leaves left, fast off the mark, its last edge clearing the frame
 /* the film comes up from black and goes down to black at its ends, the sound with it: seconds in and out */
 export const FADE = { in: 0.6, out: 0.9 };
+const DTIME = '.sub > span:has([data-dtime])';   // "Ends in 00:00:01", the words and the clock in focus together
+
+/* --------------------------------------------------------------------------------------------- laying the cut out
+   Every scene is written from its own start (0) and laid end to end: each comes in where the one before hands over (a
+   sting or a text frame at its `out`, a page at its whip), `GAP` after it: 0.03s under a whip (the next comes in from the
+   right as it goes), 0.15s after a push through type into a page (the page resolves under the flying type), 0.07s after a
+   push into the next line (it comes up under). So a hold made longer here moves everything after it, the SRT and the
+   markers with it. */
+const GAP = { whip: 0.03, page: 0.15, line: 0.07 };
+const TYPE = { line: 1, title: 1, close: 1 };
+const shift = (o, dt) => {
+  const r = t => +(t + dt).toFixed(3), x = { ...o };
+  for (const k of ['start', 'end', 'out', 'shrink', 'l2in', 'lineOut', 'end_', 'hit', 'whip', 'open', 'seeded', 'refund']) if (x[k] != null) x[k] = r(x[k]);
+  for (const k of ['buys', 'presses', 'ticks']) if (x[k]) x[k] = x[k].map(r);
+  for (const k of ['states', 'claims']) if (x[k]) x[k] = x[k].map(([t, v]) => [r(t), v]);
+  for (const k of ['cam', 'scroll', 'segs']) if (x[k]) x[k] = x[k].map(c => ({ ...c, t: r(c.t) }));
+  return x;
+};
+function lay(list) {
+  const out = []; let at = 0, how = null;
+  for (const s of list) {
+    const gap = !out.length ? 0 : how === 'whip' ? GAP.whip : TYPE[s.kind] ? GAP.line : GAP.page;
+    const p = shift(s, at + gap); out.push(p);
+    if (TYPE[p.kind] && out.length > 1) p.in = how === 'whip' ? 'whip' : 'up';   // in from the right under a whip, or up under a push
+    const away = (p.cam || []).find(k => k.away);
+    at = away ? away.t : p.kind === 'sting' ? p.whip : p.out; how = away || p.kind === 'sting' || p.exit === 'whip' ? 'whip' : 'push';
+  }
+  return out;
+}
+/* every line the film puts on screen, as it reads, from the scenes themselves, for the SRT */
+const srtOf = sc => sc.filter(s => TYPE[s.kind]).map(s => s.kind === 'line' ? [+(s.start + 0.04).toFixed(2), s.out, s.lines.join(' ')] : [+(s.start + 0.05).toFixed(2), s.kind === 'close' ? s.lineOut : s.out, `${s.l1} ${s.l2}`]);
+const byId = (sc, id) => sc.find(s => s.id === id);
+
+/* a text frame: its words rise as the camera arrives (from the right after a whip, under the push before), it holds on a
+   slow push and leaves on its exit; `hold` is the time to its exit */
+const line = (id, text, hold, exit, f) => ({ id, kind: 'line', start: 0, end: +(hold + 0.35).toFixed(2), exit, out: hold, lines: text, ...(f ? { f } : {}) });
+
+/* --------------------------------------------------------------------------------------------- the scenes */
+const sting = { id: 'sting', kind: 'sting', start: 0, end: 2.9, hit: 1.5, whip: 2.4 };
+const title = exit => ({ id: 'title', kind: 'title', start: 0, end: 2.6, in: 'whip', l1: 'Start an idea,', l2: 'fund it on-chain.', shrink: 0.82, l2in: 0.92, out: 2.15, exit });
+const close = end => ({ id: 'close', kind: 'close', start: 0, in: 'whip', end, l1: 'Seeded in full,', l2: 'or refunded in full.', shrink: 0.9, lineOut: 2.4, end_: 2.65 });
+/* the raise page from two waves in (the master) or from its opening (the teaser): the deposit panel (SOL or USDC), across
+   to the readout as the waves land (the odometer rolls, the bar sweeps to green, the backers tick up), a pull back to the
+   whole page as it fills, and the whip out */
+const CLEAR = { fill: 1.07, ax: 0.535, ay: 0.54 };
+const fill = (from, t0, gap, full, out) => {
+  const b = buys(t0, gap, from);
+  return {
+    id: 'fill', kind: 'page', start: 0, end: +(out + 0.35).toFixed(2), open: 0, states: fillStates(0, b, from), buys: b,
+    cam: [
+      { t: 0, cut: true, sel: '[data-trade="deposit"]', fill: 0.85, ry: 8, rx: 5, dof: 5, d: 0.8, from: { k: 0.7, ry: 3 }, f: { '9x16': { fill: 0.96 } } },
+      { t: 0.6, sel: '[data-dreadout]', fill: 0.9, ry: 8, rx: 5, dof: 6, d: 0.6, f: { '9x16': { fill: 0.96 } } },
+      /* in 16:9 a little closer and lower, so the rail's own mark is not cut by the frame's corner */
+      { t: full, full: true, ry: 5, rx: 4, d: 1.0, f: { '16x9': CLEAR } },
+      { t: +(full + 1.0).toFixed(2), full: true, ry: 3, rx: 3, d: out - full - 1.0, f: { '16x9': CLEAR } },   // still drifting as it fills
+      { t: out, full: true, ry: 3, rx: 3, ...OUT }
+    ]
+  };
+};
 
 /* --------------------------------------------------------------------------------------------- the master */
-const MB = buys(10.21, 0.35, 2), SP = 14.71, SEEDED = +(SP + RUN).toFixed(2), REFUND = 19.77;
-const DTIME = '.sub > span:has([data-dtime])';   // "Ends in 00:00:01", the words and the clock in focus together
-const masterScenes = [
+const SP = 0.45, SEEDED = +(SP + RUN).toFixed(2), REFUND = 1.1;
+const masterScenes = lay([
   /* the film comes up from black over the sting and goes down to black on the end card (FADE) */
-  { id: 'sting', kind: 'sting', start: 0, end: 2.7, hit: 1.5, whip: 2.2 },
-  { id: 'title', kind: 'title', start: 2.23, end: 4.6, in: 'whip', l1: 'Start an idea,', l2: 'fund it on-chain.', shrink: 2.98, l2in: 3.08, out: 4.16, exit: 'whip' },
-  { id: 'founder', kind: 'line', start: 4.19, end: 5.96, in: 'whip', exit: 'push', out: 5.61, lines: ['A founder sets a target and a deadline.'], f: { '9x16': { lines: ['A founder sets', 'a target and', 'a deadline.'] } } },
+  sting,
+  title('whip'),
+  line('pmf', ['Find product-market fit'], 1.75, 'push', { '9x16': { lines: ['Find', 'product-market fit'] } }),
+  line('presetline', ['Market cap presets'], 1.75, 'push', { '9x16': { lines: ['Market cap', 'presets'] } }),
   {
-    /* the Launch form: the Target typed (8, then 85), 7 days pressed, Open raise pressed ("Confirm in wallet…") and the
-       whip out */
-    id: 'launch', kind: 'launch', start: 5.76, end: 8.41,
-    states: [[5.76, 'launch-0'], [6.26, 'launch-1'], [6.46, 'launch-2'], [7.09, 'launch-3'], [7.79, 'launch-4']], seg: 7.01, open: 7.71,
+    /* the Launch form as it opens, the Raise section in view: the opening market cap segment on the site's own $100K, then
+       the founder's $50K pressed, the raise line deriving the raise from it ("Opens at $50K market cap · raise 168.69 SOL
+       ($25K), all into the pool"); the whip out */
+    id: 'presets', kind: 'launch', start: 0, end: 2.7, enter: true,
+    states: [[0, 'launch-0'], [1.08, 'launch-1']], segs: [{ t: 1.0, seg: '#capSeg', v: String(RAISE.cap) }],
     cam: [
-      { t: 5.76, cut: true, sel: 'fieldset:has(#fTarget)', fill: 0.9, ry: -8, rx: 5, dof: 3, d: 0.7, from: { k: 0.75, ry: -2, rx: 3 }, f: { '9x16': { fill: 0.96 }, '1x1': { fill: 0.95 } } },
-      { t: 6.11, sel: '.f:has(#fTarget)', fill: 0.82, ry: -7, rx: 4, dof: 6, d: 0.55, f: { '9x16': { fill: 0.96 } } },
-      { t: 6.81, sel: '.f:has(#timeSeg)', fill: 0.72, ry: -6, rx: 4, dof: 6, d: 0.45, f: { '9x16': { fill: 0.9 } } },
-      /* to Open raise as the form scrolls under it (in 9:16 and 1:1 the scroll is long: the scroll carries the motion) */
-      { t: 7.31, sel: '#openBtn', fill: 0.8, ry: -6, rx: 4, dof: 6, d: 0.5, f: { '9x16': { fill: 0.94, nomb: true }, '1x1': { nomb: true } } },
-      { t: 8.06, ...OUT }
-    ],
-    scroll: [{ t: 7.33, d: 0.45, sel: '.lsubmit', place: 0.55 }]
-  },
-  { id: 'buy', kind: 'line', start: 8.09, end: 9.71, in: 'whip', exit: 'push', out: 9.36, lines: ['You buy in with SOL or USDC.'], f: { '9x16': { lines: ['You buy in with', 'SOL or USDC.'] } } },
-  {
-    /* the raise page, two waves in: the deposit panel (SOL or USDC), then across to the readout as the last six waves
-       land .35s apart (the odometer rolls, the bar sweeps to green, the backers tick up), a pull back to the whole page
-       as it fills, and the whip out */
-    id: 'fill', kind: 'page', start: 9.56, end: 12.66, open: 9.56, states: fillStates(9.56, MB, 2), buys: MB,
-    cam: [
-      { t: 9.56, cut: true, sel: '[data-trade="deposit"]', fill: 0.85, ry: 8, rx: 5, dof: 5, d: 0.7, from: { k: 0.7, ry: 3 }, f: { '9x16': { fill: 0.96 } } },
-      { t: 10.06, sel: '[data-dreadout]', fill: 0.9, ry: 8, rx: 5, dof: 6, d: 0.55, f: { '9x16': { fill: 0.96 } } },
-      { t: 11.31, full: true, ry: 5, rx: 4, d: 0.9 },
-      { t: 12.31, full: true, ry: 5, rx: 4, ...OUT }
+      { t: 0, cut: true, sel: '.f:has(#capSeg)', fill: 0.86, ry: -8, rx: 5, dof: 3, d: 0.8, from: { k: 0.75, ry: -2, rx: 3 }, f: { '9x16': { fill: 0.96 }, '1x1': { fill: 0.94 } } },
+      /* in 9:16 the phone layout's fields run the column's width, so the camera holds the segment and the whole raise line
+         as close as the page allows, its figures inside the safe zone, and only turns towards the line */
+      { t: 0.55, sel: ['#capSeg', '#raiseLine'], text: true, fill: 0.86, ry: -7, rx: 4, dof: 6, d: 0.55, f: { '9x16': { fill: 0.96 } } },
+      { t: 1.35, sel: '#raiseLine', text: true, fill: 1.0, ry: -6, rx: 4, dof: 6, d: 0.7, f: { '9x16': { sel: ['#capSeg', '#raiseLine'], fill: 0.96, ry: -4 } } },
+      { t: 2.35, ...OUT }
     ]
   },
-  { id: 'met', kind: 'line', start: 12.34, end: 14.46, in: 'whip', exit: 'push', out: 14.11, lines: ['If the target is met,', 'the raise seeds as a tradeable token.'], f: { '9x16': { lines: ['If the target is met,', 'the raise seeds as', 'a tradeable token.'] } } },
+  line('target', ['Set a target and deadline'], 1.75, 'push', { '9x16': { lines: ['Set a target', 'and deadline'] } }),
+  {
+    /* the same form, on: the raise line and the deadline, 7 days pressed; the form scrolls to Open raise, pressed ("Confirm
+       in wallet…"); the whip out */
+    id: 'launch', kind: 'launch', start: 0, end: 2.8,
+    states: [[0, 'launch-1'], [0.83, 'launch-2'], [1.73, 'launch-3']], segs: [{ t: 0.75, seg: '#timeSeg', v: '168' }], open: 1.65,
+    cam: [
+      { t: 0, cut: true, sel: ['#raiseLine', '#timeSeg'], text: true, fill: 0.86, ry: -8, rx: 5, dof: 4, d: 0.8, from: { k: 0.75, ry: -2, rx: 3 }, f: { '9x16': { fill: 1.2, ax: 0.42 }, '1x1': { fill: 0.94 } } },
+      { t: 0.45, sel: '.f:has(#timeSeg)', fill: 0.74, ry: -6, rx: 4, dof: 6, d: 0.5, f: { '9x16': { sel: '#timeSeg', fill: 0.8 } } },
+      /* to Open raise as the form scrolls under it (in 9:16 and 1:1 the scroll is long: the scroll carries the motion) */
+      { t: 1.15, sel: '#openBtn', fill: 0.8, ry: -6, rx: 4, dof: 6, d: 0.5, f: { '9x16': { fill: 0.94, nomb: true }, '1x1': { nomb: true } } },
+      { t: 2.45, ...OUT }
+    ],
+    scroll: [{ t: 1.17, d: 0.45, sel: '.lsubmit', place: 0.55 }]
+  },
+  line('buy', ['Buy with SOL or USDC'], 1.75, 'push', { '9x16': { lines: ['Buy with', 'SOL or USDC'] } }),
+  fill(2, 0.75, 0.4, 2.0, 3.45),
+  line('met', ['Raises seed as tradeable tokens'], 1.85, 'push', { '9x16': { lines: ['Raises seed as', 'tradeable tokens'] } }),
   {
     /* seeding: the last step pressed ("Running…"); a pull back to the whole page as it turns seeded (the identity card's
        "Seeded", the readout turning into the pool's chart, the seeding card into the trade card); a push to the pool's
-       line (HALF/SOL, 170 SOL, Meteora DAMM v2, liquidity locked for good) and the whip out */
-    id: 'seeding', kind: 'page', start: 14.31, end: 17.06,
-    states: [[14.31, 'seeding-2'], [SP + 0.08, 'seeding-2r'], [SEEDED, 'seeded']], presses: [SP], seeded: SEEDED,
+       line (HALF/SOL, 337.38 SOL, Meteora DAMM v2, liquidity locked for good) and the whip out */
+    id: 'seeding', kind: 'page', start: 0, end: 3.15,
+    states: [[0, 'seeding-2'], [SP + 0.08, 'seeding-2r'], [SEEDED, 'seeded']], presses: [SP], seeded: SEEDED,
     cam: [
-      { t: 14.31, cut: true, sel: '[data-seeding]', fill: 0.8, ry: 9, rx: 5, dof: 6, d: 0.8, from: { k: 0.75, ry: 3 }, f: { '9x16': { fill: 0.9 } } },
-      { t: 14.86, sel: '[data-seeding]', fill: 0.9, ry: 6, rx: 4, dof: 5, d: 0.45, f: { '9x16': { fill: 0.98 } } },
+      { t: 0, cut: true, sel: '[data-seeding]', fill: 0.8, ry: 9, rx: 5, dof: 6, d: 0.85, from: { k: 0.75, ry: 3 }, f: { '9x16': { fill: 0.9 } } },
+      { t: 0.6, sel: '[data-seeding]', fill: 0.9, ry: 6, rx: 4, dof: 5, d: 0.5, f: { '9x16': { fill: 0.98 } } },
       /* in 1:1 a little closer and lower, so the rail's own mark is not cut by the frame's corner */
-      { t: 15.28, full: true, ry: 4, rx: 3, d: 0.6, f: { '1x1': { fill: 1.1, ax: 0.54, ay: 0.55 } } },
-      { t: 15.88, sel: '[data-poolcard]', fill: 0.95, ry: 6, rx: 4, dof: 6, d: 0.65, f: { '9x16': { fill: 0.96, dof: 4 }, '1x1': { dof: 5 } } },
-      { t: 16.71, ...OUT }
+      { t: 1.1, full: true, ry: 4, rx: 3, d: 0.7, f: { '1x1': { fill: 1.1, ax: 0.54, ay: 0.55 } } },
+      { t: 1.85, sel: '[data-poolcard]', fill: 0.95, ry: 6, rx: 4, dof: 6, d: 0.7, f: { '9x16': { fill: 0.96, dof: 4 }, '1x1': { dof: 5 } } },
+      { t: 2.8, ...OUT }
     ]
   },
-  { id: 'misses', kind: 'line', start: 16.74, end: 18.92, in: 'whip', exit: 'push', out: 18.57, lines: ['If it misses,', 'every wallet gets back exactly what it paid.'], f: { '9x16': { lines: ['If it misses,', 'every wallet gets back', 'exactly what it paid.'] } } },
+  line('misses', ['If it misses,', 'every wallet gets back exactly what it paid.'], 1.95, 'push', { '9x16': { lines: ['If it misses,', 'every wallet gets back', 'exactly what it paid.'] } }),
   {
     /* the other ending: "Ends in 00:00:01" running out; refunded, pulled back to "Missed target, refunded", the bar
        hatched and the site's note ("Every backer claims back exactly what they paid in SOL, the 1% fee included"), the
        identity card's "Refunds claimed" rolling up to every backer where the format shows it, and the whip out */
-    id: 'refund', kind: 'refund', start: 18.77, end: 21.52,
-    states: [[18.77, 'miss-live'], [REFUND, 'refunded']], ticks: [18.77, 19.37], refund: REFUND,
-    claims: [[20.07, 0.3], [20.32, 0.65], [20.57, 1]],
+    id: 'refund', kind: 'refund', start: 0, end: 2.95,
+    states: [[0, 'miss-live'], [REFUND, 'refunded']], ticks: [0, 0.7], refund: REFUND,
+    claims: [[1.4, 0.3], [1.65, 0.65], [1.9, 1]],
     cam: [
-      { t: 18.77, cut: true, sel: DTIME, fill: 0.5, ry: -8, rx: 5, dof: 8, d: 0.9, from: { k: 0.8, ry: -3 }, f: { '9x16': { fill: 0.7, dof: 12 } } },
-      { t: 19.42, sel: DTIME, fill: 0.6, ry: -7, rx: 5, dof: 8, d: 0.55, f: { '9x16': { fill: 0.74, dof: 12 } } },
-      { t: REFUND, sel: '.pp-missed', fill: 0.95, ry: -6, rx: 4, dof: 4, d: 0.8, nomb: true },
-      { t: 21.17, ...OUT }
+      { t: 0, cut: true, sel: DTIME, fill: 0.5, ry: -8, rx: 5, dof: 8, d: 1.0, from: { k: 0.8, ry: -3 }, f: { '9x16': { fill: 0.7, dof: 12 } } },
+      { t: 0.72, sel: DTIME, fill: 0.6, ry: -7, rx: 5, dof: 8, d: 0.6, f: { '9x16': { fill: 0.74, dof: 12 } } },
+      { t: REFUND, sel: '.pp-missed', fill: 0.95, ry: -6, rx: 4, dof: 4, d: 0.85, nomb: true },
+      { t: 2.6, ...OUT }
     ]
   },
-  { id: 'close', kind: 'close', start: 21.2, in: 'whip', end: 27.4, l1: 'Seeded in full,', l2: 'or refunded in full.', shrink: 22.02, lineOut: 23.32, end_: 23.57 }
-];
+  close(6.35)
+]);
+const mClose = byId(masterScenes, 'close'), mFill = byId(masterScenes, 'fill');
 const master = {
-  id: 'master', duration: 27.4,
+  id: 'master', duration: mClose.end,
   scenes: masterScenes,
-  /* every line the film puts on screen, as it reads, for the SRT ({x} is a variable) */
-  srt: [
-    [2.28, 4.16, 'Start an idea, fund it on-chain.'],
-    [4.23, 5.61, 'A founder sets a target and a deadline.'],
-    [8.13, 9.36, 'You buy in with SOL or USDC.'],
-    [12.38, 14.11, 'If the target is met, the raise seeds as a tradeable token.'],
-    [16.78, 18.57, 'If it misses, every wallet gets back exactly what it paid.'],
-    [21.25, 23.32, 'Seeded in full, or refunded in full.']
-  ],
+  srt: srtOf(masterScenes),
   markers: [
     ['sting hit', 1.5, 'the seed lands and brightens'],
-    ['fill complete', MB[MB.length - 1], 'the last wave of buys fills the target'],
-    ['seeded', SEEDED, 'the last seeding step lands and the page turns seeded'],
-    ['refunded', REFUND, 'the deadline passes and the raise turns refunded'],
-    ['end card', 23.57, 'the mark builds, then the wordmark'],
-    ['fade out', +(27.4 - FADE.out).toFixed(2), 'the picture and the sound go down to black']
+    ['fill complete', mFill.buys[mFill.buys.length - 1], 'the last wave of buys fills the target'],
+    ['seeded', byId(masterScenes, 'seeding').seeded, 'the last seeding step lands and the page turns seeded'],
+    ['refunded', byId(masterScenes, 'refund').refund, 'the deadline passes and the raise turns refunded'],
+    ['end card', mClose.end_, 'the mark builds, then the wordmark'],
+    ['fade out', +(mClose.end - FADE.out).toFixed(2), 'the picture and the sound go down to black']
   ]
 };
 
-/* --------------------------------------------------------------------------------------------- the teaser */
-const TB = buys(5.05, 0.35);
-const teaserScenes = [
-  { id: 'sting', kind: 'sting', start: 0, end: 2.7, hit: 1.5, whip: 2.2 },
-  { id: 'title', kind: 'title', start: 2.23, end: 4.55, in: 'whip', l1: 'Start an idea,', l2: 'fund it on-chain.', shrink: 2.98, l2in: 3.08, out: 4.15, exit: 'push' },
-  {
-    id: 'fill', kind: 'page', start: 4.35, end: 8.85, open: 4.35, states: fillStates(4.35, TB), buys: TB,
-    cam: [
-      { t: 4.35, cut: true, sel: '[data-trade="deposit"]', fill: 0.85, ry: 8, rx: 5, dof: 5, d: 0.8, from: { k: 0.7, ry: 3 }, f: { '9x16': { fill: 0.96 } } },
-      { t: 4.9, sel: '[data-dreadout]', fill: 0.9, ry: 8, rx: 5, dof: 6, d: 0.6, f: { '9x16': { fill: 0.96 } } },
-      { t: 6.5, full: true, ry: 5, rx: 4, d: 1.0 },
-      { t: 7.5, full: true, ry: 3, rx: 3, d: 1.0 },   // still drifting as it fills
-      { t: 8.5, ...OUT }
-    ]
-  },
-  { id: 'close', kind: 'close', start: 8.53, in: 'whip', end: 15.0, l1: 'Seeded in full,', l2: 'or refunded in full.', shrink: 9.35, lineOut: 10.65, end_: 10.9 }
-];
+/* --------------------------------------------------------------------------------------------- the teaser: 15s */
+const teaserScenes = lay([sting, title('push'), fill(0, 0.7, 0.35, 2.15, 4.1), close(6.14)]);
+const tClose = byId(teaserScenes, 'close'), tFill = byId(teaserScenes, 'fill');
 const teaser = {
-  id: 'teaser', duration: 15,
+  id: 'teaser', duration: tClose.end,
   scenes: teaserScenes,
-  srt: [
-    [2.28, 4.15, 'Start an idea, fund it on-chain.'],
-    [8.58, 10.65, 'Seeded in full, or refunded in full.']
-  ],
+  srt: srtOf(teaserScenes),
   markers: [
     ['sting hit', 1.5, 'the seed lands and brightens'],
-    ['fill complete', TB[TB.length - 1], 'the last wave of buys fills the target'],
-    ['end card', 10.9, 'the mark builds, then the wordmark'],
-    ['fade out', +(15 - FADE.out).toFixed(2), 'the picture and the sound go down to black']
+    ['fill complete', tFill.buys[tFill.buys.length - 1], 'the last wave of buys fills the target'],
+    ['end card', tClose.end_, 'the mark builds, then the wordmark'],
+    ['fade out', +(tClose.end - FADE.out).toFixed(2), 'the picture and the sound go down to black']
   ]
 };
 
