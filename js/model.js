@@ -15,13 +15,22 @@ const usdOf = (p, q) => p.q === 'USDC' ? q : q * solUsd(p);           // a pair-
 const qOf = (p, usd) => p.q === 'USDC' ? usd : usd / solUsd(p);
 const solUsdNow = p => SEED.solUsdLive || solUsd(p);                    // the SOL price today: the Pyth feed (chain.refreshSolUsd), else the raise's at open
 const usdNow = (p, q) => p.q === 'USDC' ? q : q * solUsdNow(p);        // a pair-asset amount in USD today: what a market cap is quoted in
-/* the floor under a target, in SOL: the program's constant, which test mode on devnet brings down to 0.05 SOL */
-/* the smallest raise, in SOL: the program's Config carries it (min_target_lamports, set once at init); until it is read, the
-   site's own figure, with test mode's smaller one as a guess once the config says it is in test mode */
-const minTargetSol = () => { const c = typeof chain !== 'undefined' && chain.cfg; return c && c.minTargetLamports ? Number(c.minTargetLamports.toString()) / 1e9 : c && c.testMode ? SEED.testMinTargetSol : SEED.minTargetSol; };
-/* the same floor in the pair asset: SOL as is, USDC as the dollars 81 SOL are worth today, to the cent the program compares in (it
-   rounds the cents down, so the figure shown is one that opens) */
-const minTargetIn = q => q === 'USDC' ? Math.floor(minTargetSol() * solUsdNow({ q: 'SOL' }) * 100) / 100 : minTargetSol();
+/* the opening market cap presets, in dollars: the founder picks one and the raise is derived from it. The program's Config
+   carries the same four (preset_caps_cents) and, on devnet in test mode, a tiny Test preset; the site reads those once the
+   config is in, so the list here only stands in until then */
+const PRESET_CAPS = SEED.presetCapsUsd || [50000, 100000, 150000, 200000];
+const presetCaps = () => { const c = typeof chain !== 'undefined' && chain.cfg; return c && c.presetCapsCents ? c.presetCapsCents.map(x => Number(x.toString()) / 100) : PRESET_CAPS; };
+const testCapUsd = () => { const c = typeof chain !== 'undefined' && chain.cfg; return c && c.testCapCents && Number(c.testCapCents.toString()) ? Number(c.testCapCents.toString()) / 100 : 0; };   // 0 off devnet
+const capUsdOf = cap => cap === 'test' ? testCapUsd() : presetCaps().includes(cap) ? cap : 0;                                   // a draft's cap choice as dollars; 0 when not on the list
+const presetIndex = cap => cap === 'test' ? (testCapUsd() ? 4 : -1) : presetCaps().indexOf(cap);                               // what open_raise takes
+/* the raise, derived from the opening market cap: cap × (1 − team share) ÷ 2, in the pair asset at today's SOL price (the
+   program does the same at the Pyth price the moment the raise opens, so a draft's figure can drift a little by then) */
+const targetUsdForCap = (capUsd, teamBps) => capUsd * (BPS - teamBps) / BPS / 2;
+/* the SOL price today, live only: the Pyth read, or nothing. On a chain-connected site the demo figure never stands in for it
+   (QA P1-F17); the demo site, with no chain, keeps its fixed price */
+const liveSolUsd = () => SEED.solUsdLive || (typeof chain !== 'undefined' && chain.on() ? 0 : SEED.demoSolUsd);
+const targetForCap = (capUsd, teamBps, q) => { const usd = targetUsdForCap(capUsd, teamBps); return q === 'USDC' ? Math.floor(usd * 100) / 100 : liveSolUsd() > 0 ? Math.floor(usd / liveSolUsd() * 1e9) / 1e9 : NaN; };
+const capOf = p => p.capUsd || fdvUsdOf(p);   // the market cap a raise opened at: the preset for a live raise; the FDV at the raise price otherwise (demo data)
 
 /* the supply: team share, then backers and the pool get equal halves of the rest */
 function splitOf(teamBps) {

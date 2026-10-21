@@ -1903,9 +1903,10 @@
     {
       "name": "migrate_config",
       "docs": [
-        "devnet builds only: a config of the layout before `min_target_lamports` is grown by the eight bytes and given its",
-        "minimum, once (a config already of this layout is refused). The program's upgrade authority signs, since the devnet",
-        "config's admin is a browser wallet. A mainnet build has no such instruction: its config is made whole at init."
+        "devnet builds only: a config of the layout before the presets (228 bytes, ending in min_target_lamports) is grown by",
+        "the forty bytes and given its presets and test cap, once (a config already of this layout is refused). The program's",
+        "upgrade authority signs, since the devnet config's admin is a browser wallet. A mainnet build has no such instruction:",
+        "its config is made whole at init."
       ],
       "discriminator": [
         92,
@@ -2036,7 +2037,16 @@
       ],
       "args": [
         {
-          "name": "min_target_lamports",
+          "name": "preset_caps_cents",
+          "type": {
+            "array": [
+              "u64",
+              4
+            ]
+          }
+        },
+        {
+          "name": "test_cap_cents",
           "type": "u64"
         }
       ]
@@ -2800,181 +2810,191 @@
     },
     {
       "code": 6007,
-      "name": "ZeroTarget",
-      "msg": "The target is zero."
+      "name": "BadPreset",
+      "msg": "That opening market cap is not one of the presets."
     },
     {
       "code": 6008,
-      "name": "OverCap",
-      "msg": "The target is over the cap at today's SOL price."
+      "name": "TestPresetNotAllowed",
+      "msg": "The test preset exists only in devnet builds, in test mode."
     },
     {
       "code": 6009,
-      "name": "TargetBelowMinimum",
-      "msg": "The target is under the minimum raise (81 SOL on mainnet; a USDC raise meets its worth at today's SOL price)."
+      "name": "UnderMinBuy",
+      "msg": "The buy is under this raise's minimum."
     },
     {
       "code": 6010,
+      "name": "OverMaxBuy",
+      "msg": "That would put this wallet over the raise's maximum per wallet."
+    },
+    {
+      "code": 6011,
+      "name": "BadLimits",
+      "msg": "The maximum per wallet is under the minimum buy."
+    },
+    {
+      "code": 6012,
       "name": "StalePrice",
       "msg": "The SOL price is stale: the Pyth feed has not updated recently."
     },
     {
-      "code": 6011,
+      "code": 6013,
       "name": "BadPair",
       "msg": "The pair asset must be SOL or USDC."
     },
     {
-      "code": 6012,
+      "code": 6014,
       "name": "BadTeamShare",
       "msg": "The team share must be under 100%."
     },
     {
-      "code": 6013,
+      "code": 6015,
       "name": "ScheduleSum",
       "msg": "The unlocks must add up to exactly 100%."
     },
     {
-      "code": 6014,
+      "code": 6016,
       "name": "ScheduleOrder",
       "msg": "The unlocks are out of order."
     },
     {
-      "code": 6015,
+      "code": 6017,
       "name": "BadSchedule",
       "msg": "The schedule is empty or has too many dates, a slice with no share, two shapes at once, or a team share of zero with a schedule."
     },
     {
-      "code": 6016,
+      "code": 6018,
       "name": "BadName",
       "msg": "The name or ticker is too long or empty."
     },
     {
-      "code": 6017,
+      "code": 6019,
       "name": "BadUri",
       "msg": "The metadata URI must be an https:// or ar:// address of at most 200 characters (Arweave on mainnet)."
     },
     {
-      "code": 6018,
+      "code": 6020,
       "name": "ZeroAmount",
       "msg": "The amount is zero."
     },
     {
-      "code": 6019,
+      "code": 6021,
       "name": "Full",
       "msg": "The raise is full."
     },
     {
-      "code": 6020,
+      "code": 6022,
       "name": "Flagged",
       "msg": "Buying is off: this raise was flagged for fraud."
     },
     {
-      "code": 6021,
+      "code": 6023,
       "name": "Blacklisted",
       "msg": "This X account cannot open a raise."
     },
     {
-      "code": 6022,
+      "code": 6024,
       "name": "BadAttestation",
       "msg": "The attestation is missing, malformed or not from the attestor."
     },
     {
-      "code": 6023,
+      "code": 6025,
       "name": "AttestationExpired",
       "msg": "The attestation has expired."
     },
     {
-      "code": 6024,
+      "code": 6026,
       "name": "NotFounder",
       "msg": "Only the founder can do that."
     },
     {
-      "code": 6025,
+      "code": 6027,
       "name": "NotAdmin",
       "msg": "Only the admin can do that."
     },
     {
-      "code": 6026,
+      "code": 6028,
       "name": "BadPriceAccount",
       "msg": "That is not the Pyth SOL/USD price account, or it is not fully verified."
     },
     {
-      "code": 6027,
+      "code": 6029,
       "name": "BadConfig",
       "msg": "Those terms are out of range."
     },
     {
-      "code": 6028,
+      "code": 6030,
       "name": "OneLiveRaise",
       "msg": "This wallet already has a live raise. One at a time."
     },
     {
-      "code": 6029,
+      "code": 6031,
       "name": "PrevRaiseMissing",
       "msg": "The raise named as this wallet's live one was not passed in."
     },
     {
-      "code": 6030,
+      "code": 6032,
       "name": "XAlreadyLinked",
       "msg": "This raise already has an X account linked."
     },
     {
-      "code": 6031,
+      "code": 6033,
       "name": "RaiseOver",
       "msg": "A refunded raise cannot link an X account."
     },
     {
-      "code": 6032,
+      "code": 6034,
       "name": "XBlacklistMissing",
       "msg": "The X handle's blacklist account was not passed in."
     },
     {
-      "code": 6033,
+      "code": 6035,
       "name": "NotPendingAdmin",
       "msg": "Only the pending admin can accept the handover."
     },
     {
-      "code": 6034,
+      "code": 6036,
       "name": "TestModeNotAllowed",
       "msg": "Test mode exists only in devnet builds, and only with the devnet proof account."
     },
     {
-      "code": 6035,
+      "code": 6037,
       "name": "WrongStep",
       "msg": "That seeding step is not next."
     },
     {
-      "code": 6036,
+      "code": 6038,
       "name": "TimeoutNotPassed",
       "msg": "The seeding timeout has not passed."
     },
     {
-      "code": 6037,
+      "code": 6039,
       "name": "AlreadyClaimed",
       "msg": "Already claimed."
     },
     {
-      "code": 6038,
+      "code": 6040,
       "name": "NothingToClaim",
       "msg": "Nothing to claim."
     },
     {
-      "code": 6039,
+      "code": 6041,
       "name": "ChangeNotDue",
       "msg": "The payout wallet change is not due yet."
     },
     {
-      "code": 6040,
+      "code": 6042,
       "name": "NoChangePending",
       "msg": "No payout wallet change is pending."
     },
     {
-      "code": 6041,
+      "code": 6043,
       "name": "WrongAccount",
       "msg": "The account does not match the raise."
     },
     {
-      "code": 6042,
+      "code": 6044,
       "name": "Overflow",
       "msg": "Arithmetic overflow."
     }
@@ -3062,6 +3082,27 @@
               "Last in the layout so a devnet config of the layout before it could be grown in place (migrate_config)."
             ],
             "type": "u64"
+          },
+          {
+            "name": "preset_caps_cents",
+            "docs": [
+              "the opening market cap presets a founder picks from, in cents, set once at init_config: $50K, $100K, $150K, $200K in",
+              "production. The raise is derived from the one chosen (math::derive_target). They are the floor and the ceiling."
+            ],
+            "type": {
+              "array": [
+                "u64",
+                4
+              ]
+            }
+          },
+          {
+            "name": "test_cap_cents",
+            "docs": [
+              "devnet test mode only: a tiny extra preset (about $30) so a cycle costs cents. A mainnet build refuses any value but",
+              "zero at init_config (math::check_presets), so no wallet anywhere has an exemption"
+            ],
+            "type": "u64"
           }
         ]
       }
@@ -3129,6 +3170,19 @@
           },
           {
             "name": "min_target_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "preset_caps_cents",
+            "type": {
+              "array": [
+                "u64",
+                4
+              ]
+            }
+          },
+          {
+            "name": "test_cap_cents",
             "type": "u64"
           }
         ]
@@ -3396,6 +3450,18 @@
                 }
               }
             }
+          },
+          {
+            "name": "preset",
+            "type": "u8"
+          },
+          {
+            "name": "min_buy",
+            "type": "u64"
+          },
+          {
+            "name": "max_buy",
+            "type": "u64"
           }
         ]
       }
@@ -3645,6 +3711,22 @@
                 }
               }
             }
+          },
+          {
+            "name": "cap_usd_cents",
+            "type": "u64"
+          },
+          {
+            "name": "preset",
+            "type": "u8"
+          },
+          {
+            "name": "min_buy",
+            "type": "u64"
+          },
+          {
+            "name": "max_buy",
+            "type": "u64"
           }
         ]
       }
@@ -3796,6 +3878,22 @@
                 }
               }
             }
+          },
+          {
+            "name": "cap_usd_cents",
+            "type": "u64"
+          },
+          {
+            "name": "preset",
+            "type": "u8"
+          },
+          {
+            "name": "min_buy",
+            "type": "u64"
+          },
+          {
+            "name": "max_buy",
+            "type": "u64"
           }
         ]
       }

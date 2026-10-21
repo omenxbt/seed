@@ -6,7 +6,8 @@ use crate::state::{EvenUnlocks, Tranche};
 pub struct RaiseOpened {
     pub raise: Pubkey, pub founder: Pubkey, pub x_handle_hash: Option<[u8; 32]>, pub pair_mint: Pubkey, pub target: u64, pub target_usd_cents: u64, pub sol_usd_cents: u64,
     pub team_bps: u16, pub payout_wallet: Pubkey, pub opened_at: i64, pub ends_at: i64, pub name: String, pub ticker: String, pub schedule: Vec<Tranche>, pub uri: String,
-    pub even: Option<EvenUnlocks>,   // last, so an indexer reading the older layout still reads everything before it
+    pub even: Option<EvenUnlocks>,   // appended, so an indexer reading an older layout still reads everything before it
+    pub cap_usd_cents: u64, pub preset: u8, pub min_buy: u64, pub max_buy: u64,
 }
 #[event] pub struct Contributed { pub raise: Pubkey, pub wallet: Pubkey, pub amount: u64, pub fee: u64, pub raised: u64, pub backers: u32, pub at: i64 }
 #[event] pub struct RaiseFilled { pub raise: Pubkey, pub at: i64 }

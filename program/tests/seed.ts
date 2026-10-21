@@ -5,7 +5,7 @@ import { BN, web3 } from '@coral-xyz/anchor';
 import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, NATIVE_MINT, createAssociatedTokenAccountIdempotentInstruction, createSyncNativeInstruction, createTransferInstruction, getAccount, getAssociatedTokenAddressSync, getMint } from '@solana/spl-token';
 import { assert } from 'chai';
 import { createHash } from 'crypto';
-import { SeedClient, pda, handleHash, attestIx, decodeMetadata, WSOL, SOL_FEED } from '../client/seed';
+import { SeedClient, pda, handleHash, attestIx, decodeMetadata, WSOL, SOL_FEED, PRESET_CAPS_CENTS, TEST_PRESET } from '../client/seed';
 import idl from '../target/idl/seed.json';
 
 const { Keypair, PublicKey, SystemProgram, LAMPORTS_PER_SOL } = web3;
@@ -20,7 +20,7 @@ describe('seed', () => {
   const attestor = Keypair.fromSeed(createHash('sha256').update(Buffer.concat([me.secretKey, Buffer.from('seed attestor')])).digest());
   const backer = Keypair.generate();
   const nonce = Date.now(), KILN_URI = 'https://xwokejftvhcwrwxxcykh.supabase.co/storage/v1/object/public/presale-media/test/kiln.json';
-  let raise: web3.PublicKey, mint: web3.Keypair, nft: web3.Keypair, r: any;
+  let raise: web3.PublicKey, mint: web3.Keypair, nft: web3.Keypair, r: any, target: BN;   // target: the suite's raise, as the chain derived it
   const handle = 'seed_test_' + nonce.toString(36);
   const expectFail = async (p: Promise<unknown>, code: string) => { try { await p; } catch (e: any) { const m = String(e.message || e); assert.include(m, code, `expected ${code}, got: ${m.slice(0, 1600)}`); return; } assert.fail(`expected ${code}`); };
 
@@ -33,7 +33,7 @@ describe('seed', () => {
     // the config, once; the attestor is fixed by it, which is why the key derives from the wallet. A config that cannot
     // be read (an older layout) or that names another attestor is closed and made again when this wallet is its admin.
     const make = async () => c.send([await c.initConfig({ admin: me.publicKey, attestor: attestor.publicKey, seedTreasury: me.publicKey, solFeed: SOL_FEED, feeBps: 100, creatorShareBps: 7000, poolFeeBps: 125, capUsdCents: new BN(10_000_000),
-      minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90 /* unused since 2026-10-20 */, payoutDelay: new BN(7 * 86400), testMode: true, minTargetLamports: sol(0.1) }, me.publicKey, USDC_DEVNET)]);
+      minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90 /* unused since 2026-10-20 */, payoutDelay: new BN(7 * 86400), testMode: true, minTargetLamports: sol(0.1) /* unused */, presetCapsCents: PRESET_CAPS_CENTS.map(x => new BN(x)), testCapCents: new BN(3000) }, me.publicKey, USDC_DEVNET)]);
     try { cfg = await c.fetchConfig(); } catch { cfg = null; }
     if (!cfg) {
       const raw = await provider.connection.getAccountInfo(c.config);
@@ -43,8 +43,8 @@ describe('seed', () => {
     assert.ok(cfg.attestor.equals(attestor.publicKey), 'the config was made with another attestor; reset it with its admin or use that wallet');
     day = cfg.testMode ? 60 : 86400;
     // a backer with a little SOL, and wrapped SOL for both
-    await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: backer.publicKey, lamports: 0.25 * LAMPORTS_PER_SOL })]);
-    for (const [w, n] of [[me, 0.2], [backer, 0.15]] as [web3.Keypair, number][]) {
+    await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: backer.publicKey, lamports: 0.55 * LAMPORTS_PER_SOL })]);   // the suite's raise, the limits raise and the refund raise are all bought from it
+    for (const [w, n] of [[me, 0.2], [backer, 0.45]] as [web3.Keypair, number][]) {
       const ata = getAssociatedTokenAddressSync(NATIVE_MINT, w.publicKey);
       await c.send([createAssociatedTokenAccountIdempotentInstruction(w.publicKey, ata, w.publicKey, NATIVE_MINT), SystemProgram.transfer({ fromPubkey: w.publicKey, toPubkey: ata, lamports: n * LAMPORTS_PER_SOL }), createSyncNativeInstruction(ata)], [w]);
     }
@@ -53,13 +53,13 @@ describe('seed', () => {
 
   it('refuses an attestation that is not from the attestor', async () => {
     const fake = Keypair.generate(), hash = handleHash(handle), expiry = Math.floor(Date.now() / 1000) + 3600;
-    const { ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 1, name: 'Fake', ticker: 'FAKE', target: sol(0.2), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
+    const { ixs } = await c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 1, name: 'Fake', ticker: 'FAKE', preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
     ixs[0] = attestIx(fake, me.publicKey, hash, expiry);
     await expectFail(c.send(ixs), 'BadAttestation');
   });
 
   it('the schedule rules: slices sum to exactly 100% of the share, dates in order, one shape at a time, none without a team share, no minimum length', async () => {
-    const bad = (schedule: any[], teamBps = 1000, even: any = null) => c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 2, name: 'Bad', ticker: 'BAD', uri: KILN_URI, target: sol(0.2), deadline: span(86400), teamBps, schedule, even, payoutWallet: me.publicKey }).then(x => c.send(x.ixs));
+    const bad = (schedule: any[], teamBps = 1000, even: any = null) => c.openRaise(me.publicKey, WSOL, attestor, handle, { nonce: nonce + 2, name: 'Bad', ticker: 'BAD', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps, schedule, even, payoutWallet: me.publicKey }).then(x => c.send(x.ixs));
     await expectFail(bad([{ dayOffset: 90, bps: 5000 }]), 'ScheduleSum');
     await expectFail(bad([{ dayOffset: 30, bps: 6000 }, { dayOffset: 60, bps: 6000 }]), 'ScheduleSum');
     await expectFail(bad([{ dayOffset: 60, bps: 5000 }, { dayOffset: 30, bps: 5000 }]), 'ScheduleOrder');
@@ -70,7 +70,7 @@ describe('seed', () => {
     await expectFail(bad([{ dayOffset: 0, bps: 10000 }], 10000), 'BadTeamShare');                          // 100% is not under 100%
     // there is no minimum length: 99% of the supply, all at seeding, is the founder's call and opens (then is cancelled)
     const f = Keypair.generate(); await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL })]);
-    const all = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 16, name: 'All', ticker: 'ALL', uri: KILN_URI, target: sol(0.1), deadline: span(86400), teamBps: 9900, schedule: [{ dayOffset: 0, bps: 10000 }], payoutWallet: f.publicKey });
+    const all = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 16, name: 'All', ticker: 'ALL', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 9900, schedule: [{ dayOffset: 0, bps: 10000 }], payoutWallet: f.publicKey });
     await c.send(all.ixs, [f]); const ra = await c.fetchRaise(all.raise);
     assert.equal(ra.teamBps, 9900); assert.equal(ra.schedule.length, 1); assert.equal(ra.schedule[0].dayOffset, 0); assert.equal(ra.even, null);
     await c.send([await c.cancelRaise(all.raise, f.publicKey)], [f]);
@@ -78,47 +78,64 @@ describe('seed', () => {
 
   it('refuses a metadata URI that is not https:// or ar://, or is too long', async () => {
     for (const uri of ['http://seed.test/x.json', 'ipfs://abc', 'https://' + 'a'.repeat(200)]) {
-      try { const { ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce: nonce + 11, name: 'Uri', ticker: 'URI', uri, target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey }); await c.send(ixs); assert.fail('opened'); }
+      try { const { ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce: nonce + 11, name: 'Uri', ticker: 'URI', uri, preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey }); await c.send(ixs); assert.fail('opened'); }
       catch (e: any) { assert.match(String(e.message || e), /BadUri/); }
     }
   });
 
   it('opens a raise with a wallet alone, no X account', async () => {
-    const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce, name: 'Kiln', ticker: 'KILN', uri: KILN_URI, target: sol(0.2), deadline: span(86400), teamBps: 1000, schedule: [], even: { cliffDays: 90, intervalDays: 30, count: 10 }, payoutWallet: me.publicKey });
+    const { raise: rk, ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce, name: 'Kiln', ticker: 'KILN', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 1000, schedule: [], even: { cliffDays: 90, intervalDays: 30, count: 10 }, payoutWallet: me.publicKey });
     assert.equal(ixs.length, 1, 'no attestation instruction without an X account');
     await c.send(ixs); raise = rk; r = await c.fetchRaise(raise);
-    assert.equal(r.teamBps, 1000); assert.ok(r.target.eq(sol(0.2))); assert.deepEqual(Object.keys(r.status)[0], 'live');
+    assert.equal(r.teamBps, 1000); assert.deepEqual(Object.keys(r.status)[0], 'live');
     assert.deepEqual(r.schedule, []); assert.equal(r.even.cliffDays, 90); assert.equal(r.even.intervalDays, 30); assert.equal(r.even.count, 10);   // the even schedule, as given
-    // the SOL price came from Pyth's sponsored feed: the raise records it, and the USD target is 0.2 SOL at that price
+    // the raise is derived from the Test preset ($30): $30 × 90% ÷ 2 = $13.50, priced at the Pyth SOL price the raise recorded
     const px = Number(r.solUsdCents); assert.ok(px > 1000 && px < 100_000, `a SOL price from Pyth, got ${px} cents`);
-    assert.ok(r.targetUsdCents.eq(new BN(Math.floor(0.2 * px))), 'a 0.2 SOL target at the Pyth price');
+    assert.equal(Number(r.capUsdCents), 3000); assert.equal(r.preset, TEST_PRESET); assert.equal(Number(r.targetUsdCents), 1350);
+    assert.ok(r.target.eq(new BN(Math.floor(1350 * 1e9 / px))), `the target is $13.50 in lamports at ${px} cents: ${r.target.toString()}`);
+    assert.ok(r.minBuy.eqn(0) && r.maxBuy.eqn(0), 'no limits');
+    target = r.target;
     assert.equal(r.xHandleHash, null, 'no X account yet');
   });
 
-  it('the minimum raise is the config\'s: a lamport under is refused, exactly it opens, and a USDC raise meets its worth at the Pyth price', async function () {
-    this.timeout(240_000);
-    const min: BN = cfg.minTargetLamports; assert.ok(min.gt(new BN(0)), 'the config carries min_target_lamports');
-    assert.ok(cfg.testMode ? min.eq(sol(0.1)) : min.eq(sol(81)), `0.1 SOL in test mode, 81 SOL otherwise; got ${min.toString()} lamports`);
-    // founders of their own, so what they open does not count as this wallet's live raise (and the one-live-raise check, which
-    // comes before the floor, stays out of the way: each refused attempt is made before that founder has a raise)
-    const f = Keypair.generate(), g = Keypair.generate();
-    await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL }), SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: g.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL })]);
-    const open = (who: web3.Keypair, pair: web3.PublicKey, target: BN, n: number, ticker: string) => c.openRaise(who.publicKey, pair, null, null, { nonce: nonce + n, name: 'Min', ticker, uri: KILN_URI, target, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: who.publicKey });
-    // the USDC floor is the minimum's worth at the price the raise above recorded: well under it is refused, well over it opens
-    const px = Number(r.solUsdCents), floorUsdc = Number(min.toString()) / LAMPORTS_PER_SOL * px / 100;   // dollars
-    const usdc = (d: number) => new BN(Math.round(d * 1e6));
-    await expectFail(open(f, WSOL, min.sub(new BN(1)), 12, 'MIN').then(x => c.send(x.ixs, [f])), 'TargetBelowMinimum');
-    await expectFail(open(f, USDC_DEVNET, usdc(floorUsdc * 0.9), 13, 'MINU').then(x => c.send(x.ixs, [f])), 'TargetBelowMinimum');
-    const at = await open(f, WSOL, min, 14, 'MIN'); await c.send(at.ixs, [f]);
-    const opened = await c.fetchRaise(at.raise); assert.ok(opened.target.eq(min), 'exactly the minimum opens');
-    const over = await open(g, USDC_DEVNET, usdc(floorUsdc * 1.1), 15, 'MINU'); await c.send(over.ixs, [g]);
-    const u = await c.fetchRaise(over.raise); assert.ok(u.targetUsdCents.gte(new BN(Math.floor(floorUsdc * 100))), 'a USDC raise at least the minimum\'s worth opens');
-    // both are cancelled so their founders are free again and nothing is left live
-    for (const [k, rk] of [[f, at.raise], [g, over.raise]] as [web3.Keypair, web3.PublicKey][]) await c.send([await c.cancelRaise(rk, k.publicKey)], [k]);
+  it('the presets: each cap at 0%, 15% and 50% team derives the target the model says, in SOL and USDC; an index off the list is refused', async function () {
+    this.timeout(300_000);
+    assert.deepEqual((cfg.presetCapsCents as BN[]).map(Number), PRESET_CAPS_CENTS); assert.equal(Number(cfg.testCapCents), 3000);
+    const px = Number(r.solUsdCents);   // the Pyth price the suite's raise opened at; a preset raise opened seconds later may differ by a cent
+    const f = Keypair.generate(); await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.25 * LAMPORTS_PER_SOL })]);   // twelve raises' rent (a cancelled raise keeps its accounts)
+    let n = 20;
+    for (const preset of [0, 1, 2, 3]) for (const teamBps of [0, 1500, 5000]) {
+      const pair = preset % 2 ? USDC_DEVNET : WSOL, o = await c.openRaise(f.publicKey, pair, null, null, { nonce: nonce + n++, name: 'Cap', ticker: 'CAP', uri: KILN_URI, preset, deadline: span(86400), teamBps, schedule: teamBps ? [{ dayOffset: 0, bps: 10000 }] : [], payoutWallet: f.publicKey });
+      await c.send(o.ixs, [f]); const x = await c.fetchRaise(o.raise);
+      const wantCents = PRESET_CAPS_CENTS[preset] * (10000 - teamBps) / 10000 / 2;
+      assert.equal(Number(x.capUsdCents), PRESET_CAPS_CENTS[preset]); assert.equal(x.preset, preset); assert.equal(Number(x.targetUsdCents), wantCents, `cap × (1 − team) ÷ 2 for preset ${preset} at ${teamBps} bps`);
+      if (pair.equals(WSOL)) { const p2 = Number(x.solUsdCents); assert.ok(Math.abs(p2 - px) < px * 0.02, 'the Pyth price, within 2%'); assert.ok(x.target.eq(new BN(Math.floor(wantCents * 1e9 / p2))), 'lamports at that price'); }
+      else { assert.equal(Number(x.solUsdCents), 0); assert.ok(x.target.eq(new BN(wantCents * 10_000)), 'USDC base units'); }
+      await c.send([await c.cancelRaise(o.raise, f.publicKey)], [f]);   // opening is free of the target; cancel so the founder is free again
+    }
+    await expectFail(c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + n++, name: 'Cap', ticker: 'CAP', uri: KILN_URI, preset: 5, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: f.publicKey }).then(x => c.send(x.ixs, [f])), 'BadPreset');
+    await expectFail(c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + n++, name: 'Cap', ticker: 'CAP', uri: KILN_URI, preset: 0, deadline: span(86400), teamBps: 0, schedule: [], minBuy: sol(0.02), maxBuy: sol(0.01), payoutWallet: f.publicKey }).then(x => c.send(x.ixs, [f])), 'BadLimits');
+  });
+
+  it('the founder\'s limits are the program\'s: a buy under the minimum is refused unless it fills the room, a wallet cannot pass its maximum', async function () {
+    this.timeout(200_000);
+    const f = Keypair.generate(); await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.04 * LAMPORTS_PER_SOL })]);
+    // the Test preset with no team: about $15 → a little SOL; min 30% of it, max 60% of it per wallet
+    const o = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 40, name: 'Lim', ticker: 'LIM', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: f.publicKey, minBuy: new BN(1), maxBuy: new BN(1) });
+    // the limits are set from the target the chain will derive, so read it from a dry build: open with limits as a fraction of the test target
+    const t = target; const min = t.muln(3).divn(10), max = t.muln(6).divn(10);
+    const o2 = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 41, name: 'Lim', ticker: 'LIM', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: f.publicKey, minBuy: min, maxBuy: max });
+    void o; await c.send(o2.ixs, [f]); const x = await c.fetchRaise(o2.raise);
+    assert.ok(x.minBuy.eq(min) && x.maxBuy.eq(max), 'the limits are on the raise');
+    await expectFail(c.send([await c.contribute(o2.raise, WSOL, backer.publicKey, min.subn(1))], [backer]), 'UnderMinBuy');
+    await c.send([await c.contribute(o2.raise, WSOL, backer.publicKey, max)], [backer]);                                   // exactly the maximum
+    await expectFail(c.send([await c.contribute(o2.raise, WSOL, backer.publicKey, min)], [backer]), 'OverMaxBuy');          // one more buy would pass it
+    await c.send([await c.contribute(o2.raise, WSOL, me.publicKey, x.target)]);                                            // the rest, trimmed to the room (under max? the room is 40%, within the 60% max)
+    await c.send([await c.cancelRaise(o2.raise, f.publicKey)], [f]).catch(() => {});                                      // filled raises cannot be cancelled; it is left to the timeout
   });
 
   it('one live raise per wallet: a second open is refused until the first has left Live', async () => {
-    const { ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce: nonce + 9, name: 'Second', ticker: 'TWO', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
+    const { ixs } = await c.openRaise(me.publicKey, WSOL, null, null, { nonce: nonce + 9, name: 'Second', ticker: 'TWO', preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: me.publicKey });
     await expectFail(c.send(ixs), 'OneLiveRaise');
   });
 
@@ -133,12 +150,13 @@ describe('seed', () => {
   });
 
   it('takes buys with the fee on top, trims the last one, and fills', async () => {
-    await c.send([await c.contribute(raise, WSOL, backer.publicKey, sol(0.1))], [backer]);
-    r = await c.fetchRaise(raise); assert.ok(r.raised.eq(sol(0.1))); assert.ok(r.feesHeld.eq(sol(0.001))); assert.equal(r.backers, 1);
+    const half = target.divn(2), rest = target.sub(half);   // half the raise, then more than the rest (trimmed)
+    await c.send([await c.contribute(raise, WSOL, backer.publicKey, half)], [backer]);
+    r = await c.fetchRaise(raise); assert.ok(r.raised.eq(half)); assert.ok(r.feesHeld.eq(half.addn(99).divn(100)), 'the 1% fee, rounded up'); assert.equal(r.backers, 1);
     const before = (await getAccount(provider.connection, getAssociatedTokenAddressSync(NATIVE_MINT, me.publicKey))).amount;
-    await c.send([await c.contribute(raise, WSOL, me.publicKey, sol(0.15))]);   // only 0.1 fits
+    await c.send([await c.contribute(raise, WSOL, me.publicKey, rest.muln(3).divn(2))]);   // only the rest fits
     const after = (await getAccount(provider.connection, getAssociatedTokenAddressSync(NATIVE_MINT, me.publicKey))).amount;
-    assert.equal(Number(before - after), 0.101 * LAMPORTS_PER_SOL, 'the buy is trimmed to the room left, plus 1%');
+    assert.equal(Number(before - after), Number(rest.add(rest.addn(99).divn(100))), 'the buy is trimmed to the room left, plus 1%');
     r = await c.fetchRaise(raise); assert.deepEqual(Object.keys(r.status)[0], 'filled'); assert.equal(r.backers, 2);
     await expectFail(c.send([await c.contribute(raise, WSOL, backer.publicKey, sol(0.01))], [backer]), 'NotLive');
   });
@@ -169,7 +187,7 @@ describe('seed', () => {
     r = await c.fetchRaise(raise); assert.deepEqual(Object.keys(r.seedStep)[0], 'pooled');
     const pool = pda.dammPool(mint.publicKey, WSOL); assert.ok(r.pool.equals(pool));
     const vaultB = await getAccount(provider.connection, pda.dammVault(WSOL, pool)), vaultA = await getAccount(provider.connection, pda.dammVault(mint.publicKey, pool));
-    assert.ok(Number(vaultB.amount) >= 0.2 * LAMPORTS_PER_SOL * 0.999999, 'the whole raise is in the pool'); assert.ok(Number(vaultA.amount) >= 450000000000000 * 0.999999);
+    assert.ok(Number(vaultB.amount) >= Number(target) * 0.999999, 'the whole raise is in the pool'); assert.ok(Number(vaultA.amount) >= 450000000000000 * 0.999999);
     const nftAcc = await getAccount(provider.connection, pda.dammPositionNftAccount(nft.publicKey), 'confirmed', TOKEN_2022_PROGRAM_ID);   // DAMM mints the position NFT with Token-2022
     assert.ok(nftAcc.owner.equals(raise), 'the position NFT is owned by the raise PDA'); assert.equal(nftAcc.amount, 1n);
     // the position's permanent lock: the Position account's permanent_locked_liquidity is non-zero (offset from the IDL layout is not needed: the raise's own record and DAMM's refusal to withdraw are the proof below)
@@ -188,13 +206,13 @@ describe('seed', () => {
     const tre = getAssociatedTokenAddressSync(NATIVE_MINT, cfg.seedTreasury, true), before = (await getAccount(provider.connection, tre)).amount;
     await c.send([await c.crankSeed(raise, WSOL, cfg.seedTreasury)]);
     r = await c.fetchRaise(raise); assert.deepEqual(Object.keys(r.status)[0], 'seeded'); assert.ok(r.seededAt.gtn(0));
-    const got = Number((await getAccount(provider.connection, tre)).amount - before); assert.ok(got >= 0.002 * LAMPORTS_PER_SOL && got < 0.002 * LAMPORTS_PER_SOL + 1000, '1% of 0.2 SOL, plus the deposit rounding');
+    const got = Number((await getAccount(provider.connection, tre)).amount - before); assert.ok(got >= Number(target) / 100 && got < Number(target) / 100 + 1000, '1% of the raise, plus the deposit rounding');
   });
 
   it('a backer claims their share of the backers tokens', async () => {
     await c.send([c.ata(backer.publicKey, backer.publicKey, mint.publicKey), await c.claimTokens(raise, mint.publicKey, backer.publicKey)], [backer]);
     const bal = await getAccount(provider.connection, getAssociatedTokenAddressSync(mint.publicKey, backer.publicKey));
-    assert.equal(bal.amount, BigInt('225000000000000'), 'half the raise is half the backers tokens');
+    assert.equal(bal.amount, BigInt(450_000_000_000_000) * BigInt(target.divn(2).toString()) / BigInt(target.toString()), 'half the raise is half the backers tokens');
     await expectFail(c.send([await c.claimTokens(raise, mint.publicKey, backer.publicKey)], [backer]), 'AccountNotInitialized');   // the record closed with the claim
   });
 
@@ -246,12 +264,12 @@ describe('seed', () => {
     const founder2 = Keypair.fromSeed(createHash('sha256').update(Buffer.concat([me.secretKey, Buffer.from('seed test founder')])).digest());
     it('refunds every backer exactly what they paid', async () => {
       await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: founder2.publicKey, lamports: 0.05 * LAMPORTS_PER_SOL })]);
-      const { raise: rk, ixs } = await c.openRaise(founder2.publicKey, WSOL, attestor, handle2, { nonce: nonce + 3, name: 'Moss', ticker: 'MOSS', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: founder2.publicKey });
+      const { raise: rk, ixs } = await c.openRaise(founder2.publicKey, WSOL, attestor, handle2, { nonce: nonce + 3, name: 'Moss', ticker: 'MOSS', preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: founder2.publicKey });
       assert.equal(ixs.length, 2, 'the attestation rides in front when an X account is linked at opening');
       await c.send(ixs, [founder2]); raise2 = rk;
       const r2o = await c.fetchRaise(raise2); assert.deepEqual(Buffer.from(r2o.xHandleHash), handleHash(handle2));
       const ata = getAssociatedTokenAddressSync(NATIVE_MINT, backer.publicKey), before = (await getAccount(provider.connection, ata)).amount;
-      await c.send([await c.contribute(raise2, WSOL, backer.publicKey, sol(0.02))], [backer]);
+      await c.send([await c.contribute(raise2, WSOL, backer.publicKey, target.divn(5))], [backer]);
       await expectFail(c.send([await c.settle(raise2)]), 'DeadlineNotPassed');
       await expectFail(c.send([await c.cancelRaise(raise2, backer.publicKey)], [backer]), 'NotFounder');
       await c.send([await c.cancelRaise(raise2, founder2.publicKey)], [founder2]);
@@ -264,13 +282,13 @@ describe('seed', () => {
       await c.send([await c.adminFlagFraud(raise2, me.publicKey, founder2.publicKey, handleHash(handle2))]);
       const r2 = await c.fetchRaise(raise2); assert.isTrue(r2.blacklisted);
       // the wallet, with or without an X account
-      let o = await c.openRaise(founder2.publicKey, WSOL, null, null, { nonce: nonce + 4, name: 'Again', ticker: 'AGN', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: founder2.publicKey });
+      let o = await c.openRaise(founder2.publicKey, WSOL, null, null, { nonce: nonce + 4, name: 'Again', ticker: 'AGN', preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: founder2.publicKey });
       await expectFail(c.send(o.ixs, [founder2]), 'Blacklisted');
       // the handle, from another wallet (the backer has no live raise and is not blacklisted)
-      o = await c.openRaise(backer.publicKey, WSOL, attestor, handle2, { nonce: nonce + 5, name: 'Again', ticker: 'AGN', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: backer.publicKey });
+      o = await c.openRaise(backer.publicKey, WSOL, attestor, handle2, { nonce: nonce + 5, name: 'Again', ticker: 'AGN', preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: backer.publicKey });
       await expectFail(c.send(o.ixs, [backer]), 'Blacklisted');
       // and the same wallet without the handle opens fine
-      o = await c.openRaise(backer.publicKey, WSOL, null, null, { nonce: nonce + 6, name: 'Clean', ticker: 'CLN', target: sol(0.1), deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: backer.publicKey });
+      o = await c.openRaise(backer.publicKey, WSOL, null, null, { nonce: nonce + 6, name: 'Clean', ticker: 'CLN', preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: backer.publicKey });
       await c.send(o.ixs, [backer]); assert.deepEqual(Object.keys((await c.fetchRaise(o.raise)).status)[0], 'live');
       await c.send([await c.cancelRaise(o.raise, backer.publicKey)], [backer]);
     }));

@@ -15,7 +15,7 @@ import { SeedClient, WSOL, pda } from '../../client/seed';
 
 const arg = (k: string, d = '') => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d; };
 const { Keypair, SystemProgram, LAMPORTS_PER_SOL } = web3; const sol = (n: number) => new BN(Math.round(n * LAMPORTS_PER_SOL));
-const TARGET = 0.5;
+const PRESET = 0;   // the staging config's smallest cap ($150): a $75 raise with no team, about half a SOL
 
 (async () => {
   if (process.env.GO !== '1') { console.log('dry: set GO=1 to send'); return; }
@@ -24,20 +24,21 @@ const TARGET = 0.5;
   const pid = new web3.PublicKey(process.env.SEED_PROGRAM_ID || (idl as any).address);
   const program = new anchor.Program({ ...(idl as any), address: pid.toBase58() } as anchor.Idl, provider), c = new SeedClient(program, provider), me = (provider.wallet as anchor.Wallet).payer;
   const backer = Keypair.fromSecretKey(Uint8Array.from(JSON.parse(readFileSync(arg('--backer', 'keys/staging-backer.json'), 'utf8'))));
-  const cfg = await c.fetchConfig(); if (cfg.testMode || Number(cfg.minTargetLamports) > TARGET * 1e9) throw new Error('not the staging config (test mode off, minimum ≤ 0.5 SOL)');
+  const cfg = await c.fetchConfig(); if (cfg.testMode || Number(cfg.presetCapsCents[0]) > 100_000) throw new Error('not the staging config (test mode off, a first preset under $1,000)');
   const out: Record<string, string> = {}; const say = (k: string, v: string) => { out[k] = v; console.log(`${k}: ${v}`); };
   const wsolOf = async (k: web3.PublicKey) => Number((await getAccount(conn, getAssociatedTokenAddressSync(NATIVE_MINT, k, true))).amount);
 
-  // the backer wraps what both raises need: 0.505 to fill SEEDTEST, 0.101 for the REFUNDME buy, 0.05 to trade
+  // the backer wraps what both raises need: about 0.5 to fill SEEDTEST (a $75 raise), 0.1 for the REFUNDME buy, 0.05 to trade
   const bAta = getAssociatedTokenAddressSync(NATIVE_MINT, backer.publicKey);
-  await c.send([createAssociatedTokenAccountIdempotentInstruction(backer.publicKey, bAta, backer.publicKey, NATIVE_MINT), SystemProgram.transfer({ fromPubkey: backer.publicKey, toPubkey: bAta, lamports: Math.round(0.66 * LAMPORTS_PER_SOL) }), createSyncNativeInstruction(bAta)], [backer]);
+  await c.send([createAssociatedTokenAccountIdempotentInstruction(backer.publicKey, bAta, backer.publicKey, NATIVE_MINT), SystemProgram.transfer({ fromPubkey: backer.publicKey, toPubkey: bAta, lamports: Math.round(0.9 * LAMPORTS_PER_SOL) }), createSyncNativeInstruction(bAta)], [backer]);
   await c.send([c.ata(me.publicKey, cfg.seedTreasury, NATIVE_MINT), c.ata(me.publicKey, me.publicKey, NATIVE_MINT)]);
 
   // SEEDTEST
   const nonce = Date.now();
-  const A = await c.openRaise(me.publicKey, WSOL, null, null, { nonce, name: 'Seedtest', ticker: 'SEEDTEST', uri, target: sol(TARGET), deadline: 86400, teamBps: 1000, schedule: [{ dayOffset: 90, bps: 10000 }], payoutWallet: me.publicKey });
+  const A = await c.openRaise(me.publicKey, WSOL, null, null, { nonce, name: 'Seedtest', ticker: 'SEEDTEST', uri, preset: PRESET, deadline: 86400, teamBps: 1000, schedule: [{ dayOffset: 90, bps: 10000 }], payoutWallet: me.publicKey });
   await c.send(A.ixs); say('SEEDTEST raise', A.raise.toBase58()); say('SEEDTEST id', `seedtest-${A.raise.toBase58().slice(0, 8).toLowerCase()}`);
-  await c.send([await c.contribute(A.raise, WSOL, backer.publicKey, sol(TARGET))], [backer]);
+  const target = (await c.fetchRaise(A.raise)).target as BN; say('SEEDTEST target', `${Number(target) / 1e9} SOL (derived from the $${Number(cfg.presetCapsCents[PRESET]) / 100} cap at the Pyth price)`);
+  await c.send([await c.contribute(A.raise, WSOL, backer.publicKey, target)], [backer]);
   let r = await c.fetchRaise(A.raise); if (Object.keys(r.status)[0] !== 'filled') throw new Error('SEEDTEST did not fill');
   const mint = Keypair.generate(), nft = Keypair.generate();
   await c.send([await c.crankMint(A.raise, mint.publicKey, WSOL, me.publicKey)], [mint]); say('mint (the CA)', mint.publicKey.toBase58());
@@ -64,7 +65,7 @@ const TARGET = 0.5;
   // REFUNDME: one buy, cancelled, refunded
   if (!process.argv.includes('--skip-refund')) {
     const f = Keypair.generate(); await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: Math.round(0.03 * LAMPORTS_PER_SOL) })]);
-    const B = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 1, name: 'Refundme', ticker: 'REFUNDME', uri, target: sol(TARGET), deadline: 86400, teamBps: 0, schedule: [], payoutWallet: f.publicKey });
+    const B = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 1, name: 'Refundme', ticker: 'REFUNDME', uri, preset: PRESET, deadline: 86400, teamBps: 0, schedule: [], payoutWallet: f.publicKey });
     await c.send(B.ixs, [f]); say('REFUNDME raise', B.raise.toBase58());
     const before = await wsolOf(backer.publicKey);
     await c.send([await c.contribute(B.raise, WSOL, backer.publicKey, sol(0.1))], [backer]);

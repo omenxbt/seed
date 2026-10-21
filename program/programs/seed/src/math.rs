@@ -51,66 +51,73 @@ pub fn mul_div_ceil(a: u64, b: u64, c: u64) -> Option<u64> {
     ((p + c as u128 - 1) / c as u128).try_into().ok()
 }
 
-/// A target against the terms: its worth in cents (the cap is in dollars) and the SOL price it was measured with. A SOL raise
-/// is held to the minimum in lamports, a USDC raise to the minimum's worth in dollars at today's SOL price. If the minimum is
-/// ever worth more than the cap, the cap is the minimum, so a raise is always possible (at exactly the cap).
-/// `is_sol`: the pair is wSOL; `target`: base units of the pair (lamports, or USDC at 6 decimals); `cents`: today's SOL price.
-pub fn check_target(is_sol: bool, target: u64, cents: u64, cap_cents: u64, min_lamports: u64) -> anchor_lang::Result<(u64, u64)> {
+/// The raise, derived from the opening market cap the founder picked: target = cap × (1 − team share) ÷ 2, in cents, then in
+/// the pair asset — lamports at today's SOL price, or USDC base units (6 dp). Half of what the team does not take is what
+/// backers pay for and all of it goes into the pool, so the pool opens at exactly the cap. Returns (target, target cents, the
+/// SOL price used; 0 for a USDC raise).
+pub fn derive_target(cap_cents: u64, team_bps: u16, is_sol: bool, sol_cents: u64) -> anchor_lang::Result<(u64, u64, u64)> {
     use anchor_lang::prelude::*;
     use crate::errors::SeedError;
-    let (target_cents, sol_cents) = if is_sol { (mul_div(target, cents, crate::state::LAMPORTS).ok_or(SeedError::Overflow)?, cents) } else { (target / 10_000, 0) };
-    require!(target_cents <= cap_cents, SeedError::OverCap);
-    if is_sol { require!(target >= min_lamports || target_cents >= cap_cents, SeedError::TargetBelowMinimum); }
-    else {
-        let floor_cents = mul_div(min_lamports, cents, crate::state::LAMPORTS).ok_or(SeedError::Overflow)?.min(cap_cents);
-        require!(target_cents >= floor_cents, SeedError::TargetBelowMinimum);
-    }
-    Ok((target_cents, sol_cents))
+    use crate::state::{BPS, LAMPORTS};
+    require!((team_bps as u64) < BPS, SeedError::BadTeamShare);
+    let target_cents = mul_div(cap_cents, BPS - team_bps as u64, BPS).ok_or(SeedError::Overflow)? / 2;
+    let target = if is_sol { mul_div(target_cents, LAMPORTS, sol_cents.max(1)).ok_or(SeedError::Overflow)? } else { target_cents.checked_mul(10_000).ok_or(SeedError::Overflow)? };
+    require!(cap_cents > 0 && target_cents > 0 && target > 0, SeedError::BadPreset);
+    Ok((target, target_cents, if is_sol { sol_cents } else { 0 }))
 }
 
-/* The minimum raise, proven on every build: `cargo test` (the mainnet build) and `cargo test --features devnet` run the same
-   cases, since the floor is a config value the binary applies the same way whatever features it was built with. */
-#[cfg(test)]
-mod target_tests {
-    use super::check_target;
-    const CAP: u64 = 10_000_000;          // $100,000 in cents
-    const MIN: u64 = 81_000_000_000;      // 81 SOL
-    const SOL: u64 = 1_000_000_000;
-    const PX: u64 = 15_000;               // $150.00
-    fn code(r: anchor_lang::Result<(u64, u64)>) -> String { match r { Ok(_) => "ok".into(), Err(e) => format!("{e:?}") } }
+/// The presets a config may be made with: four opening market caps, ascending, every one above zero. The test preset is
+/// allowed only in a devnet build and only with test mode: a mainnet build refuses any value but zero, so there is no path to
+/// a tiny raise on mainnet. (`cargo test` on the mainnet build proves the refusal; `--features devnet` proves the allowance.)
+pub fn check_presets(caps: &[u64; 4], test_cap_cents: u64, test_mode: bool) -> anchor_lang::Result<()> {
+    use anchor_lang::prelude::*;
+    use crate::errors::SeedError;
+    require!(caps.iter().all(|&c| c > 0) && caps.windows(2).all(|w| w[0] < w[1]), SeedError::BadConfig);
+    #[cfg(not(feature = "devnet"))]
+    { let _ = test_mode; require!(test_cap_cents == 0, SeedError::TestPresetNotAllowed); }
+    #[cfg(feature = "devnet")]
+    require!(test_cap_cents == 0 || test_mode, SeedError::TestPresetNotAllowed);
+    Ok(())
+}
 
-    #[test] fn sol_80_99_is_refused() { assert!(code(check_target(true, 80_990_000_000, PX, CAP, MIN)).contains("TargetBelowMinimum")); }
-    #[test] fn sol_81_opens() { assert_eq!(check_target(true, MIN, PX, CAP, MIN).unwrap(), (81 * 150 * 100, PX)); }
-    #[test] fn sol_one_lamport_under_is_refused() { assert!(code(check_target(true, MIN - 1, PX, CAP, MIN)).contains("TargetBelowMinimum")); }
-    #[test] fn usdc_meets_the_minimum_in_dollars_at_the_price() {
-        // 81 SOL at $150 is $12,150: a cent under is refused, exactly it opens
-        assert!(code(check_target(false, 12_149_990_000, PX, CAP, MIN)).contains("TargetBelowMinimum"));
-        assert_eq!(check_target(false, 12_150_000_000, PX, CAP, MIN).unwrap(), (1_215_000, 0));
-        // at $200 the same dollars no longer do
-        assert!(code(check_target(false, 12_150_000_000, 20_000, CAP, MIN)).contains("TargetBelowMinimum"));
-        assert_eq!(check_target(false, 16_200_000_000, 20_000, CAP, MIN).unwrap(), (1_620_000, 0));
+#[cfg(test)]
+mod preset_tests {
+    use super::{check_presets, derive_target};
+    const CAPS: [u64; 4] = [5_000_000, 10_000_000, 15_000_000, 20_000_000];   // $50K, $100K, $150K, $200K in cents
+    fn code<T>(r: anchor_lang::Result<T>) -> String { match r { Ok(_) => "ok".into(), Err(e) => format!("{e:?}") } }
+
+    #[test] fn every_preset_at_0_15_and_50_percent_team_at_100_150_and_250_dollars() {
+        for &cap in &CAPS { for &team in &[0u16, 1500, 5000] { for &px in &[10_000u64, 15_000, 25_000] {
+            let (lamports, cents, sol) = derive_target(cap, team, true, px).unwrap();
+            let want_cents = cap * (10_000 - team as u64) / 10_000 / 2;
+            assert_eq!(cents, want_cents, "cap {cap} team {team}: target is cap × (1 − team) ÷ 2");
+            assert_eq!(lamports, want_cents * 1_000_000_000 / px, "priced in lamports at ${}", px / 100);
+            assert_eq!(sol, px);
+            let (units, cents_u, sol_u) = derive_target(cap, team, false, px).unwrap();
+            assert_eq!((units, cents_u, sol_u), (want_cents * 10_000, want_cents, 0), "a USDC raise: the same dollars, no SOL price recorded");
+        } } }
+        // Josh's example: $100K, 15% team, $150 a SOL → $42,500 → 283.333… SOL
+        assert_eq!(derive_target(10_000_000, 1500, true, 15_000).unwrap(), (283_333_333_333, 4_250_000, 15_000));
+        assert_eq!(derive_target(5_000_000, 0, true, 10_000).unwrap().0, 250_000_000_000, "$50K, no team, $100: 250 SOL");
+        assert_eq!(derive_target(20_000_000, 5000, true, 25_000).unwrap().0, 200_000_000_000, "$200K, half to the team, $250: 200 SOL");
     }
-    #[test] fn when_81_sol_is_worth_more_than_the_cap_the_cap_is_the_minimum() {
-        let px = 200_000;   // $2,000 a SOL: 81 SOL is $162,000, over the $100,000 cap
-        assert_eq!(check_target(true, 50 * SOL, px, CAP, MIN).unwrap(), (CAP, px), "exactly $100,000 of SOL opens");
-        assert!(code(check_target(true, 49 * SOL, px, CAP, MIN)).contains("TargetBelowMinimum"), "under the cap is under the minimum");
-        assert!(code(check_target(true, 51 * SOL, px, CAP, MIN)).contains("OverCap"));
-        assert_eq!(check_target(false, 100_000_000_000, px, CAP, MIN).unwrap(), (CAP, 0), "exactly $100,000 of USDC opens");
-        assert!(code(check_target(false, 99_999_990_000, px, CAP, MIN)).contains("TargetBelowMinimum"));
+    #[test] fn a_hundred_percent_team_share_has_nothing_to_raise() { assert!(code(derive_target(10_000_000, 10_000, true, 15_000)).contains("BadTeamShare")); }
+    #[test] fn the_test_preset_is_tiny() { assert_eq!(derive_target(3_000, 1500, true, 10_500).unwrap(), (121_428_571, 1_275, 10_500), "$30, 15% team, $105: $12.75, 0.121 SOL"); }
+    #[test] fn presets_must_ascend_and_be_set() {
+        assert!(check_presets(&CAPS, 0, false).is_ok());
+        assert!(code(check_presets(&[5_000_000, 10_000_000, 10_000_000, 20_000_000], 0, false)).contains("BadConfig"));
+        assert!(code(check_presets(&[0, 10_000_000, 15_000_000, 20_000_000], 0, false)).contains("BadConfig"));
     }
-    #[test] fn over_the_cap_is_refused_first() { assert!(code(check_target(true, 1_000 * SOL, PX, CAP, MIN)).contains("OverCap")); }
-    #[test] fn a_staging_or_devnet_config_may_carry_a_lower_minimum() {
-        let min = 100_000_000;   // 0.1 SOL, the devnet test-mode config
-        assert!(code(check_target(true, 99_900_000, PX, CAP, min)).contains("TargetBelowMinimum"));
-        assert_eq!(check_target(true, min, PX, CAP, min).unwrap(), (1_500, PX));
-        assert!(code(check_target(false, 14_990_000, PX, CAP, min)).contains("TargetBelowMinimum"));   // $14.99 under 0.1 SOL at $150
-        assert_eq!(check_target(false, 15_000_000, PX, CAP, min).unwrap(), (1_500, 0));
+    #[cfg(not(feature = "devnet"))]
+    #[test] fn the_mainnet_build_refuses_a_test_preset_whatever_the_mode() {
+        assert!(code(check_presets(&CAPS, 3_000, true)).contains("TestPresetNotAllowed"));
+        assert!(code(check_presets(&CAPS, 3_000, false)).contains("TestPresetNotAllowed"));
+        assert!(code(check_presets(&CAPS, 1, true)).contains("TestPresetNotAllowed"));
     }
-    #[test] fn the_minimum_is_whatever_the_config_says_and_nothing_else() {
-        // the binary carries no number of its own: a config made with 81 SOL refuses 80 and a config made with 82 refuses 81
-        assert!(code(check_target(true, 80 * SOL, PX, CAP, 81 * SOL)).contains("TargetBelowMinimum"));
-        assert!(code(check_target(true, 81 * SOL, PX, CAP, 82 * SOL)).contains("TargetBelowMinimum"));
-        assert!(check_target(true, 82 * SOL, PX, CAP, 82 * SOL).is_ok());
+    #[cfg(feature = "devnet")]
+    #[test] fn the_devnet_build_allows_a_test_preset_only_in_test_mode() {
+        assert!(check_presets(&CAPS, 3_000, true).is_ok());
+        assert!(code(check_presets(&CAPS, 3_000, false)).contains("TestPresetNotAllowed"));
     }
 }
 

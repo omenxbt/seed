@@ -26,7 +26,12 @@ const FEE_CLAIM_EVERY = 3600e3, BACKFILL_FRESH = 30 * 60e3;   // after seeding, 
 
 Deno.serve(async (req) => {
   if (SECRET && req.headers.get('authorization') !== SECRET) return new Response('no', { status: 401 });
-  const conn = new Connection(Deno.env.get('SEED_RPC_URL')!, 'confirmed'), crank = Keypair.fromSecretKey(b58(Deno.env.get('SEED_CRANK_KEY')!));
+  /* the RPC: SEED_RPC_URL, or SEED_RPC_FALLBACK (the network's public endpoint by default) when the first is at its quota
+     or down, so a key outage cannot stop seeding (QA P0-F15) */
+  const urls = [Deno.env.get('SEED_RPC_URL')!, Deno.env.get('SEED_RPC_FALLBACK') || (/devnet/.test(Deno.env.get('SEED_RPC_URL') || '') ? 'https://api.devnet.solana.com' : 'https://api.mainnet-beta.solana.com')];
+  let conn = new Connection(urls[0], 'confirmed'), rpcNote = '';
+  try { await conn.getSlot('confirmed'); } catch (e) { rpcNote = `primary RPC failed (${String((e as Error).message).slice(0, 60)}); using the fallback`; console.warn(rpcNote); conn = new Connection(urls[1], 'confirmed'); }
+  const crank = Keypair.fromSecretKey(b58(Deno.env.get('SEED_CRANK_KEY')!));
   const provider = new AnchorProvider(conn, new Wallet(crank), { commitment: 'confirmed' });
   const program = new Program(idl as never, provider), client = seedClient(program, conn);
   const done: string[] = [], failed: string[] = [], now = Date.now();
@@ -37,9 +42,44 @@ Deno.serve(async (req) => {
   /* the seeding timeout as the program counts it: the config's seconds, shrunk 1440× in test mode (a day is a minute) */
   const cfg = await (program.account as any).config.fetch(PublicKey.findProgramAddressSync([new TextEncoder().encode('config')], program.programId)[0]);
   const seedTimeoutMs = Number(cfg.seedTimeout) * 1000 / (cfg.testMode ? 1440 : 1);
+  /* a raise the chain has and the table does not (the webhook missed its opening): written from the account, so the site
+     lists it and the swap reader has its pool; its buys arrive when scripts/reindex.ts replays it */
+  try {
+    const { data: known } = await db.from('raises').select('address').in('address', raises.map(r => r.publicKey.toBase58()));
+    const have = new Set((known ?? []).map((x: { address: string }) => x.address));
+    for (const r of raises.filter(r => !have.has(r.publicKey.toBase58()))) {
+      const a = r.account, addr = r.publicKey.toBase58(), pair = a.pairMint.toBase58(), d = pair === 'So11111111111111111111111111111111111111112' ? 9 : 6, u = (v: unknown) => Number(v) / 10 ** d;
+      let uri: string | null = null; try { uri = (await (program.account as any).raiseMeta.fetch(PublicKey.findProgramAddressSync([new TextEncoder().encode('meta'), r.publicKey.toBuffer()], program.programId)[0])).uri || null; } catch { /* no meta account */ }
+      const st = Object.keys(a.status)[0], ev = a.even as { cliffDays: number; intervalDays: number; count: number } | null;
+      const { error } = await db.from('raises').upsert({
+        id: `${String(a.ticker).toLowerCase()}-${addr.slice(0, 8).toLowerCase()}`, address: addr, founder: a.founder.toBase58(), name: a.name, ticker: a.ticker, pair_mint: pair,
+        target: u(a.target), target_usd: Number(a.targetUsdCents) / 100, sol_usd_at_open: Number(a.solUsdCents) / 100, team_bps: a.teamBps,
+        team_schedule: ev ? { cliffDays: Number(ev.cliffDays), intervalDays: Number(ev.intervalDays), count: Number(ev.count) } : (a.schedule as { dayOffset: number; bps: number }[]).length ? { tranches: (a.schedule as { dayOffset: number; bps: number }[]).map(t => ({ dayOffset: Number(t.dayOffset), bps: Number(t.bps) })) } : null,
+        payout_wallet: a.payoutWallet.toBase58(), metadata_uri: uri, cap_usd: Number(a.capUsdCents) ? Number(a.capUsdCents) / 100 : null, preset: Number(a.capUsdCents) ? a.preset : null, min_buy: Number(a.minBuy) ? u(a.minBuy) : null, max_buy: Number(a.maxBuy) ? u(a.maxBuy) : null,
+        raised: u(a.raised), backers: Number(a.backers), status: st, seed_step: Object.keys(a.seedStep)[0], opened_at: new Date(Number(a.openedAt) * 1000).toISOString(), ends_at: new Date(Number(a.endsAt) * 1000).toISOString(),
+        filled_at: Number(a.filledAt) ? new Date(Number(a.filledAt) * 1000).toISOString() : null, seeded_at: Number(a.seededAt) ? new Date(Number(a.seededAt) * 1000).toISOString() : null,
+        mint: a.mint.toBase58() === '11111111111111111111111111111111' ? null : a.mint.toBase58(), pool: a.pool.toBase58() === '11111111111111111111111111111111' ? null : a.pool.toBase58(), updated_at: new Date(now).toISOString()
+      }, { onConflict: 'address', ignoreDuplicates: true });
+      if (error) fail(`discover ${addr}`, new Error(error.message)); else note(`discovered ${addr} (the webhook had missed it)`);
+    }
+  } catch (e) { fail('discover', e); }
   for (const r of raises) {
     const id = r.publicKey.toBase58(), a = r.account, status = Object.keys(a.status)[0], step = Object.keys(a.seedStep)[0];   // Anchor enums arrive as { live: {} }
     try {
+      /* the row's progress follows the account when the webhook has fallen behind (a missed delivery, a quota): raised,
+         backers, status and the seeding step, so the board and the totals do not freeze at discovery (QA P2-91) */
+      try {
+        const cur = (await db.from('raises').select('raised, backers, status, seed_step, pair_mint').eq('address', id).maybeSingle()).data as { raised: number; backers: number; status: string; seed_step: string | null; pair_mint: string } | null;
+        if (cur) {
+          const dec = cur.pair_mint === 'So11111111111111111111111111111111111111112' ? 9 : 6, raised = Number(a.raised) / 10 ** dec, backers = Number(a.backers);
+          const patch: Record<string, unknown> = {};
+          if (Math.abs(Number(cur.raised) - raised) > 1e-9) patch.raised = raised;
+          if (Number(cur.backers) !== backers) patch.backers = backers;
+          if (cur.status !== status) patch.status = status;
+          if ((cur.seed_step ?? 'filled') !== step && status !== 'live') patch.seed_step = step;
+          if (Object.keys(patch).length) { await db.from('raises').update({ ...patch, updated_at: new Date(now).toISOString() }).eq('address', id); note(`refreshed ${id} ${Object.keys(patch).join(',')}`); }
+        }
+      } catch (e) { fail(`refresh ${id}`, e); }
       if (status === 'live' && Number(a.endsAt) * 1000 <= now) { await client.settle(r.publicKey); note(`settle ${id}`); continue; }
       if (status === 'filled') {
         if (Number(a.filledAt) * 1000 + seedTimeoutMs <= now) { await client.timeoutRefund(r.publicKey); note(`timeout ${id}`); continue; }
@@ -76,5 +116,5 @@ Deno.serve(async (req) => {
       }
     } catch (e) { fail(id, e); }
   }
-  return new Response(JSON.stringify({ done, failed, at: new Date(now).toISOString() }), { headers: { 'Content-Type': 'application/json' } });
+  return new Response(JSON.stringify({ done, failed, rpc: rpcNote || undefined, at: new Date(now).toISOString() }), { headers: { 'Content-Type': 'application/json' } });
 });

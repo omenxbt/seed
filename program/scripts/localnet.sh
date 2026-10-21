@@ -7,15 +7,16 @@
 set -e
 cd "$(dirname "$0")/.."
 RPC="${1:-https://api.devnet.solana.com}"
+PORT="${PORT:-8899}"   # PORT=8999 keeps clear of a validator another session runs on 8899 (the websocket is PORT+1, the faucet PORT+2)
 LEDGER="${TMPDIR:-/tmp}/seed-ledger"
 rm -rf "$LEDGER"
-solana-test-validator -r --ledger "$LEDGER" --url "$RPC" \
+solana-test-validator -r --ledger "$LEDGER" --url "$RPC" --rpc-port "$PORT" --faucet-port "$((PORT + 2))" --gossip-port "$((PORT + 3))" --dynamic-port-range "$((PORT + 100))-$((PORT + 200))" \
   --clone-upgradeable-program cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG \
   --clone-upgradeable-program metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s \
   --clone 7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE \
   --clone 4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU \
   --bpf-program 8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn target/deploy/seed.so --quiet &
-until solana cluster-version -u http://127.0.0.1:8899 >/dev/null 2>&1; do sleep 2; done
-solana airdrop 50 -u http://127.0.0.1:8899 keys/deployer.json >/dev/null
-echo "localnet up; the deployer wallet has 50 SOL"
+until solana cluster-version -u "http://127.0.0.1:$PORT" >/dev/null 2>&1; do sleep 2; done
+solana airdrop 50 -u "http://127.0.0.1:$PORT" keys/deployer.json >/dev/null
+echo "localnet up on port $PORT; the deployer wallet has 50 SOL"
 wait
