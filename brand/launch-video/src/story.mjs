@@ -40,6 +40,12 @@ export const FORMATS = {
   '1x1': { w: 1080, h: 1080, cls: 'f11', safe: { t: 80, r: 80, b: 80, l: 80 }, mark: 48, focus: [100, 120, 980, 960], persp: 2000, win: [1080, 1080] }
 };
 
+/* how many times larger than drawn the film lays out a page (its window) and its own type (its frame) before the camera
+   scales them back. Chrome draws a big layer under a perspective transform at no more than one pixel per CSS pixel, so a
+   page the camera holds at 3.6x its window was drawn at 1x and stretched; laid out at 4x (CSS zoom: the same layout, every
+   length 4x) the closest shot is still drawn finer than the frame shows it. The type's closest pose is about 2x */
+export const ZOOM = { page: 4, type: 2 };
+
 /* the raise filling: the waves of buys `gap` apart from wave `from` on, the odometer rolling each (tools/capture-pages.mjs
    drew the page after each wave, live-1 to live-7; the last wave lands on the filled page, seeding-0) */
 const buys = (t0, gap, from = 0) => RAISE.waves.slice(from).map((w, i) => +(t0 + i * gap).toFixed(2));
@@ -66,6 +72,7 @@ function corner(scenes) {
 
 /* --------------------------------------------------------------------------------------------- the master */
 const MB = buys(12.35, 0.35, 2), SP = 16.85, SEEDED = +(SP + RUN).toFixed(2), REFUND = 22.75;
+const DTIME = '.sub > span:has([data-dtime])';   // "Ends in 00:00:01", the words and the clock in focus together
 const masterScenes = [
   { id: 'sting', kind: 'sting', start: 0, end: 2.6, hit: 1.5, fly: 2.25 },
   { id: 'trust', kind: 'line', start: 2.35, end: 4.75, in: 'up', exit: 'push', out: 4.4, lines: ['Most launches ask you to trust a founder with your money.'], f: { '9x16': { lines: ['Most launches ask', 'you to trust a founder', 'with your money.'] } } },
@@ -124,8 +131,8 @@ const masterScenes = [
     states: [[21.75, 'miss-live'], [REFUND, 'refunded']], ticks: [21.75, 22.35], refund: REFUND,
     claims: [[23.05, 0.3], [23.3, 0.65], [23.55, 1]],
     cam: [
-      { t: 21.75, cut: true, sel: '[data-dtime]', fill: 0.5, ry: -8, rx: 5, dof: 8, d: 0.9, from: { k: 0.8, ry: -3 }, f: { '9x16': { fill: 0.7, dof: 12 } } },
-      { t: 22.4, sel: '[data-dtime]', fill: 0.6, ry: -7, rx: 5, dof: 8, d: 0.55, f: { '9x16': { fill: 0.74, dof: 12 } } },
+      { t: 21.75, cut: true, sel: DTIME, fill: 0.5, ry: -8, rx: 5, dof: 8, d: 0.9, from: { k: 0.8, ry: -3 }, f: { '9x16': { fill: 0.7, dof: 12 } } },
+      { t: 22.4, sel: DTIME, fill: 0.6, ry: -7, rx: 5, dof: 8, d: 0.55, f: { '9x16': { fill: 0.74, dof: 12 } } },
       { t: REFUND, sel: '.pp-missed', fill: 0.95, ry: -6, rx: 4, dof: 4, d: 0.8, nomb: true },
       { t: 24.15, ...OUT }
     ]
@@ -147,15 +154,14 @@ const master = {
     [18.92, 19.65, 'locked for good.'],
     [19.76, 21.55, 'If it misses, every wallet gets back exactly what it paid,'],
     [24.22, 24.95, 'fee included.'],
-    [25.05, 26.95, 'Seeded in full, or refunded in full.'],
-    [28.2, 30.0, '{url}']
+    [25.05, 26.95, 'Seeded in full, or refunded in full.']
   ],
   markers: [
     ['sting hit', 1.5, 'the seed lands and brightens'],
     ['fill complete', MB[MB.length - 1], 'the last wave of buys fills the target'],
     ['seeded', SEEDED, 'the last seeding step lands and the page turns seeded'],
     ['refunded', REFUND, 'the deadline passes and the raise turns refunded'],
-    ['end card', 27.2, 'mark, wordmark and URL']
+    ['end card', 27.2, 'the mark and the wordmark']
   ]
 };
 
@@ -181,13 +187,12 @@ const teaser = {
   scenes: teaserScenes,
   srt: [
     [2.5, 4.25, 'Back an idea at one fixed price.'],
-    [8.68, 10.75, 'Seeded in full, or refunded in full.'],
-    [12.0, 15.0, '{url}']
+    [8.68, 10.75, 'Seeded in full, or refunded in full.']
   ],
   markers: [
     ['sting hit', 1.5, 'the seed lands and brightens'],
     ['fill complete', TB[TB.length - 1], 'the last wave of buys fills the target'],
-    ['end card', 11.0, 'mark, wordmark and URL']
+    ['end card', 11.0, 'the mark and the wordmark']
   ]
 };
 

@@ -5,7 +5,3 @@ Back an idea at one fixed price.
 2
 00:00:08,680 --> 00:00:10,750
 Seeded in full, or refunded in full.
-
-3
-00:00:12,000 --> 00:00:15,000
-seed-nu-ten.vercel.app

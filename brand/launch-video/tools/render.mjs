@@ -1,8 +1,9 @@
-/* Renders every cut and format to out/: H.264 MP4s, the MOV master for editing (ProRes 422 HQ, from the 16:9 master
-   render) and the 16:9 master with no audio stream. Rebuilds first, so the figures and the site's CSS are current.
+/* Renders every cut and format to out/: H.264 MP4s (CRF 10: the pages' small type and the dot field come through a
+   close-up intact), the MOV master for editing (ProRes 4444, rendered from the page itself, not from the MP4) and the
+   16:9 master with no audio stream. Rebuilds first, so the figures and the site's CSS are current.
      node tools/render.mjs                                   all six, delivery quality
      node tools/render.mjs --only master-16x9 --draft        one, fast
-     node tools/render.mjs --variables '{"url":"seed.xyz","musicVolume":0.6}'
+     node tools/render.mjs --variables '{"musicVolume":0.6}'
    Variables reach the picture through HyperFrames (--variables); musicVolume is written into each page's <audio
    data-volume> here, because the mixer reads the authored attribute, not one set by script. Set HF_CLI to a HyperFrames
    launcher to use it in place of the pinned npx. */
@@ -29,19 +30,26 @@ for (const name of targets) {
   const dir = P('build', name), page = path.join(dir, 'index.html');
   if (vars.musicVolume != null) fs.writeFileSync(page, fs.readFileSync(page, 'utf8').replace(/(<audio id="music"[^>]*data-volume=")[^"]*"/, `$1${+vars.musicVolume}"`));
   const out = P('out', `seed-${name}.mp4`);
-  const args = [...cli.slice(1), 'render', dir, '--fps', String(FPS), '--quality', draft ? 'draft' : 'delivery', '-o', out];
+  hf(name, dir, ['--quality', draft ? 'draft' : 'delivery', ...(draft ? [] : ['--crf', '10'])], out);
+  /* the master for editing, from the page itself, so no H.264 generation sits under it */
+  if (name === 'master-16x9' && !draft) hf(name + ' (mov)', dir, ['--format', 'mov'], P('out', 'seed-master-16x9.mov'));
+}
+function hf(label, dir, opts, out) {
+  const args = [...cli.slice(1), 'render', dir, '--fps', String(FPS), ...opts, '-o', out];
   if (Object.keys(vars).length) args.push('--variables', JSON.stringify(vars));
-  console.log(`\n▸ ${name}`);
+  console.log(`\n▸ ${label}`);
   const r = spawnSync(cli[0], args, { stdio: 'inherit' });
-  if (r.status !== 0) { console.error(`render failed: ${name}`); process.exit(1); }
+  if (r.status !== 0) { console.error(`render failed: ${label}`); process.exit(1); }
 }
 
-/* the master for editing, and a cut with no audio track at all */
+/* a cut with no audio track at all */
 const master = P('out', 'seed-master-16x9.mp4');
 if (targets.includes('master-16x9') && fs.existsSync(master)) {
   const ff = (...a) => execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-y', ...a], { stdio: 'inherit' });
-  ff('-i', master, '-c:v', 'prores_ks', '-profile:v', '3', '-pix_fmt', 'yuv422p10le', '-vendor', 'apl0', '-c:a', 'pcm_s16le', P('out', 'seed-master-16x9.mov'));
   ff('-i', master, '-map', '0:v', '-c', 'copy', P('out', 'seed-master-16x9-noaudio.mp4'));
+  /* the MOV's sound as PCM, as an editor expects (HyperFrames muxes AAC) */
+  const mov = P('out', 'seed-master-16x9.mov'), tmp = P('out', 'seed-master-16x9.pcm.mov');
+  if (fs.existsSync(mov)) { ff('-i', mov, '-map', '0', '-c:v', 'copy', '-c:a', 'pcm_s16le', tmp); fs.renameSync(tmp, mov); }
 }
 
 /* check what came out: duration, frame rate, size, streams */

@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { CUTS, FORMATS, FPS, RAISE } from '../src/story.mjs';
+import { CUTS, FORMATS, FPS, RAISE, ZOOM } from '../src/story.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const proj = path.resolve(here, '..');
@@ -23,12 +23,10 @@ const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(
 /* a line's words, each its own box to rise; tickers and figures in IBM Plex Mono, as the book sets them */
 const words = s => s.split(' ').map(w => `<span class="w">${esc(w).replace(/^(SOL|USDC|\d[\d,.%]*\d%?)/, '<span class="num">$1</span>')}</span>`).join(' ');
 
-/* ------------------------------------------------------------------ variables: the URL, the network line, every figure.
-   The pages carry the figures because the site drew them from the same code (js/config/seed.js), so a figure changed in
-   the code reaches them on the next capture; the SRT reads the URL from here. */
+/* ------------------------------------------------------------------ variables: every figure. The pages carry the figures
+   because the site drew them from the same code (js/config/seed.js), so a figure changed in the code reaches them on the
+   next capture. The end card is the mark and the wordmark alone (CONFLICTS 40), so there is no URL or network line. */
 const VARS = [
-  { id: 'url', type: 'string', label: 'Site URL', default: 'seed-nu-ten.vercel.app' },
-  { id: 'networkLine', type: 'string', label: 'Network line', default: 'Live on Solana devnet' },
   { id: 'fee', type: 'string', label: 'Seed fee on each buy', default: figures.fee },
   { id: 'feeLabel', type: 'string', label: 'Fee label', default: figures.feeLabel },
   { id: 'minTarget', type: 'string', label: 'Minimum target', default: figures.minTarget },
@@ -61,10 +59,11 @@ const sec = (s, cls, inner) => `  <section id="s-${s.id}" class="clip scene ${cl
     <div class="sc">${inner}</div>
   </section>`;
 /* a stage with the camera over the film's own type (the frame's size, straight over the dot field), or over a page of the
-   site (the app's window, filling the screen, with the field under its panels for their glass to blur) */
+   site (the app's window, filling the screen, with the field under its panels for their glass to blur); each laid out
+   ZOOM times its size (story.mjs), so the camera's closest shot is still drawn finer than the frame */
 const field = '<canvas class="field" aria-hidden="true"></canvas>';
-const typeStage = inner => `<div class="stage type"><div class="cam" style="width:${F.w}px;height:${F.h}px"><div class="tw">${inner}</div></div></div>`;
-const pageStage = () => `<div class="stage" data-layout-ignore>${field}<div class="cam" style="width:${F.win[0]}px;height:${F.win[1]}px"><div class="scr hf-html" style="width:${F.win[0]}px;height:${F.win[1]}px"><div class="hf-body"></div></div></div></div>`;
+const typeStage = inner => `<div class="stage type"><div class="cam" style="width:${F.w * ZOOM.type}px;height:${F.h * ZOOM.type}px"><div class="tw" style="width:${F.w}px;height:${F.h}px;zoom:${ZOOM.type}">${inner}</div></div></div>`;
+const pageStage = () => `<div class="stage" data-layout-ignore>${field}<div class="cam" style="width:${F.win[0] * ZOOM.page}px;height:${F.win[1] * ZOOM.page}px"><div class="scr hf-html" style="width:${F.win[0]}px;height:${F.win[1]}px;zoom:${ZOOM.page}"><div class="hf-body"></div></div></div></div>`;
 const SCENES = {
   sting: s => sec(s, 's-sting', lockup('sting', markDots('sting-mark'))),
   title: s => sec(s, 's-title', typeStage(`<h1 class="t"><span class="l1">${esc(s.l1)}</span><span class="l2">${esc(s.l2)}</span></h1>`)),
@@ -74,7 +73,7 @@ const SCENES = {
   page: s => sec(s, 's-page', pageStage()),
   refund: s => sec(s, 's-refund', pageStage()),
   close: s => sec(s, 's-close', typeStage(`<h1 class="t"><span class="l1">${esc(s.l1)}</span><span class="l2">${esc(s.l2)}</span></h1>
-      <div class="endcard">${lockup('end', markDots('end-mark'))}<p class="url num" data-var-text="url">${esc(V.url)}</p><p class="net" data-var-text="networkLine">${esc(V.networkLine)}</p></div>`))
+      <div class="endcard">${lockup('end', markDots('end-mark'))}</div>`))
 };
 
 /* ------------------------------------------------------------------ one root */
@@ -85,7 +84,7 @@ function page(cut, fk) {
   const used = [...new Set(c.scenes.flatMap(s => (s.states || []).map(x => x[1])))];
   const pages = used.map(n => `<template data-page="${n}">${fs.readFileSync(P('site/pages', fk, n + '.html'), 'utf8').trim()}</template>`).join('\n');
   const meta = { window: PAGES[fk].window, states: Object.fromEntries(used.map(n => [n, { body: PAGES[fk].states[n].body, docH: PAGES[fk].states[n].docH }])) };
-  const story = { cut, format: fk, fps: FPS, duration: c.duration, size: [f.w, f.h], persp: f.persp, focus: f.focus, fillK: f.fillK || 1, cornerBox: [f.safe.l, f.safe.t, f.mark], corner: c.corner, scenes: c.scenes, raise: { name: RAISE.name, ticker: RAISE.ticker, target: RAISE.target } };
+  const story = { cut, format: fk, fps: FPS, duration: c.duration, size: [f.w, f.h], persp: f.persp, zoom: ZOOM.page, tzoom: ZOOM.type, focus: f.focus, fillK: f.fillK || 1, cornerBox: [f.safe.l, f.safe.t, f.mark], corner: c.corner, scenes: c.scenes, raise: { name: RAISE.name, ticker: RAISE.ticker, target: RAISE.target } };
   const music = cut === 'master' ? 'assets/music.wav' : 'assets/music-teaser.wav';
   return `<!doctype html>
 <html lang="en" data-composition-variables='${JSON.stringify(VARS).replace(/'/g, '&#39;')}'>

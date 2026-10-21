@@ -33,7 +33,3 @@ fee included.
 9
 00:00:25,050 --> 00:00:26,950
 Seeded in full, or refunded in full.
-
-10
-00:00:28,200 --> 00:00:30,000
-seed-nu-ten.vercel.app

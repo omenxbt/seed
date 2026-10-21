@@ -33,6 +33,8 @@ case is listed in `brand/CONFLICTS.md`.
   pills over the UI replaced by full-screen text frames of their own, separate from the UI.
 - A 15s teaser per format: sting, fill, "Seeded in full, or refunded in full", end card.
 - Every figure, the URL and the network line are composition variables, read from the program config and LOOP.md.
+  (2026-10-20: at the user's direction the end card is the mark and the wordmark alone, so the URL and the network line
+  are gone from the film and from its variables; CONFLICTS 40.)
 - Audio slot (music track, volume variable) and markers.json with the beat points; one render with no audio.
 - Output: H.264 MP4 for every format and cut, a MOV master, an SRT of the on-screen lines, a contact sheet.
 - A blind review subagent checks colour, type, easing, timing, safe zones, voice and figures before the push.

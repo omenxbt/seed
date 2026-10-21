@@ -93,12 +93,8 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 .f169 .big .kin { font-size: 200px; } .f916 .big .kin { font-size: 170px; } .f11 .big .kin { font-size: 150px; }
 .big .kin p { line-height: 1; letter-spacing: -.05em; }
 
-/* ------------------------------------------------------------ the end card: mark, wordmark, URL, network line */
+/* ------------------------------------------------------------ the end card: the mark and the wordmark, at the sting's size */
 .endcard { position: absolute; left: var(--sl); right: var(--sr); top: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .endcard .lockup { position: relative; inset: auto; }
 .endcard .lockup .mark .dot { fill: var(--ink); } .endcard .lockup .mark .seed { fill: var(--navy); }
-.endcard .url { margin: 0; color: var(--ink-2); letter-spacing: -.03em; line-height: 1.2; }
-.endcard .net { margin: 0; color: var(--muted); line-height: 1.3; }
-.f169 .endcard .lockup { --ws: 104px; } .f169 .endcard .url { font-size: 40px; margin-top: 56px; } .f169 .endcard .net { font-size: 26px; margin-top: 14px; }
-.f916 .endcard .lockup { --ws: 96px; } .f916 .endcard .url { font-size: 36px; margin-top: 52px; } .f916 .endcard .net { font-size: 26px; margin-top: 14px; }
-.f11 .endcard .lockup { --ws: 96px; } .f11 .endcard .url { font-size: 36px; margin-top: 52px; } .f11 .endcard .net { font-size: 24px; margin-top: 12px; }
+.f169 .endcard .lockup { --ws: 136px; } .f916 .endcard .lockup { --ws: 120px; } .f11 .endcard .lockup { --ws: 120px; }

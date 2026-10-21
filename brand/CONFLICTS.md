@@ -16,8 +16,8 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
    ≈$2,000" as an open decision, then commit `ef86848` set "The minimum raise is 81 SOL (Josh)". The brand book agrees
    with the code. **The video uses 81 SOL** (variable `minTarget`, shown in the launch card's hint). A $2,000 floor
    would need a program change and an upgrade on devnet; then re-render with `--variables '{"minTarget":"$2,000"}'` or
-   rerun `tools/build.mjs`, which rereads the program. The end card's network line names devnet, where the site's Launch
-   form, connected to the chain, reads its floor from the Config (`minTargetSol()` in `js/model.js`: 0.1 SOL from
+   rerun `tools/build.mjs`, which rereads the program. On devnet the site's Launch form, connected to the chain, reads
+   its floor from the Config (`minTargetSol()` in `js/model.js`: 0.1 SOL from
    `initConfig`); the film's pages are the site's demo mode, which shows `SEED.minTargetSol`, the production 81 SOL.
 2. Every other figure agrees across the program, `program/tests/seed.ts` (the devnet `initConfig`), `js/config/seed.js`
    and LOOP.md: fee 1% on top, maximum target $100,000, deadline 24 hours to 14 days, supply 1,000,000,000, pool fee
@@ -209,3 +209,7 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     `text-transform: uppercase` in `index.html`), against the book's sentence case, and the seeded page's "Creator fees"
     card is named for the founder's income in the site's own word (the book's vocabulary says founder). Shown as the
     site draws them; both are worth a look on the site.
+40. **The end card is the mark and the wordmark alone.** The book's video kit lists the end card as "Mark, wordmark and
+    the URL, the dot field drifting behind", and the brief asked for the URL and the network line as variables. At the
+    user's direction (2026-10-20) the film ends on the lockup alone, at the sting's size, so it closes on the lockup it
+    opened on: no URL, no network line, and neither is a variable any more. The SRTs end with the closing line.

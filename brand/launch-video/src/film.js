@@ -2,7 +2,8 @@
    (src/story.mjs). Everything is a pure function of the timeline's time, so any frame can be drawn first and repeats.
 
    The camera. Each UI scene is a stage with perspective holding a camera, and in it the site's own page as the site drew
-   it at this format's window (tools/capture-pages.mjs; the beat's state is mounted from its <script type="text/html">).
+   it at this format's window (tools/capture-pages.mjs; the beat's state is mounted from its <script type="text/html">),
+   laid out S.zoom times larger (CSS zoom) so the closest shot is still drawn finer than the frame (story.mjs, ZOOM).
    The camera's keys (story.mjs) are solved against the page's real layout at load: an element's box, the scale that makes
    it fill the format's focus box, a tilt. Each key eases from wherever the camera is to its pose on the brand's one curve,
    cubic-bezier(.22,1,.36,1): fast off the mark, then a long settle, so a cut reads as a whip and a hold is still a slow
@@ -154,7 +155,7 @@
   /* a camera over a world (a page, or a scene's type): keys are solved once, in order, each from the pose the camera has
      when it starts */
   function camera(o) {
-    var c = { el: o.el, world: o.world, keys: [], t0: o.t0, t1: o.t1, cuts: [], noMb: !!o.noMb };
+    var c = { el: o.el, world: o.world, keys: [], t0: o.t0, t1: o.t1, cuts: [], noMb: !!o.noMb }, Z = o.zoom || 1;
     /* over a page, every pose but a free one (the whip out) is kept inside it */
     var fit = function (p, t, k) { return o.size && !(k && k.free) ? cover(p, o.size(t)[0], o.size(t)[1]) : p; };
     c.at = function (t) {
@@ -175,8 +176,9 @@
       if (k.full) k = Object.assign({ sel: '.scr', win: true, fill: 1 }, k);
       var R = o.rect(k, prev), box = k.full ? [0, 0, FW, FH] : FOCUS, bw = box[2] - box[0], bh = box[3] - box[1];
       var fill = Math.min(bw / R[2], bh / R[3]), f0 = k.fill * (k.win || k.sel === '.scr' ? 1 : (o.fillK || 1));
-      var s = k.s != null ? k.s : clamp((k.fill <= 1 ? Math.min(f0, 1) : f0) * fill, 0.2, 3.6);   // inside the focus box, unless it pushes through
-      if (k.smax != null) s = Math.min(s, k.smax);
+      // a scale as the frame sees it (1: a page's pixel or the type's at its size), over a world laid out Z times larger
+      var s = k.s != null ? k.s / Z : clamp((k.fill <= 1 ? Math.min(f0, 1) : f0) * fill, 0.2 / Z, 3.6 / Z);   // inside the focus box, unless it pushes through
+      if (k.smax != null) s = Math.min(s, k.smax / Z);
       var cx = k.center ? FW / 2 : box[0] + bw / 2, cy = k.center ? FH / 2 : box[1] + bh / 2;
       var to = { s: s, fx: R[0] + R[2] * (k.ax != null ? k.ax : 0.5), fy: R[1] + R[3] * (k.ay != null ? k.ay : 0.5), sx: cx + (k.dx || 0), sy: cy + (k.dy || 0), rx: k.rx || 0, ry: k.ry || 0, dof: k.dof || 0, rect: R };
       to = fit(to, k.t + (k.d || 0), k);
@@ -243,7 +245,7 @@
   function scrollable(el, stop) { for (var e = el && el.parentElement; e && e !== stop; e = e.parentElement) { var cs = getComputedStyle(e); if (/(auto|scroll)/.test(cs.overflowY) && e.scrollHeight > e.clientHeight + 1) return e; } return null; }
   /* a screen: one page of the site, its beats mounted as their time comes, its scrolling columns where the story puts them */
   function screen(sec, s) {
-    var cam = $('.cam', sec), scr = $('.scr', sec), body = $('.hf-body', sec), cur = null, mounts = 0;
+    var cam = $('.cam', sec), scr = $('.scr', sec), body = $('.hf-body', sec), cur = null, mounts = 0, Z = S.zoom;
     var scrolls = (s.scroll || []).map(function (k) { return Object.assign({ from: null, to: null }, k); });
     function stateAt(t) { var n = s.states[0][1]; s.states.forEach(function (x) { if (x[0] <= t + 1e-6) n = x[1]; }); return n; }
     function mount(name) {
@@ -252,7 +254,7 @@
       $$('img', body).forEach(function (i) { i.decoding = 'sync'; });   // decoded before the timeline starts (preload), drawn on the frame it mounts
       var m = META.states[name] || {};
       body.className = 'hf-body ' + (m.body || '');
-      scr.style.height = cam.style.height = (m.docH || META.window[1]) + 'px';
+      scr.style.height = (m.docH || META.window[1]) + 'px'; cam.style.height = (m.docH || META.window[1]) * Z + 'px';
       $$('[data-hf-scroll]', body).forEach(function (e) { var v = e.getAttribute('data-hf-scroll').split(','); e.scrollTop = +v[0]; e.scrollLeft = +v[1]; });
     }
     /* a column's scroll is a function of time too: where the capture left it before its key, then the key's move */
@@ -271,7 +273,7 @@
         var el = $(k.sel, body), box = el && scrollable(el, scr); if (!box) return;
         var er = el.getBoundingClientRect(), br = box.getBoundingClientRect();
         k.from = box.scrollTop;
-        k.to = clamp(box.scrollTop + (er.top + er.height / 2) - (br.top + br.height * k.place), 0, box.scrollHeight - box.clientHeight);
+        k.to = clamp(box.scrollTop + ((er.top + er.height / 2) - (br.top + br.height * k.place)) / Z, 0, box.scrollHeight - box.clientHeight);   // a box in the frame's pixels, a scroll in the page's
       });
       cam.style.transform = keep; cur = null;
     }
@@ -279,7 +281,7 @@
       sec: sec, cam: cam, scr: scr, body: body, stateAt: stateAt,
       q: function (sel) { return $(sel, body); },
       show: function (t) { mount(stateAt(t)); scrollAt(t); },
-      /* an element's box in the page's own pixels, with the camera off */
+      /* an element's box in the camera's pixels (the page's, Z times), with the camera off */
       rect: function (k, prev) {
         /* where the element is once the move lands; if the page has changed by then, where it is as the move starts */
         var tt = k.t + (k.d || 0);
@@ -296,15 +298,15 @@
         }
         cam.style.transform = keep;
         /* a window of the app's size: round the element, or, for the whole page, round what the camera was just on */
-        if (k.win) { var w = META.window[0], h = META.window[1]; var cy = k.sel === '.scr' && prev ? prev.fy : r[1] + r[3] / 2; r = [0, clamp(cy - h / 2, 0, Math.max(0, sr.height - h)), w, Math.min(h, sr.height)]; }
+        if (k.win) { var w = META.window[0] * Z, h = META.window[1] * Z; var cy = k.sel === '.scr' && prev ? prev.fy : r[1] + r[3] / 2; r = [0, clamp(cy - h / 2, 0, Math.max(0, sr.height - h)), w, Math.min(h, sr.height)]; }
         return r;
       }
     };
     solveScrolls();
     drivers.push(function (t) { if (t >= s.start - 1e-6 && t < s.end - 1e-6) api.show(t); });
     var keys = (s.cam || []).map(function (k) { var o = Object.assign({}, k, (k.f || {})[S.format] || {}); return o; });
-    var size = function (t) { var m = META.states[stateAt(t)] || {}; return [META.window[0], m.docH || META.window[1]]; };
-    api.camera = camera({ el: cam, world: scr, keys: keys, t0: s.start, t1: s.end, rect: api.rect, size: size, fillK: S.fillK });
+    var size = function (t) { var m = META.states[stateAt(t)] || {}; return [META.window[0] * Z, (m.docH || META.window[1]) * Z]; };
+    api.camera = camera({ el: cam, world: scr, keys: keys, t0: s.start, t1: s.end, rect: api.rect, size: size, fillK: S.fillK, zoom: Z });
     return api;
   }
   /* the page's cards rising into place as it opens: 10px in .5s, 60ms a column, 45ms a card down each column */
@@ -328,7 +330,7 @@
 
   /* ------------------------------------------------------------ the film's own type, flown by the same camera */
   /* (a selector matching several elements frames them together: a line's words, not the box they wrap in) */
-  function typeCamera(sec, s, keys) { return camera({ el: $('.cam', sec), world: $('.tw', sec), noMb: true, keys: keys.map(function (k) { return Object.assign({ center: true }, k); }), t0: s.start, t1: s.end, rect: function (k) { var w = $('.tw', sec), es = k.sel ? $$(k.sel, sec) : [w], cam = $('.cam', sec); var keep = cam.style.transform; cam.style.transform = 'none'; var wr = w.getBoundingClientRect(), bs = es.map(function (e) { return e.getBoundingClientRect(); }); cam.style.transform = keep; var x0 = Math.min.apply(null, bs.map(function (b) { return b.left; })), y0 = Math.min.apply(null, bs.map(function (b) { return b.top; })), x1 = Math.max.apply(null, bs.map(function (b) { return b.right; })), y1 = Math.max.apply(null, bs.map(function (b) { return b.bottom; })); return [x0 - wr.left, y0 - wr.top, x1 - x0, y1 - y0]; } }); }
+  function typeCamera(sec, s, keys) { return camera({ el: $('.cam', sec), world: $('.tw', sec), noMb: true, zoom: S.tzoom, keys: keys.map(function (k) { return Object.assign({ center: true }, k); }), t0: s.start, t1: s.end, rect: function (k) { var w = $('.tw', sec), es = k.sel ? $$(k.sel, sec) : [w], cam = $('.cam', sec); var keep = cam.style.transform; cam.style.transform = 'none'; var wr = w.getBoundingClientRect(), bs = es.map(function (e) { return e.getBoundingClientRect(); }); cam.style.transform = keep; var x0 = Math.min.apply(null, bs.map(function (b) { return b.left; })), y0 = Math.min.apply(null, bs.map(function (b) { return b.top; })), x1 = Math.max.apply(null, bs.map(function (b) { return b.right; })), y1 = Math.max.apply(null, bs.map(function (b) { return b.bottom; })); return [x0 - wr.left, y0 - wr.top, x1 - x0, y1 - y0]; } }); }
 
   /* ------------------------------------------------------------ figures */
   var feePct = parseFloat(V.fee) || 0;
@@ -475,22 +477,20 @@
         { t: s.end_, sel: '.endcard', s: 1, d: 0.01 },
         { t: s.end_ + 0.02, sel: '.endcard', s: 1.035, d: s.end - s.end_ }
       ]);
-      // the end card builds as the Axiom ones do: the mark alone, then the wordmark drawn out from behind it, the URL under.
+      // the end card builds as the Axiom ones do: the mark alone, then the wordmark drawn out from behind it, and holds.
       // The mark is the corner mark come home: it flies from the corner to where the camera shows the end card's mark as
       // the flight lands, its dots turning from the app bar's blue to ink, and the end card's own mark takes its place there
-      var gap = wd.getBoundingClientRect().width / 2 + parseFloat(getComputedStyle(lk).columnGap || 0) / 2;
+      var TZ = S.tzoom, gap = wd.getBoundingClientRect().width / TZ / 2 + parseFloat(getComputedStyle(lk).columnGap || 0) / 2;   // in the type's own pixels
       var T0 = s.end_ + 0.02, T1 = S.corner[S.corner.length - 1][1], C = S.cornerBox, home = $$('.clip.corner .mark').pop();
       var keep = cam.el.style.transform; cam.el.style.transform = 'none';
       var wr = $('.tw', sec).getBoundingClientRect(), mr = mk.getBoundingClientRect();
       cam.el.style.transform = keep;
-      var M = matrixOf(cam.at(T1)), a = project(M, mr.left - wr.left + gap, mr.top - wr.top), b = project(M, mr.right - wr.left + gap, mr.bottom - wr.top);
+      var M = matrixOf(cam.at(T1)), a = project(M, mr.left - wr.left + gap * TZ, mr.top - wr.top), b = project(M, mr.right - wr.left + gap * TZ, mr.bottom - wr.top);
       tl.fromTo(home, { x: 0, y: 0, scale: 1, transformOrigin: '0 0' }, { x: a[0] - C[0], y: a[1] - C[1], scale: (b[0] - a[0]) / C[2], duration: T1 - T0, ease: E, immediateRender: false }, T0);
       tl.fromTo(home, { color: css('--navy-soft') }, { color: css('--ink'), duration: DUR, ease: E, immediateRender: false }, T0);
       tl.set(ec, { opacity: 0 }, 0); tl.set(ec, { opacity: 1 }, T1);
       tl.fromTo(mk, { x: gap }, { x: 0, duration: 0.6, ease: E }, T1 + 0.08);
       tl.fromTo(wd, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.6, ease: E }, T1 + 0.3);
-      rise($('.url', ec), T1 + 0.42, { fade: true });
-      rise($('.net', ec), T1 + 0.52, { fade: true });
     }
   };
 

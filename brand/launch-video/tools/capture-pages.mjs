@@ -253,13 +253,14 @@ try {
     await page.evaluate(() => { const c = presaleAdapter.candles; presaleAdapter.candles = (p, tf) => p.id === 'halfmoon' ? Promise.resolve(withSrc([], 'demo')) : c.call(presaleAdapter, p, tf); });
     await sleep(800);
     /* the film's raise wears the site's own dot field as its banner and art (the demo's are pastel gradients, a second
-       hue): crops of js/bg-dither.js at its fixed second 370, where the field's mass is, low and to the right */
+       hue): crops of js/bg-dither.js at its fixed second 370, where the field's mass is, low and to the right, kept 4x
+       with every dot a hard square (the camera goes in close on the identity card) */
     if (fk === '16x9' || !fs.existsSync(path.join(proj, 'site/assets/film/banner.png'))) {
       const shots = await page.evaluate(() => {
         BG_DITHER.seek(370);
         const c = document.getElementById('bg-dither'), k = c.width / innerWidth;
-        const crop = (x, y, w, h, W, H) => { const o = document.createElement('canvas'); o.width = W; o.height = H; const g = o.getContext('2d'); g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--panel-solid').trim() || '#1F2125'; g.fillRect(0, 0, W, H); g.drawImage(c, x * k, y * k, w * k, h * k, 0, 0, W, H); return o.toDataURL('image/png'); };
-        return { banner: crop(innerWidth - 1500, innerHeight - 500, 1500, 500, 1500, 500), art: crop(innerWidth - 400, innerHeight - 400, 400, 400, 400, 400) };
+        const crop = (x, y, w, h, W, H) => { const o = document.createElement('canvas'); o.width = W; o.height = H; const g = o.getContext('2d'); g.imageSmoothingEnabled = false; g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--panel-solid').trim() || '#1F2125'; g.fillRect(0, 0, W, H); g.drawImage(c, x * k, y * k, w * k, h * k, 0, 0, W, H); return o.toDataURL('image/png'); };
+        return { banner: crop(innerWidth - 1500, innerHeight - 500, 1500, 500, 6000, 2000), art: crop(innerWidth - 400, innerHeight - 400, 400, 400, 1600, 1600) };
       });
       fs.mkdirSync(path.join(proj, 'site/assets/film'), { recursive: true });
       for (const [k, v] of Object.entries(shots)) fs.writeFileSync(path.join(proj, 'site/assets/film', k + '.png'), Buffer.from(v.split(',')[1], 'base64'));

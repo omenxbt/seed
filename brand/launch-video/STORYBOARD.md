@@ -31,7 +31,7 @@ cubic-bezier(.22,1,.36,1).
 | 19.72 to 21.9 | line | "If it misses, / every wallet gets back exactly what it paid," rises; push through. |
 | 21.75 to 24.5 | refunded | The other ending: an extreme close-up on "Ends in 00:00:01" running out; refunded as it reaches zero (22.75s), a pull back to "Missed target, refunded", the bar hatched, and the site's note ("…the 1% fee included"); whip left. |
 | 24.18 to 25.3 | line | "fee included." comes in huge and settles; push through. |
-| 25.0 to 30.0 | close | "Seeded in full," fills the frame and settles as "or refunded in full." comes under it. The end card (27.2s): the corner mark flies home to the centre as the end card's mark, the wordmark is drawn out from it, the URL and the network line under it, over the drifting dot field. |
+| 25.0 to 30.0 | close | "Seeded in full," fills the frame and settles as "or refunded in full." comes under it. The end card (27.2s): the corner mark flies home to the centre as the end card's mark, the wordmark is drawn out from it, and the film holds on the mark and the wordmark alone over the drifting dot field (no URL or network line, CONFLICTS 40). |
 
 The corner mark is up over the film's own type only: from where the sting's mark lands and with each line that
 follows a page, until the next page fills the screen.
@@ -43,4 +43,4 @@ follows a page, until the next page fills the screen.
 | 0 to 2.6 | sting | As in the master. |
 | 2.45 to 4.65 | title | "Back an idea / at one fixed price."; the camera pushes through it. |
 | 4.45 to 8.95 | raise page | The deposit panel, across to the readout as eight waves land .35s apart, a pull back to the whole page as it fills (7.6s), whip left. |
-| 8.63 to 15.0 | close | "Seeded in full, / or refunded in full." comes in from the right, then the end card (11.0s). |
+| 8.63 to 15.0 | close | "Seeded in full, / or refunded in full." comes in from the right, then the end card (11.0s): the mark and the wordmark alone. |
