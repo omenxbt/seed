@@ -16,8 +16,8 @@ fs.mkdirSync(P('out/stills'), { recursive: true });
 
 /* the moment each scene is shown at: its state once its motion has settled */
 const STILLS = {
-  master: [['Logo sting', 1.9], ['Trust line', 3.9], ['Title card', 5.9], ['A founder sets', 7.4], ['Launch form', 8.8], ['You buy in', 11.2], ['Raise filling', 13.0], ['Target met', 15.8], ['Seeding', 17.3], ['The pool', 18.5], ['Locked for good', 19.5], ['If it misses', 21.2], ['Countdown', 22.3], ['Refunded', 23.7], ['Fee included', 24.7], ['Seeded in full', 26.5], ['End card', 29.5]],
-  teaser: [['Logo sting', 1.9], ['Title card', 3.9], ['Raise filling', 6.0], ['Filled', 8.3], ['Seeded in full', 10.3], ['End card', 14.0]]
+  master: [['Logo sting', 1.9], ['Title card', 3.6], ['A founder sets', 5.26], ['Launch form', 6.66], ['You buy in', 9.06], ['Raise filling', 10.86], ['Target met', 13.66], ['Seeding', 15.16], ['The pool', 16.36], ['If it misses', 18.22], ['Countdown', 19.32], ['Refunded', 20.72], ['Seeded in full', 22.9], ['End card', 26.0]],
+  teaser: [['Logo sting', 1.9], ['Title card', 3.6], ['Raise filling', 5.9], ['Filled', 8.2], ['Seeded in full', 10.2], ['End card', 13.5]]
 };
 
 const shots = {};

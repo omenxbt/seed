@@ -1,35 +1,23 @@
 1
-00:00:02,400 --> 00:00:04,400
-Most launches ask you to trust a founder with your money.
+00:00:02,280 --> 00:00:04,160
+Start an idea, fund it on-chain.
 
 2
-00:00:04,550 --> 00:00:06,300
-Back an idea at one fixed price.
-
-3
-00:00:06,380 --> 00:00:07,750
+00:00:04,230 --> 00:00:05,610
 A founder sets a target and a deadline.
 
-4
-00:00:10,270 --> 00:00:11,500
+3
+00:00:08,130 --> 00:00:09,360
 You buy in with SOL or USDC.
 
+4
+00:00:12,380 --> 00:00:14,110
+If the target is met, the raise seeds as a tradeable token.
+
 5
-00:00:14,520 --> 00:00:16,250
-If the target is met, the whole raise opens a Meteora pool,
+00:00:16,780 --> 00:00:18,570
+If it misses, every wallet gets back exactly what it paid.
 
 6
-00:00:18,920 --> 00:00:19,650
-locked for good.
-
-7
-00:00:19,760 --> 00:00:21,550
-If it misses, every wallet gets back exactly what it paid,
-
-8
-00:00:24,220 --> 00:00:24,950
-fee included.
-
-9
-00:00:25,050 --> 00:00:26,950
+00:00:21,250 --> 00:00:23,320
 Seeded in full, or refunded in full.

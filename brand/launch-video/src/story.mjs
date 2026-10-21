@@ -2,9 +2,9 @@
    markers. tools/build.mjs writes each cut and format from this; src/film.js reads the same data from the page (the
    #story JSON), so a time changed here moves the picture, the SRT and markers.json together. Seconds throughout.
 
-   The cut is the brand book's "Thirty seconds, spoken", as the Axiom films in delta/01-video-hyperframes/_motion-refs
-   pace theirs: each line of the script is a full-screen text frame of its own, and between them the site's own pages
-   (tools/capture-pages.mjs) fill the screen as one camera flies over them. A shot resolves out of a fast move, pushes in
+   The cut is the brand book's "Thirty seconds, spoken" as the user rewrote it (CONFLICTS 31), paced as the Axiom films
+   in delta/01-video-hyperframes/_motion-refs pace theirs: each line of the script is a full-screen text frame of its
+   own, and between them the site's own pages (tools/capture-pages.mjs) fill the screen as one camera flies over them. A shot resolves out of a fast move, pushes in
    on one element with the rest of the page out of focus, pans to the next, and leaves on a whip; the camera never shows
    a page's edge (src/film.js keeps every pose inside the page) except on the whip out, when the page leaves the frame.
 
@@ -53,146 +53,129 @@ const fillStates = (t0, b, from = 0) => [[t0, 'live-' + from]].concat(b.map((t, 
 /* Run the next step reads "Running…" for the site's 700ms after the press, then the step lands */
 const RUN = 0.78;
 const OUT = { away: true, d: 0.45 };   // the whip out: the page leaves left, fast off the mark, its last edge clearing the frame
-
-/* the corner mark rides with the film's own type: from where the sting's mark lands, and from each text frame that
-   follows a page once that page has left the frame, until the next page fills the screen; the last flies home to the
-   end card's mark (src/film.js) */
-const TYPE = { line: 1, title: 1, close: 1 }, UI = { launch: 1, page: 1, refund: 1 };
-function corner(scenes) {
-  const w = []; let open = null, gone = 0;
-  for (const s of scenes) {
-    if (s.kind === 'sting') open = s.end;
-    else if (TYPE[s.kind] && open == null) open = Math.max(s.start, gone);
-    else if (UI[s.kind] && open != null) { w.push([open, s.start]); open = null; }
-    if (UI[s.kind]) gone = s.end;
-    if (s.kind === 'close') { w.push([open, +(s.end_ + 0.6).toFixed(2)]); open = null; }
-  }
-  return w;
-}
+/* the film comes up from black and goes down to black at its ends, the sound with it: seconds in and out */
+export const FADE = { in: 0.6, out: 0.9 };
 
 /* --------------------------------------------------------------------------------------------- the master */
-const MB = buys(12.35, 0.35, 2), SP = 16.85, SEEDED = +(SP + RUN).toFixed(2), REFUND = 22.75;
+const MB = buys(10.21, 0.35, 2), SP = 14.71, SEEDED = +(SP + RUN).toFixed(2), REFUND = 19.77;
 const DTIME = '.sub > span:has([data-dtime])';   // "Ends in 00:00:01", the words and the clock in focus together
 const masterScenes = [
-  { id: 'sting', kind: 'sting', start: 0, end: 2.6, hit: 1.5, fly: 2.25 },
-  { id: 'trust', kind: 'line', start: 2.35, end: 4.75, in: 'up', exit: 'push', out: 4.4, lines: ['Most launches ask you to trust a founder with your money.'], f: { '9x16': { lines: ['Most launches ask', 'you to trust a founder', 'with your money.'] } } },
-  { id: 'title', kind: 'title', start: 4.5, end: 6.75, l1: 'Back an idea', l2: 'at one fixed price.', shrink: 5.12, l2in: 5.22, out: 6.3, exit: 'whip' },
-  { id: 'founder', kind: 'line', start: 6.33, end: 8.1, in: 'whip', exit: 'push', out: 7.75, lines: ['A founder sets a target and a deadline.'], f: { '9x16': { lines: ['A founder sets', 'a target and', 'a deadline.'] } } },
+  /* the film comes up from black over the sting and goes down to black on the end card (FADE) */
+  { id: 'sting', kind: 'sting', start: 0, end: 2.7, hit: 1.5, whip: 2.2 },
+  { id: 'title', kind: 'title', start: 2.23, end: 4.6, in: 'whip', l1: 'Start an idea,', l2: 'fund it on-chain.', shrink: 2.98, l2in: 3.08, out: 4.16, exit: 'whip' },
+  { id: 'founder', kind: 'line', start: 4.19, end: 5.96, in: 'whip', exit: 'push', out: 5.61, lines: ['A founder sets a target and a deadline.'], f: { '9x16': { lines: ['A founder sets', 'a target and', 'a deadline.'] } } },
   {
     /* the Launch form: the Target typed (8, then 85), 7 days pressed, Open raise pressed ("Confirm in wallet…") and the
        whip out */
-    id: 'launch', kind: 'launch', start: 7.9, end: 10.55,
-    states: [[7.9, 'launch-0'], [8.4, 'launch-1'], [8.6, 'launch-2'], [9.23, 'launch-3'], [9.93, 'launch-4']], seg: 9.15, open: 9.85,
+    id: 'launch', kind: 'launch', start: 5.76, end: 8.41,
+    states: [[5.76, 'launch-0'], [6.26, 'launch-1'], [6.46, 'launch-2'], [7.09, 'launch-3'], [7.79, 'launch-4']], seg: 7.01, open: 7.71,
     cam: [
-      { t: 7.9, cut: true, sel: 'fieldset:has(#fTarget)', fill: 0.9, ry: -8, rx: 5, dof: 3, d: 0.7, from: { k: 0.75, ry: -2, rx: 3 }, f: { '9x16': { fill: 0.96 }, '1x1': { fill: 0.95 } } },
-      { t: 8.25, sel: '.f:has(#fTarget)', fill: 0.82, ry: -7, rx: 4, dof: 6, d: 0.55, f: { '9x16': { fill: 0.96 } } },
-      { t: 8.95, sel: '.f:has(#timeSeg)', fill: 0.72, ry: -6, rx: 4, dof: 6, d: 0.45, f: { '9x16': { fill: 0.9 } } },
+      { t: 5.76, cut: true, sel: 'fieldset:has(#fTarget)', fill: 0.9, ry: -8, rx: 5, dof: 3, d: 0.7, from: { k: 0.75, ry: -2, rx: 3 }, f: { '9x16': { fill: 0.96 }, '1x1': { fill: 0.95 } } },
+      { t: 6.11, sel: '.f:has(#fTarget)', fill: 0.82, ry: -7, rx: 4, dof: 6, d: 0.55, f: { '9x16': { fill: 0.96 } } },
+      { t: 6.81, sel: '.f:has(#timeSeg)', fill: 0.72, ry: -6, rx: 4, dof: 6, d: 0.45, f: { '9x16': { fill: 0.9 } } },
       /* to Open raise as the form scrolls under it (in 9:16 and 1:1 the scroll is long: the scroll carries the motion) */
-      { t: 9.45, sel: '#openBtn', fill: 0.8, ry: -6, rx: 4, dof: 6, d: 0.5, f: { '9x16': { fill: 0.94, nomb: true }, '1x1': { nomb: true } } },
-      { t: 10.2, ...OUT }
+      { t: 7.31, sel: '#openBtn', fill: 0.8, ry: -6, rx: 4, dof: 6, d: 0.5, f: { '9x16': { fill: 0.94, nomb: true }, '1x1': { nomb: true } } },
+      { t: 8.06, ...OUT }
     ],
-    scroll: [{ t: 9.47, d: 0.45, sel: '.lsubmit', place: 0.55 }]
+    scroll: [{ t: 7.33, d: 0.45, sel: '.lsubmit', place: 0.55 }]
   },
-  { id: 'buy', kind: 'line', start: 10.23, end: 11.85, in: 'whip', exit: 'push', out: 11.5, lines: ['You buy in with SOL or USDC.'], f: { '9x16': { lines: ['You buy in with', 'SOL or USDC.'] } } },
+  { id: 'buy', kind: 'line', start: 8.09, end: 9.71, in: 'whip', exit: 'push', out: 9.36, lines: ['You buy in with SOL or USDC.'], f: { '9x16': { lines: ['You buy in with', 'SOL or USDC.'] } } },
   {
     /* the raise page, two waves in: the deposit panel (SOL or USDC), then across to the readout as the last six waves
        land .35s apart (the odometer rolls, the bar sweeps to green, the backers tick up), a pull back to the whole page
        as it fills, and the whip out */
-    id: 'fill', kind: 'page', start: 11.7, end: 14.8, open: 11.7, states: fillStates(11.7, MB, 2), buys: MB,
+    id: 'fill', kind: 'page', start: 9.56, end: 12.66, open: 9.56, states: fillStates(9.56, MB, 2), buys: MB,
     cam: [
-      { t: 11.7, cut: true, sel: '[data-trade="deposit"]', fill: 0.85, ry: 8, rx: 5, dof: 5, d: 0.7, from: { k: 0.7, ry: 3 }, f: { '9x16': { fill: 0.96 } } },
-      { t: 12.2, sel: '[data-dreadout]', fill: 0.9, ry: 8, rx: 5, dof: 6, d: 0.55, f: { '9x16': { fill: 0.96 } } },
-      { t: 13.45, full: true, ry: 5, rx: 4, d: 0.9 },
-      { t: 14.45, full: true, ry: 5, rx: 4, ...OUT }
+      { t: 9.56, cut: true, sel: '[data-trade="deposit"]', fill: 0.85, ry: 8, rx: 5, dof: 5, d: 0.7, from: { k: 0.7, ry: 3 }, f: { '9x16': { fill: 0.96 } } },
+      { t: 10.06, sel: '[data-dreadout]', fill: 0.9, ry: 8, rx: 5, dof: 6, d: 0.55, f: { '9x16': { fill: 0.96 } } },
+      { t: 11.31, full: true, ry: 5, rx: 4, d: 0.9 },
+      { t: 12.31, full: true, ry: 5, rx: 4, ...OUT }
     ]
   },
-  { id: 'met', kind: 'line', start: 14.48, end: 16.6, in: 'whip', exit: 'push', out: 16.25, lines: ['If the target is met,', 'the whole raise opens a Meteora pool,'], f: { '9x16': { lines: ['If the target is met,', 'the whole raise opens', 'a Meteora pool,'] } } },
+  { id: 'met', kind: 'line', start: 12.34, end: 14.46, in: 'whip', exit: 'push', out: 14.11, lines: ['If the target is met,', 'the raise seeds as a tradeable token.'], f: { '9x16': { lines: ['If the target is met,', 'the raise seeds as', 'a tradeable token.'] } } },
   {
     /* seeding: the last step pressed ("Running…"); a pull back to the whole page as it turns seeded (the identity card's
        "Seeded", the readout turning into the pool's chart, the seeding card into the trade card); a push to the pool's
        line (HALF/SOL, 170 SOL, Meteora DAMM v2, liquidity locked for good) and the whip out */
-    id: 'seeding', kind: 'page', start: 16.45, end: 19.2,
-    states: [[16.45, 'seeding-2'], [SP + 0.08, 'seeding-2r'], [SEEDED, 'seeded']], presses: [SP], seeded: SEEDED,
+    id: 'seeding', kind: 'page', start: 14.31, end: 17.06,
+    states: [[14.31, 'seeding-2'], [SP + 0.08, 'seeding-2r'], [SEEDED, 'seeded']], presses: [SP], seeded: SEEDED,
     cam: [
-      { t: 16.45, cut: true, sel: '[data-seeding]', fill: 0.8, ry: 9, rx: 5, dof: 6, d: 0.8, from: { k: 0.75, ry: 3 }, f: { '9x16': { fill: 0.9 } } },
-      { t: 17.0, sel: '[data-seeding]', fill: 0.9, ry: 6, rx: 4, dof: 5, d: 0.45, f: { '9x16': { fill: 0.98 } } },
-      { t: 17.42, full: true, ry: 4, rx: 3, d: 0.6 },
-      { t: 18.02, sel: '[data-poolcard]', fill: 0.95, ry: 6, rx: 4, dof: 6, d: 0.65, f: { '9x16': { fill: 0.96, dof: 4 }, '1x1': { dof: 5 } } },
-      { t: 18.85, ...OUT }
+      { t: 14.31, cut: true, sel: '[data-seeding]', fill: 0.8, ry: 9, rx: 5, dof: 6, d: 0.8, from: { k: 0.75, ry: 3 }, f: { '9x16': { fill: 0.9 } } },
+      { t: 14.86, sel: '[data-seeding]', fill: 0.9, ry: 6, rx: 4, dof: 5, d: 0.45, f: { '9x16': { fill: 0.98 } } },
+      /* in 1:1 a little closer and lower, so the rail's own mark is not cut by the frame's corner */
+      { t: 15.28, full: true, ry: 4, rx: 3, d: 0.6, f: { '1x1': { fill: 1.1, ax: 0.54, ay: 0.55 } } },
+      { t: 15.88, sel: '[data-poolcard]', fill: 0.95, ry: 6, rx: 4, dof: 6, d: 0.65, f: { '9x16': { fill: 0.96, dof: 4 }, '1x1': { dof: 5 } } },
+      { t: 16.71, ...OUT }
     ]
   },
-  { id: 'locked', kind: 'line', big: true, start: 18.88, end: 20.0, in: 'whip', exit: 'push', out: 19.65, lines: ['locked for good.'], f: { '9x16': { lines: ['locked', 'for good.'] } } },
-  { id: 'misses', kind: 'line', start: 19.72, end: 21.9, in: 'up', exit: 'push', out: 21.55, lines: ['If it misses,', 'every wallet gets back exactly what it paid,'], f: { '9x16': { lines: ['If it misses,', 'every wallet gets back', 'exactly what it paid,'] } } },
+  { id: 'misses', kind: 'line', start: 16.74, end: 18.92, in: 'whip', exit: 'push', out: 18.57, lines: ['If it misses,', 'every wallet gets back exactly what it paid.'], f: { '9x16': { lines: ['If it misses,', 'every wallet gets back', 'exactly what it paid.'] } } },
   {
     /* the other ending: "Ends in 00:00:01" running out; refunded, pulled back to "Missed target, refunded", the bar
        hatched and the site's note ("Every backer claims back exactly what they paid in SOL, the 1% fee included"), the
        identity card's "Refunds claimed" rolling up to every backer where the format shows it, and the whip out */
-    id: 'refund', kind: 'refund', start: 21.75, end: 24.5,
-    states: [[21.75, 'miss-live'], [REFUND, 'refunded']], ticks: [21.75, 22.35], refund: REFUND,
-    claims: [[23.05, 0.3], [23.3, 0.65], [23.55, 1]],
+    id: 'refund', kind: 'refund', start: 18.77, end: 21.52,
+    states: [[18.77, 'miss-live'], [REFUND, 'refunded']], ticks: [18.77, 19.37], refund: REFUND,
+    claims: [[20.07, 0.3], [20.32, 0.65], [20.57, 1]],
     cam: [
-      { t: 21.75, cut: true, sel: DTIME, fill: 0.5, ry: -8, rx: 5, dof: 8, d: 0.9, from: { k: 0.8, ry: -3 }, f: { '9x16': { fill: 0.7, dof: 12 } } },
-      { t: 22.4, sel: DTIME, fill: 0.6, ry: -7, rx: 5, dof: 8, d: 0.55, f: { '9x16': { fill: 0.74, dof: 12 } } },
+      { t: 18.77, cut: true, sel: DTIME, fill: 0.5, ry: -8, rx: 5, dof: 8, d: 0.9, from: { k: 0.8, ry: -3 }, f: { '9x16': { fill: 0.7, dof: 12 } } },
+      { t: 19.42, sel: DTIME, fill: 0.6, ry: -7, rx: 5, dof: 8, d: 0.55, f: { '9x16': { fill: 0.74, dof: 12 } } },
       { t: REFUND, sel: '.pp-missed', fill: 0.95, ry: -6, rx: 4, dof: 4, d: 0.8, nomb: true },
-      { t: 24.15, ...OUT }
+      { t: 21.17, ...OUT }
     ]
   },
-  { id: 'fee', kind: 'line', big: true, start: 24.18, end: 25.3, in: 'whip', exit: 'push', out: 24.95, lines: ['fee included.'], f: { '9x16': { lines: ['fee', 'included.'] } } },
-  { id: 'close', kind: 'close', start: 25.0, end: 30.0, l1: 'Seeded in full,', l2: 'or refunded in full.', shrink: 25.6, lineOut: 26.95, end_: 27.2 }
+  { id: 'close', kind: 'close', start: 21.2, in: 'whip', end: 27.4, l1: 'Seeded in full,', l2: 'or refunded in full.', shrink: 22.02, lineOut: 23.32, end_: 23.57 }
 ];
 const master = {
-  id: 'master', duration: 30,
-  corner: corner(masterScenes),
+  id: 'master', duration: 27.4,
   scenes: masterScenes,
   /* every line the film puts on screen, as it reads, for the SRT ({x} is a variable) */
   srt: [
-    [2.4, 4.4, 'Most launches ask you to trust a founder with your money.'],
-    [4.55, 6.3, 'Back an idea at one fixed price.'],
-    [6.38, 7.75, 'A founder sets a target and a deadline.'],
-    [10.27, 11.5, 'You buy in with SOL or USDC.'],
-    [14.52, 16.25, 'If the target is met, the whole raise opens a Meteora pool,'],
-    [18.92, 19.65, 'locked for good.'],
-    [19.76, 21.55, 'If it misses, every wallet gets back exactly what it paid,'],
-    [24.22, 24.95, 'fee included.'],
-    [25.05, 26.95, 'Seeded in full, or refunded in full.']
+    [2.28, 4.16, 'Start an idea, fund it on-chain.'],
+    [4.23, 5.61, 'A founder sets a target and a deadline.'],
+    [8.13, 9.36, 'You buy in with SOL or USDC.'],
+    [12.38, 14.11, 'If the target is met, the raise seeds as a tradeable token.'],
+    [16.78, 18.57, 'If it misses, every wallet gets back exactly what it paid.'],
+    [21.25, 23.32, 'Seeded in full, or refunded in full.']
   ],
   markers: [
     ['sting hit', 1.5, 'the seed lands and brightens'],
     ['fill complete', MB[MB.length - 1], 'the last wave of buys fills the target'],
     ['seeded', SEEDED, 'the last seeding step lands and the page turns seeded'],
     ['refunded', REFUND, 'the deadline passes and the raise turns refunded'],
-    ['end card', 27.2, 'the mark and the wordmark']
+    ['end card', 23.57, 'the mark builds, then the wordmark'],
+    ['fade out', +(27.4 - FADE.out).toFixed(2), 'the picture and the sound go down to black']
   ]
 };
 
 /* --------------------------------------------------------------------------------------------- the teaser */
-const TB = buys(5.15, 0.35);
+const TB = buys(5.05, 0.35);
 const teaserScenes = [
-  { id: 'sting', kind: 'sting', start: 0, end: 2.6, hit: 1.5, fly: 2.25 },
-  { id: 'title', kind: 'title', start: 2.45, end: 4.65, l1: 'Back an idea', l2: 'at one fixed price.', shrink: 3.05, l2in: 3.15, out: 4.25, exit: 'push' },
+  { id: 'sting', kind: 'sting', start: 0, end: 2.7, hit: 1.5, whip: 2.2 },
+  { id: 'title', kind: 'title', start: 2.23, end: 4.55, in: 'whip', l1: 'Start an idea,', l2: 'fund it on-chain.', shrink: 2.98, l2in: 3.08, out: 4.15, exit: 'push' },
   {
-    id: 'fill', kind: 'page', start: 4.45, end: 8.95, open: 4.45, states: fillStates(4.45, TB), buys: TB,
+    id: 'fill', kind: 'page', start: 4.35, end: 8.85, open: 4.35, states: fillStates(4.35, TB), buys: TB,
     cam: [
-      { t: 4.45, cut: true, sel: '[data-trade="deposit"]', fill: 0.85, ry: 8, rx: 5, dof: 5, d: 0.8, from: { k: 0.7, ry: 3 }, f: { '9x16': { fill: 0.96 } } },
-      { t: 5.0, sel: '[data-dreadout]', fill: 0.9, ry: 8, rx: 5, dof: 6, d: 0.6, f: { '9x16': { fill: 0.96 } } },
-      { t: 6.6, full: true, ry: 5, rx: 4, d: 1.0 },
-      { t: 8.6, ...OUT }
+      { t: 4.35, cut: true, sel: '[data-trade="deposit"]', fill: 0.85, ry: 8, rx: 5, dof: 5, d: 0.8, from: { k: 0.7, ry: 3 }, f: { '9x16': { fill: 0.96 } } },
+      { t: 4.9, sel: '[data-dreadout]', fill: 0.9, ry: 8, rx: 5, dof: 6, d: 0.6, f: { '9x16': { fill: 0.96 } } },
+      { t: 6.5, full: true, ry: 5, rx: 4, d: 1.0 },
+      { t: 7.5, full: true, ry: 3, rx: 3, d: 1.0 },   // still drifting as it fills
+      { t: 8.5, ...OUT }
     ]
   },
-  { id: 'close', kind: 'close', start: 8.63, in: 'whip', end: 15.0, l1: 'Seeded in full,', l2: 'or refunded in full.', shrink: 9.45, lineOut: 10.75, end_: 11.0 }
+  { id: 'close', kind: 'close', start: 8.53, in: 'whip', end: 15.0, l1: 'Seeded in full,', l2: 'or refunded in full.', shrink: 9.35, lineOut: 10.65, end_: 10.9 }
 ];
 const teaser = {
   id: 'teaser', duration: 15,
-  corner: corner(teaserScenes),
   scenes: teaserScenes,
   srt: [
-    [2.5, 4.25, 'Back an idea at one fixed price.'],
-    [8.68, 10.75, 'Seeded in full, or refunded in full.']
+    [2.28, 4.15, 'Start an idea, fund it on-chain.'],
+    [8.58, 10.65, 'Seeded in full, or refunded in full.']
   ],
   markers: [
     ['sting hit', 1.5, 'the seed lands and brightens'],
     ['fill complete', TB[TB.length - 1], 'the last wave of buys fills the target'],
-    ['end card', 11.0, 'the mark and the wordmark']
+    ['end card', 10.9, 'the mark builds, then the wordmark'],
+    ['fade out', +(15 - FADE.out).toFixed(2), 'the picture and the sound go down to black']
   ]
 };
 

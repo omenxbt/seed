@@ -7,7 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { CUTS, FORMATS, FPS, RAISE, ZOOM } from '../src/story.mjs';
+import { CUTS, FADE, FORMATS, FPS, RAISE, ZOOM } from '../src/story.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const proj = path.resolve(here, '..');
@@ -84,7 +84,7 @@ function page(cut, fk) {
   const used = [...new Set(c.scenes.flatMap(s => (s.states || []).map(x => x[1])))];
   const pages = used.map(n => `<template data-page="${n}">${fs.readFileSync(P('site/pages', fk, n + '.html'), 'utf8').trim()}</template>`).join('\n');
   const meta = { window: PAGES[fk].window, states: Object.fromEntries(used.map(n => [n, { body: PAGES[fk].states[n].body, docH: PAGES[fk].states[n].docH }])) };
-  const story = { cut, format: fk, fps: FPS, duration: c.duration, size: [f.w, f.h], persp: f.persp, zoom: ZOOM.page, tzoom: ZOOM.type, focus: f.focus, fillK: f.fillK || 1, cornerBox: [f.safe.l, f.safe.t, f.mark], corner: c.corner, scenes: c.scenes, raise: { name: RAISE.name, ticker: RAISE.ticker, target: RAISE.target } };
+  const story = { cut, format: fk, fps: FPS, duration: c.duration, size: [f.w, f.h], persp: f.persp, zoom: ZOOM.page, tzoom: ZOOM.type, focus: f.focus, fillK: f.fillK || 1, fade: FADE, scenes: c.scenes, raise: { name: RAISE.name, ticker: RAISE.ticker, target: RAISE.target } };
   const music = cut === 'master' ? 'assets/music.wav' : 'assets/music-teaser.wav';
   return `<!doctype html>
 <html lang="en" data-composition-variables='${JSON.stringify(VARS).replace(/'/g, '&#39;')}'>
@@ -109,8 +109,9 @@ function page(cut, fk) {
 ${c.scenes.map((s, i) => SCENES[s.kind]({ ...s, track: i % 2 ? 4 : 1 })).join('\n')}
   <div id="dof" aria-hidden="true"></div><div id="mb" aria-hidden="true"></div>
   </div>
-${c.corner.map(([a, b], i) => `  <div id="corner-${i}" class="clip corner" data-start="${a}" data-duration="${+(b - a).toFixed(3)}" data-track-index="2"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"></use></svg></div>`).join('\n')}
-  <audio id="music" src="${music}" data-start="0" data-duration="${c.duration}" data-track-index="10" data-volume="${V.musicVolume}"></audio>
+  <div id="fade" aria-hidden="true"></div>
+  <!-- the score's slot, fading in and out with the picture -->
+  <audio id="music" src="${music}" data-start="0" data-duration="${c.duration}" data-track-index="10" data-volume="${V.musicVolume}" data-fade-in="${FADE.in}" data-fade-out="${FADE.out}"></audio>
 </div>
 <script type="application/json" id="story">${JSON.stringify(story)}</script>
 <script type="application/json" id="pages">${JSON.stringify(meta)}</script>

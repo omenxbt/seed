@@ -13,17 +13,17 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 /* the film draws every motion itself, seekable from the timeline (src/film.js), so the site's CSS clocks are stopped */
 .film *, .film *::before, .film *::after { animation: none !important; transition: none !important; }
 
-/* ------------------------------------------------------------ formats: safe zones and the corner mark */
-.f169 { --sl: 96px; --sr: 96px; --st: 96px; --sb: 96px; --mk: 48px; }
-.f916 { --sl: 120px; --sr: 120px; --st: 250px; --sb: 320px; --mk: 56px; }
-.f11  { --sl: 80px; --sr: 80px; --st: 80px; --sb: 80px; --mk: 48px; }
+/* ------------------------------------------------------------ formats: safe zones */
+.f169 { --sl: 96px; --sr: 96px; --st: 96px; --sb: 96px; }
+.f916 { --sl: 120px; --sr: 120px; --st: 250px; --sb: 320px; }
+.f11  { --sl: 80px; --sr: 80px; --st: 80px; --sb: 80px; }
 
 /* ------------------------------------------------------------ the world: the dot field and every scene */
 #world { position: absolute; inset: 0; overflow: hidden; z-index: 0; }
 #world > #bg-dither { position: absolute; inset: 0; width: 100%; height: 100%; }
 .clip.scene { position: absolute; inset: 0; }
 /* at a handoff two scenes overlap: the film's own type flies past over the page coming in (over its depth of field
-   too) and comes in over the page whipping away, and the sting's mark goes over the line it flies across */
+   too) and comes in over the page whipping away, and the sting's lockup whips away over the title coming in */
 .clip.scene.s-title, .clip.scene.s-line, .clip.scene.s-close { z-index: 60; }
 .clip.scene.s-sting { z-index: 61; }
 .sc { position: absolute; inset: 0; }
@@ -34,10 +34,6 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
    backdrop root and the GPU compositor then leaves parts of a tilted panel unblurred. A stage of the film's own type is
    clear, over #bg-dither itself. */
 .stage { position: absolute; inset: 0; perspective: var(--persp); overflow: hidden; }
-/* a stage of the film's own type keeps the corner mark's clear space: once the mark is up (--cma 0) it is masked away round
-   the mark, into the same field under it */
-.stage.type { -webkit-mask-image: radial-gradient(circle at calc(var(--sl) + var(--mk) / 2) calc(var(--st) + var(--mk) / 2), rgba(0,0,0,var(--cma,1)) calc(var(--mk) * .76 + 6px), #000 calc(var(--mk) * .76 + 64px));
-  mask-image: radial-gradient(circle at calc(var(--sl) + var(--mk) / 2) calc(var(--st) + var(--mk) / 2), rgba(0,0,0,var(--cma,1)) calc(var(--mk) * .76 + 6px), #000 calc(var(--mk) * .76 + 64px)); }
 .stage > canvas.field { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .cam { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
 .tw { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
@@ -60,16 +56,17 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
   mask-image: radial-gradient(var(--rx) var(--ry) at var(--dx) var(--dy), transparent 58%, #000 100%); }
 #mb { position: absolute; inset: 0; display: none; pointer-events: none; -webkit-backdrop-filter: url(#mbf); backdrop-filter: url(#mbf); }
 
-/* the mark top left, as the app bar draws it: dots in --navy-soft, the seed in --navy; clear space of one seed diameter */
-.corner { position: absolute; left: var(--sl); top: var(--st); width: var(--mk); height: var(--mk); }
-.corner .mark { width: 100%; height: 100%; color: var(--navy-soft); --seed: var(--navy); }
+/* the film's ends: up from black and down to black (src/film.js drives its opacity) */
+#fade { position: absolute; inset: 0; z-index: 100; background: #000; opacity: 0; pointer-events: none; }
 
-/* ------------------------------------------------------------ the lockup: wordmark 500, -3%, ink, a mark 1.6x its size */
+/* ------------------------------------------------------------ the lockup: wordmark 500, -3%, ink, a mark 1.6x its size
+   The mark is the muted one wherever the film shows it, as on Seed's avatar: dots in --navy-soft, the seed in --navy (it
+   lands in the brand blue and brightens to it). CONFLICTS 41 */
 .lockup { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: calc(var(--ws) * .4); }
 .lockup .mark { flex: none; width: calc(var(--ws) * 1.6); height: calc(var(--ws) * 1.6); overflow: visible; }
 .lockup .word { font-family: var(--sans); font-weight: 500; font-size: var(--ws); letter-spacing: -.03em; line-height: 1; color: var(--ink); }
-.sting-mark .dot { fill: var(--ink); }
-.sting-mark .seed { fill: var(--solid); }
+.lockup .mark .dot { fill: var(--navy-soft); }
+.lockup .mark .seed { fill: var(--solid); }
 .f169 .lockup.sting { --ws: 136px; } .f916 .lockup.sting { --ws: 120px; } .f11 .lockup.sting { --ws: 120px; }
 
 /* ------------------------------------------------------------ titles: the hero's two lines, serif italic then sans 500 */
@@ -96,5 +93,4 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 /* ------------------------------------------------------------ the end card: the mark and the wordmark, at the sting's size */
 .endcard { position: absolute; left: var(--sl); right: var(--sr); top: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .endcard .lockup { position: relative; inset: auto; }
-.endcard .lockup .mark .dot { fill: var(--ink); } .endcard .lockup .mark .seed { fill: var(--navy); }
 .f169 .endcard .lockup { --ws: 136px; } .f916 .endcard .lockup { --ws: 120px; } .f11 .endcard .lockup { --ws: 120px; }

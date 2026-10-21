@@ -3,8 +3,8 @@
   "note": "Beat points for scoring. Times are from the start of each cut and are the same in every format.",
   "cuts": {
     "master": {
-      "duration": 30,
-      "frames": 1800,
+      "duration": 27.4,
+      "frames": 1644,
       "markers": [
         {
           "name": "sting hit",
@@ -14,27 +14,33 @@
         },
         {
           "name": "fill complete",
-          "t": 14.1,
-          "frame": 846,
+          "t": 11.96,
+          "frame": 718,
           "what": "the last wave of buys fills the target"
         },
         {
           "name": "seeded",
-          "t": 17.63,
-          "frame": 1058,
+          "t": 15.49,
+          "frame": 929,
           "what": "the last seeding step lands and the page turns seeded"
         },
         {
           "name": "refunded",
-          "t": 22.75,
-          "frame": 1365,
+          "t": 19.77,
+          "frame": 1186,
           "what": "the deadline passes and the raise turns refunded"
         },
         {
           "name": "end card",
-          "t": 27.2,
-          "frame": 1632,
-          "what": "the mark and the wordmark"
+          "t": 23.57,
+          "frame": 1414,
+          "what": "the mark builds, then the wordmark"
+        },
+        {
+          "name": "fade out",
+          "t": 26.5,
+          "frame": 1590,
+          "what": "the picture and the sound go down to black"
         }
       ]
     },
@@ -50,15 +56,21 @@
         },
         {
           "name": "fill complete",
-          "t": 7.6,
-          "frame": 456,
+          "t": 7.5,
+          "frame": 450,
           "what": "the last wave of buys fills the target"
         },
         {
           "name": "end card",
-          "t": 11,
-          "frame": 660,
-          "what": "the mark and the wordmark"
+          "t": 10.9,
+          "frame": 654,
+          "what": "the mark builds, then the wordmark"
+        },
+        {
+          "name": "fade out",
+          "t": 14.1,
+          "frame": 846,
+          "what": "the picture and the sound go down to black"
         }
       ]
     }

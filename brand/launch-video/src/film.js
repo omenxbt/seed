@@ -197,10 +197,6 @@
     cams.push(c);
     return c;
   }
-  /* the corner mark's clear space over the film's own type: a type stage is masked away round the mark while it is up (a
-     page stage never is: a masked ancestor takes the glass off its panels, and the mark is never up over a page) */
-  drivers.push(function (t) { root.style.setProperty('--cma', S.corner.some(function (w) { return t >= w[0] - 1e-6 && t < w[1] - 1e-6; }) ? '0' : '1'); });
-
   /* depth of field and motion blur from the camera on screen */
   var dof = document.getElementById('dof'), mb = document.getElementById('mb'), mbg = document.getElementById('mbg');
   var lastDof = null, lastMb = null;
@@ -337,53 +333,47 @@
   var music = document.getElementById('music');
   if (music && V.musicVolume != null) music.setAttribute('data-volume', String(V.musicVolume));
 
-  /* the 21 dots arrive on the spiral one by one, 40ms apart, rim first, each growing from nothing at full opacity (the
-     book: never fade the mark), and the seed lands last */
-  function dotsArrive(svg, t0, tSeed) {
-    var cs = $$('circle', svg), seed = cs[0], cx0 = +seed.getAttribute('cx'), cy0 = +seed.getAttribute('cy');
+  /* the 21 dots arrive on the spiral one by one, `gap` apart (40ms in the sting), rim first, each growing from nothing at
+     full opacity (the book: never fade the mark), and the seed lands last, in the brand blue, brightening to the lit one
+     as it lands: the muted mark, as on Seed's avatar */
+  function dotsArrive(svg, t0, tSeed, gap) {
+    var cs = $$('circle', svg), seed = cs[0], cx0 = +seed.getAttribute('cx'), cy0 = +seed.getAttribute('cy'), g = gap || 0.04, d = g > 0.035 ? 0.5 : 0.45;
     cs.forEach(function (c) {
       var n = +c.dataset.n; if (!n) return;
       var x = +c.getAttribute('cx'), y = +c.getAttribute('cy');
-      tl.fromTo(c, { x: (x - cx0) * 0.55, y: (y - cy0) * 0.55, scale: 0, transformOrigin: '50% 50%' }, { x: 0, y: 0, scale: 1, duration: 0.5, ease: E }, t0 + (20 - n) * 0.04);
+      tl.fromTo(c, { x: (x - cx0) * 0.55, y: (y - cy0) * 0.55, scale: 0, transformOrigin: '50% 50%' }, { x: 0, y: 0, scale: 1, duration: d, ease: E }, t0 + (20 - n) * g);
     });
-    tl.fromTo(seed, { scale: 0, transformOrigin: '50% 50%' }, { scale: 1, duration: 0.5, ease: E }, tSeed);
+    tl.fromTo(seed, { scale: 0, transformOrigin: '50% 50%' }, { scale: 1, duration: d, ease: E }, tSeed);
+    tl.fromTo(seed, { fill: css('--solid') }, { fill: css('--navy'), duration: FAST, ease: E, immediateRender: false }, tSeed + d);
   }
 
   /* ------------------------------------------------------------ scenes */
   var B = {
     sting: function (s, sec) {
-      var lock = $('.lockup', sec), svg = $('.sting-mark', sec), seed = $('circle.seed', svg);
-      // where the mark sits in the finished lockup, measured before any tween moves it
-      var mr = svg.getBoundingClientRect(), rr = root.getBoundingClientRect();
-      dotsArrive(svg, s.start + 0.2, s.start + 1.0);
+      var lock = $('.lockup', sec), svg = $('.sting-mark', sec);
+      // the seed lands by the hit (1.5s) and brightens; the mark moves over for the wordmark, which fades in at 1.6s
+      dotsArrive(svg, s.start + 0.2, s.hit - 0.5);
       var lg = $('.word', sec).getBoundingClientRect().width / 2 + parseFloat(getComputedStyle(lock).columnGap || 0) / 2;
       tl.fromTo(svg, { x: lg }, { x: 0, duration: 0.5, ease: E }, s.start + 1.45);
-      // the seed brightens from the brand blue to the lit one; the wordmark fades in at 1.6s
-      tl.fromTo(seed, { fill: css('--solid') }, { fill: css('--navy'), duration: FAST, ease: E, immediateRender: false }, s.hit);
       tl.fromTo($('.word', sec), { opacity: 0 }, { opacity: 1, duration: 0.5, ease: E }, s.start + 1.6);
-      // a slow push on the lockup, then the mark flies to its corner and becomes the mark that stays there; where the next
-      // scene is a page (the teaser) the camera pushes through the lockup instead
-      var P = 1.05, C = S.cornerBox;
-      var mcx = mr.left - rr.left + mr.width / 2, mcy = mr.top - rr.top + mr.height / 2;
-      tl.fromTo(lock, { scale: 1 }, { scale: P, duration: s.fly - s.start, ease: E }, s.start);
-      if (s.push) { tl.fromTo(lock, { scale: P }, { scale: 9, duration: 0.55, ease: E, immediateRender: false }, s.push); return; }
-      var dx = (C[0] + C[2] / 2) - (FW / 2 + (mcx - FW / 2) * P), dy = (C[1] + C[2] / 2) - (FH / 2 + (mcy - FH / 2) * P);
-      tl.fromTo(svg, { x: 0, y: 0, scale: 1, transformOrigin: '50% 50%' }, { x: dx / P, y: dy / P, scale: C[2] / (mr.width * P), duration: s.end - s.fly, ease: E, immediateRender: false }, s.fly);
-      tl.fromTo($('.word', sec), { opacity: 1, x: 0 }, { opacity: 0, x: -24, duration: DUR, ease: E, immediateRender: false }, s.fly);
-      $$('.dot', svg).forEach(function (d) { tl.fromTo(d, { fill: css('--ink') }, { fill: css('--navy-soft'), duration: FAST, ease: E, immediateRender: false }, s.end - 0.3); });
+      // a slow push on the lockup, then it whips away left, whole, as the title comes in from the right
+      var P = 1.05;
+      tl.fromTo(lock, { scale: 1 }, { scale: P, duration: s.whip - s.start, ease: E }, s.start);
+      tl.fromTo(lock, { x: 0 }, { x: -FW * 1.1, duration: 0.45, ease: E, immediateRender: false }, s.whip);
     },
     title: function (s, sec) {
       // the hero's two lines: the first huge, sharpening in; then it settles to its size as the second comes under it
       sharpen($('.l1', sec), s.start + 0.05); sharpen($('.l2', sec), s.l2in);
       typeCamera(sec, s, [
-        { t: s.start, cut: true, sel: '.l1', fill: 0.97, d: 0.9, from: { k: 0.9 } },   // in from a little further out: the huge word never passes the safe zone
+        // in from a little further out (the huge word never passes the safe zone), or from the right as the sting whips away
+        { t: s.start, cut: true, sel: '.l1', fill: 0.97, d: 0.9, from: s.in === 'whip' ? { dx: FW * 0.32 } : { k: 0.9 } },
         { t: s.shrink, sel: 'h1.t', s: 1, d: 0.7 },
         { t: s.shrink + 0.7, sel: 'h1.t', s: 1.045, d: s.out - s.shrink - 0.7 },
         // out: the camera pushes through the title, the lines flying past it and gone before the cut, as the next scene
         // comes in under them; or the title whips away left as the next line comes in from the right
         s.exit === 'whip' ? { t: s.out, sel: 'h1.t', s: 1.045, dx: -FW * 1.1, d: 0.45 } : { t: s.out, sel: 'h1.t', s: 4.4, d: 0.6 }
       ]);
-      if (s.exit === 'whip') fadeOut($('h1.t', sec), s.out + 0.02, 0.2); else fadeOut($('h1.t', sec), s.out + 0.1);
+      if (s.exit === 'whip') fadeOut($('h1.t', sec), s.out + 0.02, 0.2); else fadeOut($('h1.t', sec), s.out, 0.2);
     },
     line: function (s, sec) {
       // a line of the script, full screen: its words rise in 45ms apart as the camera arrives, it holds on a slow push,
@@ -401,7 +391,7 @@
       // out: through the type into the next shot, which resolves under it, or a whip away left as the next comes in
       var hold = s.big ? { fill: end } : { fill: 0.98, smax: 1.04 };
       if (s.exit === 'whip') { keys.push(Object.assign({ t: s.out, sel: '.lb .w', dx: -FW * 1.1, d: 0.45 }, hold)); fadeOut(blk, s.out + 0.02, 0.2); }
-      else { keys.push(Object.assign({ t: s.out, sel: '.lb .w', d: 0.6 }, s.big ? { fill: 3.8 } : { s: 4.4 })); fadeOut(blk, s.out + 0.04); }
+      else { keys.push(Object.assign({ t: s.out, sel: '.lb .w', d: 0.6 }, s.big ? { fill: 3.8 } : { s: 4.4 })); fadeOut(blk, s.out, 0.2); }   // clear as the page cuts in
       typeCamera(sec, s, keys);
     },
     launch: function (s, sec) {
@@ -421,6 +411,24 @@
       var q = function (sel) { return function () { return sc.q(sel); }; };
       ['[data-draised]', '[data-dpct]', '[data-dbackers]', '[data-sraised]', '[data-spct]', '[data-sbackers]', '[data-dtime]', '[data-stime]'].forEach(function (sel) { var ev = beatTexts(s, sel); if (ev.length) odo(q(sel), ev); });
       bar(q('[data-dbar]'), beatWidths(s, '[data-dbar]'));
+      // the wave that fills the raise: the site draws the page again as filled, its figures already at the target (a new
+      // status renders the page afresh, CONFLICTS 43), so the film rolls the filled page's raised and backers up from the
+      // last wave's and sweeps its bar from there, as the odometer and the bar do on every other wave
+      var fi = -1;
+      s.states.forEach(function (x, i) { if (fi < 0 && i && !doc(x[1]).querySelector('[data-draised]') && doc(s.states[i - 1][1]).querySelector('[data-draised]')) fi = i; });
+      if (fi > 0) {
+        var tF = s.states[fi][0], pv = s.states[fi - 1][1], nx = s.states[fi][1];
+        var filled = function (get) { return function () { return sc.q('[data-draised]') ? null : get(); }; };
+        // a figure that is a bare text node before its unit gets a box of its own to roll in
+        var lead = function (host) { if (!host) return null; var sp = host.querySelector('.hf-fr'); if (sp) return sp; var n = host.firstChild; if (!n || n.nodeType !== 3) return null; sp = document.createElement('span'); sp.className = 'hf-fr'; sp.textContent = n.textContent.trim(); host.replaceChild(sp, n); host.insertBefore(document.createTextNode(' '), sp.nextSibling); return sp; };
+        var stat = function (label) { var d = $$('.pp-stats dt', sc.body).filter(function (e) { return e.textContent.trim() === label; })[0]; return d ? d.nextElementSibling : null; };
+        var first = function (t) { return (t || '').trim().split(' ')[0]; };
+        odo(filled(function () { return lead(sc.q('.pp-fill .readout .big b')); }), [[-1, textIn(pv, '[data-draised]')], [tF, first(textIn(nx, '.pp-fill .readout .big b'))]]);
+        odo(filled(function () { return sc.q('.pp-fill .readout .sub > span:last-child'); }), [[-1, textIn(pv, '[data-dbackers]')], [tF, textIn(nx, '.pp-fill .readout .sub > span:last-child')]]);
+        odo(filled(function () { return lead(stat('Raised')); }), [[-1, textIn(pv, '[data-sraised]')], [tF, first(textIn(nx, '.pp-stats > div:first-child dd'))]]);
+        odo(filled(function () { return stat('Backers'); }), [[-1, textIn(pv, '[data-sbackers]')], [tF, first(textIn(nx, '.pp-fill .readout .sub > span:last-child'))]]);
+        bar(filled(function () { return sc.q('.pp-fill .readout .bar i'); }), [[-1, parseFloat(doc(pv).querySelector('[data-dbar]').style.width)], [tF, parseFloat(doc(nx).querySelector('.pp-fill .readout .bar i').style.width)]]);
+      }
       // a buy's chip over the readout, as the site's floatChip draws it: in at 15%, drifting to 75%, gone at 100% of 2.4s
       (s.chips || []).forEach(function (i) {
         var t0 = s.buys[i], from = s.states.filter(function (x) { return x[0] < t0 - 1e-6; }).pop()[1], to = s.states.filter(function (x) { return Math.abs(x[0] - t0) < 1e-6; })[0][1];
@@ -477,25 +485,23 @@
         { t: s.end_, sel: '.endcard', s: 1, d: 0.01 },
         { t: s.end_ + 0.02, sel: '.endcard', s: 1.035, d: s.end - s.end_ }
       ]);
-      // the end card builds as the Axiom ones do: the mark alone, then the wordmark drawn out from behind it, and holds.
-      // The mark is the corner mark come home: it flies from the corner to where the camera shows the end card's mark as
-      // the flight lands, its dots turning from the app bar's blue to ink, and the end card's own mark takes its place there
+      // the end card builds as the Axiom ones do: the mark alone, its dots arriving as the sting's did (30ms apart) and the
+      // seed landing and brightening, then the wordmark drawn out from behind it; it holds, and the film goes down to black
       var TZ = S.tzoom, gap = wd.getBoundingClientRect().width / TZ / 2 + parseFloat(getComputedStyle(lk).columnGap || 0) / 2;   // in the type's own pixels
-      var T0 = s.end_ + 0.02, T1 = S.corner[S.corner.length - 1][1], C = S.cornerBox, home = $$('.clip.corner .mark').pop();
-      var keep = cam.el.style.transform; cam.el.style.transform = 'none';
-      var wr = $('.tw', sec).getBoundingClientRect(), mr = mk.getBoundingClientRect();
-      cam.el.style.transform = keep;
-      var M = matrixOf(cam.at(T1)), a = project(M, mr.left - wr.left + gap * TZ, mr.top - wr.top), b = project(M, mr.right - wr.left + gap * TZ, mr.bottom - wr.top);
-      tl.fromTo(home, { x: 0, y: 0, scale: 1, transformOrigin: '0 0' }, { x: a[0] - C[0], y: a[1] - C[1], scale: (b[0] - a[0]) / C[2], duration: T1 - T0, ease: E, immediateRender: false }, T0);
-      tl.fromTo(home, { color: css('--navy-soft') }, { color: css('--ink'), duration: DUR, ease: E, immediateRender: false }, T0);
-      tl.set(ec, { opacity: 0 }, 0); tl.set(ec, { opacity: 1 }, T1);
-      tl.fromTo(mk, { x: gap }, { x: 0, duration: 0.6, ease: E }, T1 + 0.08);
-      tl.fromTo(wd, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.6, ease: E }, T1 + 0.3);
+      var T = s.end_ + 0.02;
+      tl.set(ec, { opacity: 0 }, 0); tl.set(ec, { opacity: 1 }, T);
+      dotsArrive(mk, T, T + 0.6, 0.03);
+      tl.fromTo(mk, { x: gap }, { x: 0, duration: 0.6, ease: E }, T + 1.0);
+      tl.fromTo(wd, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.6, ease: E }, T + 1.2);
     }
   };
 
   function build() {
     S.scenes.forEach(function (s) { var sec = document.getElementById('s-' + s.id); if (sec && B[s.kind]) B[s.kind](s, sec); });
+    // up from black and down to black at the film's ends, in step with the sound's own fades (linear, as the mixer's are)
+    var fade = document.getElementById('fade');
+    tl.fromTo(fade, { opacity: 1 }, { opacity: 0, duration: S.fade.in, ease: 'none' }, 0);
+    tl.fromTo(fade, { opacity: 0 }, { opacity: 1, duration: S.fade.out, ease: 'none', immediateRender: false }, S.duration - S.fade.out - DT);   // black on the last frame
     var clock = { t: 0 };
     tl.fromTo(clock, { t: 0 }, { t: S.duration, duration: S.duration, ease: 'none', onUpdate: function () { var t = tl.time(); drivers.forEach(function (d) { d(t); }); } }, 0);
     drivers.forEach(function (d) { d(0); });

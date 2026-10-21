@@ -1,7 +1,7 @@
 1
-00:00:02,500 --> 00:00:04,250
-Back an idea at one fixed price.
+00:00:02,280 --> 00:00:04,150
+Start an idea, fund it on-chain.
 
 2
-00:00:08,680 --> 00:00:10,750
+00:00:08,580 --> 00:00:10,650
 Seeded in full, or refunded in full.

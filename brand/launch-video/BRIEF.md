@@ -6,7 +6,7 @@ message: "Seeded in full, or refunded in full."
 destination: youtube
 aspect: 1920x1080
 language: en
-length: 30s
+length: 27s
 angle: product
 ---
 
@@ -31,6 +31,10 @@ case is listed in `brand/CONFLICTS.md`.
 - Formats: 1920×1080 master, 1080×1920 and 1080×1080 recomposed (not cropped), the brand book's safe zones.
 - 2026-10-20, from the user: the master 30s at most and 60fps; shorter text frames; the UI full screen; the caption
   pills over the UI replaced by full-screen text frames of their own, separate from the UI.
+- 2026-10-21, from the user: the logo always as on Seed's avatar (the muted mark); the title "Start an idea, fund it
+  on-chain."; "Most launches ask you to trust a founder with your money." cut; the met line "If the target is met, the
+  raise seeds as a tradeable token."; "locked for good." and "fee included." cut; no corner mark; the film fades in and
+  out; digital sound effects, then, the same day, no sound effects after all. CONFLICTS 31, 41 and 42.
 - A 15s teaser per format: sting, fill, "Seeded in full, or refunded in full", end card.
 - Every figure, the URL and the network line are composition variables, read from the program config and LOOP.md.
   (2026-10-20: at the user's direction the end card is the mark and the wordmark alone, so the URL and the network line
