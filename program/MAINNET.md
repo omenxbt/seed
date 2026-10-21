@@ -19,7 +19,7 @@ the four presets, 1% buy fee, 125 bps pool, 70/30, no minimum unlock, 7-day payo
 | C, $50,000, filled and never seeded | `timeout_refund` refused before the 3-day timeout, refunds after it |
 | D, $50,000, one-day deadline, one buy | `settle` marks it missed after the deadline; the refund is exact |
 
-Takes about 90 minutes, almost all of it the 90-minute cliff (`--fast` skips that one wait). Last run 2026-10-20 under the
+Takes about 90 minutes, almost all of it the 90-minute cliff (`--fast` skips that one wait). Last run 2026-10-21 (UTC) under the
 presets: 34 checks, all passed (SOL at $106.92 from the cloned feed; A's $40,000 raise was 374.11 SOL). **Not covered:** a burn of
 unvested team tokens on a takeover — no such instruction exists; the schedule keeps unlocking to the new payout wallet.
 That policy is open (Needs Josh).
