@@ -88,8 +88,8 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
 14. **Wordmark weight.** The book says 500 (the app bar); the lockup SVGs in `brand/logo/` set it at 600
     (`brand/README.md`). The video sets the wordmark as live text at 500.
 15. **The mark's dot count at small sizes.** The book says the 13-dot mark at 56px and under. The site's app bar draws
-    the 21-dot mark (`#seed21`) at every size, and the pages show it as the site draws it. The film's own mark is in the
-    sting and the end card only, at 218px (16:9) and 192px (9:16, 1:1), where the 21-dot mark is the book's.
+    the 21-dot mark (`#seed21`) at every size, and the pages show it as the site draws it. The film's own mark is on the
+    end card only, at 218px (16:9) and 192px (9:16, 1:1), where the 21-dot mark is the book's.
 16. **Primary button contrast.** White on `--grad-btn` measures 4.01:1 in HyperFrames' contrast check, under WCAG AA's
     4.5:1 for 14px text. The video keeps the site's button.
 17. **Demo art.** Every demo raise's art and banner in `assets/demo/` is a pastel gradient (Halfmoon's runs cyan to
@@ -124,9 +124,7 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
 24. **Frosted panels never fade,** as the site's `rise` keyframe has it (a fading card cannot blur what is behind it).
     Scenes of panels begin and end on a camera move (a whip, a push through an element); type fades, and at a handoff
     the film's own type flies past, clearing, over the scene coming in under it, or comes in from the right over a page
-    whipping away (the title comes in from the right as the sting's lockup whips away left). Marks never fade either:
-    the sting's dots grow in at full opacity and its lockup leaves whole on the whip, and the end card's dots grow in
-    the same way. The one exception is the film's own fade to black at its very end, which takes the end card down
+    whipping away. Marks never fade either: the end card's dots grow in at full opacity. The one exception is the film's own fade to black at its very end, which takes the end card down
     with the whole frame (42).
 25. **The pages are the site's own, at each beat.** `tools/capture-pages.mjs` runs `index.html` on its demo data and
     keeps the DOM the site draws: the Launch form as it opens and as its presets and deadline are pressed, the raise page
@@ -141,7 +139,7 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     refused, so the pages show the site's figures (the presets, the $148.2 demo SOL price) and repeat exactly. With no
     chain the site prices at its demo SOL price (`liveSolUsd`), as its demo mode does.
 26. **A faster clock.** Each wave of buys lands hours later in the raise's time, so it fills at 82.4% of its window, and the refund countdown shows its last second, reaching zero as the page turns refunded (the capture has three
-    left; the film's odometer shows the last one). The raise page opens two waves in, and its last six waves land .4s apart (.35s in the teaser, all eight). The Launch form's "Confirm in
+    left; the film's odometer shows the last one). The raise page opens two waves in, and its last six waves land .4s apart (.45s in the teaser, all eight). The Launch form's "Confirm in
     wallet…" holds about .7s of the site's 1s before the form whips away; each seeding step's "Running…" holds the site's 700ms.
     The site's buy chip (`floatChip`) floats one buy; a wave is many buys, so the film shows no chips, and the odometer
     rolls the raised figure, the percentage and the backers count at each wave as `patchDetail` rolls them. The refunded
@@ -167,15 +165,15 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     drawn).
 31. **The script** is "Thirty seconds, spoken", one line a frame, as the user rewrote it (2026-10-21): "Start an idea, /
     fund it on-chain." (in place of "Seed asks you to back an idea at one fixed price."), "Find product-market fit",
-    "Market cap presets", "Set a target and deadline", "Buy with SOL or USDC", "Raises seed as tradeable tokens", "If it
+    "Set a target and deadline", "Buy with SOL or USDC", "Raises seed as tradeable tokens", "If it
     misses, every wallet gets back exactly what it paid." and "Seeded in full, or refunded in full." The book's "Most
     launches…", "locked for good." and "fee included." frames are cut (the pages still say "liquidity locked for good"
     and "the 1% fee included" where the site draws them), and so are "and your tokens are yours the same day", "Nothing
-    is minted, nothing is held back." and "That is Seed." (the end card's wordmark says the last). Six of the lines are
-    the user's short phrases, not the book's full sentences, and carry no full stop, as the user wrote them; "Market
-    cap" and "product-market" are spelled as the book's vocabulary and common usage have them (the user's message wrote
-    "Marketcap" and "product market"). "Set a target and deadline" follows the presets shot: the target is the one the
-    preset derived, which the raise line shows beside the deadline. The master is 36.4s.
+    is minted, nothing is held back." and "That is Seed." (the end card's wordmark says the last). Four of the lines are
+    the user's short phrases, not the book's full sentences, and carry no full stop, as the user wrote them;
+    "product-market" is spelled as common usage has it (the user's message wrote "product market"). A "Market cap
+    presets" frame was added and then cut at the user's direction (2026-10-21): the Launch form after "Set a target and
+    deadline" shows the presets, the founder's press deriving the target, then the deadline. The master is 31.3s.
 32. **The camera.** The film flies one camera over the pages and its own type, after the Axiom films in
     `delta/01-video-hyperframes/_motion-refs/` (the motion only; the README maps each move). The book has no camera, so
     these are the video's own choices, kept inside its rules: every move eases on the one curve, panels tilt (up to 11°)
@@ -188,7 +186,7 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     its panels and blurs behind their glass, as on the site. The camera never shows a page's edge: every pose, tilted or
     not, is kept where the page covers the whole frame (`cover` in `src/film.js`), until the whip that takes the page
     away. In 1:1 the full-page views show the site's 1080 layout as drawn, its rail column emptier than the main one.
-    There is no corner mark: at the user's direction (2026-10-21) the mark is in the sting and the end card only (the
+    There is no corner mark: at the user's direction (2026-10-21) the mark is on the end card only (the
     site's own app bar and rail carry theirs on the pages).
 34. **Safe zones.** The element the camera is on sits inside its format's focus box, which lies inside the safe zone
     (16:9 x 160–1760, y 140–940; 9:16 x 120–960, y 300–1620; 1:1 x 100–980, y 120–960): a cut resolves onto it from no
@@ -203,7 +201,8 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     masked; a `--no-browser-gpu` render would not be.
 36. **Frame rate and length.** The brief asks for a master of about 55s at 30fps. At the user's direction (2026-10-20)
     the master was cut to 30s, the length of the book's script, and every cut renders at 60fps. On 2026-10-21 the user
-    cut three lines, then asked for the pace slowed slightly and two more frames (31): it is 36.4s, the teaser 15s. Motion blur is measured over a
+    cut three lines, then asked for the pace slowed slightly and a new frame (31), then cut the logo sting (44): it is
+    31.3s, the teaser 15s. Motion blur is measured over a
     thirtieth of a second, so it is the length it was at 30fps. The teaser stays 15s.
 37. **The odometer's digits** sit on the baseline in the film (`.rd` as an inline flex box). On the site its
     inline-block with `overflow:hidden` takes its bottom edge as its baseline, so the digits ride above the signs beside
@@ -217,11 +216,10 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     site draws them; both are worth a look on the site.
 40. **The end card is the mark and the wordmark alone.** The book's video kit lists the end card as "Mark, wordmark and
     the URL, the dot field drifting behind", and the brief asked for the URL and the network line as variables. At the
-    user's direction (2026-10-20) the film ends on the lockup alone, at the sting's size, so it closes on the lockup it
-    opened on: no URL, no network line, and neither is a variable any more. The SRTs end with the closing line.
+    user's direction (2026-10-20) the film ends on the lockup alone, at the size the book's sting gives it: no URL, no network line, and neither is a variable any more. The SRTs end with the closing line.
 41. **The mark is the muted one wherever the film shows it.** The book sets the mark on charcoal with ink dots and the
     navy seed, and keeps the muted version (#52668F dots) for bars and rails. At the user's direction (2026-10-21) the
-    sting and the end card show the muted mark, as on Seed's avatar: `--navy-soft` dots and the seed in `--navy`, which
+    end card shows the muted mark, as on Seed's avatar: `--navy-soft` dots and the seed in `--navy`, which
     lands in `--solid` and brightens to it. The wordmark beside it is ink, as in the lockup.
 42. **Fades.** At the user's direction (2026-10-21) the film comes up from black over its first 0.6s and goes down to
     black over its last 0.9s, linear, the score's slot fading with it (`data-fade-in`/`data-fade-out`): a whole-frame
@@ -234,3 +232,7 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     up from the last wave's (the site's odometer, .55s a digit) and sweeps its bar from there (.6s), as on every other
     wave; "84%" to "100%" gains a digit, so it is drawn without the slide, as the site's odometer does. Worth doing on
     the site too: patch the filled readout from the live one before the re-render.
+44. **No logo sting.** The book's video kit opens on its logo sting ("Logo sting · 3s": the 21 dots on the spiral, the
+    seed landing and brightening, the wordmark at 1.6s). At the user's direction (2026-10-21) the film opens straight on
+    its title, up from black ("Start an idea," huge, settling as "fund it on-chain." comes under it), in both cuts; the
+    mark is the end card's alone, and its dots arrive as the sting's would (on the spiral, rim first, 30ms apart).

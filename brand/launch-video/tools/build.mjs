@@ -50,7 +50,7 @@ const symbols = site('mark-symbols.svg.html').trim();
 const markSvg = fs.readFileSync(P('site/seed-mark-dark.svg'), 'utf8');
 const dots = [...markSvg.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/g)].map(m => m.slice(1, 4).map(Number));
 const lockup = (cls, dotsSvg) => `<div class="lockup ${cls}">${dotsSvg}<span class="word">Seed</span></div>`;
-/* the 21-dot mark as circles, so the sting and the end card can bring its dots in one by one */
+/* the 21-dot mark as circles, so the end card can bring its dots in one by one */
 const markDots = cls => `<svg class="mark ${cls}" viewBox="0 0 100 100" aria-hidden="true">${dots.map(([x, y, r], i) => `<circle class="${i ? 'dot' : 'seed'}" data-n="${i}" cx="${x}" cy="${y}" r="${r}"></circle>`).join('')}</svg>`;
 
 let F = null, FK = null;   // the format page() is writing
@@ -65,7 +65,6 @@ const field = '<canvas class="field" aria-hidden="true"></canvas>';
 const typeStage = inner => `<div class="stage type"><div class="cam" style="width:${F.w * ZOOM.type}px;height:${F.h * ZOOM.type}px"><div class="tw" style="width:${F.w}px;height:${F.h}px;zoom:${ZOOM.type}">${inner}</div></div></div>`;
 const pageStage = () => `<div class="stage" data-layout-ignore>${field}<div class="cam" style="width:${F.win[0] * ZOOM.page}px;height:${F.win[1] * ZOOM.page}px"><div class="scr hf-html" style="width:${F.win[0]}px;height:${F.win[1]}px;zoom:${ZOOM.page}"><div class="hf-body"></div></div></div></div>`;
 const SCENES = {
-  sting: s => sec(s, 's-sting', lockup('sting', markDots('sting-mark'))),
   title: s => sec(s, 's-title', typeStage(`<h1 class="t"><span class="l1">${esc(s.l1)}</span><span class="l2">${esc(s.l2)}</span></h1>`)),
   /* a line's clauses one to a block, wrapped with balanced lines, or broken where the story sets them for this format */
   line: s => { const set = s.f && s.f[FK] && s.f[FK].lines; return sec(s, 's-line' + (s.big ? ' big' : ''), typeStage(`<div class="kin"><div class="lb${set ? ' set' : ''}">${(set || s.lines).map(l => `<p>${words(l)}</p>`).join('')}</div></div>`)); },

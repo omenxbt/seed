@@ -6,7 +6,7 @@ message: "Seeded in full, or refunded in full."
 destination: youtube
 aspect: 1920x1080
 language: en
-length: 36s
+length: 31s
 angle: product
 ---
 
@@ -22,7 +22,7 @@ case is listed in `brand/CONFLICTS.md`.
 
 - ../../css/presale.css, ../../css/delta.css and the inline `<style>` of ../../index.html: the site's stylesheets, copied in by `tools/sync-site.mjs`.
 - ../fonts/: Instrument Sans 400/500, Instrument Serif 400 italic, IBM Plex Mono 400/500, the site's own files.
-- ../logo/seed-mark-dark.svg: the 21-dot mark (dot geometry for the sting).
+- ../logo/seed-mark-dark.svg: the 21-dot mark (dot geometry for the end card).
 - ../../js/bg-dither.js: the dot field, in its fixed-seed mode (`?bgt=370`).
 - assets/music.wav: the user's score goes here (a silent placeholder until then).
 
@@ -38,7 +38,10 @@ case is listed in `brand/CONFLICTS.md`.
 - 2026-10-21, later, from the user: the pace slowed slightly; the lines "Set a target and deadline", "Buy with SOL or
   USDC" and "Raises seed as tradeable tokens"; two new frames, "Market cap presets" and "Find product-market fit"
   (after the title); the Launch beat rebuilt on final-model's opening market cap presets (merged in). CONFLICTS 1, 31.
-- A 15s teaser per format: sting, fill, "Seeded in full, or refunded in full", end card.
+  Then "Market cap presets" cut again; the Launch form is one shot after "Set a target and deadline". Then the logo
+  sting at the start removed: the film opens on its title (CONFLICTS 44).
+- A 15s teaser per format: sting, fill, "Seeded in full, or refunded in full", end card (no sting since 2026-10-21:
+  the title opens it).
 - Every figure, the URL and the network line are composition variables, read from the program config and LOOP.md.
   (2026-10-20: at the user's direction the end card is the mark and the wordmark alone, so the URL and the network line
   are gone from the film and from its variables; CONFLICTS 40.)

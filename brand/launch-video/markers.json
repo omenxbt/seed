@@ -3,43 +3,37 @@
   "note": "Beat points for scoring. Times are from the start of each cut and are the same in every format.",
   "cuts": {
     "master": {
-      "duration": 36.38,
-      "frames": 2183,
+      "duration": 31.27,
+      "frames": 1876,
       "markers": [
         {
-          "name": "sting hit",
-          "t": 1.5,
-          "frame": 90,
-          "what": "the seed lands and brightens"
-        },
-        {
           "name": "fill complete",
-          "t": 19.74,
-          "frame": 1184,
+          "t": 14.63,
+          "frame": 878,
           "what": "the last wave of buys fills the target"
         },
         {
           "name": "seeded",
-          "t": 23.7,
-          "frame": 1422,
+          "t": 18.59,
+          "frame": 1115,
           "what": "the last seeding step lands and the page turns seeded"
         },
         {
           "name": "refunded",
-          "t": 28.5,
-          "frame": 1710,
+          "t": 23.39,
+          "frame": 1403,
           "what": "the deadline passes and the raise turns refunded"
         },
         {
           "name": "end card",
-          "t": 32.68,
-          "frame": 1961,
+          "t": 27.57,
+          "frame": 1654,
           "what": "the mark builds, then the wordmark"
         },
         {
           "name": "fade out",
-          "t": 35.48,
-          "frame": 2129,
+          "t": 30.37,
+          "frame": 1822,
           "what": "the picture and the sound go down to black"
         }
       ]
@@ -49,21 +43,15 @@
       "frames": 900,
       "markers": [
         {
-          "name": "sting hit",
-          "t": 1.5,
-          "frame": 90,
-          "what": "the seed lands and brightens"
-        },
-        {
           "name": "fill complete",
-          "t": 7.88,
-          "frame": 473,
+          "t": 6.7,
+          "frame": 402,
           "what": "the last wave of buys fills the target"
         },
         {
           "name": "end card",
-          "t": 11.51,
-          "frame": 691,
+          "t": 10.43,
+          "frame": 626,
           "what": "the mark builds, then the wordmark"
         },
         {

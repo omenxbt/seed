@@ -23,9 +23,8 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 #world > #bg-dither { position: absolute; inset: 0; width: 100%; height: 100%; }
 .clip.scene { position: absolute; inset: 0; }
 /* at a handoff two scenes overlap: the film's own type flies past over the page coming in (over its depth of field
-   too) and comes in over the page whipping away, and the sting's lockup whips away over the title coming in */
+   too) and comes in over the page whipping away */
 .clip.scene.s-title, .clip.scene.s-line, .clip.scene.s-close { z-index: 60; }
-.clip.scene.s-sting { z-index: 61; }
 .sc { position: absolute; inset: 0; }
 
 /* ------------------------------------------------------------ the camera's stage
@@ -67,7 +66,6 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 .lockup .word { font-family: var(--sans); font-weight: 500; font-size: var(--ws); letter-spacing: -.03em; line-height: 1; color: var(--ink); }
 .lockup .mark .dot { fill: var(--navy-soft); }
 .lockup .mark .seed { fill: var(--solid); }
-.f169 .lockup.sting { --ws: 136px; } .f916 .lockup.sting { --ws: 120px; } .f11 .lockup.sting { --ws: 120px; }
 
 /* ------------------------------------------------------------ titles: the hero's two lines, serif italic then sans 500 */
 .film h1.t { position: absolute; left: var(--sl); right: var(--sr); top: 0; bottom: 0; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--ink); }
@@ -90,7 +88,7 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 .f169 .big .kin { font-size: 200px; } .f916 .big .kin { font-size: 170px; } .f11 .big .kin { font-size: 150px; }
 .big .kin p { line-height: 1; letter-spacing: -.05em; }
 
-/* ------------------------------------------------------------ the end card: the mark and the wordmark, at the sting's size */
+/* ------------------------------------------------------------ the end card: the mark and the wordmark, the lockup's own size */
 .endcard { position: absolute; left: var(--sl); right: var(--sr); top: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .endcard .lockup { position: relative; inset: auto; }
 .f169 .endcard .lockup { --ws: 136px; } .f916 .endcard .lockup { --ws: 120px; } .f11 .endcard .lockup { --ws: 120px; }

@@ -334,9 +334,9 @@
   var music = document.getElementById('music');
   if (music && V.musicVolume != null) music.setAttribute('data-volume', String(V.musicVolume));
 
-  /* the 21 dots arrive on the spiral one by one, `gap` apart (40ms in the sting), rim first, each growing from nothing at
-     full opacity (the book: never fade the mark), and the seed lands last, in the brand blue, brightening to the lit one
-     as it lands: the muted mark, as on Seed's avatar */
+  /* the 21 dots arrive on the spiral one by one, `gap` apart, rim first, each growing from nothing at full opacity (the
+     book: never fade the mark), and the seed lands last, in the brand blue, brightening to the lit one as it lands: the
+     muted mark, as on Seed's avatar */
   function dotsArrive(svg, t0, tSeed, gap) {
     var cs = $$('circle', svg), seed = cs[0], cx0 = +seed.getAttribute('cx'), cy0 = +seed.getAttribute('cy'), g = gap || 0.04, d = g > 0.035 ? 0.5 : 0.45;
     cs.forEach(function (c) {
@@ -350,23 +350,11 @@
 
   /* ------------------------------------------------------------ scenes */
   var B = {
-    sting: function (s, sec) {
-      var lock = $('.lockup', sec), svg = $('.sting-mark', sec);
-      // the seed lands by the hit (1.5s) and brightens; the mark moves over for the wordmark, which fades in at 1.6s
-      dotsArrive(svg, s.start + 0.2, s.hit - 0.5);
-      var lg = $('.word', sec).getBoundingClientRect().width / 2 + parseFloat(getComputedStyle(lock).columnGap || 0) / 2;
-      tl.fromTo(svg, { x: lg }, { x: 0, duration: 0.5, ease: E }, s.start + 1.45);
-      tl.fromTo($('.word', sec), { opacity: 0 }, { opacity: 1, duration: 0.5, ease: E }, s.start + 1.6);
-      // a slow push on the lockup, then it whips away left, whole, as the title comes in from the right
-      var P = 1.05;
-      tl.fromTo(lock, { scale: 1 }, { scale: P, duration: s.whip - s.start, ease: E }, s.start);
-      tl.fromTo(lock, { x: 0 }, { x: -FW * 1.1, duration: 0.45, ease: E, immediateRender: false }, s.whip);
-    },
     title: function (s, sec) {
       // the hero's two lines: the first huge, sharpening in; then it settles to its size as the second comes under it
       sharpen($('.l1', sec), s.start + 0.05); sharpen($('.l2', sec), s.l2in);
       typeCamera(sec, s, [
-        // in from a little further out (the huge word never passes the safe zone), or from the right as the sting whips away
+        // in from a little further out (the huge word never passes the safe zone), or from the right after a whip
         { t: s.start, cut: true, sel: '.l1', fill: 0.97, d: 0.9, from: s.in === 'whip' ? { dx: FW * 0.32 } : { k: 0.9 } },
         { t: s.shrink, sel: 'h1.t', s: 1, d: 0.7 },
         { t: s.shrink + 0.7, sel: 'h1.t', s: 1.045, d: s.out - s.shrink - 0.7 },
@@ -489,8 +477,8 @@
         { t: s.end_, sel: '.endcard', s: 1, d: 0.01 },
         { t: s.end_ + 0.02, sel: '.endcard', s: 1.035, d: s.end - s.end_ }
       ]);
-      // the end card builds as the Axiom ones do: the mark alone, its dots arriving as the sting's did (30ms apart) and the
-      // seed landing and brightening, then the wordmark drawn out from behind it; it holds, and the film goes down to black
+      // the end card builds as the Axiom ones do: the mark alone, its dots arriving on the spiral (30ms apart) and the seed
+      // landing and brightening, then the wordmark drawn out from behind it; it holds, and the film goes down to black
       var TZ = S.tzoom, gap = wd.getBoundingClientRect().width / TZ / 2 + parseFloat(getComputedStyle(lk).columnGap || 0) / 2;   // in the type's own pixels
       var T = s.end_ + 0.02;
       tl.set(ec, { opacity: 0 }, 0); tl.set(ec, { opacity: 1 }, T);

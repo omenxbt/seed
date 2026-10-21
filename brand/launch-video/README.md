@@ -1,6 +1,6 @@
 # Seed launch video
 
-A HyperFrames project. The 36.4s master at 1920×1080, 1080×1920 and 1080×1080, each recomposed for its frame, and a 15s
+A HyperFrames project. The 31.3s master at 1920×1080, 1080×1920 and 1080×1080, each recomposed for its frame, and a 15s
 teaser in each format, all at 60fps. On-screen type only: each line of the brand book's "Thirty seconds, spoken", as the
 user rewrote it (`../CONFLICTS.md` 31), is a full-screen text frame of its own. Between the lines, every UI moment is the site itself, filling the screen: the page
 the site draws at each beat of the story, flown over by one camera. Design truth: `frame.md`.
@@ -22,14 +22,15 @@ never their UI, colours or type.
 | Extreme close-up on one value with shallow depth of field (bnb-v2 15–17.5s) | the opening market cap presets as $50K is pressed and the raise line it derives, the deadline segment, the readout as the odometer rolls, "Ends in 00:00:01" |
 | State changes inside a held shot (portfolio-v2 2–6s) | the raise page after each wave of buys, the seeding step, seeded, refunded: the camera keeps moving while the page changes |
 | Pull back to the full app on a tilt (bnb-v2 30–35s) | the whole raise page filling the screen as it fills |
-| Mark alone, then the wordmark built out from it (ink-chain 6.4s) | the end card: the mark's dots arrive as the sting's did and the seed brightens, then the wordmark is drawn out from it, and the film holds on the lockup alone and goes down to black |
+| Mark alone, then the wordmark built out from it (ink-chain 6.4s) | the end card: the mark's dots arrive on the spiral and the seed brightens, then the wordmark is drawn out from it, and the film holds on the lockup alone and goes down to black |
 
 Everything eases on `cubic-bezier(.22,1,.36,1)`. Depth of field is a masked backdrop blur over the page and motion blur
 a directional SVG blur from the camera's own travel per frame (`#dof`, `#mb`), so frosted panels keep their glass. The
 pages fill the screen: every camera pose is kept where the page covers the whole frame, tilt and all (`cover` in
-`src/film.js`), until the whip that takes it away. There is no corner mark: the mark is the sting's and the end card's,
-the muted one both times (slate dots, the seed landing in the brand blue and brightening), as on Seed's avatar. The film
-comes up from black over its first 0.6s and goes down to black over its last 0.9s, the sound with it.
+`src/film.js`), until the whip that takes it away. There is no logo sting and no corner mark: the film opens on its
+title and the mark is the end card's, the muted one (slate dots, the seed landing in the brand blue and brightening), as
+on Seed's avatar. The film comes up from black over its first 0.6s and goes down to black over its last 0.9s, the sound
+with it.
 One dot field runs under the whole film: a page's stage draws it on the ground under its panels (for their glass to
 blur), the film's own type plays straight over `#bg-dither`, and at a handoff the film's type sits over the page.
 
@@ -89,14 +90,14 @@ attribute). With `npx hyperframes render --variables` alone, every other variabl
 0.9s). There are no sound effects (the user's direction, 2026-10-21). Drop the score in at the same path and rerun
 `tools/render.mjs`.
 
-`markers.json` lists the beat points (sting hit, fill complete, seeded, refunded, end card, fade out) in seconds and
+`markers.json` lists the beat points (fill complete, seeded, refunded, end card, fade out) in seconds and
 frames for each cut. `out/seed-master-16x9-noaudio.mp4` has no audio stream.
 
 ## Out
 
 | File | What |
 | --- | --- |
-| `out/seed-master-16x9.mp4`, `-9x16`, `-1x1` | the 36.4s master, H.264 at CRF 10, 60fps |
+| `out/seed-master-16x9.mp4`, `-9x16`, `-1x1` | the 31.3s master, H.264 at CRF 10, 60fps |
 | `out/seed-teaser-16x9.mp4`, `-9x16`, `-1x1` | the 15s teaser, H.264 at CRF 10, 60fps |
 | `out/seed-master-16x9-noaudio.mp4` | the master with no audio track |
 | `out/seed-master-16x9.mov` | ProRes 4444 for editing, rendered from the page (not from the MP4), written locally (not in git) |
