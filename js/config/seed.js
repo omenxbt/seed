@@ -12,6 +12,8 @@ const SEED = {
   seedTimeoutDays: 3,          // a filled raise that has not seeded by then refunds everyone
   minUnlockDays: 90,           // unused since 2026-10-20 (no minimum on team unlocks); kept for the Config's layout, which still carries the field
   payoutDelayDays: 7,          // a payout wallet change takes effect after this long and shows while pending
+  blockedCountries: [],        // ISO country codes a wallet may not connect from (checked at connect through /api/geo); empty = no block
+  termsVersion: '2026-10-21',  // the Terms of use, Privacy and Risk disclosure a wallet accepts once (kept in this browser); bump to ask again
   admins: ['6xFrba28fk6RyiLREzLPHBP4xPXutDs69Ju69hCixAFZ', '6GTuondHNLSJkYemhVw8GYFTK3ANHPFXdVYUM5JP5zyf'],   // Seed admin wallets (a Squads multisig on mainnet); only they can flag fraud or approve a takeover
   hiddenFounders: ['6GTuondHNLSJkYemhVw8GYFTK3ANHPFXdVYUM5JP5zyf', '47GQX1dFMCz2UapFUbVBnkiyDMmfso7c5Za5Um7tQE57', 'F6BmoJCaGNmQsTTGnRxdvr5KFPMn58QfnXBwSoBHXAhN'],   // raises these wallets open never show on the site: the deployer, the test suite's second founder, and one earlier throwaway test founder
   /* the chain the site talks to. The browser RPC key is a public one locked to this site's domains in the Helius

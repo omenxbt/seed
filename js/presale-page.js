@@ -55,6 +55,8 @@ function roleOf(p, w) {
   return null;
 }
 const artHTML = (p, cls) => { const pr = profileOf(p); return pr.art ? `<img class="${cls}" src="${esc(pr.art)}" alt="" style="object-position:${esc(pr.artPos || '50% 50%')}">` : `<span class="${cls} glyph-art" style="--h:${hashStr(p.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(p)}</svg></span>`; };
+/* the link to share a raise: /r/<id> carries the preview card (ticker, opening cap, fill, time left, pair) and sends a browser on to the page */
+const shareUrl = p => `${location.origin.startsWith('http') && !/localhost|127\.0\.0\.1/.test(location.host) ? location.origin : 'https://seed-nu-ten.vercel.app'}/r/${encodeURIComponent(p.id)}`;
 const copyBtn = (val, label, text) => `<button class="copy" data-copy="${esc(val)}" data-copy-label="${esc(label)}" aria-label="Copy ${esc(label)}">${text ? `<span class="num">${esc(text)}</span>` : ''}${ICONS.copy}</button>`;
 const statusPill = p => `<span class="st-pill ${p.blacklisted ? 'flagged' : p.status}">${p.blacklisted ? 'Flagged' : RAISE_STATE[p.status]}</span>`;
 const isFounder = p => !!state.wallet && (p.mine || roleOf(p, walletId()) === 'founder' || roleOf(p, state.wallet.pk) === 'founder');
@@ -73,7 +75,7 @@ function ppHeader(p) {
       <div class="pp-banner">${pr.banner ? `<img class="pp-bg" src="${esc(pr.banner)}" alt="" style="object-position:${esc(pr.bannerPos || '50% 50%')}">` : ''}<a class="back" href="#">&larr; All raises</a></div>
       <div class="pp-idrow">${artHTML(p, 'pp-art')}${statusPill(p)}</div>
       <div class="pp-name"><h1>${esc(p.name)}</h1><span class="pp-tk num">$${esc(p.ticker)}</span></div>
-      <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/info" data-jump-risk>${riskChip(risk)}</a>${p.mine ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}</div>
+      <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/info" data-jump-risk>${riskChip(risk)}</a>${p.mine ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}${p.live ? `<button type="button" class="copy share" data-share="${esc(shareUrl(p))}" aria-label="Share this raise">${ICONS.out}Share</button>` : ''}</div>
       ${caOf(p) || socials ? `<div class="pp-meta">${caOf(p) ? copyBtn(caOf(p), 'contract address', 'CA ' + shortMint(caOf(p))) : ''}<span class="pp-socials">${socials}</span></div>` : ''}
       <dl class="pp-stats" data-pstats>${ppStats(p)}</dl>
     </section>`;
@@ -89,7 +91,7 @@ function ppStats(p) {
   if (p.status === 'refunded') {
     const rows = backersAdapter.rows(p), claimed = rows.filter(r => r.refundClaimed).length;
     return st('Final raise', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Filled', Math.floor(pctOf(p) + 1e-7) + '%') + st('Backers', p.backers) +
-      st('Refunds claimed', `${claimed} <em>/ ${rows.length}</em>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Closed', fmtDay(p.resolvedAt || p.endsAt));
+      st('Refunds claimed', `${claimed} <em>/ ${rows.length || p.backers || 0}</em>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Closed', fmtDay(p.resolvedAt || p.endsAt));   // the backers count stands in until the list is read (QA P2-96)
   }
   if (p.status === 'filled') return st('Raised', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Backers', p.backers) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) +
     st('Filled', fmtAgo(Date.now() - p.filledAt)) + st('Seeding', `${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1} <em>/ ${SEED_STEPS.length}</em>`) + st('Refunds if not seeded by', fmtDate(seedDeadline(p)));
@@ -830,6 +832,7 @@ function floatChip(p, amt) {
 }
 function bindRail(p) {
   const box = detailBox, dc = $('[data-dclaim]', box); if (dc) dc.onclick = () => claim(p, dc);
+  const sh = $('[data-share]', box); if (sh) sh.onclick = async () => { const url = sh.dataset.share, title = `${p.name} ($${p.ticker}) raise on Seed`; if (navigator.share) { try { await navigator.share({ title, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; } } try { await navigator.clipboard.writeText(url); toast('Link copied: ' + url); } catch (e) { toast(url); } };
   const cb = $('[data-cancel]', box); if (cb) cb.onclick = async () => { if (!confirm(`Cancel the ${p.name} raise? Every backer gets a refund, fee included, and the raise cannot reopen.`)) return; cb.disabled = true; const was = cb.textContent; cb.textContent = 'Confirm in wallet…';
     const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('The cancel did not confirm in 90 seconds. Check the wallet and the raise; try again if it is still live.')), 90e3));
     try { await Promise.race([cancelRaise(find(p.id) || p), timeout]); } catch (e) { toast(e.message); } finally { if (cb.isConnected) { cb.disabled = false; cb.textContent = was; } } };

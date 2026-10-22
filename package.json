@@ -1,0 +1,8 @@
+{
+  "name": "seed-site",
+  "private": true,
+  "description": "Seed: the static site plus its Vercel functions (link previews, the geo check, client error reports)",
+  "dependencies": {
+    "@vercel/og": "^0.6.5"
+  }
+}

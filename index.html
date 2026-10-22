@@ -7,6 +7,8 @@
 <meta name="theme-color" content="#16171A">
 <title>Seed</title>
 <meta name="description" content="Seeded in full, or refunded in full. A launchpad for raises on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL or USDC. If it misses its target by the deadline, every wallet gets back what it paid.">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Seed"><meta property="og:title" content="Seed: seeded in full, or refunded in full"><meta property="og:description" content="Raises on Solana, built on Meteora. Pick an opening market cap; the pool opens there, locked for good."><meta property="og:url" content="https://seed-nu-ten.vercel.app/"><meta property="og:image" content="https://seed-nu-ten.vercel.app/api/og"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Seed: seeded in full, or refunded in full"><meta name="twitter:description" content="Raises on Solana, built on Meteora. Pick an opening market cap; the pool opens there, locked for good."><meta name="twitter:image" content="https://seed-nu-ten.vercel.app/api/og">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='42.00' cy='56.70' r='6.91' fill='%232E63E7'/%3E%3Ccircle cx='50.27' cy='36.69' r='6.74' fill='%2352668F'/%3E%3Ccircle cx='59.20' cy='63.42' r='6.57' fill='%2352668F'/%3E%3Ccircle cx='30.17' cy='46.87' r='6.39' fill='%2352668F'/%3E%3Ccircle cx='67.19' cy='38.70' r='6.22' fill='%2352668F'/%3E%3Ccircle cx='42.97' cy='72.93' r='6.05' fill='%2352668F'/%3E%3Ccircle cx='37.37' cy='27.67' r='5.88' fill='%2352668F'/%3E%3Ccircle cx='74.59' cy='59.53' r='5.70' fill='%2352668F'/%3E%3Ccircle cx='22.45' cy='61.21' r='5.53' fill='%2352668F'/%3E%3Ccircle cx='61.95' cy='22.72' r='5.36' fill='%2352668F'/%3E%3Ccircle cx='58.61' cy='80.60' r='5.18' fill='%2352668F'/%3E%3Ccircle cx='20.30' cy='33.54' r='5.01' fill='%2352668F'/%3E%3Ccircle cx='82.89' cy='42.79' r='4.84' fill='%2352668F'/%3E%3Ccircle cx='28.42' cy='79.61' r='4.67' fill='%2352668F'/%3E%3Ccircle cx='44.30' cy='13.34' r='4.49' fill='%2352668F'/%3E%3Ccircle cx='78.45' cy='74.97' r='4.32' fill='%2352668F'/%3E%3Ccircle cx='9.52' cy='51.85' r='4.15' fill='%2352668F'/%3E%3Ccircle cx='77.95' cy='21.48' r='3.98' fill='%2352668F'/%3E%3Ccircle cx='47.15' cy='92.03' r='3.80' fill='%2352668F'/%3E%3Ccircle cx='21.57' cy='17.25' r='3.63' fill='%2352668F'/%3E%3Ccircle cx='92.69' cy='56.09' r='3.46' fill='%2352668F'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -855,7 +857,7 @@ a.ico:hover{color:var(--ink)}
     </section>
     <div class="board-foot">
       <p class="board-note" id="tryHint" hidden></p><p class="board-note" id="refundNote" hidden></p>
-      <span class="foot-note"><span data-foot>Live on Solana devnet: real transactions, test SOL with no value, and a day counts as a minute. Demo raises are marked; a connected wallet signs its own transactions.</span> <button data-reset>Reset demo</button></span>
+      <span class="foot-legal"><a href="#/docs/terms">Terms</a> · <a href="#/docs/privacy">Privacy</a> · <a href="#/docs/risk">Risk disclosure</a></span><span class="foot-note"><span data-foot>Live on Solana devnet: real transactions, test SOL with no value, and a day counts as a minute. Demo raises are marked; a connected wallet signs its own transactions.</span> <button data-reset>Reset demo</button></span>
     </div>
   </section>
 
@@ -1435,6 +1437,54 @@ a.ico:hover{color:var(--ink)}
       </div>
     </section>
 
+    <section class="doc-sec" id="d-terms" data-t="Terms of use">
+      <div class="prose">
+        <h2>Terms of use</h2>
+        <p><b>What Seed is.</b> Seed is a website and an open-source program on Solana that let a founder open a fixed-price raise and let backers buy into it. Seed does not hold anyone's money: every buy goes into an escrow owned by the raise's own on-chain account, every seeding step and every refund is an instruction anyone can send, and Seed's admin wallet has exactly two powers, flagging fraud and approving a community takeover of a payout wallet. Seed is non-custodial.</p>
+        <p><b>Who may use it.</b> You must be allowed to use Solana and to hold digital assets where you live, and you must not be in a country Seed blocks. By connecting a wallet or opening a raise you confirm that, and you accept these terms, the privacy note and the risk disclosure below. If you are a founder, you also confirm that what your raise says about itself (name, description, links, team) is true and is yours to say.</p>
+        <p><b>What a raise promises, and only that.</b> A raise either fills to its target by its deadline and seeds a locked Meteora pool at the market cap the founder picked, or it does not fill and every backer takes back exactly what they paid, the 1% fee included. Nothing else is promised. Seed does not promise that a token will trade, hold any value, or be listed anywhere.</p>
+        <p><b>The fees.</b> Backers pay 1% on top of each buy, held in the escrow and sent to Seed only when the raise seeds; it is refunded with the buy if the raise does not. Seeded pools charge 1.25% on trades; after Meteora's share, 70% of what the locked position earns goes to the founder's payout wallet and 30% to Seed. These numbers are fixed in the program's configuration and no instruction changes them.</p>
+        <p><b>What you must not do.</b> Open a raise under a false identity, pretend a token or team is something it is not, use Seed to launder money or evade sanctions, attack the program or the site, or scrape the site to harm its users. A wallet flagged for fraud cannot open another raise.</p>
+        <p><b>No advice.</b> Nothing on Seed is investment, legal or tax advice. The information panels show facts the program and the chain can check and the founder's own stated terms; they are not an endorsement.</p>
+        <p><b>Liability.</b> Seed is provided as it is. Solana, Meteora, Pyth and wallet software are not ours and can fail; the program can carry mistakes. To the extent the law allows, Seed's operators are not liable for losses from using it. Where that is not allowed, liability is limited to the fees you paid Seed in the three months before the claim.</p>
+        <p><b>Changes.</b> These terms may change; the date at the top of the page and the version your wallet accepted are kept in your browser, and you will be asked to accept again when they change in a way that matters.</p>
+      </div>
+      <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
+        <h3>In one breath</h3>
+        <dl class="kv">
+          <div><dt>Custody</dt><dd class="t">None. The raise's own account holds the escrow; the pool is locked for good</dd></div>
+          <div><dt>Miss</dt><dd class="t">Full refund, fee included</dd></div>
+          <div><dt>Returns</dt><dd class="t">Not promised, ever</dd></div>
+          <div><dt>Admin powers</dt><dd class="t">Flag fraud, approve a takeover. Nothing else</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-privacy" data-t="Privacy">
+      <div class="prose">
+        <h2>Privacy</h2>
+        <p><b>What the site keeps in your browser.</b> Your watchlist, filters, the wallet you connected last, the version of the terms you accepted and your drafts, in local storage. None of it is sent to Seed.</p>
+        <p><b>What Seed's backend sees.</b> When you open a raise, post an update, chat, report a raise or link an X account, the message you sign with your wallet and the wallet's public address, so the backend can check it was you. Uploads (art, a deck, token metadata) go to Seed's storage and are public, because the raise page shows them. The X link keeps the handle and the account's public age and follower count that the badge shows.</p>
+        <p><b>What is public anyway.</b> Everything on Solana: every buy, claim and refund is a transaction anyone can read, tied to a wallet address. Seed's indexer reads the same chain and keeps the same facts in a database so the pages load fast.</p>
+        <p><b>Analytics and errors.</b> The site counts page views without cookies and without identifying you (Vercel's privacy-friendly analytics), and when the page itself breaks it sends a short error message and the page's address so it can be fixed. No wallet address goes with either.</p>
+        <p><b>Your country.</b> At wallet connect the site asks the edge which country the request came from, to refuse connections from countries Seed blocks. The country code is not stored.</p>
+        <p><b>Third parties.</b> Solana RPC providers, Meteora, Pyth, Supabase (the backend and storage), Vercel (the site), X (for the optional sign-in) and the wallet you use each see what they need to do their part, under their own policies.</p>
+        <p><b>Contact.</b> The project's X account and GitHub, linked in the footer.</p>
+      </div>
+    </section>
+
+    <section class="doc-sec" id="d-risk" data-t="Risk disclosure">
+      <div class="prose">
+        <h2>Risk disclosure</h2>
+        <p><b>You can lose everything you put in after a raise seeds.</b> A seeded token trades freely on a pool with little liquidity. Its price can fall to nothing, and the opening market cap the founder picked is where the pool starts, not a promise of where it goes. Most new tokens lose most of their value.</p>
+        <p><b>Before it seeds, the risk is smaller but not zero.</b> Until a raise fills, your buy sits in an escrow the raise's account owns; if it misses, you claim it back in full. That depends on the program being correct and Solana running. The program is open source and tested, and no instruction can move the escrow anywhere but into the pool or back to backers, but software can carry mistakes.</p>
+        <p><b>The team share.</b> A founder may keep up to just under the whole supply for the team, unlocking all at seeding or on any schedule they set. Seed shows the share and the schedule as facts and does not limit them. Read them.</p>
+        <p><b>Founders are not vetted.</b> A wallet is enough to open a raise. An X badge means an account was linked, not that a person was checked. The information panel shows what the chain can confirm; the rest is the founder's word.</p>
+        <p><b>Other things that can go wrong.</b> A stale or wrong oracle price at opening, a Meteora or Solana outage, a wallet bug, a phishing site that looks like Seed (check the address), a founder who disappears, a token that no exchange or aggregator lists. The locked pool cannot be withdrawn by anyone, including Seed, so a dead token's liquidity is gone for good.</p>
+        <p><b>Only put in what you can lose.</b> Nothing here is advice.</p>
+      </div>
+    </section>
+
     <section class="doc-sec" id="d-params" data-t="Parameters">
       <div class="prose" style="max-width:none;grid-column:1/-1">
         <h2>Parameters</h2>
@@ -1471,6 +1521,12 @@ a.ico:hover{color:var(--ink)}
 </div>
 </div>
 
+<dialog id="termsDlg" aria-labelledby="termsH"><div class="sheet terms-sheet">
+  <h2 id="termsH">Before you connect</h2>
+  <p>Seed is non-custodial: a raise's own account holds every buy until it either seeds a locked pool or refunds everyone in full. Nothing promises a return; a seeded token can lose all its value. Read the <a href="#/docs/terms">terms of use</a>, the <a href="#/docs/privacy">privacy note</a> and the <a href="#/docs/risk">risk disclosure</a>.</p>
+  <label class="terms-ok"><input type="checkbox" id="termsOk"> I have read them, I am allowed to use Solana where I live, and I accept the terms.</label>
+  <div class="row-btns"><button type="button" class="btn btn-navy" id="termsYes" disabled>Continue</button><button type="button" class="btn btn-ink" id="termsNo">Not now</button></div>
+</div></dialog>
 <dialog id="walletDlg" aria-label="Connect a wallet"><div class="sheet" id="walletDlgBody"></div></dialog>
 <dialog id="xDlg" aria-label="Link an X account"><div class="sheet" id="xDlgBody"></div></dialog>
 <dialog id="filterDlg" aria-label="Board filters"><div class="sheet fsheet" id="filterBody"></div></dialog>
@@ -1667,7 +1723,7 @@ const fmtDay = ms => new Date(ms).toLocaleDateString(undefined, { month: 'short'
 function paceOf(p) { const h = (p.endsAt - Date.now()) / H; return h > 0 ? leftOf(p) / h : Infinity; }
 function paceTxt(p) { if (p.status !== 'live') return ''; const v = paceOf(p); return isFinite(v) ? `${v >= 1e4 ? fmtC(v, p.q) : fmtSig(v)} ${Q(p).sym}/h` : ''; }
 function timeCell(p) { return p.status === 'live' ? fmtLeft(p.endsAt - Date.now()) : p.status === 'filled' ? 'Filled ' + fmtAgo(Date.now() - p.filledAt) : (p.status === 'seeded' ? 'Seeded ' : 'Closed ') + fmtDay(p.resolvedAt || p.endsAt); }
-const find = id => state.presales.find(p => p.id === id);
+const find = id => state.presales.find(p => p.id === id) || (id && id.length >= 32 ? state.presales.find(p => p.address === id) : undefined);   // by the site's short id, or by the Raise account's address (QA P2-95)
 
 function glyph(p) {
   let h = hashStr(p.ticker + '/' + p.name), c = '';
@@ -2132,7 +2188,28 @@ async function connectWith(id) {
 /* with no wallet extension there is nothing to choose, so the demo wallet connects in one click as before.
    The pick connects directly: a dialog's close event is not delivered while the tab is in the background. */
 let choosing = null;
-function connect() {
+/* the terms: accepted once per version, kept in this browser; asked before the first wallet connect and before a raise opens */
+const termsKey = () => 'seed.terms.' + (SEED.termsVersion || '1');
+const termsAccepted = () => { try { return localStorage.getItem(termsKey()) === 'yes'; } catch (e) { return false; } };
+function askTerms() {
+  if (termsAccepted()) return Promise.resolve(true);
+  const d = $('#termsDlg'), ok = $('#termsOk'), yes = $('#termsYes'); ok.checked = false; yes.disabled = true;
+  return new Promise(done => {
+    const finish = v => { d.onclose = null; if (d.open) d.close(); if (v) { try { localStorage.setItem(termsKey(), 'yes'); } catch (e) {} } done(v); };
+    ok.onchange = () => { yes.disabled = !ok.checked; }; yes.onclick = () => finish(true); $('#termsNo').onclick = () => finish(false); d.onclose = () => finish(false);
+    d.showModal();
+  });
+}
+/* the viewer's country, from the edge; a local copy has none. Blocked countries are SEED.blockedCountries (empty = no block) */
+let geoCountry = null;
+async function countryAllowed() {
+  if (!(SEED.blockedCountries || []).length) return true;
+  if (geoCountry == null) { try { geoCountry = (await (await fetch('/api/geo', { cache: 'no-store' })).json()).country || ''; } catch (e) { geoCountry = ''; } }
+  return !SEED.blockedCountries.includes(geoCountry);
+}
+async function connect() {
+  if (!(await countryAllowed())) { toast('Seed is not available in your country.'); return; }
+  if (!(await askTerms())) return;
   const found = WALLETS.filter(w => w.get());
   if (!found.length) return connectWith('demo');
   if (choosing) return choosing;
@@ -2615,6 +2692,16 @@ addEventListener('storage', e => {
 <script src="js/config/supabase.js"></script>
 <script src="js/data/top-tokens.js"></script>
 <script src="js/data/demo.js"></script>
+<script>
+/* client errors: a short message and where, to /api/err (the function's log); no wallet, no identity. Analytics: Vercel's, cookie-free. */
+(function () {
+  let sent = 0; const ver = document.querySelector('meta[name="seed-version"]') ? document.querySelector('meta[name="seed-version"]').content : '';
+  const report = (msg, at) => { if (sent++ > 4 || /429|max usage|rate limit|Server responded/.test(msg)) return; try { fetch('/api/err', { method: 'POST', keepalive: true, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ msg: String(msg).slice(0, 300), at: String(at || '').slice(0, 200), page: location.hash.slice(0, 120), ver }) }); } catch (e) {} };
+  addEventListener('error', e => report(e.message, (e.filename || '') + ':' + (e.lineno || '')));
+  addEventListener('unhandledrejection', e => report(e.reason && (e.reason.message || String(e.reason)), 'promise'));
+})();
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 <script src="js/adapters/common.js"></script>
 <script src="js/adapters/supabase.js"></script>
 <script src="js/adapters/presale.js"></script>

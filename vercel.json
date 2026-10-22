@@ -1,9 +1,35 @@
 {
   "redirects": [
-    { "source": "/app", "destination": "/", "statusCode": 301 },
-    { "source": "/app/:path*", "destination": "/", "statusCode": 301 },
-    { "source": "/landing", "destination": "/", "statusCode": 301 },
-    { "source": "/home", "destination": "/", "statusCode": 301 },
-    { "source": "/terminal", "destination": "/", "statusCode": 301 }
+    {
+      "source": "/app",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/app/:path*",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/landing",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/home",
+      "destination": "/",
+      "statusCode": 301
+    },
+    {
+      "source": "/terminal",
+      "destination": "/",
+      "statusCode": 301
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/r/:id",
+      "destination": "/api/r?id=:id"
+    }
   ]
 }

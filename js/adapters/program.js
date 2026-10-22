@@ -464,6 +464,10 @@ function renderAdminNote() {
   } else if (chain.isAdmin()) {
     box.hidden = false; const c = chain.cfg, stale = c && Number(c.poolFeeBps) !== SEED.poolFeeBps && SEED.network === 'devnet';
     box.innerHTML = `<p class="quiet" style="margin-top:12px">This wallet is the Seed admin on ${esc(SEED.network)}.${c ? ` Config: pool fee ${Number(c.poolFeeBps) / 100}%, Seed fee ${Number(c.feeBps) / 100}%, founder share ${Number(c.creatorShareBps) / 100}%${c.testMode ? ', test mode' : ''}.` : ''}</p>${stale ? `<div class="pp-notice"><b>The site expects a ${SEED.poolFeeBps / 100}% pool fee</b><p>The devnet config says ${Number(c.poolFeeBps) / 100}%. Only a devnet build can close the config and make it again; new pools open with the new fee, existing ones keep theirs. Treasury, attestor and admin stay as they are.</p><button type="button" class="btn btn-navy" data-reset-config>Apply ${SEED.poolFeeBps / 100}% on devnet</button></div>` : ''}`;
+    // open alerts from the monitoring job (ops_runs → check_ops → alerts)
+    if (supa.configured()) supa.client.from('alerts').select('kind, message, opened_at').is('resolved_at', null).order('opened_at', { ascending: false }).limit(5).then(({ data }) => {
+      if (data && data.length && box.isConnected) box.insertAdjacentHTML('afterbegin', `<div class="pp-notice bad"><b>Alerts</b>${data.map(a => `<p>${esc(a.message)} <span class="quiet">(${fmtAgo(Date.now() - Date.parse(a.opened_at))})</span></p>`).join('')}</div>`);
+    }).catch(() => {});
     // the pair allowlist: what is allowed, and a form to allow, pause or resume an asset
     const pairs = Object.entries(chain.registry);
     box.insertAdjacentHTML('beforeend', `<div class="pp-notice" style="margin-top:12px"><b>Pair assets</b><p class="quiet">SOL and USDC are built in. ${pairs.length ? pairs.map(([k, v]) => `<span class="num">${esc(k)}</span>${v.paused ? ' (paused)' : ''}${v.stable ? ' ($1)' : ''}`).join(', ') : 'No other pair is allowed yet.'}</p>

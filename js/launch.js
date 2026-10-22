@@ -328,6 +328,7 @@ function drawGate() {
 async function openPresale() {
   if (busy) return;
   if (!(await ensureWallet())) return;
+  if (typeof askTerms === 'function' && !(await askTerms())) return;   // the terms, if this browser has not accepted the current version
   $('#fErr').textContent = ''; if (showErrors(validateFields())) return;
   const d = readDraft(), da = draftAsset(), b = $('#openBtn'); busy = true; b.disabled = true;
   const id = d.ticker.toLowerCase() + '-' + Date.now().toString(36), now = Date.now(), profile = draftProfile(d);

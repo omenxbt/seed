@@ -124,5 +124,6 @@ Deno.serve(async (req) => {
       }
     } catch (e) { fail(id, e); }
   }
+  await db.from('ops_runs').insert({ fn: 'crank', ok: failed.length === 0, note: failed.length ? failed.slice(0, 3).join(' | ').slice(0, 300) : `${done.length} done${rpcNote ? '; ' + rpcNote : ''}` }).then(() => {}, () => {});   // the run's outcome, for the alerts job
   return new Response(JSON.stringify({ done, failed, rpc: rpcNote || undefined, at: new Date(now).toISOString() }), { headers: { 'Content-Type': 'application/json' } });
 });
