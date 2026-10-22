@@ -50,4 +50,5 @@ pub enum SeedError {
     #[msg("No payout wallet change is pending.")] NoChangePending,
     #[msg("The account does not match the raise.")] WrongAccount,
     #[msg("Arithmetic overflow.")] Overflow,
+    #[msg("The pool already holds the raise; it can only be seeded, never refunded.")] AlreadyPooled,
 }

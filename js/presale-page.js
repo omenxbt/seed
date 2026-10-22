@@ -75,7 +75,7 @@ function ppHeader(p) {
       <div class="pp-banner">${pr.banner ? `<img class="pp-bg" src="${esc(pr.banner)}" alt="" style="object-position:${esc(pr.bannerPos || '50% 50%')}">` : ''}<a class="back" href="#">&larr; All raises</a></div>
       <div class="pp-idrow">${artHTML(p, 'pp-art')}${statusPill(p)}</div>
       <div class="pp-name"><h1>${esc(p.name)}</h1><span class="pp-tk num">$${esc(p.ticker)}</span></div>
-      <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/info" data-jump-risk>${riskChip(risk)}</a>${p.mine ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}${p.live ? `<button type="button" class="copy share" data-share="${esc(shareUrl(p))}" aria-label="Share this raise">${ICONS.out}Share</button>` : ''}</div>
+      <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/info" data-jump-risk>${riskChip(risk)}</a>${isMine(p) ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}${p.live ? `<button type="button" class="copy share" data-share="${esc(shareUrl(p))}" aria-label="Share this raise">${ICONS.out}Share</button>` : ''}</div>
       ${caOf(p) || socials ? `<div class="pp-meta">${caOf(p) ? copyBtn(caOf(p), 'contract address', 'CA ' + shortMint(caOf(p))) : ''}<span class="pp-socials">${socials}</span></div>` : ''}
       <dl class="pp-stats" data-pstats>${ppStats(p)}</dl>
     </section>`;
@@ -904,8 +904,13 @@ function bindLiveTrade(p, panel) {
   const inp = $('#ppAmt', panel), go = $('[data-go]', panel), err = $('[data-buyerr]', panel), slip = $('[data-slip]', panel);
   const now = () => find(p.id) || p, num = () => parseFloat((inp.value || '').replace(/,/g, '')), C = Q(p);
   const sell = () => pg.side === 'sell', on = () => !!state.wallet && isReal();   // the demo wallet cannot trade a real pool
+  /* the quick buys are the pair's own: SOL's three, a dollar asset's 1 / 5 / 10, and for any other priced asset about $1, $5
+     and $10 of it, rounded to two figures (QA P2-104) */
+  const nice = x => { const m = 10 ** Math.floor(Math.log10(x)); return Math.round(x / m * 10) / 10 * m; };
+  const px = typeof pairPriceUsd === 'function' ? pairPriceUsd(C.sym) : 0;
+  const quick = C.sym === 'SOL' ? [0.01, 0.05, 0.1] : C.sym === 'USDC' || C.stable || !(px > 0) ? [1, 5, 10] : [1, 5, 10].map(usd => nice(usd / px));
   const chips = () => { $('[data-tchips]', panel).innerHTML = sell() ? [25, 50, 100].map(c => `<button type="button" data-pct="${c}">${c}%</button>`).join('')
-    : [0.01, 0.05, 0.1].filter(c => !on() || c <= balOf(p.q)).map(c => `<button type="button" data-chip="${c}">${c} ${esc(C.sym)}</button>`).join('') + '<button type="button" data-chip="max">Max</button>'; };
+    : quick.filter(c => !on() || c <= balOf(p.q)).map(c => `<button type="button" data-chip="${c}">${c} ${esc(C.sym)}</button>`).join('') + '<button type="button" data-chip="max">Max</button>'; };
   let timer = null;
   const sync = async () => {
     if (!panel.isConnected) return;

@@ -82,16 +82,19 @@ Deno.serve(async (req) => {
       } catch (e) { fail(`refresh ${id}`, e); }
       if (status === 'live' && Number(a.endsAt) * 1000 <= now) { await client.settle(r.publicKey); note(`settle ${id}`); continue; }
       if (status === 'filled') {
-        /* seeding first, all three steps in one pass, so the cadence never straddles test mode's three-minute timeout (QA P0-F19):
-           mint, then pool, then seed; a step that fails leaves the raise for the next pass, and only a raise still waiting at
-           'filled' past the timeout is refunded (a seeding under way is finished, not undone) */
+        /* seeding first, every ready step in one pass (mint, then pool, then seed), so the crank's cadence never decides a
+           raise's fate (QA P0-F19). A refund is sent only when seeding has truly stalled: the step just failed, nothing moved
+           this pass, and the program's window — the seeding timeout counted from the last step (the fill, then the mint) —
+           has passed; the program refuses it otherwise. A pooled raise is never refunded: the pool holds it, crank_seed
+           finishes it next pass */
         let cur = step, moved = false;
         try {
           if (cur === 'filled') { await client.crankMint(r.publicKey); note(`mint ${id}`); cur = 'minted'; moved = true; }
           if (cur === 'minted') { await client.crankPool(r.publicKey); note(`pool ${id}`); cur = 'pooled'; moved = true; }
           if (cur === 'pooled') { await client.crankSeed(r.publicKey); note(`seed ${id}`); moved = true; }
         } catch (e) {
-          if (cur === 'filled' && Number(a.filledAt) * 1000 + seedTimeoutMs <= now) { await client.timeoutRefund(r.publicKey); note(`timeout ${id} (seeding never started: ${String((e as Error).message).slice(0, 60)})`); continue; }
+          const since = Math.max(Number(a.progressAt ?? 0), Number(a.filledAt)) * 1000;   // a raise from before progress_at reads it as 0
+          if (!moved && (cur === 'filled' || cur === 'minted') && since + seedTimeoutMs <= now) { await client.timeoutRefund(r.publicKey); note(`timeout ${id} (stalled at ${cur}: ${String((e as Error).message).slice(0, 60)})`); continue; }
           throw e;
         }
         if (moved) continue;

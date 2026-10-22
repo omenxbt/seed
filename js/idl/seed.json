@@ -1751,8 +1751,9 @@
       "docs": [
         "once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks; it is",
         "compiled only into devnet builds (`--features devnet`) and, even there, needs the devnet USDC mint as a witness,",
-        "an account that exists on no other cluster. A mainnet build has no code path that sets it. `min_target_lamports`",
-        "is the smallest raise (81 SOL in production); like the fee it is set here and no instruction changes it after."
+        "an account that exists on no other cluster. A mainnet build has no code path that sets it. The opening market cap",
+        "presets (`preset_caps_cents`, and a test preset only in test mode) size every raise; like the fee they are set here",
+        "and no instruction changes them after. `min_target_lamports` is unused since 2026-10-20 and kept for the layout."
       ],
       "discriminator": [
         23,
@@ -2501,7 +2502,9 @@
     {
       "name": "timeout_refund",
       "docs": [
-        "a filled raise that has not finished seeding within the timeout refunds; anyone can call it"
+        "a filled raise whose seeding has stalled refunds; anyone can call it. The timeout counts from the last seeding step",
+        "(the fill, then the mint), so a raise that is being seeded is finished by whoever cranks next, never undone under a",
+        "late crank; and once the pool holds the raise there is nothing left to refund from: only crank_seed can follow (QA P0-F19)"
       ],
       "discriminator": [
         194,
@@ -3134,6 +3137,11 @@
       "code": 6047,
       "name": "Overflow",
       "msg": "Arithmetic overflow."
+    },
+    {
+      "code": 6048,
+      "name": "AlreadyPooled",
+      "msg": "The pool already holds the raise; it can only be seeded, never refunded."
     }
   ],
   "types": [
@@ -3212,11 +3220,8 @@
           {
             "name": "min_target_lamports",
             "docs": [
-              "the smallest raise, in lamports, set once at init_config like the fee and never changed after: 81 SOL in production,",
-              "the size a pump.fun curve collects before it graduates, so the smallest Seed pool opens where those tokens migrate and",
-              "a bigger target opens at a higher market cap. A USDC raise meets its worth at the SOL price when it opens. A staging",
-              "deployment of the same binary may be made with a lower one (devnet test mode uses 0.1 SOL, so a cycle costs cents).",
-              "Last in the layout so a devnet config of the layout before it could be grown in place (migrate_config)."
+              "unused since 2026-10-20: the presets below size a raise (a raise once had a minimum in lamports here); kept for the",
+              "layout, which every devnet config already carries"
             ],
             "type": "u64"
           },
@@ -3985,6 +3990,15 @@
           {
             "name": "max_buy",
             "type": "u64"
+          },
+          {
+            "name": "progress_at",
+            "docs": [
+              "when the last seeding step landed: the fill, then the mint, then the pool. The seeding timeout counts from here, so a",
+              "raise whose seeding is under way is finished by the next crank, never refunded under it (QA P0-F19). A raise from",
+              "before this field reads it as 0 and falls back to filled_at"
+            ],
+            "type": "i64"
           }
         ]
       }

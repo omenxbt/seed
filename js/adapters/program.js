@@ -92,8 +92,8 @@ var chain = {
         const sym = String(a.symbol), mint = a.mint.toBase58();
         this.registry[sym] = { mint, decimals: a.decimals, tokenProgram: a.tokenProgram.toBase58(), stable: !!a.stable, paused: !!a.paused, feed: a.feed.toBase58(), addedAt: Number(a.addedAt) * 1000 };
         PAIR_DP[sym] = a.decimals; SEED.pairMints[sym] = mint;
-        if (!ASSETS[sym]) ASSETS[sym] = { sym, mint, dp: a.decimals >= 6 ? 2 : a.decimals, decimals: a.decimals, chips: a.stable ? [10, 50, 250] : [0.5, 2, 10], verified: true, allowed: true, paused: !!a.paused };
-        else Object.assign(ASSETS[sym], { allowed: true, paused: !!a.paused, decimals: a.decimals });
+        if (!ASSETS[sym]) ASSETS[sym] = { sym, mint, dp: a.decimals >= 6 ? 2 : a.decimals, decimals: a.decimals, chips: a.stable ? [10, 50, 250] : [0.5, 2, 10], stable: !!a.stable, verified: true, allowed: true, paused: !!a.paused };
+        else Object.assign(ASSETS[sym], { allowed: true, paused: !!a.paused, decimals: a.decimals, stable: !!a.stable });
       }
     } catch (e) { console.warn('pairs not read:', e.message); }
     return this.registry;
@@ -173,9 +173,17 @@ var chain = {
     if (a.takeoverTo && !a.takeoverTo.equals(this.w.PublicKey.default)) p.takeover = p.takeover || { from: null, to: a.takeoverTo.toBase58(), at: t(a.takeoverAt), reportId: null, by: null, label: null };
     return p;
   },
+  /* a pair asset the registry has not named (not read yet, or since removed): a placeholder symbol from its address, 6 decimals
+     (every SPL mint Seed allows other than SOL is 6), unpriced; the next registry read replaces it */
+  unknownPair(mint) {
+    const sym = mint.slice(0, 4) + '…' + mint.slice(-4);
+    if (!ASSETS[sym]) { ASSETS[sym] = { sym, mint, dp: 2, decimals: 6, chips: [10, 50, 250], verified: false, allowed: false, paused: false }; PAIR_DP[sym] = 6; }
+    return sym;
+  },
   /* an indexed row (Supabase) onto a raise object; the chain fills in the rest when the page is opened */
   fromRow(r, prof) {
-    const q = Object.keys(SEED.pairMints).find(k => SEED.pairMints[k] === r.pair_mint) || 'SOL', me = state.wallet && state.wallet.pk, pr = prof && prof.profile || {}, m = pr.model || {};   // the registry adds its pairs to SEED.pairMints
+    // the registry adds its pairs to SEED.pairMints (loadLive reads it first); a mint still unknown is shown by its address, never as SOL
+    const q = Object.keys(SEED.pairMints).find(k => SEED.pairMints[k] === r.pair_mint) || this.unknownPair(r.pair_mint), me = state.wallet && state.wallet.pk, pr = prof && prof.profile || {}, m = pr.model || {};
     const p = { id: r.id, address: r.address, live: true, name: r.name, ticker: r.ticker, q, target: Number(r.target), targetUsd: Number(r.target_usd), solUsdAtOpen: r.sol_usd_at_open ? Number(r.sol_usd_at_open) : SEED.demoSolUsd,
       raised: Number(r.raised), backers: r.backers, openedAt: Date.parse(r.opened_at), endsAt: Date.parse(r.ends_at), status: r.status, seedStep: r.seed_step, refundReason: r.refund_reason, filledAt: r.filled_at ? Date.parse(r.filled_at) : null, seededAt: r.seeded_at ? Date.parse(r.seeded_at) : null, resolvedAt: r.resolved_at ? Date.parse(r.resolved_at) : null,
       feeBps: r.fee_bps, creatorShareBps: r.creator_share_bps, teamBps: r.team_bps, teamSchedule: r.team_schedule, capUsd: r.cap_usd != null ? Number(r.cap_usd) : undefined, preset: r.preset, minBuy: r.min_buy != null ? Number(r.min_buy) : undefined, maxBuy: r.max_buy != null ? Number(r.max_buy) : undefined, tokenUseCase: m.tokenUseCase || 'none', xAccount: r.x_id ? (m.xAccount && m.xAccount.handle ? m.xAccount : { handle: String(r.x_id).replace(/^dev:/, ''), verified: !String(r.x_id).startsWith('dev:'), typed: String(r.x_id).startsWith('dev:'), createdAt: null, followers: null }) : { handle: '', verified: false, createdAt: null, followers: null }, pastRaises: [],
@@ -192,6 +200,10 @@ var chain = {
     if (!supa.configured() || !(await supa.init())) return false;
     const [rs, ps, cs] = await Promise.all([supa.client.from('raises').select('*').order('opened_at', { ascending: false }).limit(200), supa.client.from('raise_profiles').select('address,founder,profile'), supa.client.from('contributions').select('raise_id,wallet,amount,fee,at,refunded_at,claimed_at').order('at')]);
     if (rs.error) return false;
+    /* the pair registry before the rows: a row's pair asset is named by its mint, and a mint the registry has not supplied
+       yet would read as SOL (QA P1-F22). One forced re-read when a row names a mint still unknown (the public RPC rate-limits at boot) */
+    await this.loadPairs();
+    if ((rs.data || []).some(r => !Object.values(SEED.pairMints).includes(r.pair_mint))) { this.pairsAt = 0; this.pairsTriedAt = 0; await this.loadPairs(); }
     (ps.data || []).forEach(x => this.profiles[x.address] = x);
     const me = state.wallet && state.wallet.pk, byRaise = {};
     (cs.data || []).forEach(c => (byRaise[c.raise_id] = byRaise[c.raise_id] || []).push(c));
@@ -203,7 +215,7 @@ var chain = {
       if (me) {
         const mine = p.buys.filter(b => b.you);
         if (mine.length) {
-          const open = mine.filter(b => !b.refundClaimed), amt = r6(open.reduce((a, b) => a + b.amount, 0));
+          const open = mine.filter(b => !b.refundClaimed), amt = Number(open.reduce((a, b) => a + b.amount, 0).toFixed(9));   // to the lamport, not six places: the tokens owed are derived from it (QA P2-103)
           if (!(p.id in state.positions) || state.positions[p.id] !== amt) state.positions[p.id] = amt || state.positions[p.id] || 0;
           if ((byRaise[r.id] || []).some(c => c.wallet === me && (c.claimed_at || c.refunded_at))) state.claimed[p.id] = state.claimed[p.id] || (p.status === 'seeded' ? 'tokens' : 'refund');
         }
@@ -353,10 +365,12 @@ var chain = {
   async claimRefund(p) {
     await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), pp = this.pairProgram(p), wt = this.ata(me, pairMint, pp), a = await this.program.account.raise.fetch(raise), st = Object.keys(a.status)[0], now = Date.now() / 1000;
     const ixs = [];
-    // the raise settles on chain before the first refund if the crank has not been by yet: a miss, or a seeding timeout
+    // the raise settles on chain before the first refund if the crank has not been by yet: a miss, or a seeding that stalled
+    // (the timeout counts from the last seeding step, the fill or the mint; a raise the pool already holds is only ever seeded)
+    const step = Object.keys(a.seedStep)[0], since = Math.max(Number(a.filledAt), Number(a.progressAt || 0)), tmo = this.cfg.testMode ? Number(this.cfg.seedTimeout) / 1440 : Number(this.cfg.seedTimeout);
     if (st === 'live' && now >= Number(a.endsAt)) ixs.push(await this.program.methods.settle().accounts({ raise }).instruction());
-    else if (st === 'filled' && now >= Number(a.filledAt) + (this.cfg.testMode ? Number(this.cfg.seedTimeout) / 1440 : Number(this.cfg.seedTimeout))) ixs.push(await this.program.methods.timeoutRefund().accounts({ raise, config: this.pda.config() }).instruction());
-    else if (st !== 'refunded') { this.apply(p, a); throw new Error(st === 'seeded' ? 'This raise seeded; there is no refund, the tokens are yours to claim.' : 'This raise is still open.'); }
+    else if (st === 'filled' && step !== 'pooled' && now >= since + tmo) ixs.push(await this.program.methods.timeoutRefund().accounts({ raise, config: this.pda.config() }).instruction());
+    else if (st !== 'refunded') { this.apply(p, a); throw new Error(st === 'seeded' ? 'This raise seeded; there is no refund, the tokens are yours to claim.' : st === 'filled' ? 'This raise is being seeded; there is no refund while seeding is under way.' : 'This raise is still open.'); }
     ixs.push(this.ixAtaIdem(me, wt, me, pairMint, pp), await this.program.methods.claimRefund().accounts({ raise, contribution: this.pda.contribution(raise, me), wallet: me, pairMint, walletToken: wt, escrow: this.ata(raise, pairMint, pp), tokenProgram: pp }).instruction());
     if (p.q === 'SOL') ixs.push(this.ixClose(wt, me, me));
     await this.send(ixs); this.later(p);

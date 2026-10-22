@@ -1030,14 +1030,14 @@ a.ico:hover{color:var(--ink)}
   <article>
     <div class="doc-hero">
       <h1><span class="l1">How Seed works,</span><span class="l2">in plain terms</span></h1>
-      <p>A launchpad for raises on Solana. Buy into an idea at one fixed price, paired with SOL or USDC. If it fills, the whole raise opens a Meteora pool that is locked for good. If it misses, every wallet gets back exactly what it paid.</p>
+      <p>A launchpad for raises on Solana. Buy into an idea at one fixed price, paired with SOL, USDC or another asset on Seed's allowlist. If it fills, the whole raise opens a Meteora pool that is locked for good. If it misses, every wallet gets back exactly what it paid.</p>
       <p>The rules of a raise, the supply split, the two fees, team unlocks, what Seed enforces and what it leaves to you. Each section has the explanation on the left and the numbers that matter beside it.</p>
     </div>
 
     <section class="doc-sec" id="d-overview" data-t="Overview">
       <div class="prose">
         <h2>Overview</h2>
-        <p>A founder connects a wallet, picks the market cap the pool will open at ($50K, $100K, $150K or $200K), a deadline of one to thirty days, the asset the raise is paired with, and whether the team keeps a share. The raise itself is derived: the cap times what the team does not take, halved, priced at the SOL price when it opens; nobody types a target. Backers buy in with that asset at one fixed price, plus a 1% fee on top.</p>
+        <p>A founder connects a wallet, picks the market cap the pool will open at ($50K, $100K, $150K or $200K), a deadline of one to thirty days, the asset the raise is paired with, and whether the team keeps a share. The raise itself is derived: the cap times what the team does not take, halved, priced in the pair asset at its price when the raise opens; nobody types a target. Backers buy in with that asset at one fixed price, plus a 1% fee on top.</p>
         <p>If the target is met, Seed's program mints the 1,000,000,000 supply, revokes the mint and freeze authorities, puts the whole raise and the pool's half of the supply into a Meteora DAMM v2 pool at the raise price, and locks that liquidity permanently. Backers claim their tokens straight away. If the deadline passes first, nothing is minted and every backer takes back what they paid, fee included.</p>
         <p>There is no treasury, no vault and no reserve. The money raised goes into the pool and nowhere else, so there is nothing to rug. What a founder earns is a share of the pool's trading fees, paid to a payout wallet, and the team tokens they chose to keep, which unlock on a schedule everyone can see.</p>
         <p>Seed enforces a short list of hard rules in its program and acts on fraud. Everything else a founder decides, and the page shows those decisions as facts rather than warnings.</p>
@@ -1048,7 +1048,7 @@ a.ico:hover{color:var(--ink)}
           <div><dt>Network</dt><dd class="t">Solana</dd></div>
           <div><dt>Raise</dt><dd class="t">Seed program, fixed price</dd></div>
           <div><dt>Pool</dt><dd class="t">Meteora DAMM v2, locked for good</dd></div>
-          <div><dt>Pairs with</dt><dd class="t">SOL or USDC</dd></div>
+          <div><dt>Pairs with</dt><dd class="t">SOL, USDC or an allowlisted asset</dd></div>
           <div><dt>Opening market cap</dt><dd class="t">$50K, $100K, $150K or $200K; the raise is derived</dd></div>
           <div><dt>Deadline</dt><dd class="t">24 hours to 30 days</dd></div>
           <div><dt>Token supply</dt><dd>1,000,000,000</dd></div>
@@ -1076,7 +1076,7 @@ a.ico:hover{color:var(--ink)}
         </svg>
         <p>A raise is <b>live</b> from the moment it opens, and it leaves that state exactly once.</p>
         <ul>
-          <li><b>Filled.</b> The raise reaches the target. It closes to buys on the spot, even if the deadline is days away, and seeding begins: four idempotent steps that anyone can run. If they are not all done within three days, the raise refunds instead.</li>
+          <li><b>Filled.</b> The raise reaches the target. It closes to buys on the spot, even if the deadline is days away, and seeding begins: idempotent steps that anyone can run. If seeding stalls, three days without a step, the raise refunds instead; a seeding under way is always finished, never undone.</li>
           <li><b>Seeded.</b> The last step lands. The token exists, the pool is open and locked, backers claim their tokens, and the team's unlock clock starts.</li>
           <li><b>Refunded.</b> The deadline arrives and the raise is short, the founder cancels it, or seeding times out. Nothing is minted and every backer claims back what they paid.</li>
         </ul>
@@ -1136,7 +1136,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-assets" data-t="Pair assets and the cap">
       <div class="prose">
         <h2>Pair assets and the cap</h2>
-        <p>Every raise is priced and paid for in one asset, chosen by the founder when it opens: SOL or USDC. Both are deep, verified and simple to price, which is why they are the only two.</p>
+        <p>Every raise is priced and paid for in one asset, chosen by the founder when it opens: SOL, USDC, or any asset on Seed's allowlist. The allowlist is kept on chain by Seed's admin: an SPL token (Token or Token-2022, such as a tokenized stock) with its own Pyth price feed, or a stablecoin priced at a dollar, and no transfer fee, transfer hook, permanent delegate or non-transferable flag. A pair can be paused for new raises; raises already open in it are untouched. The pair's price is fixed on chain when the raise opens, so the raise is sized in that asset once and never moves.</p>
         <p>Backers buy in with that asset. The fee is held in it, the Meteora pool is paired against it, the pool's fees are collected in it, and a refund returns it. Nothing is swapped along the way, so there is no slippage inside a raise.</p>
         <p>There is no typed target. The founder picks an opening market cap from four presets, $50K, $100K, $150K or $200K, and the raise is derived from it: target = cap × (1 − team share) ÷ 2, priced in the pair asset at the Pyth SOL/USD price the moment the raise opens. Backers pay for half of what the team does not take, the pool gets the other half, and the whole raise goes into the pool, so the pool opens at exactly that market cap. The presets are the floor and the ceiling: there is no separate minimum or maximum. They live in the program's Config, set once at init. On devnet, in test mode, a tiny Test preset (about $30) lets a cycle cost cents; no mainnet build has it.</p>
       </div>
@@ -1151,10 +1151,11 @@ a.ico:hover{color:var(--ink)}
             <tr><td class="num" style="text-align:left">60,000 USDC</td><td class="num">0.00012 USDC</td><td class="num">600.00 USDC</td></tr>
           </tbody>
         </table>
-        <h3>Verified at launch</h3>
+        <h3>Built in</h3>
         <dl class="kv">
           <div><dt>SOL</dt><dd>So111…11112</dd></div>
           <div><dt>USDC</dt><dd>EPjFW…yTDt1v</dd></div>
+          <div><dt>Others</dt><dd>the allowlist, read from the chain; the Launch form offers what it holds</dd></div>
         </dl>
       </div>
     </section>
@@ -1169,7 +1170,7 @@ a.ico:hover{color:var(--ink)}
           <li><b>Pooled.</b> The whole raise and the pool's tokens open a full-range Meteora DAMM v2 pool at the raise price. The liquidity position is locked permanently, and its NFT is held by a Seed program account that no instruction can move it out of.</li>
           <li><b>Seeded.</b> Backers' claims open and the team's unlock clock starts.</li>
         </ol>
-        <p>If the four steps are not all done within three days of filling, the raise refunds. That is the only way a filled raise fails, and it needs no one's permission: the timeout is in the program.</p>
+        <p>If seeding stalls, three days passing with no step taken since the fill or since the mint, the raise refunds. That is the only way a filled raise fails, and it needs no one's permission: the timeout is in the program. It counts from the last step, so a raise whose seeding is under way is finished by whoever runs the next step, never refunded under it; and once the pool holds the raise, the only step left is to seed.</p>
         <p>The fee rides on top of each buy, so the full target reaches the pool and the opening price equals the raise price exactly.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
@@ -1240,7 +1241,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-refunds" data-t="Refunds">
       <div class="prose">
         <h2>Refunds</h2>
-        <p>A raise refunds in three cases: the deadline passes with the raise short of the target, the founder cancels it while it is live, or it fills but seeding does not finish within three days. In every case the result is the same. Each backer withdraws once and receives exactly what they paid: the amount that went into the raise plus the fee held on it.</p>
+        <p>A raise refunds in three cases: the deadline passes with the raise short of the target, the founder cancels it while it is live, or it fills but seeding stalls for three days. In every case the result is the same. Each backer withdraws once and receives exactly what they paid: the amount that went into the raise plus the fee held on it.</p>
         <p>Refunds are pulled by backers instead of pushed by the program. A push loop over hundreds of wallets does not fit in a Solana transaction, and one bad account could stall it. With pull withdrawals, every refund is independent of every other.</p>
         <p>Withdrawals do not expire. Nothing was minted, so a failed token never reaches a wallet. Each buy creates a small escrow account, and the rent paid for it comes back with the withdrawal. The full cost of a missed raise to a backer is two network fees.</p>
       </div>
@@ -1346,7 +1347,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-terminal" data-t="Reading the terminal">
       <div class="prose">
         <h2>Reading the terminal</h2>
-        <p>The terminal lists every live and seeded raise, paired with SOL or USDC, as one ranked table. <b>All</b> is every live and seeded raise; the other tabs cut it by stage: <b>New ideas</b> (under 50% filled), <b>Seeding</b> (half full to seeded), <b>Seeded</b> (trading) and <b>Refunded</b>, which sits apart because those raises are over. Above the table, the featured card follows the most active raise and Trending shows the eight most active, whatever the filters say. Each row carries the numbers needed to judge a raise at a glance; on a phone the same raises are cards.</p>
+        <p>The terminal lists every live and seeded raise, one pair asset at a time, as one ranked table. <b>All</b> is every live and seeded raise; the other tabs cut it by stage: <b>New ideas</b> (under 50% filled), <b>Seeding</b> (half full to seeded), <b>Seeded</b> (trading) and <b>Refunded</b>, which sits apart because those raises are over. Above the table, the featured card follows the most active raise and Trending shows the eight most active, whatever the filters say. Each row carries the numbers needed to judge a raise at a glance; on a phone the same raises are cards.</p>
         <ul>
           <li><b>Market cap</b> is in dollars: the pool's price over the whole supply on a seeded raise, at today's SOL price; on a live raise, the market cap it will open at. Hover it for the figure in SOL.</li>
           <li><b>Change</b> is the pool's price against the raise price on a seeded raise. On a live raise it is the share of the target gained in the last six hours (<b>+10% 6h</b>), or Quiet when nothing came in; a filled raise reads Seeding while its pool is being made.</li>
@@ -1494,9 +1495,9 @@ a.ico:hover{color:var(--ink)}
           <tbody>
             <tr><td>Network</td><td>Solana</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Raise engine</td><td>Seed's own program: fixed price, no withdrawals while live, closes at the target</td><td class="num"><span class="st set">Set</span></td></tr>
-            <tr><td>Pair asset</td><td>SOL or USDC, chosen by the founder</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Pair asset</td><td>SOL, USDC or an asset on the on-chain allowlist, chosen by the founder</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Opening market cap presets</td><td>$50K, $100K, $150K, $200K, set once in the program's Config (plus a ~$30 Test preset on devnet in test mode only); the raise is cap × (1 − team) ÷ 2 at the Pyth price</td><td class="num"><span class="st set">Set</span></td></tr>
-            <tr><td>Target cap</td><td>$100,000, SOL converted at the price when the raise opens</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Opening market cap</td><td>One of four presets, $50K, $100K, $150K or $200K; the raise is derived from it in the pair asset at its price when the raise opens</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Deadline</td><td>24 hours to 30 days</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Seed fee, f</td><td>1% on top of each buy, returned on a refund</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Refund</td><td>100% of what each backer paid, on a miss, a cancel or a seeding timeout</td><td class="num"><span class="st set">Set</span></td></tr>
@@ -1740,7 +1741,7 @@ function toast(msg) {
 }
 const pairTag = p => `<span class="chain${Q(p).verified ? '' : ' unv'}">Pairs with ${esc(Q(p).sym)}</span>${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}`;
 const projCell = p => `${avatar(p)}<span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b>
-  <span class="meta">${pairTag(p)}${p.mine ? '<span class="tag">Yours</span>' : ''}${state.positions[p.id] ? `<span class="tag in num">${fmtC(state.positions[p.id], p.q)} ${esc(Q(p).sym)} in</span>` : ''}</span></span>`;
+  <span class="meta">${pairTag(p)}${isMine(p) ? '<span class="tag">Yours</span>' : ''}${state.positions[p.id] ? `<span class="tag in num">${fmtC(state.positions[p.id], p.q)} ${esc(Q(p).sym)} in</span>` : ''}</span></span>`;
 const progCell = p => `<span class="c-prog"><span class="bar"><i data-bar style="width:${pctOf(p)}%"></i></span><span class="pct num" data-pct>${Math.floor(pctOf(p) + 1e-7)}%</span></span>`;
 
 /* ------------------------------------------------------------ segmented */
@@ -2191,9 +2192,9 @@ let choosing = null;
 /* the terms: accepted once per version, kept in this browser; asked before the first wallet connect and before a raise opens */
 const termsKey = () => 'seed.terms.' + (SEED.termsVersion || '1');
 const termsAccepted = () => { try { return localStorage.getItem(termsKey()) === 'yes'; } catch (e) { return false; } };
-function askTerms() {
+function askTerms(heading = 'Before you connect') {   // 'Before you open a raise' from the Launch form (QA P2-101)
   if (termsAccepted()) return Promise.resolve(true);
-  const d = $('#termsDlg'), ok = $('#termsOk'), yes = $('#termsYes'); ok.checked = false; yes.disabled = true;
+  const d = $('#termsDlg'), ok = $('#termsOk'), yes = $('#termsYes'); ok.checked = false; yes.disabled = true; $('#termsH').textContent = heading;
   return new Promise(done => {
     const finish = v => { d.onclose = null; if (d.open) d.close(); if (v) { try { localStorage.setItem(termsKey(), 'yes'); } catch (e) {} } done(v); };
     ok.onchange = () => { yes.disabled = !ok.checked; }; yes.onclick = () => finish(true); $('#termsNo').onclick = () => finish(false); d.onclose = () => finish(false);
@@ -2236,6 +2237,9 @@ async function resume() {
     const r = await Promise.race([prov.connect({ onlyIfTrusted: true }), wait(4000).then(() => { throw 0; })]);
     const pk = String((r && r.publicKey) || prov.publicKey || '');
     if (!B58.test(pk) || state.wallet) return;
+    // the gates Connect has: a wallet trusted before the terms existed, or from a blocked country, is not restored silently;
+    // it connects again by hand and meets the sheet (QA P2-102)
+    if (!termsAccepted() || !(await countryAllowed())) return;
     enterReal(); watch(prov);
     state.wallet = { kind: was.kind, name: was.name, pk, addr: shortMint(pk), bal: pk === was.pk ? was.bal : {}, stale: false };
     save(); renderAll(); if (detailBox) renderDetail(); refreshBalances(true);
@@ -2306,6 +2310,7 @@ $('#prows').addEventListener('click', e => { const cl = e.target.closest('[data-
    unlocked and can be claimed, and the payout wallet with any change on the way. */
 ui.pmode = 'backer';
 const myRaises = () => !state.wallet ? [] : isReal() ? state.presales.filter(p => p.live && p.founderWallet === state.wallet.pk) : state.presales.filter(p => p.mine || (p.creator && (p.creator === walletId() || p.creator === state.wallet.pk)));
+const isMine = p => !!state.wallet && (isReal() ? !!p.live && p.founderWallet === state.wallet.pk : !!(p.mine || (p.creator && p.creator === walletId())));   // the "Yours" tag: the demo founder's raises are nobody's until the demo wallet is connected (QA P2-97)
 const teamClaimable = p => { const u = unlockState(p); return Math.max(0, u.unlocked - (p.teamClaimed || 0)); };
 function renderCreator() {
   const box = $('#pCreator'); $('#pBacker').hidden = ui.pmode !== 'backer'; box.hidden = ui.pmode !== 'creator'; if (box.hidden) return;

@@ -328,7 +328,7 @@ function drawGate() {
 async function openPresale() {
   if (busy) return;
   if (!(await ensureWallet())) return;
-  if (typeof askTerms === 'function' && !(await askTerms())) return;   // the terms, if this browser has not accepted the current version
+  if (typeof askTerms === 'function' && !(await askTerms('Before you open a raise'))) return;   // the terms, if this browser has not accepted the current version
   $('#fErr').textContent = ''; if (showErrors(validateFields())) return;
   const d = readDraft(), da = draftAsset(), b = $('#openBtn'); busy = true; b.disabled = true;
   const id = d.ticker.toLowerCase() + '-' + Date.now().toString(36), now = Date.now(), profile = draftProfile(d);
@@ -375,7 +375,7 @@ async function uploadTokenJson(p, profile) {
   return supa.upload(file);
 }
 function renderMine() {
-  const l = state.presales.filter(p => p.mine);
+  const l = myRaises();   // the connected wallet's own: a real wallet's live raises, a demo wallet's demo ones; none without a wallet (QA P2-97)
   $('#mineList').innerHTML = l.length ? l.map(p => `<a class="row ${p.status}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}"><span class="c-proj">${projCell(p)}</span>${progCell(p)}
       <span class="c-raised num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${esc(Q(p).sym)}</em></span><span class="c-time num" data-time>${timeCell(p)}</span><span class="c-act"><span class="pill-sm">View</span></span></a>`).join('')
     : '<div class="empty">You have not opened a raise yet. Fill in the form to open your first.</div>';

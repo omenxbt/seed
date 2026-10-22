@@ -44,7 +44,12 @@ function splitOf(teamBps) {
 const priceOf = p => p.target / splitOf(p.teamBps).backers;             // q per token, fixed when the raise opens
 const fdvOf = p => priceOf(p) * SEED.supply;                             // in q
 const fdvUsdOf = p => usdOf(p, fdvOf(p));
-const tokensFor = (p, amount) => Math.min(amount, p.target) / p.target * splitOf(p.teamBps).backers;   // for a buy of `amount` q
+/* the tokens a buy of `amount` of the pair asset earns, rounded as the program rounds them: floor(units in × the backers' units ÷
+   the target's units), in whole tokens — so the panel's "Tokens owed" is the claim's figure to the unit (QA P2-103) */
+const tokensFor = (p, amount) => {
+  const dp = typeof pairDecimals === 'function' ? pairDecimals(p.q) : 9, u = x => BigInt(Math.round(x * 10 ** dp)), t = u(p.target); if (!(t > 0n)) return 0;
+  return Number(u(Math.min(amount, p.target)) * BigInt(Math.round(splitOf(p.teamBps).backers * 1e6)) / t) / 1e6;
+};
 const feeOf = amount => r6(amount * SEED.feeBps / BPS);                  // on top of the buy
 const paidFor = amount => r6(amount + feeOf(amount));                    // what leaves the wallet
 const amountFor = paid => r6(paid / (1 + SEED.feeBps / BPS));            // the buy inside a payment

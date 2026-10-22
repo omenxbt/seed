@@ -22,11 +22,13 @@ const [raiseArg, side = 'buy', amountArg = '0.001', slip = '2'] = process.argv.s
   }
   const r = await c.fetchRaise(raise); if (!r.pool || r.pool.equals(web3.PublicKey.default)) throw new Error('not seeded');
   const amm = new CpAmm(provider.connection), ps = await amm.fetchPoolState(r.pool), tokA = ps.tokenAMint.equals(r.mint);
-  const dec = { tok: 6, pair: r.pairMint.equals(WSOL) ? 9 : 6 }, inDec = side === 'buy' ? dec.pair : dec.tok, outDec = side === 'buy' ? dec.tok : dec.pair;
+  const dec = { tok: 6, pair: (await import('@solana/spl-token')).unpackMint(r.pairMint, (await provider.connection.getAccountInfo(r.pairMint))!, (await provider.connection.getAccountInfo(r.pairMint))!.owner).decimals }, inDec = side === 'buy' ? dec.pair : dec.tok, outDec = side === 'buy' ? dec.tok : dec.pair;
   const inMint = side === 'buy' ? r.pairMint : r.mint, outMint = side === 'buy' ? r.mint : r.pairMint, inAmount = new BN(Math.round(Number(amountArg) * 10 ** inDec));
   const q = await amm.getQuote({ inAmount, inputTokenMint: inMint, slippage: Math.round(Number(slip) * 100) /* basis points */, poolState: ps, currentTime: Math.floor(Date.now() / 1000), currentSlot: await provider.connection.getSlot(), tokenADecimal: tokA ? dec.tok : dec.pair, tokenBDecimal: tokA ? dec.pair : dec.tok });
   console.log('quote', { in: amountArg, out: Number(q.swapOutAmount.toString()) / 10 ** outDec, minOut: Number(q.minSwapOutAmount.toString()) / 10 ** outDec, impactPct: Number(q.priceImpact.toString()) });
-  const tx = await amm.swap({ payer: me.publicKey, pool: r.pool, inputTokenMint: inMint, outputTokenMint: outMint, amountIn: inAmount, minimumAmountOut: q.minSwapOutAmount, tokenAVault: ps.tokenAVault, tokenBVault: ps.tokenBVault, tokenAMint: ps.tokenAMint, tokenBMint: ps.tokenBMint, tokenAProgram: TOKEN_PROGRAM_ID, tokenBProgram: TOKEN_PROGRAM_ID, referralTokenAccount: null, poolState: ps });
+  // each side under its own token program: the pair asset may be Token-2022 (QA P1-F21); the mint account's owner says which
+  const progOf = async (m: web3.PublicKey) => m.equals(r.mint) ? TOKEN_PROGRAM_ID : (await provider.connection.getAccountInfo(m))!.owner;
+  const tx = await amm.swap({ payer: me.publicKey, pool: r.pool, inputTokenMint: inMint, outputTokenMint: outMint, amountIn: inAmount, minimumAmountOut: q.minSwapOutAmount, tokenAVault: ps.tokenAVault, tokenBVault: ps.tokenBVault, tokenAMint: ps.tokenAMint, tokenBMint: ps.tokenBMint, tokenAProgram: await progOf(ps.tokenAMint), tokenBProgram: await progOf(ps.tokenBMint), referralTokenAccount: null, poolState: ps });
   const sig = await c.send([web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }), ...tx.instructions]);
   console.log('signature', sig);
   const held = await provider.connection.getTokenAccountBalance(getAssociatedTokenAddressSync(r.mint, me.publicKey)).catch(() => null);

@@ -69,9 +69,11 @@ const damm = {
      one the panel showed (the quote passed in), so a price that moved since is caught by the pool, not waved through. */
   async swap(p, side, amount, slippage = this.slippage, shown = null) {
     const s = await this.state(p, true), q = shown && shown.inAmount ? shown : await this.quote(p, side, amount, slippage), me = chain.me();
-    const tokMint = chain.pk(p.mint), pairMint = chain.pk(SEED.pairMints[p.q]), tp = chain.pk(PROG.TOKEN);
+    const tokMint = chain.pk(p.mint), pairMint = chain.pk(SEED.pairMints[p.q]);
+    // each side under its own token program: the raise's token is always Token, the pair asset may be Token-2022 (a tokenized stock) — QA P1-F21
+    const progOf = m => m.equals(tokMint) ? chain.pk(PROG.TOKEN) : chain.pairProgram(p);
     const tx = await this.amm.swap({ payer: me, pool: chain.pk(p.pool), inputTokenMint: side === 'buy' ? pairMint : tokMint, outputTokenMint: side === 'buy' ? tokMint : pairMint, amountIn: q.inAmount, minimumAmountOut: q.minOutRaw,
-      tokenAVault: s.tokenAVault, tokenBVault: s.tokenBVault, tokenAMint: s.tokenAMint, tokenBMint: s.tokenBMint, tokenAProgram: tp, tokenBProgram: tp, referralTokenAccount: null, poolState: s });
+      tokenAVault: s.tokenAVault, tokenBVault: s.tokenBVault, tokenAMint: s.tokenAMint, tokenBMint: s.tokenBMint, tokenAProgram: progOf(s.tokenAMint), tokenBProgram: progOf(s.tokenBMint), referralTokenAccount: null, poolState: s });
     const pri = await this.priorityIx(p, 400000);
     const sig = await chain.send(pri ? [pri, ...tx.instructions] : tx.instructions, [], 400000);
     this.states[p.pool] = null;

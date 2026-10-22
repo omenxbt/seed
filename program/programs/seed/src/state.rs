@@ -154,6 +154,10 @@ pub struct Raise {
     pub preset: u8,           // its index (0..3, or TEST_PRESET on devnet)
     pub min_buy: u64,         // the smallest buy, in base units of the pair asset; 0 = none. A buy that fills the room may be smaller
     pub max_buy: u64,         // the most one wallet may put in over the raise, in base units; 0 = none
+    /// when the last seeding step landed: the fill, then the mint, then the pool. The seeding timeout counts from here, so a
+    /// raise whose seeding is under way is finished by the next crank, never refunded under it (QA P0-F19). A raise from
+    /// before this field reads it as 0 and falls back to filled_at
+    pub progress_at: i64,
 }
 
 impl Raise {

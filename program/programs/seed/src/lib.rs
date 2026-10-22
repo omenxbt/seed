@@ -330,7 +330,7 @@ pub mod seed {
         c.try_serialize(&mut &mut ca.data.borrow_mut()[..])?;
         r.raised += amount; r.fees_held += fee;
         emit!(Contributed { raise: r.key(), wallet: ctx.accounts.wallet.key(), amount, fee, raised: r.raised, backers: r.backers, at: now });
-        if r.raised >= r.target { r.status = RaiseStatus::Filled; r.seed_step = SeedStep::Filled; r.filled_at = now; emit!(RaiseFilled { raise: r.key(), at: now }); }
+        if r.raised >= r.target { r.status = RaiseStatus::Filled; r.seed_step = SeedStep::Filled; r.filled_at = now; r.progress_at = now; emit!(RaiseFilled { raise: r.key(), at: now }); }
         Ok(())
     }
 
@@ -348,11 +348,15 @@ pub mod seed {
         refund(r, RefundReason::Cancelled, now)
     }
 
-    /// a filled raise that has not finished seeding within the timeout refunds; anyone can call it
+    /// a filled raise whose seeding has stalled refunds; anyone can call it. The timeout counts from the last seeding step
+    /// (the fill, then the mint), so a raise that is being seeded is finished by whoever cranks next, never undone under a
+    /// late crank; and once the pool holds the raise there is nothing left to refund from: only crank_seed can follow (QA P0-F19)
     pub fn timeout_refund(ctx: Context<RaiseAndConfig>) -> Result<()> {
         let now = Clock::get()?.unix_timestamp; let r = &mut ctx.accounts.raise;
         require!(r.status == RaiseStatus::Filled, SeedError::NotFilled);
-        require!(now >= r.filled_at + ctx.accounts.config.span(ctx.accounts.config.seed_timeout), SeedError::TimeoutNotPassed);
+        require!(r.seed_step != SeedStep::Pooled, SeedError::AlreadyPooled);
+        let since = r.progress_at.max(r.filled_at);   // a raise from before progress_at reads it as 0
+        require!(now >= since + ctx.accounts.config.span(ctx.accounts.config.seed_timeout), SeedError::TimeoutNotPassed);
         refund(r, RefundReason::Timeout, now)
     }
 
@@ -405,7 +409,7 @@ pub mod seed {
             DataV2 { name: r.name.clone(), symbol: r.ticker.clone(), uri: ai.raise_meta.uri.clone(), seller_fee_basis_points: 0, creators: None, collection: None, uses: None }, false, true, None)?;
         token::set_authority(CpiContext::new_with_signer(tp.clone(), SetAuthority { account_or_mint: mint.clone(), current_authority: auth.clone() }, signer), AuthorityType::MintTokens, None)?;
         let r = &mut ctx.accounts.raise;
-        r.mint = ctx.accounts.mint.key(); r.seed_step = SeedStep::Minted;
+        r.mint = ctx.accounts.mint.key(); r.seed_step = SeedStep::Minted; r.progress_at = now;
         emit!(RaiseMinted { raise: r.key(), mint: r.mint, at: now });
         Ok(())
     }
@@ -457,7 +461,7 @@ pub mod seed {
         let dust = ctx.accounts.stage.amount;
         if dust > 0 { token_interface::transfer_checked(CpiContext::new_with_signer(ptp.clone(), TransferChecked { from: stage.clone(), mint: ctx.accounts.pair_mint.to_account_info(), to: ctx.accounts.escrow.to_account_info(), authority: pool_payer.clone() }, &[ps]), dust, pair_dec)?; }
         let r = &mut ctx.accounts.raise;
-        r.pool = ctx.accounts.pool.key(); r.position = ctx.accounts.position.key(); r.position_nft_mint = ctx.accounts.position_nft_mint.key(); r.seed_step = SeedStep::Pooled;
+        r.pool = ctx.accounts.pool.key(); r.position = ctx.accounts.position.key(); r.position_nft_mint = ctx.accounts.position_nft_mint.key(); r.seed_step = SeedStep::Pooled; r.progress_at = now;
         emit!(RaisePooled { raise: r.key(), pool: r.pool, position: r.position, at: now });
         Ok(())
     }

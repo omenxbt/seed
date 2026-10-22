@@ -90,7 +90,8 @@ so expect DEXScreener and Meteora to show it, Jupiter's quote to route, Birdeye 
    `lookupTable`, `pairMints.USDC = EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`, `xTyped: false`, `admins = [squads vault]`.
    Supabase: `SEED_RPC_URL` mainnet, `SEED_PROGRAM_ID`, `SEED_DEV_X_HANDLES` **unset**, the Irys wallet for metadata uploads,
    the production attestor secret; a mainnet Helius webhook (raw, the program id; pools join as raises seed); redeploy
-   `seed`, `crank`, `helius-webhook`. Run `scripts/check-deploy.ts production` again after.
+   `seed`, `crank`, `helius-webhook`. Vercel: the env `SEED_RPC_URL` (a mainnet RPC) and `SEED_PROGRAM_ID` for the link
+   preview functions (`api/_cfg.js` reads the pair allowlist from the chain). Run `scripts/check-deploy.ts production` again after.
    **No small test raise on production.** The small tests (a seeded raise, a refunded raise, the DEX pick-up) belong to
    stage 2 on the staging program; production's first raise is a real one at the $50K preset, opened by a real founder
    from the site, and its pick-up on DEXScreener, Birdeye, Jupiter, Axiom and GMGN is checked as it seeds (the README's

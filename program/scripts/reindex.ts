@@ -14,20 +14,22 @@ const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
 (async () => {
   const conn = new web3.Connection(RPC, 'confirmed'), program = new anchor.Program(idl as anchor.Idl, { connection: conn }), coder = program.coder.accounts;
   const args = process.argv.slice(2); if (!args.length) throw new Error('give raise addresses or ids');
-  /* an id (ticker-xxxxxxxx) is looked up among the program's accounts; an address is used as is */
+  /* an id (ticker-xxxxxxxx) is looked up among the program's accounts; a bare ticker (no dash, ten characters or fewer) means
+     every raise with that ticker; an address is used as is */
   let all: readonly { pubkey: web3.PublicKey; account: web3.AccountInfo<Buffer> }[] | null = null;
-  const resolve = async (a: string) => {
-    if (a.length > 40) return new web3.PublicKey(a);
+  const resolve = async (a: string): Promise<web3.PublicKey[]> => {
+    if (a.length > 40) return [new web3.PublicKey(a)];
     all = all || await conn.getProgramAccounts(program.programId);
-    for (const x of all) { try { const d = coder.decode('raise', x.account.data); if (`${d.ticker.toLowerCase()}-${x.pubkey.toBase58().slice(0, 8).toLowerCase()}` === a) return x.pubkey; } catch { /* not a raise */ } }
-    throw new Error('no raise ' + a);
+    const found: web3.PublicKey[] = [];
+    for (const x of all) { try { const d = coder.decode('raise', x.account.data), id = `${d.ticker.toLowerCase()}-${x.pubkey.toBase58().slice(0, 8).toLowerCase()}`; if (id === a.toLowerCase() || (!a.includes('-') && d.ticker.toLowerCase() === a.toLowerCase())) found.push(x.pubkey); } catch { /* not a raise */ } }
+    if (!found.length) throw new Error('no raise ' + a);
+    return found;
   };
   const post = async (items: unknown[]) => {
     const r = await fetch(`${SUPA}/functions/v1/helius-webhook`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-seed-replay': KEY }, body: JSON.stringify(items) });
     const t = await r.text(); if (!r.ok) throw new Error(`webhook ${r.status}: ${t}`); return t;
   };
-  for (const a of args) {
-    const raise = await resolve(a);
+  for (const a of args) for (const raise of await resolve(a)) {
     const addresses = [raise];
     try { const d: any = await (program.account as any).raise.fetch(raise); if (d.pool && !d.pool.equals(web3.PublicKey.default)) addresses.push(d.pool); } catch (e) { console.warn(`${a}: raise account not decodable (${(e as Error).message.slice(0, 60)}); replaying its transactions anyway`); }
     for (const addr of addresses) {

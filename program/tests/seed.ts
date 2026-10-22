@@ -44,8 +44,8 @@ describe('seed', () => {
     assert.ok(cfg.attestor.equals(attestor.publicKey), 'the config was made with another attestor; reset it with its admin or use that wallet');
     day = cfg.testMode ? 60 : 86400;
     // a backer with a little SOL, and wrapped SOL for both
-    await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: backer.publicKey, lamports: 0.55 * LAMPORTS_PER_SOL })]);   // the suite's raise, the limits raise and the refund raise are all bought from it
-    for (const [w, n] of [[me, 0.2], [backer, 0.45]] as [web3.Keypair, number][]) {
+    await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: backer.publicKey, lamports: 0.65 * LAMPORTS_PER_SOL })]);   // the suite's raise, the limits raise, the refund raise and the two F19 raises are all bought from it
+    for (const [w, n] of [[me, 0.2], [backer, 0.55]] as [web3.Keypair, number][]) {
       const ata = getAssociatedTokenAddressSync(NATIVE_MINT, w.publicKey);
       await c.send([createAssociatedTokenAccountIdempotentInstruction(w.publicKey, ata, w.publicKey, NATIVE_MINT), SystemProgram.transfer({ fromPubkey: w.publicKey, toPubkey: ata, lamports: n * LAMPORTS_PER_SOL }), createSyncNativeInstruction(ata)], [w]);
     }
@@ -313,23 +313,62 @@ describe('seed', () => {
     await c.send([await c.cancelRaise(o.raise, f.publicKey)], [f]);
   });
 
-  it('a raise minted but never pooled times out and every backer still gets a refund (QA P0-F20)', async function () {
-    this.timeout(400_000);
-    const f = Keypair.generate(); await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL })]);
-    const o = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 70, name: 'Stuck', ticker: 'STUCK', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 5000, schedule: [{ dayOffset: 0, bps: 10000 }], payoutWallet: f.publicKey });
-    await c.send(o.ixs, [f]); const rs = await c.fetchRaise(o.raise), t = rs.target as BN;
-    const b1 = (await getAccount(provider.connection, getAssociatedTokenAddressSync(NATIVE_MINT, backer.publicKey))).amount;
-    await c.send([await c.contribute(o.raise, WSOL, backer.publicKey, t)], [backer]);
-    const m3 = Keypair.generate(); await c.send([await c.crankMint(o.raise, m3.publicKey, WSOL, me.publicKey)], [m3]);
-    const filled = await c.fetchRaise(o.raise); assert.deepEqual(Object.keys(filled.seedStep)[0], 'minted');
-    // the seeding timeout (3 "days" = 3 minutes in test mode), then anyone refunds it
-    const due = Number(filled.filledAt) + span(Number(cfg.seedTimeout)) + 8;
-    while (((await provider.connection.getBlockTime(await provider.connection.getSlot('confirmed'))) || 0) < due) await new Promise(r => setTimeout(r, 5000));
-    await c.send([await c.timeoutRefund(o.raise)]);
-    const rr = await c.fetchRaise(o.raise); assert.deepEqual(Object.keys(rr.status)[0], 'refunded'); assert.deepEqual(Object.keys(rr.refundReason)[0], 'timeout');
-    await c.send([await c.claimRefund(o.raise, WSOL, backer.publicKey)], [backer]);
-    const b2 = (await getAccount(provider.connection, getAssociatedTokenAddressSync(NATIVE_MINT, backer.publicKey))).amount;
-    assert.equal(b2, b1, 'the deposit and its 1% came back exactly, with the token already minted');
+  describe('a late crank versus a stalled seeding (QA P0-F19, P0-F20)', () => {
+    /* two raises, filled and minted together. The seeding timeout (3 "days": 3 minutes in test mode) counts from the last
+       seeding step, so after SLOW's mint nobody can refund it for a timeout more, a crank that comes by later than that still
+       pools and seeds it, and once pooled it can never be refunded. STUCK's pool step never comes: a timeout after its mint,
+       anyone refunds it, and each of its two backers gets back exactly what they paid */
+    const backer2 = Keypair.generate(), mSlow = Keypair.generate(), mStuck = Keypair.generate(), nftSlow = Keypair.generate();
+    let slow: web3.PublicKey, stuck: web3.PublicKey, b1: bigint, b2: bigint, mintedAt = 0;
+    const wsol = async (k: web3.PublicKey) => (await getAccount(provider.connection, getAssociatedTokenAddressSync(NATIVE_MINT, k))).amount;
+    const until = async (t: number) => { while (((await provider.connection.getBlockTime(await provider.connection.getSlot('confirmed'))) || 0) < t) await new Promise(r => setTimeout(r, 5000)); };
+
+    it('both fill and mint; the progress clock moves to the mint', async function () {
+      this.timeout(120_000);
+      const ata2 = getAssociatedTokenAddressSync(NATIVE_MINT, backer2.publicKey), f = Keypair.generate(), g = Keypair.generate();
+      await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: backer2.publicKey, lamports: 0.2 * LAMPORTS_PER_SOL }), SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL }), SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: g.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL })]);
+      await c.send([createAssociatedTokenAccountIdempotentInstruction(backer2.publicKey, ata2, backer2.publicKey, NATIVE_MINT), SystemProgram.transfer({ fromPubkey: backer2.publicKey, toPubkey: ata2, lamports: 0.15 * LAMPORTS_PER_SOL }), createSyncNativeInstruction(ata2)], [backer2]);
+      const oS = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 70, name: 'Slow', ticker: 'SLOW', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 5000, schedule: [{ dayOffset: 0, bps: 10000 }], payoutWallet: f.publicKey });
+      const oT = await c.openRaise(g.publicKey, WSOL, null, null, { nonce: nonce + 71, name: 'Stuck', ticker: 'STUCK', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 5000, schedule: [{ dayOffset: 0, bps: 10000 }], payoutWallet: g.publicKey });
+      await c.send(oS.ixs, [f]); await c.send(oT.ixs, [g]); slow = oS.raise; stuck = oT.raise;
+      const tS = (await c.fetchRaise(slow)).target as BN, tT = (await c.fetchRaise(stuck)).target as BN, half = tT.divn(2);
+      await c.send([await c.contribute(slow, WSOL, backer.publicKey, tS)], [backer]);
+      b1 = await wsol(backer.publicKey); b2 = await wsol(backer2.publicKey);   // what each holds before buying STUCK
+      await c.send([await c.contribute(stuck, WSOL, backer.publicKey, half)], [backer]);
+      await c.send([await c.contribute(stuck, WSOL, backer2.publicKey, tT.sub(half))], [backer2]);
+      await c.send([await c.crankMint(stuck, mStuck.publicKey, WSOL, me.publicKey)], [mStuck]);
+      // SLOW's mint lands a good half minute after its fill, so the two clocks (from the fill, from the mint) are told apart below
+      const fS = Number((await c.fetchRaise(slow)).filledAt); await until(fS + 30);
+      await c.send([await c.crankMint(slow, mSlow.publicKey, WSOL, me.publicKey)], [mSlow]);
+      const rs = await c.fetchRaise(stuck), rl = await c.fetchRaise(slow); assert.deepEqual(Object.keys(rs.seedStep)[0], 'minted'); assert.equal(Number(rs.backers), 2);
+      mintedAt = Number(rs.progressAt); assert.ok(mintedAt >= Number(rs.filledAt) && mintedAt > 0, 'progress_at moved from the fill to the mint');
+      assert.ok(Number(rl.progressAt) >= fS + 30 && Number(rl.filledAt) === fS, 'SLOW: filled_at kept the fill, progress_at took the mint');
+    });
+
+    it('a crank later than the timeout still seeds a minted raise; nobody can refund it meanwhile, nor ever once pooled', async function () {
+      this.timeout(400_000);
+      const r0 = await c.fetchRaise(slow);
+      await until(Number(r0.filledAt) + span(Number(cfg.seedTimeout)) + 8);   // a timeout since the fill: the old rule would refund here, the mint's clock has 20 s to run
+      await expectFail(c.send([await c.timeoutRefund(slow)]), 'TimeoutNotPassed');
+      await c.send([web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }), await c.crankPool(slow, mSlow.publicKey, WSOL, nftSlow.publicKey, me.publicKey)], [nftSlow]);
+      await expectFail(c.send([await c.timeoutRefund(slow)]), 'AlreadyPooled');
+      await c.send([await c.crankSeed(slow, WSOL, cfg.seedTreasury)]);
+      const r1 = await c.fetchRaise(slow); assert.deepEqual(Object.keys(r1.status)[0], 'seeded');
+      await expectFail(c.send([await c.timeoutRefund(slow)]), 'NotFilled');
+      await c.send([c.ata(backer.publicKey, backer.publicKey, mSlow.publicKey), await c.claimTokens(slow, mSlow.publicKey, backer.publicKey)], [backer]);
+      assert.ok((await getAccount(provider.connection, getAssociatedTokenAddressSync(mSlow.publicKey, backer.publicKey))).amount > 0n, 'the backer holds SLOW: the late crank cost nobody anything');
+    });
+
+    it('a raise minted and never pooled refunds every backer exactly, one timeout after its mint', async function () {
+      this.timeout(400_000);
+      await until(mintedAt + span(Number(cfg.seedTimeout)) + 8);
+      await c.send([await c.timeoutRefund(stuck)]);
+      const rr = await c.fetchRaise(stuck); assert.deepEqual(Object.keys(rr.status)[0], 'refunded'); assert.deepEqual(Object.keys(rr.refundReason)[0], 'timeout');
+      await c.send([await c.claimRefund(stuck, WSOL, backer.publicKey)], [backer]);
+      await c.send([await c.claimRefund(stuck, WSOL, backer2.publicKey)], [backer2]);
+      assert.equal(await wsol(backer.publicKey), b1, 'the first backer: deposit and 1% back exactly, with the token already minted');
+      assert.equal(await wsol(backer2.publicKey), b2, 'the second backer too');
+    });
   });
 
   describe('a cancelled raise, opened by a fresh founder wallet', () => {
