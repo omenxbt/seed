@@ -60,8 +60,8 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     "USDC"), opening market cap segment ("$50K", "$100K", "$150K", "$200K") and deadline segment ("24h", "3 days",
     "7 days", "14 days"); the chips and pills "SOL pair", "Pairs with
     SOL", "1 of 4 steps" and "1 warning", and the unit in the app bar's chips and the deposit box ("SOL"); the titles
-    and labels "Deposit into $HALF", "Seeding $HALF", "Trade $HALF", "Top 10 backers", "24h volume", "Founder's 70%",
-    the pool card's pair ("HALF/SOL", a `dd` without `.num`), the chart legend "Buys per 6 hours", the filled card's
+    and labels "Deposit into $SEED", "Seeding $SEED", "Trade $SEED", "Top 10 backers", "24h volume", "Founder's 70%",
+    the pool card's pair ("SEED/SOL", a `dd` without `.num`), the chart legend "Buys per 6 hours", the filled card's
     "Filled 1m ago" and backers count ("214 backers") and "Deadline passed Oct 24, 3:36 PM"; the Launch form's hints
     (the opening market cap's "at $148.2 per SOL today; fixed at the Pyth price when the raise opens"; the uploads'
     "1500 × 500 px", "1:1, square" and "10 MB at most"; the ticker check's "top-500 Solana token"; the team and payout
@@ -70,8 +70,7 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     opening (337.38 SOL, $50K in all)", "Oct 24, 3:36 PM, or the moment it fills", "when the 7 days are up", "a day at
     $5K, $25K or $100K of daily volume"); the app bar's chips ("1", "$232.69K", "$148.2"); and every line of
     running text that carries a figure: the pace line (`.pp-pace`), the filled and refunded raises' notes (`.pp-note`,
-    "by Oct 26, 10:01 AM", "the 1% fee included"), the seeding card's note, the Creator fees text ("70% … 30% …") and
-    the About text ("Stake SOL once…"). The video shows the site's pages as the site draws them; the film's own tickers, in the text frames ("SOL or USDC"), are in IBM Plex Mono.
+    "by Oct 26, 10:01 AM", "the 1% fee included"), the seeding card's note and the Creator fees text ("70% … 30% …"). The video shows the site's pages as the site draws them; the film's own tickers, in the text frames ("SOL or USDC"), are in IBM Plex Mono.
 12. **Glyphs the site's font files leave out.** The site loads Google Fonts' latin subsets of IBM Plex Mono and
     Instrument Sans, which have no subscript digits and no left arrow, so the zero count in a raise price ("0.0₆17 SOL",
     U+2080 to U+2089) and the back link ("← All raises", U+2190) fall back to a system face on the site. The film draws
@@ -89,14 +88,21 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     (`brand/README.md`). The video sets the wordmark as live text at 500.
 15. **The mark's dot count at small sizes.** The book says the 13-dot mark at 56px and under. The site's app bar draws
     the 21-dot mark (`#seed21`) at every size, and the pages show it as the site draws it. The film's own mark is on the
-    end card only, at 218px (16:9) and 192px (9:16, 1:1), where the 21-dot mark is the book's.
+    end card and as the raise's art (17), at 218px on the end card (16:9) and 192px (9:16, 1:1), where the 21-dot mark
+    is the book's.
 16. **Primary button contrast.** White on `--grad-btn` measures 4.01:1 in HyperFrames' contrast check, under WCAG AA's
     4.5:1 for 14px text. The video keeps the site's button.
 17. **Demo art.** Every demo raise's art and banner in `assets/demo/` is a pastel gradient (Halfmoon's runs cyan to
-    violet), and a raise with no banner gets the site's blue `.pp-banner` gradient. The film's raise wears the site's
-    own dot field instead: its banner and art are crops of `js/bg-dither.js` at its fixed second (`site/assets/film/`),
-    given to the Launch form's own upload slots as well, so its preview shows them and not the site's pastel stand-in
-    glyph. So the film adds no hue but blue and no gradient to the pages.
+    violet), and a raise with no banner gets the site's blue `.pp-banner` gradient. The film's raise is Seed's own token
+    (25) and wears Seed's own look instead: its banner is a crop of the site's dot field (`js/bg-dither.js` at its fixed
+    second) and its art Seed's avatar, the muted mark on the charcoal ground (41), drawn from `seed-mark-muted.svg`
+    (`site/assets/film/`). The Launch form's own upload slots are given them too, so its preview shows them and not the
+    site's pastel stand-in glyph. So the film adds no hue but blue and no gradient to the pages. The brand banners in
+    `brand/banner/` are not used: their mark has ink dots. The art sits in the site's own rounded avatar tile on the
+    identity card (the page's frame round a token's art, not one round the mark), so at the raise page's wider views
+    the Seed mark shows whole near the page's top left, as the token's avatar beside "Seed $SEED". The camera never
+    holds it cut by the frame's edge (in 1:1 the pull-backs sit lower, so it stays off the frame); on a move it crosses
+    the edge as anything on the page does, for the few frames the move takes.
 
 ## The site against itself
 
@@ -129,12 +135,15 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
 25. **The pages are the site's own, at each beat.** `tools/capture-pages.mjs` runs `index.html` on its demo data and
     keeps the DOM the site draws: the Launch form as it opens and as its presets and deadline are pressed, the raise page
     after each of eight waves of buys, each seeding step, seeded, and the other ending at 62% with three seconds left,
-    then refunded. The film's raise is the demo raise Halfmoon set to the $50K preset (168.69 SOL, the site's own
+    then refunded. The film's raise is Seed's own token, at the user's direction (2026-10-21): the demo raise Halfmoon
+    renamed Seed ($SEED), with Seed's own About ("A launchpad for raises on Solana.", the brand banner's line), no links
+    (its Launch form gives none) and no team, deck or roadmap of Halfmoon's, set to the $50K preset (168.69 SOL, the site's own
     derivation, which the capture checks against the page), 7 days and 214 backers (`src/raise.json`); the refund ending
     stops at 104.59 SOL and 122 backers. The founder is the demo wallet (7xKp…9fQa): it fills the Launch form connected, and the raise
     page it opens names it as founder and payout wallet with no X linked, as the form had it. The raise page is shown as
     any visitor sees it, with no wallet connected (a founder's own view adds founder controls). While the form is filled
-    the demo raise Halfmoon is held out of the site's list, so the ticker check has no live $HALF to clash with. The
+    the demo raise is held out of the site's list, so the ticker check has no live $SEED to clash with (and SEED is not
+    among the site's 500 largest Solana tokens). The
     site's own demo mode is held still (no simulated buys, no demo crank), its clock is fixed, and outside requests are
     refused, so the pages show the site's figures (the presets, the $148.2 demo SOL price) and repeat exactly. With no
     chain the site prices at its demo SOL price (`liveSolUsd`), as its demo mode does.
@@ -151,29 +160,31 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     in this window."), as the pool card's "24h volume 0" has it. The camera cuts from the seeding card to the pool's
     line ("Meteora DAMM v2 pool … Liquidity locked for good") rather than crossing the page.
 28. **The last seeding step is never shown ticked.** When the fourth step lands the site turns the raise seeded and the
-    seeding card becomes the trade card ("Trade $HALF"), so no page the site draws has all four steps done. The film
+    seeding card becomes the trade card ("Trade $SEED"), so no page the site draws has all four steps done. The film
     holds on the card through that change, then cuts to the pool.
 29. **The raise chart's entrance** (`playEnter`: the raise line in 1.7s, the area at 1.1s, the tip at 1.8s) is not in
     the 30-second cut; the pages draw their charts complete, as the site does on a page drawn again.
 30. **Left out of the pages:** the app's foot note ("Prototype. Raise data is simulated…" in demo mode), the site's
-    toasts ("Opened Halfmoon. It is live until Oct 24, 3:36 PM", "Halfmoon missed its target. Backers can claim
-    refunds."; the text frames carry those lines), Halfmoon's demo announcement, its demo chat (a raise just opened has
+    toasts ("Opened Seed. It is live until Oct 24, 3:36 PM", "Seed missed its target. Backers can claim
+    refunds."; the text frames carry those lines), the demo raise's own announcement, its demo chat (a raise just opened has
     none; the demo's avatars are pastel gradients) and the demo's own "Yours" raise (Tidewater) in "Your raises", since
     this is the founder's first raise. Everything else on the pages is as the site draws it: the "Demo data" pills, the
     deposit panel's "Simulated on the demo wallet. No transaction is sent.", and the app's own 21-dot mark in its icon
     rail (34px at the full-page views in 16:9 and 1:1, under the book's 40px for 21 dots; it is the site's rail as
     drawn).
-31. **The script** is "Thirty seconds, spoken", one line a frame, as the user rewrote it (2026-10-21): "Start an idea, /
-    fund it on-chain." (in place of "Seed asks you to back an idea at one fixed price."), "Find product-market fit",
-    "Set a target and deadline", "Buy with SOL or USDC", "Raises seed as tradeable tokens", "If it
-    misses, every wallet gets back exactly what it paid." and "Seeded in full, or refunded in full." The book's "Most
-    launches…", "locked for good." and "fee included." frames are cut (the pages still say "liquidity locked for good"
-    and "the 1% fee included" where the site draws them), and so are "and your tokens are yours the same day", "Nothing
-    is minted, nothing is held back." and "That is Seed." (the end card's wordmark says the last). Four of the lines are
-    the user's short phrases, not the book's full sentences, and carry no full stop, as the user wrote them;
-    "product-market" is spelled as common usage has it (the user's message wrote "product market"). A "Market cap
-    presets" frame was added and then cut at the user's direction (2026-10-21): the Launch form after "Set a target and
-    deadline" shows the presets, the founder's press deriving the target, then the deadline. The master is 31.3s.
+31. **The script** is "Thirty seconds, spoken", one line a frame, as the user rewrote it (2026-10-21): "Finding
+    product-market fit / shouldn't be hard", "Start an idea, / fund it on-chain." (in place of "Seed asks you to back an
+    idea at one fixed price."), "Set a target and deadline", "Pair with anything" (45), "Buy with SOL or USDC", "Raises
+    seed as tradeable tokens", "If it misses, every wallet gets back exactly what it paid." and "Seeded in full, or
+    refunded in full." The book's "Most launches…", "locked for good." and "fee included." frames are cut (the pages
+    still say "liquidity locked for good" and "the 1% fee included" where the site draws them), and so are "and your
+    tokens are yours the same day", "Nothing is minted, nothing is held back." and "That is Seed." (the end card's
+    wordmark says the last). Five of the lines are the user's short phrases, not the book's full sentences, and carry no
+    full stop, as the user wrote them; "product-market" is spelled as common usage has it (the user's message wrote
+    "product market"). Frames for "Find product-market fit", "Market cap presets" and "Introducing" (with the lockup
+    after it) were added and then cut at the user's direction (2026-10-21). The Launch form after "Set a target and
+    deadline" shows the presets, the founder's press deriving the target, then the deadline. The master is 33.7s; the
+    teaser opens on its title.
 32. **The camera.** The film flies one camera over the pages and its own type, after the Axiom films in
     `delta/01-video-hyperframes/_motion-refs/` (the motion only; the README maps each move). The book has no camera, so
     these are the video's own choices, kept inside its rules: every move eases on the one curve, panels tilt (up to 11°)
@@ -186,7 +197,7 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     its panels and blurs behind their glass, as on the site. The camera never shows a page's edge: every pose, tilted or
     not, is kept where the page covers the whole frame (`cover` in `src/film.js`), until the whip that takes the page
     away. In 1:1 the full-page views show the site's 1080 layout as drawn, its rail column emptier than the main one.
-    There is no corner mark: at the user's direction (2026-10-21) the mark is on the end card only (the
+    There is no corner mark: at the user's direction (2026-10-21) the film's own mark is the end card's only (the
     site's own app bar and rail carry theirs on the pages).
 34. **Safe zones.** The element the camera is on sits inside its format's focus box, which lies inside the safe zone
     (16:9 x 160–1760, y 140–940; 9:16 x 120–960, y 300–1620; 1:1 x 100–980, y 120–960): a cut resolves onto it from no
@@ -201,8 +212,8 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     masked; a `--no-browser-gpu` render would not be.
 36. **Frame rate and length.** The brief asks for a master of about 55s at 30fps. At the user's direction (2026-10-20)
     the master was cut to 30s, the length of the book's script, and every cut renders at 60fps. On 2026-10-21 the user
-    cut three lines, then asked for the pace slowed slightly and a new frame (31), then cut the logo sting (44): it is
-    31.3s, the teaser 15s. Motion blur is measured over a
+    cut three lines, then asked for the pace slowed slightly, a new opening and no logo at the start (31, 44): it is
+    33.7s, the teaser 15s. Motion blur is measured over a
     thirtieth of a second, so it is the length it was at 30fps. The teaser stays 15s.
 37. **The odometer's digits** sit on the baseline in the film (`.rd` as an inline flex box). On the site its
     inline-block with `overflow:hidden` takes its bottom edge as its baseline, so the digits ride above the signs beside
@@ -219,7 +230,7 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     user's direction (2026-10-20) the film ends on the lockup alone, at the size the book's sting gives it: no URL, no network line, and neither is a variable any more. The SRTs end with the closing line.
 41. **The mark is the muted one wherever the film shows it.** The book sets the mark on charcoal with ink dots and the
     navy seed, and keeps the muted version (#52668F dots) for bars and rails. At the user's direction (2026-10-21) the
-    end card shows the muted mark, as on Seed's avatar: `--navy-soft` dots and the seed in `--navy`, which
+    end card and the raise's art show the muted mark, as on Seed's avatar: `--navy-soft` dots and the seed in `--navy`, which
     lands in `--solid` and brightens to it. The wordmark beside it is ink, as in the lockup.
 42. **Fades.** At the user's direction (2026-10-21) the film comes up from black over its first 0.6s and goes down to
     black over its last 0.9s, linear, the score's slot fading with it (`data-fade-in`/`data-fade-out`): a whole-frame
@@ -232,7 +243,29 @@ decides otherwise; each case says what the launch video (`brand/launch-video/`) 
     up from the last wave's (the site's odometer, .55s a digit) and sweeps its bar from there (.6s), as on every other
     wave; "84%" to "100%" gains a digit, so it is drawn without the slide, as the site's odometer does. Worth doing on
     the site too: patch the filled readout from the live one before the re-render.
-44. **No logo sting.** The book's video kit opens on its logo sting ("Logo sting · 3s": the 21 dots on the spiral, the
-    seed landing and brightening, the wordmark at 1.6s). At the user's direction (2026-10-21) the film opens straight on
-    its title, up from black ("Start an idea," huge, settling as "fund it on-chain." comes under it), in both cuts; the
-    mark is the end card's alone, and its dots arrive as the sting's would (on the spiral, rim first, 30ms apart).
+44. **No logo at the start.** The book's video kit opens on its logo sting ("Logo sting · 3s": the 21 dots on the
+    spiral, the seed landing and brightening, the wordmark at 1.6s). At the user's direction (2026-10-21) the master
+    opens on "Finding product-market fit / shouldn't be hard" up from black and goes straight to its title, and the
+    teaser opens on its title; the lockup is the end card's alone, its dots arriving as the sting's would (on the
+    spiral, rim first, 30ms apart). (An "Introducing" frame with the lockup building after it was tried and cut.)
+45. **"Pair with anything."** The user's line (2026-10-21) before "Buy with SOL or USDC". The code the film is made from
+    pairs a raise with SOL or USDC only: `open_raise` refuses any other pair mint (`BadPair`, `program/programs/seed/
+    src/lib.rs`), the Launch form's pair segment offers SOL and USDC ("Raises pair with SOL or USDC."), and LOOP.md says
+    "priced in the pair asset (SOL or USDC)"; the site's code carries hidden "any token" and tokenized-stock options the
+    program does not take. The user says pairing with any token is being added to the program now. The film keeps the
+    line and shows the pages as the site draws them today (SOL or USDC); once the pairing ships, re-capture
+    (`tools/capture-pages.mjs`) so the Launch form shows it, and update this entry.
+46. **Other companies' and chains' marks, round "Pair with anything".** At the user's direction (2026-10-21) coins fly out
+    from behind the line and ring it: Apple, Tesla, Nvidia, Google, Meta, Netflix, Robinhood and PayPal, and Bitcoin,
+    Ethereum, Solana, BNB Chain, XRP, Dogecoin, Cardano, Polygon, Chainlink and Sui. The site's hidden stock option lists
+    xStocks of Nvidia, Apple, Tesla, Robinhood, Coinbase, Microsoft, the S&P 500, Google, Amazon and Meta, not Netflix or
+    PayPal, and most of the chains are not Solana tokens: the coins stand for "anything", the user's claim (45), not
+    for a list the code has. The book has no rule for third-party marks.
+    The marks are their owners' trademarks, taken as path data from Simple Icons (CC0, `src/coins.json`; Microsoft and
+    Amazon are not in it, at their request, so they are not shown), and they stand for what a raise could pair with,
+    not for any partner or endorsement; worth a legal look before the film runs as an ad. At the user's direction each
+    coin wears its brand's own colours (`src/coins.json`: simple-icons' brand hex where it reads on a coin, else the
+    brand's familiar coin icon; Solana's gradient, Google's four colours), with the panel's hairline round the disc:
+    the one place in the film where hues other than the brand's blue and the results' colours appear, against the
+    book's "blue is the only colour that is not data". The coins grow in as the mark's dots do, on the one curve, with
+    no spin, and clear with the line.

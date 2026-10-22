@@ -7,7 +7,8 @@
      raise page after each buy, while seeding, seeded, at 62% with seconds left, refunded), with every hidden element
      dropped and input values and scroll positions kept;
    - site/pages/pages.json: per state, the scroll positions and the document height.
-   The film's raise is the demo raise Halfmoon set to the film's terms (the $50K opening market cap preset, no team share,
+   The film's raise is Seed's own token, Seed ($SEED): the demo raise Halfmoon renamed and set to the film's terms (the
+   $50K opening market cap preset, no team share,
    so a $25,000 raise in SOL at the demo SOL price; 7 days, 214 backers), drawn by renderDetail(); the clock is fixed (the
    raise opens 2026-10-17 15:36 UTC) and every request off this machine is refused, so the site runs on its demo data and
    its own figures (the presets, the demo SOL price), and two runs write the same files. Usage: node tools/capture-pages.mjs [16x9 9x16 1x1] */
@@ -152,11 +153,15 @@ function grab() {
   return { html: clone.innerHTML.replace(/\s{2,}/g, ' '), body: document.body.className, root: document.documentElement.className, scrollY: scrollY, docH: document.documentElement.scrollHeight, vw: innerWidth, vh: innerHeight };
 }
 
-/* the film's raise, set on the demo raise Halfmoon: its terms, its buys up to this beat, its status */
+/* the film's raise, set on the demo raise Halfmoon: Seed's own token, its terms, its buys up to this beat, its status */
 function setRaise(o) {
   const x = find('halfmoon'), pr = profileOf(x);
   pr.updates = []; pr.announcements = []; pr.chat = [];   // a raise just opened has no chat yet (the demo's avatars are pastel gradients)
   pr.banner = o.banner; pr.art = o.art; pr.bannerPos = pr.artPos = '50% 50%';
+  /* Seed ($SEED): its name and ticker and its own About; no links (its Launch form gave none) and none of Halfmoon's
+     team, deck or roadmap */
+  Object.assign(x, { name: o.name, ticker: o.ticker, roadmap: [] });
+  Object.assign(pr, { description: o.about, links: { website: null, x: null, telegram: null, discord: null, github: null }, team: [], deck: null });
   /* the raise is the one the demo wallet just opened: its founder and payout wallet are that wallet (shown 7xKp…9fQa, as
      the wallet chip shows it), with no X linked, as on the Launch form */
   const me = '7xKpHm3vQ8sYc2RkT9bW4nJdLz6uFgE5aXq1PrNt9fQa';
@@ -260,15 +265,19 @@ try {
        in this window.") in place of the demo's stand-in pool, whose hourly walk runs forward from the moment of seeding */
     await page.evaluate(() => { const c = presaleAdapter.candles; presaleAdapter.candles = (p, tf) => p.id === 'halfmoon' ? Promise.resolve(withSrc([], 'demo')) : c.call(presaleAdapter, p, tf); });
     await sleep(800);
-    /* the film's raise wears the site's own dot field as its banner and art (the demo's are pastel gradients, a second
-       hue): crops of js/bg-dither.js at its fixed second 370, where the field's mass is, low and to the right, kept 4x
-       with every dot a hard square (the camera goes in close on the identity card) */
+    /* the film's raise wears the site's own dot field as its banner (the demo's are pastel gradients, a second hue): a
+       crop of js/bg-dither.js at its fixed second 370, where the field's mass is, low and to the right, kept 4x with
+       every dot a hard square (the camera goes in close on the identity card). Its art is Seed's own avatar: the muted
+       mark on the charcoal ground, drawn from the mark's SVG at 1600px */
     if (fk === '16x9' || !fs.existsSync(path.join(proj, 'site/assets/film/banner.png'))) {
-      const shots = await page.evaluate(() => {
+      const shots = await page.evaluate(async () => {
         BG_DITHER.seek(370);
-        const c = document.getElementById('bg-dither'), k = c.width / innerWidth;
-        const crop = (x, y, w, h, W, H) => { const o = document.createElement('canvas'); o.width = W; o.height = H; const g = o.getContext('2d'); g.imageSmoothingEnabled = false; g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--panel-solid').trim() || '#1F2125'; g.fillRect(0, 0, W, H); g.drawImage(c, x * k, y * k, w * k, h * k, 0, 0, W, H); return o.toDataURL('image/png'); };
-        return { banner: crop(innerWidth - 1500, innerHeight - 500, 1500, 500, 6000, 2000), art: crop(innerWidth - 400, innerHeight - 400, 400, 400, 1600, 1600) };
+        const c = document.getElementById('bg-dither'), k = c.width / innerWidth, css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+        const crop = (x, y, w, h, W, H) => { const o = document.createElement('canvas'); o.width = W; o.height = H; const g = o.getContext('2d'); g.imageSmoothingEnabled = false; g.fillStyle = css('--panel-solid') || '#1F2125'; g.fillRect(0, 0, W, H); g.drawImage(c, x * k, y * k, w * k, h * k, 0, 0, W, H); return o.toDataURL('image/png'); };
+        const mark = new Image(); mark.src = '/brand/logo/seed-mark-muted.svg'; await mark.decode();
+        const a = document.createElement('canvas'); a.width = a.height = 1600; const g = a.getContext('2d');
+        g.fillStyle = css('--bg') || '#16171A'; g.fillRect(0, 0, 1600, 1600); g.drawImage(mark, 304, 304, 992, 992);   // the mark 62% of the square, as the app icon sets it
+        return { banner: crop(innerWidth - 1500, innerHeight - 500, 1500, 500, 6000, 2000), art: a.toDataURL('image/png') };
       });
       fs.mkdirSync(path.join(proj, 'site/assets/film'), { recursive: true });
       for (const [k, v] of Object.entries(shots)) fs.writeFileSync(path.join(proj, 'site/assets/film', k + '.png'), Buffer.from(v.split(',')[1], 'base64'));
@@ -303,7 +312,7 @@ try {
         await sleep(900);
       } else {
         await page.evaluate(h => { if (location.hash !== h) location.hash = h; }, b.page); await sleep(700);
-        await page.evaluate((o, R) => { if (window.__hm && !state.presales.includes(window.__hm)) state.presales.push(window.__hm); setRaise(Object.assign({ t0: R.t0, window: R.window, target: R.target, targetUsd: R.targetUsd, cap: R.cap, teamBps: R.teamBps, banner: 'brand/launch-video/site/assets/film/banner.png', art: 'brand/launch-video/site/assets/film/art.png' }, o)); renderDetail(true); if (typeof renderStatChips === 'function') renderStatChips(); }, b.raise, R).catch(e => { throw new Error(b.name + ': ' + e.message); });
+        await page.evaluate((o, R) => { if (window.__hm && !state.presales.includes(window.__hm)) state.presales.push(window.__hm); setRaise(Object.assign({ t0: R.t0, window: R.window, target: R.target, targetUsd: R.targetUsd, cap: R.cap, teamBps: R.teamBps, name: R.name, ticker: R.ticker, about: R.about, banner: 'brand/launch-video/site/assets/film/banner.png', art: 'brand/launch-video/site/assets/film/art.png' }, o)); renderDetail(true); if (typeof renderStatChips === 'function') renderStatChips(); }, b.raise, R).catch(e => { throw new Error(b.name + ': ' + e.message); });
         await sleep(1400);
       }
       if (b.focus) await page.evaluate(q => { const e = document.querySelector(q); if (e) e.focus({ preventScroll: true }); }, b.focus);

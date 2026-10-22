@@ -6,7 +6,7 @@ message: "Seeded in full, or refunded in full."
 destination: youtube
 aspect: 1920x1080
 language: en
-length: 31s
+length: 34s
 angle: product
 ---
 
@@ -39,7 +39,11 @@ case is listed in `brand/CONFLICTS.md`.
   USDC" and "Raises seed as tradeable tokens"; two new frames, "Market cap presets" and "Find product-market fit"
   (after the title); the Launch beat rebuilt on final-model's opening market cap presets (merged in). CONFLICTS 1, 31.
   Then "Market cap presets" cut again; the Launch form is one shot after "Set a target and deadline". Then the logo
-  sting at the start removed: the film opens on its title (CONFLICTS 44).
+  sting at the start removed: the film opens on its title (CONFLICTS 44). Then a new opening for the master:
+  "Finding product-market fit shouldn't be hard" (an ellipsis first, then none), "Introducing", the logo and wordmark, then "Start an idea, fund it
+  on-chain."; the "Find product-market fit" frame cut. Then the token the film launches is Seed's own, Seed ($SEED),
+  its art the muted mark (CONFLICTS 17, 25). Then "Introducing" and the logo after it cut again, and a "Pair with
+  anything" frame before "Buy with SOL or USDC" (the user: the code is adding pairing with any token; CONFLICTS 45).
 - A 15s teaser per format: sting, fill, "Seeded in full, or refunded in full", end card (no sting since 2026-10-21:
   the title opens it).
 - Every figure, the URL and the network line are composition variables, read from the program config and LOOP.md.

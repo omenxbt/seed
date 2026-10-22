@@ -50,7 +50,19 @@ const symbols = site('mark-symbols.svg.html').trim();
 const markSvg = fs.readFileSync(P('site/seed-mark-dark.svg'), 'utf8');
 const dots = [...markSvg.matchAll(/<circle cx="([\d.]+)" cy="([\d.]+)" r="([\d.]+)"/g)].map(m => m.slice(1, 4).map(Number));
 const lockup = (cls, dotsSvg) => `<div class="lockup ${cls}">${dotsSvg}<span class="word">Seed</span></div>`;
-/* the 21-dot mark as circles, so the end card can bring its dots in one by one */
+/* the coins round "Pair with anything": the marks of what a raise could pair with (src/coins.json), behind the line */
+const COINS = JSON.parse(fs.readFileSync(P('src/coins.json'), 'utf8')).coins;
+/* each coin in its brand's colours: the disc, and the mark in one colour, Solana's gradient or Google's four colours (the
+   G drawn four times, each clipped to its wedge of the circle, as the logo sets them round it) */
+const WEDGE = (a0, a1) => [[12, 12], ...[a0, (a0 + a1) / 2, a1].map(a => [12 + 20 * Math.cos(a * Math.PI / 180), 12 + 20 * Math.sin(a * Math.PI / 180)])].map(p => p.map(v => v.toFixed(2)).join(',')).join(' ');
+const GOOGLE = [['#EA4335', 205, 320], ['#4285F4', 320, 395], ['#34A853', 35, 150], ['#FBBC05', 150, 205]];
+const markOf = (c, i) => c.fg === 'solana'
+  ? `<defs><linearGradient id="coin-g${i}" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#9945FF"></stop><stop offset="1" stop-color="#14F195"></stop></linearGradient></defs><path fill="url(#coin-g${i})" d="${c.path}"></path>`
+  : c.fg === 'google'
+    ? GOOGLE.map(([col, a0, a1], k) => `<clipPath id="coin-c${i}-${k}"><polygon points="${WEDGE(a0, a1)}"></polygon></clipPath><path fill="${col}" clip-path="url(#coin-c${i}-${k})" d="${c.path}"></path>`).join('')
+    : `<path fill="${c.fg}" d="${c.path}"></path>`;
+const coinsOf = () => `<div class="coins">${COINS.map((c, i) => `<span class="coin" data-n="${i}" title="${esc(c.name)}" style="--cb:${c.bg}"><svg viewBox="0 0 24 24" aria-hidden="true">${markOf(c, i)}</svg></span>`).join('')}</div>`;
+/* the 21-dot mark as circles, so the lockup and the end card can bring its dots in one by one */
 const markDots = cls => `<svg class="mark ${cls}" viewBox="0 0 100 100" aria-hidden="true">${dots.map(([x, y, r], i) => `<circle class="${i ? 'dot' : 'seed'}" data-n="${i}" cx="${x}" cy="${y}" r="${r}"></circle>`).join('')}</svg>`;
 
 let F = null, FK = null;   // the format page() is writing
@@ -65,9 +77,10 @@ const field = '<canvas class="field" aria-hidden="true"></canvas>';
 const typeStage = inner => `<div class="stage type"><div class="cam" style="width:${F.w * ZOOM.type}px;height:${F.h * ZOOM.type}px"><div class="tw" style="width:${F.w}px;height:${F.h}px;zoom:${ZOOM.type}">${inner}</div></div></div>`;
 const pageStage = () => `<div class="stage" data-layout-ignore>${field}<div class="cam" style="width:${F.win[0] * ZOOM.page}px;height:${F.win[1] * ZOOM.page}px"><div class="scr hf-html" style="width:${F.win[0]}px;height:${F.win[1]}px;zoom:${ZOOM.page}"><div class="hf-body"></div></div></div></div>`;
 const SCENES = {
+  logo: s => sec(s, 's-logo', typeStage(`<div class="endcard">${lockup('end', markDots('logo-mark'))}</div>`)),
   title: s => sec(s, 's-title', typeStage(`<h1 class="t"><span class="l1">${esc(s.l1)}</span><span class="l2">${esc(s.l2)}</span></h1>`)),
   /* a line's clauses one to a block, wrapped with balanced lines, or broken where the story sets them for this format */
-  line: s => { const set = s.f && s.f[FK] && s.f[FK].lines; return sec(s, 's-line' + (s.big ? ' big' : ''), typeStage(`<div class="kin"><div class="lb${set ? ' set' : ''}">${(set || s.lines).map(l => `<p>${words(l)}</p>`).join('')}</div></div>`)); },
+  line: s => { const set = s.f && s.f[FK] && s.f[FK].lines; return sec(s, 's-line' + (s.big ? ' big' : ''), typeStage(`${s.coins ? coinsOf() : ''}<div class="kin"><div class="lb${set ? ' set' : ''}">${(set || s.lines).map(l => `<p>${words(l)}</p>`).join('')}</div></div>`)); },
   launch: s => sec(s, 's-launch', pageStage()),
   page: s => sec(s, 's-page', pageStage()),
   refund: s => sec(s, 's-refund', pageStage()),

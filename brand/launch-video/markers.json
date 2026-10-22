@@ -3,37 +3,37 @@
   "note": "Beat points for scoring. Times are from the start of each cut and are the same in every format.",
   "cuts": {
     "master": {
-      "duration": 31.27,
-      "frames": 1876,
+      "duration": 33.69,
+      "frames": 2021,
       "markers": [
         {
           "name": "fill complete",
-          "t": 14.63,
-          "frame": 878,
+          "t": 17.05,
+          "frame": 1023,
           "what": "the last wave of buys fills the target"
         },
         {
           "name": "seeded",
-          "t": 18.59,
-          "frame": 1115,
+          "t": 21.01,
+          "frame": 1261,
           "what": "the last seeding step lands and the page turns seeded"
         },
         {
           "name": "refunded",
-          "t": 23.39,
-          "frame": 1403,
+          "t": 25.81,
+          "frame": 1549,
           "what": "the deadline passes and the raise turns refunded"
         },
         {
           "name": "end card",
-          "t": 27.57,
-          "frame": 1654,
+          "t": 29.99,
+          "frame": 1799,
           "what": "the mark builds, then the wordmark"
         },
         {
           "name": "fade out",
-          "t": 30.37,
-          "frame": 1822,
+          "t": 32.79,
+          "frame": 1967,
           "what": "the picture and the sound go down to black"
         }
       ]

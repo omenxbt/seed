@@ -24,7 +24,7 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 .clip.scene { position: absolute; inset: 0; }
 /* at a handoff two scenes overlap: the film's own type flies past over the page coming in (over its depth of field
    too) and comes in over the page whipping away */
-.clip.scene.s-title, .clip.scene.s-line, .clip.scene.s-close { z-index: 60; }
+.clip.scene.s-title, .clip.scene.s-line, .clip.scene.s-logo, .clip.scene.s-close { z-index: 60; }
 .sc { position: absolute; inset: 0; }
 
 /* ------------------------------------------------------------ the camera's stage
@@ -87,6 +87,14 @@ html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background:
 .f11 .kin { font-size: 86px; } .f11 .kin p { max-width: 900px; }
 .f169 .big .kin { font-size: 200px; } .f916 .big .kin { font-size: 170px; } .f11 .big .kin { font-size: 150px; }
 .big .kin p { line-height: 1; letter-spacing: -.05em; }
+
+/* ------------------------------------------------------------ the coins round "Pair with anything"
+   The marks of what a raise could pair with, each coin in its brand's own colours (src/coins.json; CONFLICTS 46), with
+   the panel's hairline round the disc (src/film.js flies them out from behind the line) */
+.coins { position: absolute; inset: 0; }
+.coin { position: absolute; left: 0; top: 0; width: var(--cs); height: var(--cs); margin: calc(var(--cs) / -2) 0 0 calc(var(--cs) / -2); border-radius: 50%; background: var(--cb, var(--panel-solid)); border: 1px solid var(--panel-line); box-shadow: inset 0 1px 0 rgba(255,255,255,.08); display: grid; place-items: center; }
+.coin svg { width: 50%; height: 50%; }
+.f169 .coins { --cs: 112px; } .f916 .coins { --cs: 124px; } .f11 .coins { --cs: 96px; }
 
 /* ------------------------------------------------------------ the end card: the mark and the wordmark, the lockup's own size */
 .endcard { position: absolute; left: var(--sl); right: var(--sr); top: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }

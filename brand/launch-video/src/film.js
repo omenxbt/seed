@@ -348,6 +348,42 @@
     tl.fromTo(seed, { fill: css('--solid') }, { fill: css('--navy'), duration: FAST, ease: E, immediateRender: false }, tSeed + d);
   }
 
+  /* the coins round a line: each flies out from behind it to its place on one of two rings round it, growing from
+     nothing as it goes (as the mark's dots arrive), 30ms apart, on the brand's curve, the inner ring first; they hold
+     with the line and clear with it. A ring runs at one distance from the line's box (a rounded rectangle round it,
+     taller in a tall frame), so no coin touches the type, and its coins are spaced evenly along it */
+  function ringAt(u, A, B, r) {
+    var L = [2 * (A - r), Math.PI * r / 2, 2 * (B - r), Math.PI * r / 2, 2 * (A - r), Math.PI * r / 2, 2 * (B - r), Math.PI * r / 2];
+    var d = (u - Math.floor(u)) * L.reduce(function (a, b) { return a + b; }, 0), k = 0;
+    while (k < 7 && d > L[k]) { d -= L[k]; k++; }
+    var q = function (cx, cy, a0) { var a = a0 + d / r; return [cx + Math.cos(a) * r, cy + Math.sin(a) * r]; };
+    return [[-A + r + d, -B], q(A - r, -B + r, -Math.PI / 2), [A, -B + r + d], q(A - r, B - r, 0), [A - r - d, B], q(-A + r, B - r, Math.PI / 2), [-A, B - r - d], q(-A + r, -B + r, Math.PI)][k];
+  }
+  function coinsOut(sec, s) {
+    var cam = $('.cam', sec), wrap = $('.coins', sec), cs = $$('.coin', sec), TZ = S.tzoom;
+    var keep = cam.style.transform; cam.style.transform = 'none';
+    var wr = $('.tw', sec).getBoundingClientRect(), bs = $$('.lb .w', sec).map(function (e) { return e.getBoundingClientRect(); });
+    var size = cs[0].getBoundingClientRect().width / TZ;
+    cam.style.transform = keep;
+    var x0 = Math.min.apply(null, bs.map(function (b) { return b.left; })), x1 = Math.max.apply(null, bs.map(function (b) { return b.right; }));
+    var y0 = Math.min.apply(null, bs.map(function (b) { return b.top; })), y1 = Math.max.apply(null, bs.map(function (b) { return b.bottom; }));
+    var cx = ((x0 + x1) / 2 - wr.left) / TZ, cy = ((y0 + y1) / 2 - wr.top) / TZ, hw = (x1 - x0) / 2 / TZ, hh = (y1 - y0) / 2 / TZ;
+    /* a wide or square frame takes two rings; a tall one one taller ring, kept inside its side margins, where a phone's
+       buttons sit */
+    var tall = FH > FW * 1.2, inner = tall ? cs.length : Math.ceil(cs.length * 0.55);
+    var m = tall ? 120 + size * 0.6 : size * 0.6 + Math.max(FW, FH) * 0.03;   // whole in frame through the hold's slow push
+    cs.forEach(function (c, i) {
+      var ring = i < inner ? 0 : 1, n = ring ? cs.length - inner : inner, j = ring ? i - inner : i;
+      var dd = size * (ring ? 2.0 : 0.85) + ((i * 37) % 7) / 6 * size * 0.15, k = ring ? 0.78 : 1;
+      var A = tall ? Math.min(hw + dd, FW / 2 - m) : hw + dd, B = tall ? Math.max(hh + dd, FH * 0.31) : hh + dd;
+      var p = ringAt((j + (ring ? 0.5 : 0)) / n + 0.06, A, B, Math.min(dd, A, B));
+      var tx = clamp(cx + p[0], m, FW - m), ty = clamp(cy + p[1], m, FH - m);
+      c.style.left = tx.toFixed(1) + 'px'; c.style.top = ty.toFixed(1) + 'px';
+      tl.fromTo(c, { x: (cx - tx) * 0.92, y: (cy - ty) * 0.92, scale: 0, transformOrigin: '50% 50%' }, { x: 0, y: 0, scale: k, duration: 0.8, ease: E }, s.start + 0.3 + i * 0.03);
+    });
+    fadeOut(wrap, s.out, 0.2);
+  }
+
   /* ------------------------------------------------------------ scenes */
   var B = {
     title: function (s, sec) {
@@ -363,6 +399,21 @@
         s.exit === 'whip' ? { t: s.out, sel: 'h1.t', s: 1.045, dx: -FW * 1.1, d: 0.45 } : { t: s.out, sel: 'h1.t', s: 4.4, d: 0.6 }
       ]);
       if (s.exit === 'whip') fadeOut($('h1.t', sec), s.out + 0.02, 0.2); else fadeOut($('h1.t', sec), s.out, 0.2);
+    },
+    logo: function (s, sec) {
+      // the lockup builds as the end card's does (the mark's dots on the spiral 30ms apart, the seed landing and
+      // brightening, the wordmark drawn out from behind it), holds on a slow push and whips away left, whole: a mark
+      // never fades
+      var lk = $('.endcard .lockup', sec), mk = $('.mark', lk), wd = $('.word', lk);
+      typeCamera(sec, s, [
+        { t: s.start, cut: true, sel: '.endcard', s: 1, d: 0.9, from: s.in === 'whip' ? { dx: FW * 0.32 } : { k: 0.92 } },
+        { t: s.start + 0.9, sel: '.endcard', s: 1.035, d: s.out - s.start - 0.9 },
+        { t: s.out, sel: '.endcard', s: 1.035, dx: -FW * 1.1, d: 0.45 }
+      ]);
+      var gap = wd.getBoundingClientRect().width / S.tzoom / 2 + parseFloat(getComputedStyle(lk).columnGap || 0) / 2, T = s.start + 0.15;   // in the type's own pixels
+      dotsArrive(mk, T, T + 0.6, 0.03);
+      tl.fromTo(mk, { x: gap }, { x: 0, duration: 0.6, ease: E }, T + 1.0);
+      tl.fromTo(wd, { clipPath: 'inset(0 100% 0 0)' }, { clipPath: 'inset(0 0% 0 0)', duration: 0.6, ease: E }, T + 1.2);
     },
     line: function (s, sec) {
       // a line of the script, full screen: its words rise in 45ms apart as the camera arrives, it holds on a slow push,
@@ -382,6 +433,7 @@
       if (s.exit === 'whip') { keys.push(Object.assign({ t: s.out, sel: '.lb .w', dx: -FW * 1.1, d: 0.45 }, hold)); fadeOut(blk, s.out + 0.02, 0.2); }
       else { keys.push(Object.assign({ t: s.out, sel: '.lb .w', d: 0.6 }, s.big ? { fill: 3.8 } : { s: 4.4 })); fadeOut(blk, s.out, 0.2); }   // clear as the page cuts in
       typeCamera(sec, s, keys);
+      if (s.coins) coinsOut(sec, s);
     },
     launch: function (s, sec) {
       var sc = screen(sec, s);

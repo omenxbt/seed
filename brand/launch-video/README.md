@@ -1,6 +1,6 @@
 # Seed launch video
 
-A HyperFrames project. The 31.3s master at 1920×1080, 1080×1920 and 1080×1080, each recomposed for its frame, and a 15s
+A HyperFrames project. The 33.7s master at 1920×1080, 1080×1920 and 1080×1080, each recomposed for its frame, and a 15s
 teaser in each format, all at 60fps. On-screen type only: each line of the brand book's "Thirty seconds, spoken", as the
 user rewrote it (`../CONFLICTS.md` 31), is a full-screen text frame of its own. Between the lines, every UI moment is the site itself, filling the screen: the page
 the site draws at each beat of the story, flown over by one camera. Design truth: `frame.md`.
@@ -27,9 +27,9 @@ never their UI, colours or type.
 Everything eases on `cubic-bezier(.22,1,.36,1)`. Depth of field is a masked backdrop blur over the page and motion blur
 a directional SVG blur from the camera's own travel per frame (`#dof`, `#mb`), so frosted panels keep their glass. The
 pages fill the screen: every camera pose is kept where the page covers the whole frame, tilt and all (`cover` in
-`src/film.js`), until the whip that takes it away. There is no logo sting and no corner mark: the film opens on its
-title and the mark is the end card's, the muted one (slate dots, the seed landing in the brand blue and brightening), as
-on Seed's avatar. The film comes up from black over its first 0.6s and goes down to black over its last 0.9s, the sound
+`src/film.js`), until the whip that takes it away. There is no logo at the start and no corner mark: the master opens on its
+first line, the teaser on its title, and the film's own mark is the end card's, the muted one (slate dots, the seed
+landing in the brand blue and brightening), as on Seed's avatar. The film comes up from black over its first 0.6s and goes down to black over its last 0.9s, the sound
 with it.
 One dot field runs under the whole film: a page's stage draws it on the ground under its panels (for their glass to
 blur), the film's own type plays straight over `#bg-dither`, and at a handoff the film's type sits over the page.
@@ -56,8 +56,8 @@ npx hyperframes check build/master-9x16   # any cut and format is its own projec
   `scripts/check-deploy.ts`, the devnet `initConfig`, `claim_refund`), `js/config/seed.js` and LOOP.md, and stops the
   build if they disagree.
 - `tools/capture-pages.mjs` runs the site (`index.html`) in the Chrome HyperFrames uses, at 1920×1080, 1080×1080 and
-  540×960, on its demo data with a fixed clock and every outside request refused. The film's raise is the demo raise
-  Halfmoon set to `src/raise.json` (the $50K opening market cap preset, so a 168.69 SOL raise at the demo SOL price, 7
+  540×960, on its demo data with a fixed clock and every outside request refused. The film's raise is Seed's own
+  token, Seed ($SEED): the demo raise Halfmoon renamed and set to `src/raise.json` (the $50K opening market cap preset, so a 168.69 SOL raise at the demo SOL price, 7
   days, eight waves of buys); the Launch form is filled by pressing its presets and deadline.
   Rerun it whenever the site changes.
 - `tools/sync-site.mjs` copies the tokens, `js/bg-dither.js`, `brand/fonts/` and the mark into `site/`, with
@@ -97,7 +97,7 @@ frames for each cut. `out/seed-master-16x9-noaudio.mp4` has no audio stream.
 
 | File | What |
 | --- | --- |
-| `out/seed-master-16x9.mp4`, `-9x16`, `-1x1` | the 31.3s master, H.264 at CRF 10, 60fps |
+| `out/seed-master-16x9.mp4`, `-9x16`, `-1x1` | the 33.7s master, H.264 at CRF 10, 60fps |
 | `out/seed-teaser-16x9.mp4`, `-9x16`, `-1x1` | the 15s teaser, H.264 at CRF 10, 60fps |
 | `out/seed-master-16x9-noaudio.mp4` | the master with no audio track |
 | `out/seed-master-16x9.mov` | ProRes 4444 for editing, rendered from the page (not from the MP4), written locally (not in git) |

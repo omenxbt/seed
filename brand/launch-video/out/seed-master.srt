@@ -1,27 +1,31 @@
 1
-00:00:00,050 --> 00:00:02,450
-Start an idea, fund it on-chain.
+00:00:00,040 --> 00:00:02,100
+Finding product-market fit shouldn't be hard
 
 2
-00:00:02,520 --> 00:00:04,230
-Find product-market fit
+00:00:02,220 --> 00:00:04,320
+Start an idea, fund it on-chain.
 
 3
-00:00:04,340 --> 00:00:06,050
+00:00:04,390 --> 00:00:06,100
 Set a target and deadline
 
 4
-00:00:10,020 --> 00:00:11,730
-Buy with SOL or USDC
+00:00:10,070 --> 00:00:12,330
+Pair with anything
 
 5
-00:00:15,400 --> 00:00:17,210
-Raises seed as tradeable tokens
+00:00:12,440 --> 00:00:14,150
+Buy with SOL or USDC
 
 6
-00:00:20,230 --> 00:00:22,140
-If it misses, every wallet gets back exactly what it paid.
+00:00:17,820 --> 00:00:19,630
+Raises seed as tradeable tokens
 
 7
-00:00:24,970 --> 00:00:27,320
+00:00:22,650 --> 00:00:24,560
+If it misses, every wallet gets back exactly what it paid.
+
+8
+00:00:27,390 --> 00:00:29,740
 Seeded in full, or refunded in full.

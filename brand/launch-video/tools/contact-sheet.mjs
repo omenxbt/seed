@@ -15,7 +15,7 @@ const P = (...a) => path.join(proj, ...a);
 fs.mkdirSync(P('out/stills'), { recursive: true });
 
 /* the moment each scene is shown at, read off the story: its state once its motion has settled, just before it leaves */
-const NAME = { title: 'Title card', pmf: 'Product-market fit', target: 'Target, deadline', launch: 'Launch form', buy: 'Buy with', met: 'Raises seed', misses: 'If it misses' };
+const NAME = { fit: 'Product-market fit', title: 'Title card', target: 'Target, deadline', launch: 'Launch form', pair: 'Pair with', buy: 'Buy with', met: 'Raises seed', misses: 'If it misses' };
 const leaves = s => { const a = (s.cam || []).find(k => k.away); return +((a ? a.t : s.out) - 0.25).toFixed(2); };
 const stillsOf = c => c.scenes.flatMap(s =>
   s.kind === 'close' ? [['Seeded in full', +(s.lineOut - 0.3).toFixed(2)], ['End card', +(s.end - FADE.out - 0.3).toFixed(2)]]
