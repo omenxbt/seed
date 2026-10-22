@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
           if (cur === 'minted') { await client.crankPool(r.publicKey); note(`pool ${id}`); cur = 'pooled'; moved = true; }
           if (cur === 'pooled') { await client.crankSeed(r.publicKey); note(`seed ${id}`); moved = true; }
         } catch (e) {
-          const since = Math.max(Number(a.progressAt ?? 0), Number(a.filledAt)) * 1000;   // a raise from before progress_at reads it as 0
+          const prog = Number(a.progressAt ?? 0), filled = Number(a.filledAt), since = (prog >= filled && prog * 1000 <= now ? prog : filled) * 1000;   // a raise from before progress_at reads 0 or leftover bytes: anything outside [filled_at, now] is the fill
           if (!moved && (cur === 'filled' || cur === 'minted') && since + seedTimeoutMs <= now) { await client.timeoutRefund(r.publicKey); note(`timeout ${id} (stalled at ${cur}: ${String((e as Error).message).slice(0, 60)})`); continue; }
           throw e;
         }

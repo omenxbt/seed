@@ -367,7 +367,7 @@ var chain = {
     const ixs = [];
     // the raise settles on chain before the first refund if the crank has not been by yet: a miss, or a seeding that stalled
     // (the timeout counts from the last seeding step, the fill or the mint; a raise the pool already holds is only ever seeded)
-    const step = Object.keys(a.seedStep)[0], since = Math.max(Number(a.filledAt), Number(a.progressAt || 0)), tmo = this.cfg.testMode ? Number(this.cfg.seedTimeout) / 1440 : Number(this.cfg.seedTimeout);
+    const step = Object.keys(a.seedStep)[0], filled = Number(a.filledAt), prog = Number(a.progressAt || 0), since = prog >= filled && prog <= now ? prog : filled, tmo = this.cfg.testMode ? Number(this.cfg.seedTimeout) / 1440 : Number(this.cfg.seedTimeout);   // a progress_at outside [filled_at, now] is an older layout's leftover bytes: the fill counts
     if (st === 'live' && now >= Number(a.endsAt)) ixs.push(await this.program.methods.settle().accounts({ raise }).instruction());
     else if (st === 'filled' && step !== 'pooled' && now >= since + tmo) ixs.push(await this.program.methods.timeoutRefund().accounts({ raise, config: this.pda.config() }).instruction());
     else if (st !== 'refunded') { this.apply(p, a); throw new Error(st === 'seeded' ? 'This raise seeded; there is no refund, the tokens are yours to claim.' : st === 'filled' ? 'This raise is being seeded; there is no refund while seeding is under way.' : 'This raise is still open.'); }

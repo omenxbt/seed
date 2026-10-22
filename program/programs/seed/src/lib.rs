@@ -355,7 +355,8 @@ pub mod seed {
         let now = Clock::get()?.unix_timestamp; let r = &mut ctx.accounts.raise;
         require!(r.status == RaiseStatus::Filled, SeedError::NotFilled);
         require!(r.seed_step != SeedStep::Pooled, SeedError::AlreadyPooled);
-        let since = r.progress_at.max(r.filled_at);   // a raise from before progress_at reads it as 0
+        // a raise from before progress_at reads it as 0, or as leftover bytes of an older layout: anything outside [filled_at, now] is the fill
+        let since = if r.progress_at >= r.filled_at && r.progress_at <= now { r.progress_at } else { r.filled_at };
         require!(now >= since + ctx.accounts.config.span(ctx.accounts.config.seed_timeout), SeedError::TimeoutNotPassed);
         refund(r, RefundReason::Timeout, now)
     }
