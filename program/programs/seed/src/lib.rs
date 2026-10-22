@@ -15,6 +15,7 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::instructions::ID as INSTRUCTIONS_ID;
 use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, SetAuthority, Token, TokenAccount, Transfer};
+use anchor_spl::token_interface::{self, Mint as PairMint, TokenAccount as PairTokenAccount, TokenInterface, TransferChecked};
 use anchor_spl::token::spl_token::instruction::AuthorityType;
 use anchor_spl::metadata::{self, CreateMetadataAccountsV3, mpl_token_metadata::types::DataV2};
 
@@ -55,6 +56,8 @@ pub struct ConfigParams {
     pub test_cap_cents: u64,           // 0 everywhere but a devnet test-mode config (about 3_000, $30)
 }
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
+pub struct PairParams { pub symbol: String, pub feed_id: [u8; 32], pub stable: bool, pub paused: bool }
+#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct ConfigUpdate { pub seed_treasury: Option<Pubkey>, pub attestor: Option<Pubkey> }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -84,8 +87,9 @@ pub mod seed {
 
     /// once. `test_mode` makes a day a minute for deadlines, the seeding timeout, payout changes and unlocks; it is
     /// compiled only into devnet builds (`--features devnet`) and, even there, needs the devnet USDC mint as a witness,
-    /// an account that exists on no other cluster. A mainnet build has no code path that sets it. `min_target_lamports`
-    /// is the smallest raise (81 SOL in production); like the fee it is set here and no instruction changes it after.
+    /// an account that exists on no other cluster. A mainnet build has no code path that sets it. The opening market cap
+    /// presets (`preset_caps_cents`, and a test preset only in test mode) size every raise; like the fee they are set here
+    /// and no instruction changes them after. `min_target_lamports` is unused since 2026-10-20 and kept for the layout.
     pub fn init_config(ctx: Context<InitConfig>, p: ConfigParams) -> Result<()> {
         if p.test_mode {
             #[cfg(not(feature = "devnet"))]
@@ -109,6 +113,49 @@ pub mod seed {
 
     /// the admin may change where Seed's fees go and who signs attestations, nothing else: the fee, the split, the
     /// deadlines and every open raise's terms are out of reach
+    /// the admin allows a pair asset for new raises, or pauses or resumes one: any SPL token (Token or Token-2022) without a
+    /// transfer fee, a transfer hook, a permanent delegate or a non-transferable flag, with the Pyth price account that prices
+    /// it (or `stable` for a dollar). Raises already open in it are untouched. In a devnet build the program's upgrade
+    /// authority may do it too (the devnet config's admin is a browser wallet).
+    pub fn set_pair(ctx: Context<SetPair>, p: PairParams) -> Result<()> {
+        let now = Clock::get()?.unix_timestamp;
+        let signer = ctx.accounts.signer.key();
+        let mut allowed = signer == ctx.accounts.config.admin;
+        #[cfg(feature = "devnet")]
+        if !allowed { if let Some(pd) = &ctx.accounts.program_data { let d = pd.try_borrow_data()?; allowed = d.len() >= 45 && d[0..4] == 3u32.to_le_bytes() && d[12] == 1 && Pubkey::try_from(&d[13..45]).unwrap() == signer; } }
+        require!(allowed, SeedError::NotAdmin);
+        require!(!p.symbol.is_empty() && p.symbol.len() <= MAX_PAIR_SYMBOL, SeedError::BadName);
+        let mint_ai = ctx.accounts.mint.to_account_info();
+        let tp = *mint_ai.owner;
+        require!(tp == token::ID || tp == TOKEN_2022, SeedError::BadPair);
+        if tp == TOKEN_2022 {   // the extensions that would break an escrow, a refund or a pool deposit
+            use anchor_spl::token_2022::spl_token_2022::{extension::{BaseStateWithExtensions, ExtensionType, StateWithExtensions}, state::Mint as Mint22};
+            let d = mint_ai.try_borrow_data()?;
+            let st = StateWithExtensions::<Mint22>::unpack(&d).map_err(|_| SeedError::BadPair)?;
+            let ext = st.get_extension_types().map_err(|_| SeedError::BadPair)?;
+            require!(!ext.iter().any(|e| matches!(e, ExtensionType::TransferFeeConfig | ExtensionType::TransferHook | ExtensionType::PermanentDelegate | ExtensionType::NonTransferable | ExtensionType::ConfidentialTransferMint | ExtensionType::Pausable)), SeedError::PairExtensions);
+        }
+        if !p.stable {   // the feed must be a verified Pyth account carrying this feed id with a fresh price
+            let f = ctx.accounts.feed.as_ref().ok_or(SeedError::BadPairFeed)?;
+            pyth::price_cents(&f.to_account_info(), &p.feed_id, now).map_err(|_| SeedError::BadPairFeed)?;
+        }
+        let a = &mut ctx.accounts.pair;
+        if a.mint == Pubkey::default() { a.mint = ctx.accounts.mint.key(); a.added_at = now; a.bump = ctx.bumps.pair; }
+        a.token_program = tp; a.decimals = ctx.accounts.mint.decimals; a.stable = p.stable; a.paused = p.paused; a.symbol = p.symbol.clone();
+        a.feed = if p.stable { Pubkey::default() } else { ctx.accounts.feed.as_ref().unwrap().key() }; a.feed_id = if p.stable { [0; 32] } else { p.feed_id };
+        emit!(PairSet { mint: a.mint, symbol: p.symbol, stable: p.stable, paused: p.paused, by: signer, at: now });
+        Ok(())
+    }
+
+    /// devnet builds only: the longest deadline, by the program's upgrade authority (production inits with the value it wants)
+    #[cfg(feature = "devnet")]
+    pub fn devnet_set_max_deadline(ctx: Context<DevnetPatch>, max_deadline: i64) -> Result<()> {
+        { let d = ctx.accounts.program_data.try_borrow_data()?; require!(d.len() >= 45 && d[0..4] == 3u32.to_le_bytes() && d[12] == 1 && Pubkey::try_from(&d[13..45]).unwrap() == ctx.accounts.authority.key(), SeedError::NotAdmin); }
+        require!(max_deadline > ctx.accounts.config.min_deadline, SeedError::BadConfig);
+        ctx.accounts.config.max_deadline = max_deadline;
+        Ok(())
+    }
+
     pub fn update_config(ctx: Context<AdminConfig>, u: ConfigUpdate) -> Result<()> {
         let c = &mut ctx.accounts.config;
         if let Some(t) = u.seed_treasury { c.seed_treasury = t; }
@@ -199,18 +246,27 @@ pub mod seed {
         require!(p.uri.starts_with("ar://") || p.uri.starts_with("https://arweave.net/") || p.uri.starts_with("https://gateway.irys.xyz/"), SeedError::BadUri);
         require!(p.deadline >= c.span(c.min_deadline) && p.deadline <= c.span(c.max_deadline), SeedError::BadDeadline);
         let pair = ctx.accounts.pair_mint.key();
-        require!(pair == WSOL || pair == USDC || pair == USDC_DEVNET, SeedError::BadPair);
         require!(p.max_buy == 0 || p.min_buy <= p.max_buy, SeedError::BadLimits);
+        // the pair asset's price and decimals: SOL from the config's Pyth feed, USDC a dollar, anything else from the admin's
+        // allowlist (its own Pyth feed, or a dollar when stable), paused pairs refused for new raises
+        let (price_cents, decimals, sol_usd_cents) = if pair == WSOL { let c = pyth::sol_usd_cents(&ctx.accounts.sol_feed.to_account_info(), now)?; (c, 9u8, c) }
+            else if pair == USDC || pair == USDC_DEVNET { (100u64, 6u8, 0u64) }
+            else {
+                let a = ctx.accounts.pair.as_ref().ok_or(SeedError::BadPair)?;
+                require!(a.mint == pair, SeedError::BadPair); require!(!a.paused, SeedError::PairPaused);
+                require!(*ctx.accounts.pair_mint.to_account_info().owner == a.token_program, SeedError::BadPair);
+                let c = if a.stable { 100 } else { let f = ctx.accounts.pair_feed.as_ref().ok_or(SeedError::BadPairFeed)?; require!(f.key() == a.feed, SeedError::BadPairFeed); pyth::price_cents(&f.to_account_info(), &a.feed_id, now)? };
+                (c, a.decimals, c)
+            };
         // the raise is derived, never typed: the opening market cap is one of the config's presets, the target is
-        // cap × (1 − team share) ÷ 2, priced in the pair asset at today's SOL price (refused when stale); math::derive_target
+        // cap × (1 − team share) ÷ 2, priced in the pair asset at today's price (refused when stale); math::derive_target
         let cap = c.cap_for(p.preset).ok_or(SeedError::BadPreset)?;
-        let cents = pyth::sol_usd_cents(&ctx.accounts.sol_feed.to_account_info(), now)?;
-        let (target, target_usd_cents, sol_usd_cents) = math::derive_target(cap, p.team_bps, pair == WSOL, cents)?;
+        let (target, target_usd_cents) = math::derive_target(cap, p.team_bps, decimals, price_cents)?;
         // the team share and its unlocks: any share under 100%, all at seeding or any schedule, as long as it adds up to
         // exactly 100% of the share and its dates increase (math::check_schedule); no minimum length and no maximum
         math::check_schedule(p.team_bps, &p.schedule, p.even.as_ref())?;
 
-        anchor_spl::associated_token::create(CpiContext::new(ctx.accounts.associated_token_program.to_account_info(), anchor_spl::associated_token::Create { payer: ctx.accounts.founder.to_account_info(), associated_token: ctx.accounts.escrow.to_account_info(), authority: ctx.accounts.raise.to_account_info(), mint: ctx.accounts.pair_mint.to_account_info(), system_program: ctx.accounts.system_program.to_account_info(), token_program: ctx.accounts.token_program.to_account_info() }))?;
+        anchor_spl::associated_token::create(CpiContext::new(ctx.accounts.associated_token_program.to_account_info(), anchor_spl::associated_token::Create { payer: ctx.accounts.founder.to_account_info(), associated_token: ctx.accounts.escrow.to_account_info(), authority: ctx.accounts.raise.to_account_info(), mint: ctx.accounts.pair_mint.to_account_info(), system_program: ctx.accounts.system_program.to_account_info(), token_program: ctx.accounts.pair_token_program.to_account_info() }))?;
         let r = &mut ctx.accounts.raise;
         r.founder = founder; r.nonce = p.nonce; r.x_handle_hash = p.x.as_ref().map(|x| x.handle_hash); r.pair_mint = pair;
         r.target = target; r.target_usd_cents = target_usd_cents; r.sol_usd_cents = sol_usd_cents; r.time_unit = c.unit();
@@ -256,7 +312,7 @@ pub mod seed {
         require!(r.min_buy == 0 || amount >= r.min_buy || amount == room, SeedError::UnderMinBuy);   // the buy that fills the raise may be smaller
         let max_buy = r.max_buy;
         let fee = math::mul_div_ceil(amount, r.fee_bps as u64, BPS).ok_or(SeedError::Overflow)?;
-        token::transfer(CpiContext::new(ctx.accounts.token_program.to_account_info(), Transfer { from: ctx.accounts.wallet_token.to_account_info(), to: ctx.accounts.escrow.to_account_info(), authority: ctx.accounts.wallet.to_account_info() }), amount + fee)?;
+        token_interface::transfer_checked(CpiContext::new(ctx.accounts.token_program.to_account_info(), TransferChecked { from: ctx.accounts.wallet_token.to_account_info(), mint: ctx.accounts.pair_mint.to_account_info(), to: ctx.accounts.escrow.to_account_info(), authority: ctx.accounts.wallet.to_account_info() }), amount + fee, ctx.accounts.pair_mint.decimals)?;
         // the contribution record: created on the wallet's first buy, added to after
         let raise_key = r.key(); let wallet_key = ctx.accounts.wallet.key(); let ca = ctx.accounts.contribution.to_account_info();
         let mut c = if ca.data_is_empty() {
@@ -306,7 +362,7 @@ pub mod seed {
         require!(r.status == RaiseStatus::Refunded, SeedError::NotRefunded);
         let back = c.amount + c.fee; require!(back > 0, SeedError::NothingToClaim);
         let seeds: &[&[u8]] = &[RAISE_SEED, r.founder.as_ref(), &r.nonce.to_le_bytes(), &[r.bump]];
-        token::transfer(CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), Transfer { from: ctx.accounts.escrow.to_account_info(), to: ctx.accounts.wallet_token.to_account_info(), authority: r.to_account_info() }, &[seeds]), back)?;
+        token_interface::transfer_checked(CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), TransferChecked { from: ctx.accounts.escrow.to_account_info(), mint: ctx.accounts.pair_mint.to_account_info(), to: ctx.accounts.wallet_token.to_account_info(), authority: r.to_account_info() }, &[seeds]), back, ctx.accounts.pair_mint.decimals)?;
         emit!(RefundClaimed { raise: r.key(), wallet: ctx.accounts.wallet.key(), amount: back, at: now });
         Ok(())
     }
@@ -329,10 +385,11 @@ pub mod seed {
         // the vaults: the backers' at the raise's ATA, the pool's and the team's at fixed PDAs. The pool vault and the pair
         // stage belong to the pool payer PDA, because DAMM's `payer` both pays the pool's rent and signs the deposits into it
         anchor_spl::associated_token::create(CpiContext::new(ai.associated_token_program.to_account_info(), anchor_spl::associated_token::Create { payer: payer.clone(), associated_token: ai.backers_vault.to_account_info(), authority: auth.clone(), mint: mint.clone(), system_program: sp.clone(), token_program: tp.clone() }))?;
+        // the stage: the pool payer's associated token account for the pair asset, under the pair's own program (Token-2022 for a tokenized stock)
+        anchor_spl::associated_token::create_idempotent(CpiContext::new(ai.associated_token_program.to_account_info(), anchor_spl::associated_token::Create { payer: payer.clone(), associated_token: ai.stage.to_account_info(), authority: pool_payer.clone(), mint: ai.pair_mint.to_account_info(), system_program: sp.clone(), token_program: ai.pair_token_program.to_account_info() }))?;
         for (vault, seed, bump, of, owner) in [
             (ai.pool_vault.to_account_info(), b"pool".as_ref(), ctx.bumps.pool_vault, mint.clone(), pool_payer.clone()),
             (ai.team_vault.to_account_info(), b"team".as_ref(), ctx.bumps.team_vault, mint.clone(), auth.clone()),
-            (ai.stage.to_account_info(), b"stage".as_ref(), ctx.bumps.stage, ai.pair_mint.to_account_info(), pool_payer),
         ] {
             let vs: &[&[u8]] = &[seed, raise_key.as_ref(), &[bump]];
             anchor_lang::system_program::create_account(CpiContext::new_with_signer(sp.clone(), anchor_lang::system_program::CreateAccount { from: payer.clone(), to: vault.clone() }, &[vs]), rent.minimum_balance(TokenAccount::LEN), TokenAccount::LEN as u64, &token::ID)?;
@@ -375,6 +432,7 @@ pub mod seed {
         };
         let ai = &ctx.accounts;
         let (raise_ai, tp, sp, prog, ev) = (ai.raise.to_account_info(), ai.token_program.to_account_info(), ai.system_program.to_account_info(), ai.cp_amm_program.to_account_info(), ai.damm_event_authority.to_account_info());
+        let ptp = ai.pair_token_program.to_account_info(); let pair_dec = ai.pair_mint.decimals;
         let (cranker, pool_payer, stage) = (ai.cranker.to_account_info(), ai.pool_payer.to_account_info(), ai.stage.to_account_info());
         let raise_key = ai.raise.key();
         let ps: &[&[u8]] = &[b"payer", raise_key.as_ref(), &[ctx.bumps.pool_payer]];
@@ -382,14 +440,14 @@ pub mod seed {
         // DAMM's payer pays the pool's rent and signs the deposits, so it is the pool payer PDA, which owns the pool vault and
         // the stage: the raise is the pool's creator and the position's owner. The pair side moves from the escrow to the stage
         // first; the cranker fronts the rent and gets the change back after
-        token::transfer(CpiContext::new_with_signer(tp.clone(), Transfer { from: ai.escrow.to_account_info(), to: stage.clone(), authority: raise_ai.clone() }, signer), b)?;
+        token_interface::transfer_checked(CpiContext::new_with_signer(ptp.clone(), TransferChecked { from: ai.escrow.to_account_info(), mint: ai.pair_mint.to_account_info(), to: stage.clone(), authority: raise_ai.clone() }, signer), b, pair_dec)?;
         let fronted = POOL_RENT_FRONT;
         anchor_lang::system_program::transfer(CpiContext::new(sp.clone(), anchor_lang::system_program::Transfer { from: cranker.clone(), to: pool_payer.clone() }), fronted)?;
         damm::initialize_customizable_pool(damm::InitPoolAccounts {
             creator: &raise_ai, position_nft_mint: &ai.position_nft_mint.to_account_info(), position_nft_account: &ai.position_nft_account.to_account_info(), payer: &pool_payer,
             pool_authority: &ai.pool_authority.to_account_info(), pool: &ai.pool.to_account_info(), position: &ai.position.to_account_info(), token_a_mint: &ai.mint.to_account_info(), token_b_mint: &ai.pair_mint.to_account_info(),
             token_a_vault: &ai.token_a_vault.to_account_info(), token_b_vault: &ai.token_b_vault.to_account_info(), payer_token_a: &ai.pool_vault.to_account_info(), payer_token_b: &stage,
-            token_a_program: &tp, token_b_program: &tp, token_2022_program: &ai.token_2022_program.to_account_info(), system_program: &sp, event_authority: &ev, program: &prog,
+            token_a_program: &tp, token_b_program: &ptp, token_2022_program: &ai.token_2022_program.to_account_info(), system_program: &sp, event_authority: &ev, program: &prog,
         }, params, both)?;
         damm::permanent_lock_position(damm::LockAccounts { pool: &ai.pool.to_account_info(), position: &ai.position.to_account_info(), position_nft_account: &ai.position_nft_account.to_account_info(), signer: &raise_ai, event_authority: &ev, program: &prog }, liquidity, signer)?;
         // the change: whatever rent DAMM did not take goes back to the cranker, and any pair dust the deposit rounded off goes back to the escrow
@@ -397,7 +455,7 @@ pub mod seed {
         if left > 0 { anchor_lang::system_program::transfer(CpiContext::new_with_signer(sp.clone(), anchor_lang::system_program::Transfer { from: pool_payer.clone(), to: cranker.clone() }, &[ps]), left)?; }
         ctx.accounts.stage.reload()?;
         let dust = ctx.accounts.stage.amount;
-        if dust > 0 { token::transfer(CpiContext::new_with_signer(tp.clone(), Transfer { from: stage.clone(), to: ctx.accounts.escrow.to_account_info(), authority: pool_payer.clone() }, &[ps]), dust)?; }
+        if dust > 0 { token_interface::transfer_checked(CpiContext::new_with_signer(ptp.clone(), TransferChecked { from: stage.clone(), mint: ctx.accounts.pair_mint.to_account_info(), to: ctx.accounts.escrow.to_account_info(), authority: pool_payer.clone() }, &[ps]), dust, pair_dec)?; }
         let r = &mut ctx.accounts.raise;
         r.pool = ctx.accounts.pool.key(); r.position = ctx.accounts.position.key(); r.position_nft_mint = ctx.accounts.position_nft_mint.key(); r.seed_step = SeedStep::Pooled;
         emit!(RaisePooled { raise: r.key(), pool: r.pool, position: r.position, at: now });
@@ -414,7 +472,7 @@ pub mod seed {
         // everything left in the escrow: the 1% fee, plus the few units of the pair asset the pool deposit rounded off
         // (sent back from the stage at step 2); from here on the escrow holds trading fees only
         let fees = ctx.accounts.escrow.amount;
-        if fees > 0 { token::transfer(CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), Transfer { from: ctx.accounts.escrow.to_account_info(), to: ctx.accounts.treasury_token.to_account_info(), authority: r.to_account_info() }, &[seeds]), fees)?; }
+        if fees > 0 { token_interface::transfer_checked(CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), TransferChecked { from: ctx.accounts.escrow.to_account_info(), mint: ctx.accounts.pair_mint.to_account_info(), to: ctx.accounts.treasury_token.to_account_info(), authority: r.to_account_info() }, &[seeds]), fees, ctx.accounts.pair_mint.decimals)?; }
         let r = &mut ctx.accounts.raise;
         r.fees_held = 0; r.status = RaiseStatus::Seeded; r.seed_step = SeedStep::Seeded; r.seeded_at = now;
         emit!(RaiseSeeded { raise: r.key(), at: now });
@@ -441,18 +499,18 @@ pub mod seed {
         require!(r.status == RaiseStatus::Seeded, SeedError::NotSeeded);
         let seeds: &[&[u8]] = &[RAISE_SEED, r.founder.as_ref(), &r.nonce.to_le_bytes(), &[r.bump]];
         let signer = &[seeds];
-        let ai = &ctx.accounts; let tp = ai.token_program.to_account_info();
+        let ai = &ctx.accounts; let tp = ai.token_program.to_account_info(); let ptp = ai.pair_token_program.to_account_info(); let pair_dec = ai.pair_mint.decimals;
         damm::claim_position_fee(damm::ClaimFeeAccounts {
             pool_authority: &ai.pool_authority.to_account_info(), pool: &ai.pool.to_account_info(), position: &ai.position.to_account_info(), token_a_account: &ai.pool_vault.to_account_info(), token_b_account: &ai.escrow.to_account_info(),
             token_a_vault: &ai.token_a_vault.to_account_info(), token_b_vault: &ai.token_b_vault.to_account_info(), token_a_mint: &ai.mint.to_account_info(), token_b_mint: &ai.pair_mint.to_account_info(), position_nft_account: &ai.position_nft_account.to_account_info(),
-            signer: &ai.raise.to_account_info(), token_a_program: &tp, token_b_program: &tp, event_authority: &ai.damm_event_authority.to_account_info(), program: &ai.cp_amm_program.to_account_info(),
+            signer: &ai.raise.to_account_info(), token_a_program: &tp, token_b_program: &ptp, event_authority: &ai.damm_event_authority.to_account_info(), program: &ai.cp_amm_program.to_account_info(),
         }, signer)?;
         ctx.accounts.escrow.reload()?;
         let total = ctx.accounts.escrow.amount;   // after seeding the escrow holds only fees
         require!(total > 0, SeedError::NothingToClaim);
         let founder = math::mul_div(total, r.creator_share_bps as u64, BPS).ok_or(SeedError::Overflow)?; let seed = total - founder;
-        if founder > 0 { token::transfer(CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), Transfer { from: ctx.accounts.escrow.to_account_info(), to: ctx.accounts.payout_token.to_account_info(), authority: r.to_account_info() }, signer), founder)?; }
-        if seed > 0 { token::transfer(CpiContext::new_with_signer(ctx.accounts.token_program.to_account_info(), Transfer { from: ctx.accounts.escrow.to_account_info(), to: ctx.accounts.treasury_token.to_account_info(), authority: r.to_account_info() }, signer), seed)?; }
+        if founder > 0 { token_interface::transfer_checked(CpiContext::new_with_signer(ptp.clone(), TransferChecked { from: ctx.accounts.escrow.to_account_info(), mint: ctx.accounts.pair_mint.to_account_info(), to: ctx.accounts.payout_token.to_account_info(), authority: r.to_account_info() }, signer), founder, pair_dec)?; }
+        if seed > 0 { token_interface::transfer_checked(CpiContext::new_with_signer(ptp.clone(), TransferChecked { from: ctx.accounts.escrow.to_account_info(), mint: ctx.accounts.pair_mint.to_account_info(), to: ctx.accounts.treasury_token.to_account_info(), authority: r.to_account_info() }, signer), seed, pair_dec)?; }
         emit!(FeesClaimed { raise: r.key(), by: ctx.accounts.cranker.key(), founder, seed, at: now });
         Ok(())
     }
@@ -559,6 +617,29 @@ pub struct AdminConfig<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(p: PairParams)]
+pub struct SetPair<'info> {
+    #[account(seeds = [CONFIG_SEED], bump = config.bump)] pub config: Box<Account<'info, Config>>,
+    #[account(mut)] pub signer: Signer<'info>,
+    /// CHECK: this program's ProgramData, read raw, for a devnet build's upgrade authority; None on mainnet
+    pub program_data: Option<UncheckedAccount<'info>>,
+    pub mint: Box<InterfaceAccount<'info, PairMint>>,
+    /// CHECK: the Pyth price account for this asset (parsed and checked in the handler); None for a stable
+    pub feed: Option<UncheckedAccount<'info>>,
+    #[account(init_if_needed, payer = signer, space = 8 + PairAsset::INIT_SPACE, seeds = [PAIR_SEED, mint.key().as_ref()], bump)] pub pair: Box<Account<'info, PairAsset>>,
+    pub system_program: Program<'info, System>,
+}
+
+#[cfg(feature = "devnet")]
+#[derive(Accounts)]
+pub struct DevnetPatch<'info> {
+    #[account(mut, seeds = [CONFIG_SEED], bump = config.bump)] pub config: Account<'info, Config>,
+    pub authority: Signer<'info>,
+    /// CHECK: this program's ProgramData account, read raw
+    #[account(seeds = [crate::ID.as_ref()], bump, seeds::program = anchor_lang::solana_program::bpf_loader_upgradeable::ID)] pub program_data: UncheckedAccount<'info>,
+}
+
+#[derive(Accounts)]
 pub struct AcceptAdmin<'info> {
     #[account(mut, seeds = [CONFIG_SEED], bump = config.bump)] pub config: Account<'info, Config>,
     pub new_admin: Signer<'info>,
@@ -594,7 +675,13 @@ pub struct OpenRaise<'info> {
     #[account(init, payer = founder, space = 8 + Raise::INIT_SPACE, seeds = [RAISE_SEED, founder.key().as_ref(), &p.nonce.to_le_bytes()], bump)]
     pub raise: Box<Account<'info, Raise>>,
     #[account(mut)] pub founder: Signer<'info>,
-    pub pair_mint: Box<Account<'info, Mint>>,
+    pub pair_mint: Box<InterfaceAccount<'info, PairMint>>,
+    /// the pair asset's token program: Token, or Token-2022 for a tokenized stock
+    pub pair_token_program: Interface<'info, TokenInterface>,
+    /// the allowlist entry for a pair other than SOL or USDC, at ["pair", mint]
+    #[account(seeds = [PAIR_SEED, pair_mint.key().as_ref()], bump = pair.bump)] pub pair: Option<Box<Account<'info, PairAsset>>>,
+    /// CHECK: that pair's Pyth price account, the one the entry names; parsed in pyth.rs
+    pub pair_feed: Option<UncheckedAccount<'info>>,
     /// CHECK: the escrow for buys, the raise PDA's associated token account for the pair asset; created here
     #[account(mut)] pub escrow: UncheckedAccount<'info>,
     /// CHECK: must not exist; admin_flag_fraud creates it for a blacklisted founder wallet
@@ -626,9 +713,10 @@ pub struct Contribute<'info> {
     /// CHECK: the wallet's contribution record at seeds ["contrib", raise, wallet]; created on the first buy, read after
     #[account(mut, seeds = [CONTRIB_SEED, raise.key().as_ref(), wallet.key().as_ref()], bump)] pub contribution: UncheckedAccount<'info>,
     #[account(mut)] pub wallet: Signer<'info>,
-    #[account(mut, token::mint = raise.pair_mint, token::authority = wallet)] pub wallet_token: Account<'info, TokenAccount>,
-    #[account(mut, associated_token::mint = raise.pair_mint, associated_token::authority = raise)] pub escrow: Account<'info, TokenAccount>,
-    pub token_program: Program<'info, Token>,
+    #[account(address = raise.pair_mint @ SeedError::WrongAccount)] pub pair_mint: Box<InterfaceAccount<'info, PairMint>>,
+    #[account(mut, token::mint = pair_mint, token::authority = wallet, token::token_program = token_program)] pub wallet_token: Box<InterfaceAccount<'info, PairTokenAccount>>,
+    #[account(mut, associated_token::mint = pair_mint, associated_token::authority = raise, associated_token::token_program = token_program)] pub escrow: Box<InterfaceAccount<'info, PairTokenAccount>>,
+    pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
 
@@ -654,9 +742,10 @@ pub struct ClaimRefund<'info> {
     #[account(mut, close = wallet, seeds = [CONTRIB_SEED, raise.key().as_ref(), wallet.key().as_ref()], bump = contribution.bump, has_one = wallet, has_one = raise)]
     pub contribution: Account<'info, Contribution>,
     #[account(mut)] pub wallet: Signer<'info>,
-    #[account(mut, token::mint = raise.pair_mint, token::authority = wallet)] pub wallet_token: Account<'info, TokenAccount>,
-    #[account(mut, associated_token::mint = raise.pair_mint, associated_token::authority = raise)] pub escrow: Account<'info, TokenAccount>,
-    pub token_program: Program<'info, Token>,
+    #[account(address = raise.pair_mint @ SeedError::WrongAccount)] pub pair_mint: Box<InterfaceAccount<'info, PairMint>>,
+    #[account(mut, token::mint = pair_mint, token::authority = wallet, token::token_program = token_program)] pub wallet_token: Box<InterfaceAccount<'info, PairTokenAccount>>,
+    #[account(mut, associated_token::mint = pair_mint, associated_token::authority = raise, associated_token::token_program = token_program)] pub escrow: Box<InterfaceAccount<'info, PairTokenAccount>>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(Accounts)]
@@ -671,11 +760,14 @@ pub struct CrankMint<'info> {
     #[account(mut, seeds = [b"pool", raise.key().as_ref()], bump)] pub pool_vault: UncheckedAccount<'info>,
     /// CHECK: the team's tokens; created here at seeds ["team", raise]
     #[account(mut, seeds = [b"team", raise.key().as_ref()], bump)] pub team_vault: UncheckedAccount<'info>,
-    #[account(address = raise.pair_mint @ SeedError::WrongAccount)] pub pair_mint: Account<'info, Mint>,
-    /// CHECK: the pair tokens going into the pool wait here; created at seeds ["stage", raise], owned by the pool payer
-    #[account(mut, seeds = [b"stage", raise.key().as_ref()], bump)] pub stage: UncheckedAccount<'info>,
+    #[account(address = raise.pair_mint @ SeedError::WrongAccount)] pub pair_mint: Box<InterfaceAccount<'info, PairMint>>,
+    /// CHECK: the pair tokens going into the pool wait here: the pool payer's associated token account for the pair asset,
+    /// under the pair's token program; created here
+    #[account(mut)] pub stage: UncheckedAccount<'info>,
     /// CHECK: a PDA with no data that owns the pool vault and the stage and is DAMM's payer; seeds ["payer", raise]
     #[account(seeds = [b"payer", raise.key().as_ref()], bump)] pub pool_payer: UncheckedAccount<'info>,
+    /// the pair asset's token program
+    pub pair_token_program: Interface<'info, TokenInterface>,
     #[account(seeds = [META_SEED, raise.key().as_ref()], bump = raise_meta.bump)] pub raise_meta: Account<'info, RaiseMeta>,
     /// CHECK: Token Metadata's PDA for the mint; the metadata program derives and checks it
     #[account(mut)] pub metadata: UncheckedAccount<'info>,
@@ -692,12 +784,15 @@ pub struct CrankPool<'info> {
     #[account(seeds = [CONFIG_SEED], bump = config.bump)] pub config: Box<Account<'info, Config>>,
     #[account(mut)] pub cranker: Signer<'info>,
     pub mint: Box<Account<'info, Mint>>,
-    pub pair_mint: Box<Account<'info, Mint>>,
+    pub pair_mint: Box<InterfaceAccount<'info, PairMint>>,
     #[account(mut, seeds = [b"pool", raise.key().as_ref()], bump)] pub pool_vault: Box<Account<'info, TokenAccount>>,
-    #[account(mut, associated_token::mint = pair_mint, associated_token::authority = raise)] pub escrow: Box<Account<'info, TokenAccount>>,
-    #[account(mut, seeds = [b"stage", raise.key().as_ref()], bump)] pub stage: Box<Account<'info, TokenAccount>>,
+    #[account(mut, associated_token::mint = pair_mint, associated_token::authority = raise, associated_token::token_program = pair_token_program)] pub escrow: Box<InterfaceAccount<'info, PairTokenAccount>>,
+    /// the pair side of the deposit, staged in the pool payer's associated token account (made at step 1)
+    #[account(mut, associated_token::mint = pair_mint, associated_token::authority = pool_payer, associated_token::token_program = pair_token_program)] pub stage: Box<InterfaceAccount<'info, PairTokenAccount>>,
     /// CHECK: the dataless PDA that owns the pool vault and the stage and pays DAMM; seeds ["payer", raise]
     #[account(mut, seeds = [b"payer", raise.key().as_ref()], bump)] pub pool_payer: UncheckedAccount<'info>,
+    /// the pair asset's token program
+    pub pair_token_program: Interface<'info, TokenInterface>,
     /// the position NFT's mint: a fresh keypair the cranker signs with
     #[account(mut)] pub position_nft_mint: Signer<'info>,
     /// CHECK: DAMM creates it at its PDA, owned by the raise
@@ -726,9 +821,10 @@ pub struct CrankPool<'info> {
 pub struct CrankSeed<'info> {
     #[account(mut)] pub raise: Account<'info, Raise>,
     #[account(seeds = [CONFIG_SEED], bump = config.bump)] pub config: Account<'info, Config>,
-    #[account(mut, associated_token::mint = raise.pair_mint, associated_token::authority = raise)] pub escrow: Account<'info, TokenAccount>,
-    #[account(mut, token::mint = raise.pair_mint, constraint = treasury_token.owner == config.seed_treasury @ SeedError::WrongAccount)] pub treasury_token: Account<'info, TokenAccount>,
-    pub token_program: Program<'info, Token>,
+    #[account(address = raise.pair_mint @ SeedError::WrongAccount)] pub pair_mint: Box<InterfaceAccount<'info, PairMint>>,
+    #[account(mut, associated_token::mint = pair_mint, associated_token::authority = raise, associated_token::token_program = token_program)] pub escrow: Box<InterfaceAccount<'info, PairTokenAccount>>,
+    #[account(mut, token::mint = pair_mint, token::token_program = token_program, constraint = treasury_token.owner == config.seed_treasury @ SeedError::WrongAccount)] pub treasury_token: Box<InterfaceAccount<'info, PairTokenAccount>>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 #[derive(Accounts)]
@@ -750,13 +846,15 @@ pub struct ClaimCreatorFees<'info> {
     #[account(seeds = [CONFIG_SEED], bump = config.bump)] pub config: Box<Account<'info, Config>>,
     #[account(mut)] pub cranker: Signer<'info>,
     pub mint: Box<Account<'info, Mint>>,
-    pub pair_mint: Box<Account<'info, Mint>>,
+    pub pair_mint: Box<InterfaceAccount<'info, PairMint>>,
     #[account(mut, seeds = [b"pool", raise.key().as_ref()], bump)] pub pool_vault: Box<Account<'info, TokenAccount>>,
-    #[account(mut, associated_token::mint = pair_mint, associated_token::authority = raise)] pub escrow: Box<Account<'info, TokenAccount>>,
+    #[account(mut, associated_token::mint = pair_mint, associated_token::authority = raise, associated_token::token_program = pair_token_program)] pub escrow: Box<InterfaceAccount<'info, PairTokenAccount>>,
     /// CHECK: the payout wallet as the raise names it
     #[account(address = raise.payout_wallet @ SeedError::WrongAccount)] pub payout_wallet: UncheckedAccount<'info>,
-    #[account(mut, associated_token::mint = pair_mint, associated_token::authority = payout_wallet)] pub payout_token: Box<Account<'info, TokenAccount>>,
-    #[account(mut, token::mint = pair_mint, constraint = treasury_token.owner == config.seed_treasury @ SeedError::WrongAccount)] pub treasury_token: Box<Account<'info, TokenAccount>>,
+    #[account(mut, associated_token::mint = pair_mint, associated_token::authority = payout_wallet, associated_token::token_program = pair_token_program)] pub payout_token: Box<InterfaceAccount<'info, PairTokenAccount>>,
+    #[account(mut, token::mint = pair_mint, token::token_program = pair_token_program, constraint = treasury_token.owner == config.seed_treasury @ SeedError::WrongAccount)] pub treasury_token: Box<InterfaceAccount<'info, PairTokenAccount>>,
+    /// the pair asset's token program
+    pub pair_token_program: Interface<'info, TokenInterface>,
     /// CHECK: DAMM's fixed pool authority
     #[account(address = DAMM_POOL_AUTHORITY)] pub pool_authority: UncheckedAccount<'info>,
     /// CHECK: checked against the raise

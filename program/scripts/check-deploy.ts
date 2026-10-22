@@ -1,6 +1,7 @@
 // The deploy check: reads the live Config and the program account on a cluster and refuses to report success unless they
-// carry the terms the profile demands. Production is 81 SOL and 125 bps (and 100 bps on buys, 70/30, no test mode); staging
-// may carry a lower minimum; devnet is the test-mode config. Exit code 0 only on success, so a deploy script can gate on it.
+// carry the terms the profile demands. Production is the four opening market cap presets ($50K, $100K, $150K, $200K), no
+// test preset, 125 bps on the pool, 100 bps on buys, 70/30 and no test mode; staging carries small presets of its own;
+// devnet is the test-mode config with its $30 test preset. Exit code 0 only on success, so a deploy script can gate on it.
 //   npx ts-node -P tsconfig.json scripts/check-deploy.ts production|staging|devnet <rpc url> [program id]
 import * as anchor from '@coral-xyz/anchor';
 import { web3 } from '@coral-xyz/anchor';
@@ -28,7 +29,9 @@ const BPF_UPGRADEABLE = new web3.PublicKey('BPFLoaderUpgradeab1e1111111111111111
     if (!(c.presetCapsCents as any[]).every((x: any, i: number, a: any[]) => Number(x) > 0 && (i === 0 || Number(x) > Number(a[i - 1])))) failures.push('presets must be set and ascending');
     console.log(`${profile} ${pid.toBase58()} on ${rpc.replace(/api-key=[^&]+/, 'api-key=…')}`);
     console.log(`  presets ${(c.presetCapsCents as any[]).map((x: any) => '$' + (Number(x) / 100).toLocaleString('en-US')).join(' · ')}${Number(c.testCapCents) ? ` · test preset $${Number(c.testCapCents) / 100}` : ''} · pool fee ${c.poolFeeBps} bps · buy fee ${c.feeBps} bps · founder share ${c.creatorShareBps / 100}% · test mode ${c.testMode}`);
-    console.log(`  admin ${c.admin.toBase58()} · treasury ${c.seedTreasury.toBase58()} · attestor ${c.attestor.toBase58()} · price feed ${c.solFeed.toBase58()}`);
+    console.log(`  admin ${c.admin.toBase58()} · treasury ${c.seedTreasury.toBase58()} · attestor ${c.attestor.toBase58()} · price feed ${c.solFeed.toBase58()} · deadline ${Number(c.minDeadline) / 3600}h to ${Number(c.maxDeadline) / 86400}d`);
+    const pairs: any[] = await (program.account as any).pairAsset.all().catch(() => []);
+    console.log(`  allowed pairs: SOL, USDC${pairs.map((x: any) => `, ${x.account.symbol}${x.account.paused ? ' (paused)' : ''}${x.account.stable ? ' ($1)' : ''}`).join('')}`);
   }
   // the program account: who may upgrade it (production: the Squads multisig; never a hot wallet)
   const programData = web3.PublicKey.findProgramAddressSync([pid.toBuffer()], BPF_UPGRADEABLE)[0];

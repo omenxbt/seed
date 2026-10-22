@@ -71,14 +71,38 @@ var chain = {
   },
   ata(owner, mint, tokenProgram = PROG.TOKEN) { return this.find([owner.toBytes(), this.pk(tokenProgram).toBytes(), mint.toBytes()], this.pk(PROG.ATA)); },
   /* the few SPL instructions the flows need, built by hand (no token library in the browser) */
-  ixAtaIdem(payer, ata, owner, mint) {
+  ixAtaIdem(payer, ata, owner, mint, tokenProgram = this.pk(PROG.TOKEN)) {
     const k = (p, s, w) => ({ pubkey: p, isSigner: s, isWritable: w });
-    return new this.w.TransactionInstruction({ programId: this.pk(PROG.ATA), data: Uint8Array.of(1), keys: [k(payer, true, true), k(ata, false, true), k(owner, false, false), k(mint, false, false), k(this.pk(PROG.SYSTEM), false, false), k(this.pk(PROG.TOKEN), false, false)] });
+    return new this.w.TransactionInstruction({ programId: this.pk(PROG.ATA), data: Uint8Array.of(1), keys: [k(payer, true, true), k(ata, false, true), k(owner, false, false), k(mint, false, false), k(this.pk(PROG.SYSTEM), false, false), k(tokenProgram, false, false)] });
   },
   ixSync(ata) { return new this.w.TransactionInstruction({ programId: this.pk(PROG.TOKEN), data: Uint8Array.of(17), keys: [{ pubkey: ata, isSigner: false, isWritable: true }] }); },
   ixClose(ata, dest, owner) { return new this.w.TransactionInstruction({ programId: this.pk(PROG.TOKEN), data: Uint8Array.of(9), keys: [{ pubkey: ata, isSigner: false, isWritable: true }, { pubkey: dest, isSigner: false, isWritable: true }, { pubkey: owner, isSigner: true, isWritable: false }] }); },
   units(p, amount) { return new this.lib.BN(Math.round(amount * 10 ** PAIR_DP[p.q]).toString()); },
-  pairMint(p) { return this.pk(SEED.pairMints[p.q]); },
+  pairMint(p) { const m = SEED.pairMints[p.q] || (this.registry[p.q] && this.registry[p.q].mint); if (!m) throw new Error(`Unknown pair asset ${p.q}.`); return this.pk(m); },
+  pairProgram(p) { const r = this.registry[p.q]; return this.pk(r ? r.tokenProgram : PROG.TOKEN); },   // Token-2022 for a tokenized stock, Token otherwise
+  registry: {},   // by symbol: { mint, decimals, tokenProgram, stable, paused, feed }
+  /* the admin's pair allowlist, read once: each entry becomes an asset the Launch form offers and the page can price in */
+  async loadPairs() {
+    if (!(await this.init()) || this.pairsAt) return this.registry; this.pairsAt = Date.now();
+    try {
+      const all = await this.program.account.pairAsset.all();
+      for (const { account: a } of all) {
+        const sym = String(a.symbol), mint = a.mint.toBase58();
+        this.registry[sym] = { mint, decimals: a.decimals, tokenProgram: a.tokenProgram.toBase58(), stable: !!a.stable, paused: !!a.paused, feed: a.feed.toBase58(), addedAt: Number(a.addedAt) * 1000 };
+        PAIR_DP[sym] = a.decimals; SEED.pairMints[sym] = mint;
+        if (!ASSETS[sym]) ASSETS[sym] = { sym, mint, dp: a.decimals >= 6 ? 2 : a.decimals, decimals: a.decimals, chips: a.stable ? [10, 50, 250] : [0.5, 2, 10], verified: true, allowed: true, paused: !!a.paused };
+        else Object.assign(ASSETS[sym], { allowed: true, paused: !!a.paused, decimals: a.decimals });
+      }
+    } catch (e) { console.warn('pairs not read:', e.message); }
+    return this.registry;
+  },
+  /* the admin (or, on a devnet build, the upgrade authority) allows, pauses or resumes a pair asset */
+  async setPair(mint, { symbol, feed, feedId, stable, paused }) {
+    await this.init(); const me = this.me(), m = this.pk(mint), programData = this.find([this.pid.toBytes()], this.pk('BPFLoaderUpgradeab1e11111111111111111111111'));
+    const ix = await this.program.methods.setPair({ symbol, feedId: feedId ? Array.from(feedId) : new Array(32).fill(0), stable: !!stable, paused: !!paused })
+      .accounts({ config: this.pda.config(), signer: me, programData: this.cfg.admin.equals(me) ? null : programData, mint: m, feed: stable || !feed ? null : this.pk(feed), pair: this.find([enc('pair'), m.toBytes()]), systemProgram: this.pk(PROG.SYSTEM) }).instruction();
+    await this.send([ix]); this.pairsAt = 0; await this.loadPairs();
+  },
   me() { return this.pk(state.wallet.pk); },
   raiseKey(p) { return this.pk(p.address); },
 
@@ -149,7 +173,7 @@ var chain = {
   },
   /* an indexed row (Supabase) onto a raise object; the chain fills in the rest when the page is opened */
   fromRow(r, prof) {
-    const q = r.pair_mint === SEED.pairMints.USDC ? 'USDC' : 'SOL', me = state.wallet && state.wallet.pk, pr = prof && prof.profile || {}, m = pr.model || {};
+    const q = Object.keys(SEED.pairMints).find(k => SEED.pairMints[k] === r.pair_mint) || 'SOL', me = state.wallet && state.wallet.pk, pr = prof && prof.profile || {}, m = pr.model || {};   // the registry adds its pairs to SEED.pairMints
     const p = { id: r.id, address: r.address, live: true, name: r.name, ticker: r.ticker, q, target: Number(r.target), targetUsd: Number(r.target_usd), solUsdAtOpen: r.sol_usd_at_open ? Number(r.sol_usd_at_open) : SEED.demoSolUsd,
       raised: Number(r.raised), backers: r.backers, openedAt: Date.parse(r.opened_at), endsAt: Date.parse(r.ends_at), status: r.status, seedStep: r.seed_step, refundReason: r.refund_reason, filledAt: r.filled_at ? Date.parse(r.filled_at) : null, seededAt: r.seeded_at ? Date.parse(r.seeded_at) : null, resolvedAt: r.resolved_at ? Date.parse(r.resolved_at) : null,
       feeBps: r.fee_bps, creatorShareBps: r.creator_share_bps, teamBps: r.team_bps, teamSchedule: r.team_schedule, capUsd: r.cap_usd != null ? Number(r.cap_usd) : undefined, preset: r.preset, minBuy: r.min_buy != null ? Number(r.min_buy) : undefined, maxBuy: r.max_buy != null ? Number(r.max_buy) : undefined, tokenUseCase: m.tokenUseCase || 'none', xAccount: r.x_id ? (m.xAccount && m.xAccount.handle ? m.xAccount : { handle: String(r.x_id).replace(/^dev:/, ''), verified: !String(r.x_id).startsWith('dev:'), typed: String(r.x_id).startsWith('dev:'), createdAt: null, followers: null }) : { handle: '', verified: false, createdAt: null, followers: null }, pastRaises: [],
@@ -288,7 +312,8 @@ var chain = {
   async openRaise(p) {
     if (!(await this.init()) || !this.cfg) throw new Error('Seed\'s program could not be read (the config did not load from the RPC). Check the connection and try again.');   // said plainly, not a crash on a null config
     const me = this.me(), att = await this.attestation();
-    const nonce = Date.now(), raise = this.pda.raise(me, nonce), pairMint = this.pairMint(p), scale = this.cfg.testMode ? 1440 : 1;
+    const nonce = Date.now(), raise = this.pda.raise(me, nonce), pairMint = this.pairMint(p), pp = this.pairProgram(p), reg = this.registry[p.q], scale = this.cfg.testMode ? 1440 : 1;
+    if (reg && reg.paused) throw new Error(`${p.q} is paused for new raises.`);
     const deadline = Math.max(1, Math.round((p.endsAt - Date.now()) / 1000 / scale));
     // the schedule as the program takes it: an even schedule compact, custom dates as tranches, nothing without a team share
     const even = p.teamBps && isEven(p.teamSchedule) ? { cliffDays: p.teamSchedule.cliffDays || 0, intervalDays: p.teamSchedule.intervalDays, count: p.teamSchedule.count } : null;
@@ -298,7 +323,7 @@ var chain = {
     const prevRaise = fs && !fs.liveRaise.equals(this.w.PublicKey.default) ? fs.liveRaise : null;
     const pr = p.profile || {}, lim = v => new this.lib.BN(v > 0 ? this.units(p, v).toString() : 0);   // the founder's limits, program-enforced
     const ix = await this.program.methods.openRaise({ nonce: new this.lib.BN(nonce), name: p.name, ticker: p.ticker, preset: p.preset, minBuy: lim(pr.minBuy), maxBuy: lim(pr.maxBuy), deadline: new this.lib.BN(deadline), teamBps: p.teamBps, schedule, payoutWallet: this.pk(p.payoutWallet), x: att ? att.arg : null, uri: p.metadataUri || '', even })
-      .accounts({ config: this.pda.config(), solFeed: this.pk(PROG.SOL_FEED), raise, founder: me, pairMint, escrow: this.ata(raise, pairMint), walletBlacklist: this.pda.blacklist(me), founderState: this.pda.founderState(me), prevRaise, raiseMeta: this.pda.raiseMeta(raise), instructions: this.pk(PROG.INSTRUCTIONS), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) })
+      .accounts({ config: this.pda.config(), solFeed: this.pk(PROG.SOL_FEED), raise, founder: me, pairMint, pairTokenProgram: pp, pair: reg ? this.find([enc('pair'), pairMint.toBytes()]) : null, pairFeed: reg && !reg.stable ? this.pk(reg.feed) : null, escrow: this.ata(raise, pairMint, pp), walletBlacklist: this.pda.blacklist(me), founderState: this.pda.founderState(me), prevRaise, raiseMeta: this.pda.raiseMeta(raise), instructions: this.pk(PROG.INSTRUCTIONS), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) })
       .remainingAccounts(att ? att.remaining : []).instruction();
     await this.send(att ? [att.ix, ix] : [ix]); if (this.dry) return;
     p.address = raise.toBase58(); p.live = true; p.id = `${p.ticker.toLowerCase()}-${p.address.slice(0, 8).toLowerCase()}`; p.founderWallet = state.wallet.pk; p.creator = state.wallet.pk;
@@ -316,21 +341,21 @@ var chain = {
     const prof = this.profiles[p.address]; if (prof && prof.profile && prof.profile.model) { prof.profile.model.xAccount = { handle: att.handle, verified: !att.typed, typed: att.typed }; supa.call('raise-profile', { address: p.address, profile: prof.profile }).catch(() => {}); }
   },
   async contribute(p, pay) {
-    await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), wt = this.ata(me, pairMint), amount = this.units(p, pay);
-    const ixs = [this.ixAtaIdem(me, wt, me, pairMint)];
+    await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), pp = this.pairProgram(p), wt = this.ata(me, pairMint, pp), amount = this.units(p, pay);
+    const ixs = [this.ixAtaIdem(me, wt, me, pairMint, pp)];
     if (p.q === 'SOL') ixs.push(this.w.SystemProgram.transfer({ fromPubkey: me, toPubkey: wt, lamports: Number(amount.toString()) }), this.ixSync(wt));   // wrap exactly what the buy and its fee need
-    ixs.push(await this.program.methods.contribute(amount).accounts({ raise, contribution: this.pda.contribution(raise, me), wallet: me, walletToken: wt, escrow: this.ata(raise, pairMint), tokenProgram: this.pk(PROG.TOKEN), systemProgram: this.pk(PROG.SYSTEM) }).instruction());
+    ixs.push(await this.program.methods.contribute(amount).accounts({ raise, contribution: this.pda.contribution(raise, me), wallet: me, pairMint, walletToken: wt, escrow: this.ata(raise, pairMint, pp), tokenProgram: pp, systemProgram: this.pk(PROG.SYSTEM) }).instruction());
     if (p.q === 'SOL') ixs.push(this.ixClose(wt, me, me));   // whatever a trimmed last buy left wrapped comes back as SOL
     await this.send(ixs); this.later(p);
   },
   async claimRefund(p) {
-    await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), wt = this.ata(me, pairMint), a = await this.program.account.raise.fetch(raise), st = Object.keys(a.status)[0], now = Date.now() / 1000;
+    await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), pp = this.pairProgram(p), wt = this.ata(me, pairMint, pp), a = await this.program.account.raise.fetch(raise), st = Object.keys(a.status)[0], now = Date.now() / 1000;
     const ixs = [];
     // the raise settles on chain before the first refund if the crank has not been by yet: a miss, or a seeding timeout
     if (st === 'live' && now >= Number(a.endsAt)) ixs.push(await this.program.methods.settle().accounts({ raise }).instruction());
     else if (st === 'filled' && now >= Number(a.filledAt) + (this.cfg.testMode ? Number(this.cfg.seedTimeout) / 1440 : Number(this.cfg.seedTimeout))) ixs.push(await this.program.methods.timeoutRefund().accounts({ raise, config: this.pda.config() }).instruction());
     else if (st !== 'refunded') { this.apply(p, a); throw new Error(st === 'seeded' ? 'This raise seeded; there is no refund, the tokens are yours to claim.' : 'This raise is still open.'); }
-    ixs.push(this.ixAtaIdem(me, wt, me, pairMint), await this.program.methods.claimRefund().accounts({ raise, contribution: this.pda.contribution(raise, me), wallet: me, walletToken: wt, escrow: this.ata(raise, pairMint), tokenProgram: this.pk(PROG.TOKEN) }).instruction());
+    ixs.push(this.ixAtaIdem(me, wt, me, pairMint, pp), await this.program.methods.claimRefund().accounts({ raise, contribution: this.pda.contribution(raise, me), wallet: me, pairMint, walletToken: wt, escrow: this.ata(raise, pairMint, pp), tokenProgram: pp }).instruction());
     if (p.q === 'SOL') ixs.push(this.ixClose(wt, me, me));
     await this.send(ixs); this.later(p);
   },
@@ -344,26 +369,26 @@ var chain = {
   },
   /* the seeding steps, pushed from the page; the crank does the same on its own timer */
   async seedStep(p, step) {
-    await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), a = await this.program.account.raise.fetch(raise), st = Object.keys(a.seedStep)[0];
+    await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), pp = this.pairProgram(p), stage = this.ata(this.pda.poolPayer(raise), pairMint, pp), a = await this.program.account.raise.fetch(raise), st = Object.keys(a.seedStep)[0];
     if (Object.keys(a.status)[0] !== 'filled') { this.apply(p, a); throw new Error('That raise is past seeding.'); }
     if (st === 'filled') {
       const mint = this.w.Keypair.generate();
-      await this.send([await this.program.methods.crankMint().accounts({ raise, cranker: me, mint: mint.publicKey, backersVault: this.ata(raise, mint.publicKey), poolVault: this.pda.poolVault(raise), teamVault: this.pda.teamVault(raise), pairMint, stage: this.pda.stage(raise), poolPayer: this.pda.poolPayer(raise), raiseMeta: this.pda.raiseMeta(raise), metadata: this.pda.metadata(mint.publicKey), tokenMetadataProgram: this.pk(PROG.METADATA), rent: this.pk(PROG.RENT), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) }).instruction()], [mint], 400000);
+      await this.send([await this.program.methods.crankMint().accounts({ raise, cranker: me, mint: mint.publicKey, backersVault: this.ata(raise, mint.publicKey), poolVault: this.pda.poolVault(raise), teamVault: this.pda.teamVault(raise), pairMint, stage, poolPayer: this.pda.poolPayer(raise), pairTokenProgram: pp, raiseMeta: this.pda.raiseMeta(raise), metadata: this.pda.metadata(mint.publicKey), tokenMetadataProgram: this.pk(PROG.METADATA), rent: this.pk(PROG.RENT), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) }).instruction()], [mint], 400000);
     } else if (st === 'minted') {
       const nft = this.w.Keypair.generate(), mint = a.mint, pool = this.pda.dammPool(mint, pairMint);
-      await this.send([await this.program.methods.crankPool().accounts({ raise, config: this.pda.config(), cranker: me, mint, pairMint, poolVault: this.pda.poolVault(raise), escrow: this.ata(raise, pairMint), stage: this.pda.stage(raise), poolPayer: this.pda.poolPayer(raise),
+      await this.send([await this.program.methods.crankPool().accounts({ raise, config: this.pda.config(), cranker: me, mint, pairMint, poolVault: this.pda.poolVault(raise), escrow: this.ata(raise, pairMint, pp), stage, poolPayer: this.pda.poolPayer(raise), pairTokenProgram: pp,
         positionNftMint: nft.publicKey, positionNftAccount: this.pda.dammNftAccount(nft.publicKey), poolAuthority: this.pk(PROG.DAMM_AUTH), pool, position: this.pda.dammPosition(nft.publicKey), tokenAVault: this.pda.dammVault(mint, pool), tokenBVault: this.pda.dammVault(pairMint, pool),
         dammEventAuthority: this.pda.dammEvent(), cpAmmProgram: this.pk(PROG.DAMM), tokenProgram: this.pk(PROG.TOKEN), token2022Program: this.pk(PROG.TOKEN_2022), systemProgram: this.pk(PROG.SYSTEM) }).instruction()], [nft], 600000);
     } else if (st === 'pooled') {
-      const tre = this.ata(this.cfg.seedTreasury, pairMint);
-      await this.send([this.ixAtaIdem(me, tre, this.cfg.seedTreasury, pairMint), await this.program.methods.crankSeed().accounts({ raise, config: this.pda.config(), escrow: this.ata(raise, pairMint), treasuryToken: tre, tokenProgram: this.pk(PROG.TOKEN) }).instruction()]);
+      const tre = this.ata(this.cfg.seedTreasury, pairMint, pp);
+      await this.send([this.ixAtaIdem(me, tre, this.cfg.seedTreasury, pairMint, pp), await this.program.methods.crankSeed().accounts({ raise, config: this.pda.config(), pairMint, escrow: this.ata(raise, pairMint, pp), treasuryToken: tre, tokenProgram: pp }).instruction()]);
     } else throw new Error('Seeding is done.');
     await this.sync(p);
   },
   async claimFees(p) {
-    await this.init(); const me = this.me(), raise = this.raiseKey(p), a = await this.program.account.raise.fetch(raise), pairMint = a.pairMint, payout = a.payoutWallet, tre = this.ata(this.cfg.seedTreasury, pairMint), pt = this.ata(payout, pairMint);
-    await this.send([this.ixAtaIdem(me, pt, payout, pairMint), this.ixAtaIdem(me, tre, this.cfg.seedTreasury, pairMint),
-      await this.program.methods.claimCreatorFees().accounts({ raise, config: this.pda.config(), cranker: me, mint: a.mint, pairMint, poolVault: this.pda.poolVault(raise), escrow: this.ata(raise, pairMint), payoutWallet: payout, payoutToken: pt, treasuryToken: tre, poolAuthority: this.pk(PROG.DAMM_AUTH), pool: a.pool, position: a.position,
+    await this.init(); const me = this.me(), raise = this.raiseKey(p), a = await this.program.account.raise.fetch(raise), pairMint = a.pairMint, pp = this.pairProgram(p), payout = a.payoutWallet, tre = this.ata(this.cfg.seedTreasury, pairMint, pp), pt = this.ata(payout, pairMint, pp);
+    await this.send([this.ixAtaIdem(me, pt, payout, pairMint, pp), this.ixAtaIdem(me, tre, this.cfg.seedTreasury, pairMint, pp),
+      await this.program.methods.claimCreatorFees().accounts({ raise, config: this.pda.config(), cranker: me, mint: a.mint, pairMint, poolVault: this.pda.poolVault(raise), escrow: this.ata(raise, pairMint, pp), payoutWallet: payout, payoutToken: pt, treasuryToken: tre, pairTokenProgram: pp, poolAuthority: this.pk(PROG.DAMM_AUTH), pool: a.pool, position: a.position,
         positionNftAccount: this.pda.dammNftAccount(a.positionNftMint), tokenAVault: this.pda.dammVault(a.mint, a.pool), tokenBVault: this.pda.dammVault(pairMint, a.pool), dammEventAuthority: this.pda.dammEvent(), cpAmmProgram: this.pk(PROG.DAMM), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) }).instruction()], [], 400000);
     this.later(p);
   },
@@ -437,6 +462,21 @@ function renderAdminNote() {
   } else if (chain.isAdmin()) {
     box.hidden = false; const c = chain.cfg, stale = c && Number(c.poolFeeBps) !== SEED.poolFeeBps && SEED.network === 'devnet';
     box.innerHTML = `<p class="quiet" style="margin-top:12px">This wallet is the Seed admin on ${esc(SEED.network)}.${c ? ` Config: pool fee ${Number(c.poolFeeBps) / 100}%, Seed fee ${Number(c.feeBps) / 100}%, founder share ${Number(c.creatorShareBps) / 100}%${c.testMode ? ', test mode' : ''}.` : ''}</p>${stale ? `<div class="pp-notice"><b>The site expects a ${SEED.poolFeeBps / 100}% pool fee</b><p>The devnet config says ${Number(c.poolFeeBps) / 100}%. Only a devnet build can close the config and make it again; new pools open with the new fee, existing ones keep theirs. Treasury, attestor and admin stay as they are.</p><button type="button" class="btn btn-navy" data-reset-config>Apply ${SEED.poolFeeBps / 100}% on devnet</button></div>` : ''}`;
+    // the pair allowlist: what is allowed, and a form to allow, pause or resume an asset
+    const pairs = Object.entries(chain.registry);
+    box.insertAdjacentHTML('beforeend', `<div class="pp-notice" style="margin-top:12px"><b>Pair assets</b><p class="quiet">SOL and USDC are built in. ${pairs.length ? pairs.map(([k, v]) => `<span class="num">${esc(k)}</span>${v.paused ? ' (paused)' : ''}${v.stable ? ' ($1)' : ''}`).join(', ') : 'No other pair is allowed yet.'}</p>
+      <form data-pair-form class="form" style="gap:8px"><div class="f"><label>Mint</label><div class="inp"><input name="mint" class="num" placeholder="mint address" spellcheck="false"></div></div><div class="f"><label>Symbol</label><div class="inp"><input name="symbol" maxlength="10" placeholder="NVDAx"></div></div>
+      <div class="f"><label>Pyth price account</label><div class="inp"><input name="feed" class="num" placeholder="leave empty for a $1 stable" spellcheck="false"></div></div><div class="f"><label>Pyth feed id (hex)</label><div class="inp"><input name="feedId" class="num" placeholder="64 hex characters" spellcheck="false"></div></div>
+      <div class="f full"><label><input type="checkbox" name="paused"> Paused for new raises</label></div><div class="f full"><button type="submit" class="btn btn-navy">Allow or update this pair</button></div></form></div>`);
+    $('[data-pair-form]', box).onsubmit = async e => {
+      e.preventDefault(); const f = e.target, b = $('button[type=submit]', f), v = n => (f.elements[n].value || '').trim();
+      if (!v('mint') || !v('symbol')) return toast('A mint and a symbol are needed.');
+      const feedHex = v('feedId').replace(/^0x/, ''); if (v('feed') && feedHex.length !== 64) return toast('The feed id is 32 bytes of hex (64 characters).');
+      b.disabled = true; b.textContent = 'Confirm in wallet…';
+      try { await chain.setPair(v('mint'), { symbol: v('symbol'), feed: v('feed') || null, feedId: v('feed') ? Uint8Array.from(feedHex.match(/../g).map(h => parseInt(h, 16))) : null, stable: !v('feed'), paused: f.elements.paused.checked }); toast(`${v('symbol')} ${f.elements.paused.checked ? 'is paused' : 'is allowed'} as a pair asset.`); if (typeof renderPairSeg === 'function') renderPairSeg(); }
+      catch (x) { toast(x.message); }
+      renderAll();
+    };
     const rb = $('[data-reset-config]', box); if (rb) rb.onclick = async e => { e.target.disabled = true; e.target.textContent = 'Confirm in wallet…'; try { await chain.resetConfig(); toast(`The devnet config now opens pools at ${SEED.poolFeeBps / 100}%.`); } catch (x) { toast(x.message); } renderAll(); };
   }
   else box.hidden = true;

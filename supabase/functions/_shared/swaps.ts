@@ -19,6 +19,16 @@ export const DAMM_PROGRAM = 'cpamdpZCGKUy5JxQXB4dcpGPiikHawvSWAd6mEn1sGG';
 export type PoolRaise = { id: string; pool: string; mint: string; pair_mint: string; pool_fee_bps?: number | null };
 export const POOL_RAISE_COLS = 'id, pool, mint, pair_mint, pool_fee_bps';
 
+/* a mint's decimals, read once per mint from its account (Token or Token-2022: the field sits at the same offset, 44) */
+const decimalsCache = new Map<string, number>();
+export async function mintDecimals(url: string, mint: string): Promise<number> {
+  const known: Record<string, number> = { So11111111111111111111111111111111111111112: 9, EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v: 6, '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU': 6 };
+  if (known[mint] != null) return known[mint];
+  if (decimalsCache.has(mint)) return decimalsCache.get(mint)!;
+  const r = await rpcCall(url, 'getAccountInfo', [mint, { encoding: 'base64' }]) as { value?: { data: [string, string] } } | null;
+  const data = r?.value?.data?.[0]; if (!data) throw new Error('no mint ' + mint);
+  const d = Uint8Array.from(atob(data), c => c.charCodeAt(0)); const dec = d[44]; decimalsCache.set(mint, dec); return dec;
+}
 const rpcCall = async (url: string, method: string, params: unknown[]) => { const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) }).then((x) => x.json()); if (res.error) throw new Error(res.error.message); return res.result; };
 
 /* the pool's flat fee in basis points: the cliff fee numerator, a u64 over 1e9 at the head of the pool account's fee

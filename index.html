@@ -895,18 +895,14 @@ a.ico:hover{color:var(--ink)}
         </div></fieldset>
 
         <fieldset><legend><span class="num">02</span>Raise</legend><div class="form">
-        <div class="f full"><span class="lab">Pair with<span class="hint">Backers buy in with this asset and the Meteora pool is paired against it. Raises pair with SOL or USDC.</span></span>
-          <div><div class="seg" id="pairSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="SOL" aria-pressed="true">SOL</button><button type="button" data-v="USDC" aria-pressed="false">USDC</button></div></div>
+        <div class="f full"><span class="lab">Pair with<span class="hint" id="pairHint">Backers buy in with this asset and the Meteora pool is paired against it: SOL, USDC, or an asset Seed has allowed, such as a tokenized stock.</span></span>
+          <div><div class="seg seg-wrap" id="pairSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="SOL" aria-pressed="true">SOL</button><button type="button" data-v="USDC" aria-pressed="false">USDC</button></div></div>
         </div>
-        <div class="f full" id="stockRow" hidden><span class="lab">Tokenized stock<span class="hint">xStocks from Meteora's approved list</span></span>
-          <div class="chips stocks" style="margin-top:0"><button type="button" data-stock="NVDAx" aria-pressed="false" title="NVIDIA">NVDAx</button><button type="button" data-stock="AAPLx" aria-pressed="false" title="Apple">AAPLx</button><button type="button" data-stock="TSLAx" aria-pressed="false" title="Tesla">TSLAx</button><button type="button" data-stock="HOODx" aria-pressed="false" title="Robinhood">HOODx</button><button type="button" data-stock="COINx" aria-pressed="false" title="Coinbase">COINx</button><button type="button" data-stock="MSFTx" aria-pressed="false" title="Microsoft">MSFTx</button><button type="button" data-stock="SPYx" aria-pressed="false" title="S&amp;P 500 ETF">SPYx</button><button type="button" data-stock="GOOGLx" aria-pressed="false" title="Alphabet">GOOGLx</button><button type="button" data-stock="AMZNx" aria-pressed="false" title="Amazon">AMZNx</button><button type="button" data-stock="METAx" aria-pressed="false" title="Meta">METAx</button></div></div>
-        <div class="f full" id="mintRow" hidden><label for="fMint">Token mint address<span class="hint" id="mintInfo"></span></label><div class="inp"><input id="fMint" class="num" placeholder="Paste an SPL mint address" autocomplete="off" spellcheck="false" style="font-size:13px"></div>
-          <div class="chips" style="margin-top:2px"><button type="button" data-mint="JUP">JUP</button><button type="button" data-mint="BONK">BONK</button></div></div>
         <div class="f full"><span class="lab">Opening market cap<i class="tip" tabindex="0" data-tip="The market cap the pool opens at. The raise is derived from it: cap × (1 − team share) ÷ 2, priced at the SOL price when the raise opens, and all of it goes into the pool.">?</i><span class="hint" id="targetUsd"></span></span>
           <div><div class="seg" id="capSeg" role="group" aria-label="Opening market cap"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="50000" aria-pressed="false">$50K</button><button type="button" data-v="100000" aria-pressed="true">$100K</button><button type="button" data-v="150000" aria-pressed="false">$150K</button><button type="button" data-v="200000" aria-pressed="false">$200K</button><button type="button" data-v="test" aria-pressed="false" id="capTest" hidden>Test</button></div></div>
           <p class="sched-note ok num" id="raiseLine"></p><span class="suf num" id="fCur" hidden>SOL</span></div>
         <div class="f"><span class="lab">Deadline<i class="tip" tabindex="0" data-tip="How long the raise stays open. It closes the moment it fills; if it has not filled by the deadline, everyone is refunded, fee included.">?</i></span>
-          <div><div class="seg" id="timeSeg" role="group" aria-label="Deadline"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="24" aria-pressed="false">24h</button><button type="button" data-v="72" aria-pressed="true">3 days</button><button type="button" data-v="168" aria-pressed="false">7 days</button><button type="button" data-v="336" aria-pressed="false">14 days</button></div></div>
+          <div><div class="seg" id="timeSeg" role="group" aria-label="Deadline"><span class="seg-ind" aria-hidden="true"></span><button type="button" data-v="24" aria-pressed="false">24h</button><button type="button" data-v="72" aria-pressed="true">3 days</button><button type="button" data-v="168" aria-pressed="false">7 days</button><button type="button" data-v="336" aria-pressed="false">14 days</button><button type="button" data-v="720" aria-pressed="false">30 days</button></div></div>
         </div>
         <div class="f full derived" id="derived"><span class="lab">What backers pay<i class="tip" tabindex="0" data-tip="The price is not set by you. It is the target divided by the backers' tokens, so the pool opens at exactly what backers paid.">?</i></span><dl class="kv kv-wide" id="derivedRows"></dl></div>
         <div class="f lim" data-lim="min"><span class="lab"><label for="fMin">Minimum buy</label><i class="tip" tabindex="0" data-tip="The smallest buy a wallet can make. Off, any amount above zero counts.">?</i><button type="button" class="switch" role="switch" aria-checked="false" data-lim-toggle="min" aria-label="Set a minimum buy"></button></span>
@@ -1039,7 +1035,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-overview" data-t="Overview">
       <div class="prose">
         <h2>Overview</h2>
-        <p>A founder connects a wallet, picks the market cap the pool will open at ($50K, $100K, $150K or $200K), a deadline of one to fourteen days, the asset the raise is paired with, and whether the team keeps a share. The raise itself is derived: the cap times what the team does not take, halved, priced at the SOL price when it opens; nobody types a target. Backers buy in with that asset at one fixed price, plus a 1% fee on top.</p>
+        <p>A founder connects a wallet, picks the market cap the pool will open at ($50K, $100K, $150K or $200K), a deadline of one to thirty days, the asset the raise is paired with, and whether the team keeps a share. The raise itself is derived: the cap times what the team does not take, halved, priced at the SOL price when it opens; nobody types a target. Backers buy in with that asset at one fixed price, plus a 1% fee on top.</p>
         <p>If the target is met, Seed's program mints the 1,000,000,000 supply, revokes the mint and freeze authorities, puts the whole raise and the pool's half of the supply into a Meteora DAMM v2 pool at the raise price, and locks that liquidity permanently. Backers claim their tokens straight away. If the deadline passes first, nothing is minted and every backer takes back what they paid, fee included.</p>
         <p>There is no treasury, no vault and no reserve. The money raised goes into the pool and nowhere else, so there is nothing to rug. What a founder earns is a share of the pool's trading fees, paid to a payout wallet, and the team tokens they chose to keep, which unlock on a schedule everyone can see.</p>
         <p>Seed enforces a short list of hard rules in its program and acts on fraud. Everything else a founder decides, and the page shows those decisions as facts rather than warnings.</p>
@@ -1052,7 +1048,7 @@ a.ico:hover{color:var(--ink)}
           <div><dt>Pool</dt><dd class="t">Meteora DAMM v2, locked for good</dd></div>
           <div><dt>Pairs with</dt><dd class="t">SOL or USDC</dd></div>
           <div><dt>Opening market cap</dt><dd class="t">$50K, $100K, $150K or $200K; the raise is derived</dd></div>
-          <div><dt>Deadline</dt><dd class="t">24 hours to 14 days</dd></div>
+          <div><dt>Deadline</dt><dd class="t">24 hours to 30 days</dd></div>
           <div><dt>Token supply</dt><dd>1,000,000,000</dd></div>
           <div><dt>Team share</dt><dd class="t">0% to under 100%, set by the founder</dd></div>
           <div><dt>Backers and the pool</dt><dd class="t">Half of the rest, each</dd></div>
@@ -1327,7 +1323,7 @@ a.ico:hover{color:var(--ink)}
         <h3>Enforced by the program</h3>
         <dl class="kv">
           <div><dt>Opening market cap</dt><dd class="t">One of four presets; the raise derived at the open</dd></div>
-          <div><dt>Deadline</dt><dd class="t">24 hours to 14 days</dd></div>
+          <div><dt>Deadline</dt><dd class="t">24 hours to 30 days</dd></div>
           <div><dt>Refunds</dt><dd class="t">Miss, cancel or seeding timeout</dd></div>
           <div><dt>Supply</dt><dd class="t">1B, authorities revoked</dd></div>
           <div><dt>Pool</dt><dd class="t">Whole raise, locked for good</dd></div>
@@ -1451,7 +1447,7 @@ a.ico:hover{color:var(--ink)}
             <tr><td>Pair asset</td><td>SOL or USDC, chosen by the founder</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Opening market cap presets</td><td>$50K, $100K, $150K, $200K, set once in the program's Config (plus a ~$30 Test preset on devnet in test mode only); the raise is cap × (1 − team) ÷ 2 at the Pyth price</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Target cap</td><td>$100,000, SOL converted at the price when the raise opens</td><td class="num"><span class="st set">Set</span></td></tr>
-            <tr><td>Deadline</td><td>24 hours to 14 days</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Deadline</td><td>24 hours to 30 days</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Seed fee, f</td><td>1% on top of each buy, returned on a refund</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Refund</td><td>100% of what each backer paid, on a miss, a cancel or a seeding timeout</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Seeding timeout</td><td>3 days after filling</td><td class="num"><span class="st set">Set</span></td></tr>
@@ -1549,7 +1545,6 @@ function save() { try { state.at = state.at || Date.now(); const s = JSON.string
 /* ---- chain reads (live), on the endpoint in SEED.rpc (js/config/seed.js), with a keyless public one behind it for mainnet
    token lookups. Calls are spaced and retried because public endpoints rate limit; api.mainnet-beta.solana.com refuses browser origins. */
 const RPCS = SEED.network === 'devnet' ? [...new Set([SEED.rpc, 'https://api.devnet.solana.com'])] : [SEED.rpc, 'https://public.rpc.solanavibestation.com'];   // a fallback on the same network only
-const JUP_SEARCH = 'https://lite-api.jup.ag/tokens/v2/search?query=';
 const TOKEN_PROGRAMS = ['TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA', 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb'];
 let rpcQuietUntil = 0;   // after a rate limit, the page's polling stands down for a while instead of piling up retries (QA P1-F16)
 async function rpc(method, params) {
@@ -1703,6 +1698,13 @@ function initSeg(el, onChange) {
   return { place, set };
 }
 const placeSegs = () => Object.values(seg).forEach(s => s.place());
+/* the pair segment: SOL and USDC, then every pair the admin allowed (chain.loadPairs), paused ones marked; rebuilt as the list changes */
+function renderPairSeg() {
+  const el = $('#pairSeg'); if (!el) return;
+  const extra = Object.keys(ASSETS).filter(k => ASSETS[k].allowed).sort();
+  el.innerHTML = '<span class="seg-ind" aria-hidden="true"></span>' + ['SOL', 'USDC', ...extra].map(k => `<button type="button" data-v="${esc(k)}" aria-pressed="${String(k === draft.pair)}"${ASSETS[k].paused ? ' title="Paused for new raises"' : ''}>${esc(k)}${ASSETS[k].paused ? ' ⏸' : ''}</button>`).join('');
+  seg.pair = initSeg(el, v => { draft.pair = v; $('#fErr').textContent = ''; renderPreview(); });
+}
 
 /* ============================================================= TERMINAL */
 /* bars sweep in only for rows that were not already on screen, so a buy or a re-sort does not replay every bar */
@@ -2105,7 +2107,7 @@ const watched = new WeakSet();
    SOL is told where to get some and how to switch the wallet app over */
 function afterRealConnect(w) {
   if (typeof chain === 'undefined' || !chain.on()) return;
-  chain.init().then(ok => ok && chain.loadLive()).then(got => { if (got) { save(); renderAll(); if (detailBox) renderDetail(true); } });
+  chain.init().then(ok => ok && chain.loadPairs().then(() => { renderPairSeg(); return chain.loadLive(); })).then(got => { if (got) { save(); renderAll(); if (detailBox) renderDetail(true); } });
   if (SEED.network === 'devnet' && !w.stale && !((w.bal && w.bal.SOL) > 0)) setTimeout(() => toast('This site runs on Solana devnet and this wallet holds no devnet SOL. In Phantom: Settings → Developer settings → Testnet mode, then get test SOL at faucet.solana.com.'), 900);
 }
 function watch(prov) {
@@ -2167,41 +2169,13 @@ $('#disconnectBtn').onclick = () => { if (isReal()) { const prov = providerOf(st
 document.addEventListener('click', e => { if (!e.target.closest('#walletPop')) $('#walletPop').classList.remove('open'); });
 
 /* ---------------------------------------------------------------- launch */
-const draft = { pair: 'SOL', stock: 'NVDAx', hours: 72, cap: 100000 };   // cap: the opening market cap preset in dollars, or 'test' for devnet's tiny one
+const draft = { pair: 'SOL', hours: 72, cap: 100000 };   // cap: the opening market cap preset in dollars, or 'test' for devnet's tiny one
 /* resolve the pair asset from the form: a known key, or a custom mint (flagged unverified) */
 function draftAsset() {
-  if (draft.pair === 'stock') return { key: draft.stock, a: ASSETS[draft.stock] };
-  if (draft.pair !== 'any') return { key: draft.pair, a: ASSETS[draft.pair] };
-  const mint = $('#fMint').value.trim();
-  if (!mint) return { key: null, err: 'Paste the mint address of the token to pair with.' };
-  if (!B58.test(mint)) return { key: null, err: 'That is not a valid Solana mint address. It should be 32 to 44 base58 characters.' };
-  const known = Object.keys(ASSETS).find(k => ASSETS[k].mint === mint);
-  if (known) return { key: known, a: ASSETS[known] };
-  lookupMint(mint); const i = mintInfo[mint], key = 'm_' + mint.slice(0, 10);
-  if (i.s === 'wait') return { key: null, wait: true, err: 'Still checking that mint on Solana. Try again in a moment.' };
-  if (i.s === 'bad') return { key: null, bad: true, err: 'That address is not an SPL token mint. Paste the mint, not a wallet or a token account.' };
-  return { key, a: { sym: i.sym || mint.slice(0, 4).toUpperCase(), name: i.name, mint, dp: 2, decimals: i.decimals, verified: !!i.verified }, custom: true, off: i.s === 'off' };
-}
-/* a pasted mint is checked on chain (is it a mint, under which token program) and against Jupiter's list (symbol, verified).
-   s: wait | ok | bad (not a mint) | off (Solana unreachable: listed as unverified rather than blocked) */
-const mintInfo = {}; let mintTimer, mintPending;
-function lookupMint(mint) {
-  if (mintInfo[mint]) return;
-  if (mintPending && mintInfo[mintPending] && mintInfo[mintPending].s === 'wait') delete mintInfo[mintPending];
-  clearTimeout(mintTimer); mintPending = mint; mintInfo[mint] = { s: 'wait' };
-  mintTimer = setTimeout(async () => {
-    let info;
-    try {
-      const v = (await rpc('getAccountInfo', [mint, { encoding: 'jsonParsed' }])).value, parsed = v && v.data && v.data.parsed;
-      if (!v || !TOKEN_PROGRAMS.includes(v.owner) || !parsed || parsed.type !== 'mint') info = { s: 'bad' };
-      else {
-        let t = null; try { t = (await (await fetch(JUP_SEARCH + encodeURIComponent(mint))).json()).find(x => x.id === mint) || null; } catch (e) {}
-        info = { s: 'ok', decimals: parsed.info.decimals, sym: t && t.symbol ? String(t.symbol).slice(0, 10) : '', name: t && t.name ? String(t.name).slice(0, 40) : '', verified: !!(t && t.isVerified) };
-      }
-    } catch (e) { info = { s: 'off' }; }
-    if (mintInfo[mint]) mintInfo[mint] = info;
-    if ($('#fMint').value.trim() === mint) renderPreview();
-  }, 350);
+  const a = ASSETS[draft.pair];   // SOL, USDC, or a pair the admin allowed (chain.loadPairs adds those to ASSETS)
+  if (!a) return { key: null, err: 'Pick a pair asset.' };
+  if (a.paused) return { key: draft.pair, a, err: `${a.sym} is paused for new raises.` };
+  return { key: draft.pair, a };
 }
 const cleanNum = v => { const s = String(v || '').replace(/,/g, '').trim(); return /^\d*\.?\d+$/.test(s) ? Number(s) : NaN; };   // a plain decimal only: "12abc" and "Infinity" are not targets
 /* the draft's terms: the target is never typed, it is derived from the chosen opening market cap at today's SOL price (model.js) */
@@ -2215,8 +2189,6 @@ function validateDraft(d, da) {
   if (!(d.target > 0)) return 'The SOL price has not loaded yet; try again in a moment.';
   return '';
 }
-$('#stockRow').addEventListener('click', e => { const b = e.target.closest('[data-stock]'); if (!b) return; draft.stock = b.dataset.stock; $('#fErr').textContent = ''; renderPreview(); });
-$('#mintRow').addEventListener('click', e => { const b = e.target.closest('[data-mint]'); if (!b) return; $('#fMint').value = ASSETS[b.dataset.mint].mint; $('#fErr').textContent = ''; renderPreview(); });
 /* ------------------------------------------------------------- portfolio */
 function renderPortfolio() {
   const ids = [...new Set([...Object.keys(state.positions), ...Object.keys(state.tokens || {}).filter(id => state.tokens[id] > 0)])]; let nLive = 0, nRef = 0, nTok = 0;
@@ -2598,9 +2570,9 @@ function boot() {
   seg.perf = initSeg($('#perfSeg'), v => { ui.perf.mode = v; renderPerf(); });
   seg.assetF = initSeg($('#assetSeg'), v => { ui.fAsset = v; renderTerminal(); });
   seg.minUnit = initSeg($('#minUnit'), v => setLimUnit('min', v)); seg.maxUnit = initSeg($('#maxUnit'), v => setLimUnit('max', v));
-  seg.pair = initSeg($('#pairSeg'), v => { draft.pair = v; $('#fErr').textContent = ''; renderPreview(); if (v === 'any') $('#fMint').focus(); });
   seg.time = initSeg($('#timeSeg'), v => { draft.hours = +v; renderPreview(); });
   seg.cap = initSeg($('#capSeg'), v => { draft.cap = v === 'test' ? 'test' : +v; $('#fErr').textContent = ''; renderPreview(); });
+  renderPairSeg();
   seg.pmode = initSeg($('#pmodeSeg'), v => { ui.pmode = v; renderCreator(); });
   $('#bq').addEventListener('input', e => { ui.bq = e.target.value; if (ui.view === 'app' && ui.tab !== 'terminal' && e.target.value) { location.hash = '#'; } else renderTerminal(); });   // the search sits in the app bar: typing on another page opens the board
   $('#refreshBtn').addEventListener('click', async e => {   // re-read the live raises now, instead of waiting for the next sync

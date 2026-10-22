@@ -24,3 +24,4 @@ pub struct RaiseOpened {
 #[event] pub struct FraudFlagged { pub raise: Pubkey, pub founder: Pubkey, pub x_handle_hash: Option<[u8; 32]>, pub by: Pubkey, pub at: i64 }
 #[event] pub struct XLinked { pub raise: Pubkey, pub founder: Pubkey, pub x_handle_hash: [u8; 32], pub at: i64 }
 #[event] pub struct TakeoverApproved { pub raise: Pubkey, pub from: Pubkey, pub to: Pubkey, pub by: Pubkey, pub at: i64 }
+#[event] pub struct PairSet { pub mint: Pubkey, pub symbol: String, pub stable: bool, pub paused: bool, pub by: Pubkey, pub at: i64 }

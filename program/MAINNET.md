@@ -75,8 +75,8 @@ so expect DEXScreener and Meteora to show it, Jupiter's quote to route, Birdeye 
    `solana program deploy target/deploy/seed.so --program-id target/deploy/seed-keypair.json -u <mainnet rpc> -k keys/deployer.json`
 4. **Init the Config, once, with the four presets and 125 bps**, naming the Squads vault as admin and the treasury wallet Seed will use
    (a Squads vault too, or a cold wallet), the production attestor's public key, Pyth `7UVimffxr9ow1uXYxsr4LHAcV58mLzhmwaeKvJ1pjLiE`:
-   `presetCapsCents [5_000_000, 10_000_000, 15_000_000, 20_000_000], testCapCents 0, minTargetLamports 1 (unused), poolFeeBps 125, feeBps 100, creatorShareBps 7000, capUsdCents 10_000_000, minDeadline 86400,
-   maxDeadline 1_209_600, seedTimeout 259_200, minUnlockDays 90, payoutDelay 604_800, testMode false` — the test suite's
+   `presetCapsCents [5_000_000, 10_000_000, 15_000_000, 20_000_000], testCapCents 0, minTargetLamports 1 (unused, kept for the layout), poolFeeBps 125, feeBps 100, creatorShareBps 7000, capUsdCents 10_000_000 (unused: the presets are the ceiling), minDeadline 86400,
+   maxDeadline 2_592_000 (30 days), seedTimeout 259_200, minUnlockDays 90 (unused: no minimum on team unlocks), payoutDelay 604_800, testMode false` — the test suite's
    `make()` in `tests/seed.ts` has the exact call shape (`c.initConfig(params, payer, null)`). There is no instruction that
    changes the presets, the fees or the deadlines afterwards; `update_config` moves only the treasury and the attestor.
 5. **Lookup table.** `ANCHOR_PROVIDER_URL=<mainnet rpc> ANCHOR_WALLET=keys/deployer.json npx ts-node -P tsconfig.json scripts/alt.ts mainnet`
@@ -90,6 +90,9 @@ so expect DEXScreener and Meteora to show it, Jupiter's quote to route, Birdeye 
    `lookupTable`, `pairMints.USDC = EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`, `xTyped: false`, `admins = [squads vault]`.
    Supabase: `SEED_RPC_URL` mainnet, `SEED_PROGRAM_ID`, `SEED_DEV_X_HANDLES` **unset**, the Irys wallet for metadata uploads,
    the production attestor secret; a mainnet Helius webhook (raw, the program id; pools join as raises seed); redeploy
-   `seed`, `crank`, `helius-webhook`. Run `scripts/check-deploy.ts production` again after; then the first real raise per
-   README.md's checklist (a few dollars, a one-day deadline, a wallet that is not the admin) and the DEX pick-up check.
+   `seed`, `crank`, `helius-webhook`. Run `scripts/check-deploy.ts production` again after.
+   **No small test raise on production.** The small tests (a seeded raise, a refunded raise, the DEX pick-up) belong to
+   stage 2 on the staging program; production's first raise is a real one at the $50K preset, opened by a real founder
+   from the site, and its pick-up on DEXScreener, Birdeye, Jupiter, Axiom and GMGN is checked as it seeds (the README's
+   checklist, items 3–7, applied to that raise).
 9. **Keep:** the build's sha256, the deploy and init signatures, the Config address, the table address — in DECISIONS.md.

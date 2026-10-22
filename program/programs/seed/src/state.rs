@@ -6,6 +6,8 @@ pub const CONTRIB_SEED: &[u8] = b"contrib";
 pub const BLACKLIST_SEED: &[u8] = b"blacklist";
 pub const FOUNDER_SEED: &[u8] = b"founder";
 pub const META_SEED: &[u8] = b"meta";
+pub const PAIR_SEED: &[u8] = b"pair";
+pub const MAX_PAIR_SYMBOL: usize = 10;
 pub const MAX_URI: usize = 200;   // Token Metadata's own limit
 
 pub const BPS: u64 = 10_000;
@@ -38,12 +40,9 @@ pub struct Config {
     pub payout_delay: i64,        // seconds, 7d
     pub test_mode: bool,          // devnet only: a day is a minute (see init_config)
     pub bump: u8,
-    /// the smallest raise, in lamports, set once at init_config like the fee and never changed after: 81 SOL in production,
-    /// the size a pump.fun curve collects before it graduates, so the smallest Seed pool opens where those tokens migrate and
-    /// a bigger target opens at a higher market cap. A USDC raise meets its worth at the SOL price when it opens. A staging
-    /// deployment of the same binary may be made with a lower one (devnet test mode uses 0.1 SOL, so a cycle costs cents).
-    /// Last in the layout so a devnet config of the layout before it could be grown in place (migrate_config).
-    pub min_target_lamports: u64,   // unused since 2026-10-20: the presets below size a raise; kept for the layout
+    /// unused since 2026-10-20: the presets below size a raise (a raise once had a minimum in lamports here); kept for the
+    /// layout, which every devnet config already carries
+    pub min_target_lamports: u64,
     /// the opening market cap presets a founder picks from, in cents, set once at init_config: $50K, $100K, $150K, $200K in
     /// production. The raise is derived from the one chosen (math::derive_target). They are the floor and the ceiling.
     pub preset_caps_cents: [u64; 4],
@@ -52,6 +51,27 @@ pub struct Config {
     pub test_cap_cents: u64,
 }
 pub const TEST_PRESET: u8 = 4;   // the index of the test preset in open_raise; 0..3 are the production presets
+
+/// A pair asset the admin allowed (["pair", mint]): SOL and USDC need none (they are built in); any other SPL token — a
+/// tokenized stock, a major token — is added here with the Pyth price account that prices it, so a preset market cap can be
+/// turned into a target in that asset at opening. `stable` means the asset is a dollar (no feed). `paused` stops new raises
+/// in it; raises already open are untouched. Mints with a transfer fee, a transfer hook, a permanent delegate or that are
+/// non-transferable are refused at set_pair.
+#[account]
+#[derive(InitSpace)]
+pub struct PairAsset {
+    pub mint: Pubkey,
+    pub token_program: Pubkey,   // Token or Token-2022
+    pub decimals: u8,
+    pub feed: Pubkey,            // the Pyth price account (zero when stable)
+    pub feed_id: [u8; 32],       // the Pyth feed id the account must carry
+    pub stable: bool,
+    pub paused: bool,
+    #[max_len(MAX_PAIR_SYMBOL)]
+    pub symbol: String,
+    pub added_at: i64,
+    pub bump: u8,
+}
 impl Config {
     /// one "day" in seconds: 86 400, or 60 in test mode
     pub fn unit(&self) -> i64 { if self.test_mode { 60 } else { DAY } }

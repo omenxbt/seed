@@ -12,14 +12,18 @@ pub const SOL_USD_FEED_ID: [u8; 32] = [0xef, 0x0d, 0x8b, 0x6f, 0xda, 0x2c, 0xeb,
 pub const MAX_AGE: i64 = 15 * 60;
 
 /// the SOL price in US cents, or an error if the account is not the fully verified SOL/USD feed or is stale
-pub fn sol_usd_cents(acc: &AccountInfo, now: i64) -> Result<u64> {
+pub fn sol_usd_cents(acc: &AccountInfo, now: i64) -> Result<u64> { price_cents(acc, &SOL_USD_FEED_ID, now) }
+
+/// a price in US cents from any sponsored feed account, checked against the feed id it must carry (a pair asset's, from
+/// the allowlist) and refused when stale
+pub fn price_cents(acc: &AccountInfo, feed_id: &[u8; 32], now: i64) -> Result<u64> {
     require!(acc.owner == &RECEIVER, SeedError::BadPriceAccount);
     let d = acc.try_borrow_data()?;
     require!(d.len() >= 8 + 32 + 1 + 32 + 8 + 8 + 4 + 8, SeedError::BadPriceAccount);
     let mut o = 8 + 32;
     let level = d[o]; o += 1;
     require!(level == 1, SeedError::BadPriceAccount);   // Full verification only
-    require!(d[o..o + 32] == SOL_USD_FEED_ID, SeedError::BadPriceAccount); o += 32;
+    require!(d[o..o + 32] == feed_id[..], SeedError::BadPriceAccount); o += 32;
     let price = i64::from_le_bytes(d[o..o + 8].try_into().unwrap()); o += 8;
     o += 8;   // conf
     let expo = i32::from_le_bytes(d[o..o + 4].try_into().unwrap()); o += 4;

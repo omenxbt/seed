@@ -16,7 +16,7 @@ const STAGING_CAPS_CENTS = [15_000, 30_000, 45_000, 60_000];   // $150, $300, $4
   const program = new anchor.Program({ ...(idl as any), address: pid.toBase58() } as anchor.Idl, provider), c = new SeedClient(program, provider), me = (provider.wallet as anchor.Wallet).payer;
   const attestor = web3.Keypair.fromSeed(createHash('sha256').update(Buffer.concat([me.secretKey, Buffer.from('seed attestor')])).digest());
   const ix = await c.initConfig({ admin: me.publicKey, attestor: attestor.publicKey, seedTreasury: me.publicKey, solFeed: SOL_FEED, feeBps: 100, creatorShareBps: 7000, poolFeeBps: 125, capUsdCents: new BN(10_000_000),
-    minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90, payoutDelay: new BN(7 * 86400), testMode: false, minTargetLamports: new BN(1) /* unused */, presetCapsCents: STAGING_CAPS_CENTS.map(x => new BN(x)), testCapCents: new BN(0) }, me.publicKey, null);
+    minDeadline: new BN(86400), maxDeadline: new BN(30 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90, payoutDelay: new BN(7 * 86400), testMode: false, minTargetLamports: new BN(1) /* unused */, presetCapsCents: STAGING_CAPS_CENTS.map(x => new BN(x)), testCapCents: new BN(0) }, me.publicKey, null);
   const sig = await c.send([ix]);
   const cfg = await c.fetchConfig();
   console.log(`staging config made in ${sig}: presets ${(cfg.presetCapsCents as BN[]).map(x => '$' + Number(x) / 100).join(' ')}, pool fee ${cfg.poolFeeBps} bps, test mode ${cfg.testMode}, admin ${cfg.admin.toBase58()}`);

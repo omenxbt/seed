@@ -50,7 +50,7 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
 
   // the config at production terms, test mode for time, 81 SOL the minimum
   await c.send([await c.initConfig({ admin: me.publicKey, attestor: attestor.publicKey, seedTreasury: treasury.publicKey, solFeed: SOL_FEED, feeBps: 100, creatorShareBps: 7000, poolFeeBps: 125, capUsdCents: new BN(10_000_000),
-    minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90, payoutDelay: new BN(7 * 86400), testMode: true, minTargetLamports: sol(81) /* unused */, presetCapsCents: PRESET_CAPS_CENTS.map(x => new BN(x)), testCapCents: new BN(0) }, me.publicKey, USDC_DEVNET)]);
+    minDeadline: new BN(86400), maxDeadline: new BN(30 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90, payoutDelay: new BN(7 * 86400), testMode: true, minTargetLamports: sol(81) /* unused */, presetCapsCents: PRESET_CAPS_CENTS.map(x => new BN(x)), testCapCents: new BN(0) }, me.publicKey, USDC_DEVNET)]);
   const cfg = await c.fetchConfig();
   check((cfg.presetCapsCents as BN[]).map(Number).join() === PRESET_CAPS_CENTS.join() && Number(cfg.testCapCents) === 0 && cfg.poolFeeBps === 125 && cfg.feeBps === 100 && cfg.creatorShareBps === 7000, 'config: the four presets, no test preset, 125 bps pool fee, 1% buy fee, 70/30');
   const span = (secs: number) => Math.floor(secs / 1440);

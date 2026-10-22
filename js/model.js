@@ -14,7 +14,7 @@ const dayOf = p => (p && p.dayMs) || D;                                  // one 
 const usdOf = (p, q) => p.q === 'USDC' ? q : q * solUsd(p);           // a pair-asset amount in USD at the raise's own SOL price
 const qOf = (p, usd) => p.q === 'USDC' ? usd : usd / solUsd(p);
 const solUsdNow = p => SEED.solUsdLive || solUsd(p);                    // the SOL price today: the Pyth feed (chain.refreshSolUsd), else the raise's at open
-const usdNow = (p, q) => p.q === 'USDC' ? q : q * solUsdNow(p);        // a pair-asset amount in USD today: what a market cap is quoted in
+const usdNow = (p, q) => p.q === 'USDC' ? q : p.q === 'SOL' ? q * solUsdNow(p) : q * solUsd(p);   // a pair-asset amount in USD today: SOL at the live price; another pair at its price when the raise opened (no live feed on the page yet)
 /* the opening market cap presets, in dollars: the founder picks one and the raise is derived from it. The program's Config
    carries the same four (preset_caps_cents) and, on devnet in test mode, a tiny Test preset; the site reads those once the
    config is in, so the list here only stands in until then */

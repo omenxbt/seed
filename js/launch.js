@@ -7,7 +7,7 @@
    Uploads go to Supabase Storage (signed upload URL from the Edge Function) when it is configured; until then they are a
    preview in this browser only. The banner is saved at 1500 x 500 and the token art as a square, cropped where the founder
    dragged the preview. A deck can be a PDF, a slide file (PowerPoint, Keynote, OpenDocument) or an image.
-   The pair asset, stock and mint handling (draft, draftAsset, lookupMint, readDraft, validateDraft) stays in index.html.
+   The pair asset (draft, draftAsset: SOL, USDC or an allowed pair from chain.loadPairs), readDraft and validateDraft stay in index.html.
    ========================================================================== */
 const lf = {
   team: [{ name: '', role: 'Founder', x: '', github: '', linkedin: '', wallet: '' }],
@@ -198,7 +198,7 @@ function validateFields() {
   if (!d.name) err('#fName', 'Give the project a name.');
   if (!/^[A-Z0-9]{1,6}$/.test(d.ticker)) err('#fTicker', 'A ticker is 1 to 6 letters or digits.');
   else if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) err('#fTicker', `$${d.ticker} is in use by a live raise. Pick another.`);
-  if (da.err) err('#fMint', da.err);
+  if (da.err) err('#pairSeg', da.err);
   if (!(d.cap > 0) || d.preset < 0) err('#capSeg', 'Pick an opening market cap.');
   else if (!(d.target > 0)) err('#capSeg', 'The SOL price has not loaded yet; try again in a moment.');
   const mn = numv($('#fMin').value), mx = numv($('#fMax').value), L = lf.lim;
@@ -273,10 +273,7 @@ function clampTip(t) {
 let founderLooked = '';
 function renderPreview() {
   const d = readDraft(), da = draftAsset(), C = da.a || { sym: 'TOKEN', dp: 2, verified: false }, ok = !isNaN(d.target) && d.target > 0, sym = esc(C.sym), dp = draftPresale(), pr = dp.profile;
-  $('#mintRow').hidden = draft.pair !== 'any'; $('#stockRow').hidden = draft.pair !== 'stock';
-  $$('#stockRow [data-stock]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.stock === draft.stock)));
-  $('#mintInfo').textContent = draft.pair !== 'any' ? '' : da.wait ? 'Checking on Solana…' : da.bad ? 'Not a token mint.' : da.err ? '' : !da.custom ? `Recognised as ${C.sym}`
-    : da.off ? 'Solana could not be reached to check this mint. It will be listed as unverified.' : C.verified ? `${C.name || C.sym} (${C.sym}), verified on Jupiter` : `A real SPL mint${da.a.name ? `, ${da.a.name}` : ''}, but not on Jupiter's verified list. Backers will see a warning.`;
+  $('#pairHint').textContent = da.a && da.a.allowed ? `${C.name || C.sym}: an asset Seed allowed${da.a.paused ? ', paused for new raises' : ''}${C.decimals != null ? `, ${C.decimals} decimals` : ''}.` : 'Backers buy in with this asset and the Meteora pool is paired against it: SOL, USDC, or an asset Seed has allowed, such as a tokenized stock.';
   $('#fCur').textContent = C.sym; $$('[data-cur]').forEach(e => e.textContent = C.sym);
   if (typeof chain !== 'undefined' && chain.on() && !SEED.solUsdLive) chain.refreshSolUsd().then(v => { if (v) renderPreview(); });   // the first preview before the feed is read is redrawn at today's price
   if (typeof chain !== 'undefined' && chain.on() && !chain.cfg) chain.init().then(() => { if (chain.cfg) renderPreview(); }).catch(() => {});   // and at the chain's floor once the config is read (test mode brings it down)
@@ -287,7 +284,7 @@ function renderPreview() {
   drawSplit(dp); drawDerived(dp, ok, sym);
   const art = pr.art ? `<img class="pv-art" src="${esc(pr.art)}" alt="" style="object-position:${pr.artPos}">` : `<span class="pv-art glyph-art" style="--h:${hashStr(dp.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(dp)}</svg></span>`;
   $('#pvCard').innerHTML = `${pr.banner ? `<div class="pv-banner"><img src="${esc(pr.banner)}" alt="" style="object-position:${pr.bannerPos}"></div>` : ''}<div class="pv-id">${art}<span class="nm"><b>${esc(dp.name)}<span class="tk">$${esc(dp.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div><div class="c-prog"><span class="bar"><i style="width:0%"></i></span><span class="pct num">0%</span></div>`;
-  const label = { 24: '24 hours', 72: '3 days', 168: '7 days', 336: '14 days' }[d.hours], split = splitOf(dp.teamBps), f = n => Number(n.toFixed(C.dp)).toLocaleString('en-US', { maximumFractionDigits: C.dp });
+  const label = { 24: '24 hours', 72: '3 days', 168: '7 days', 336: '14 days', 720: '30 days' }[d.hours], split = splitOf(dp.teamBps), f = n => Number(n.toFixed(C.dp)).toLocaleString('en-US', { maximumFractionDigits: C.dp });
   const noTarget = d.cap > 0 ? 'The SOL price has not loaded yet' : 'Pick an opening market cap';   // why there is no figure yet (QA P2-90)
   const pc = n => (n / SEED.supply * 100).toFixed(n / SEED.supply * 100 % 1 ? 1 : 0) + '%', fees = v => fmtUsd(feeSplit(v).founder);
   $('#pvFacts').innerHTML = [
@@ -350,7 +347,7 @@ async function openPresale() {
     await adapter.openPresale(p);   // a real wallet's raise comes back with its chain address and id
     if (supa.configured()) supa.call('register', { presaleId: p.id }).catch(() => {});
     state.presales.unshift(p); save();
-    ['#fName', '#fTicker', '#fMint', '#fDesc', '#fMin', '#fMax', '#fUse', '#fPayout', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
+    ['#fName', '#fTicker', '#fDesc', '#fMin', '#fMax', '#fUse', '#fPayout', '#lWebsite', '#lX', '#lTelegram', '#lDiscord', '#lGithub'].forEach(s => $(s).value = '');
     $('#fTeam').value = '10'; lf.sched = 'over'; lf.tr = [{ day: 30, pct: 50 }, { day: 60, pct: 50 }]; drawRows('tr'); if (lf.on.alloc) $('[data-toggle="alloc"]').click(); lf.lim.use = { on: false };
     if (!supa.configured()) lf.urls.deck = '';   // the page keeps showing the local deck, so its preview URL is not released
     lf.lim.min = { on: false, unit: 'q' }; lf.lim.max = { on: false, unit: 'q' }; syncLim();

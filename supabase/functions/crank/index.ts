@@ -16,7 +16,7 @@ import { Connection, Keypair, PublicKey } from 'npm:@solana/web3.js@1.95.3';
 import { AnchorProvider, Program, Wallet } from 'npm:@coral-xyz/anchor@0.30.1';
 import idl from './seed.json' with { type: 'json' };
 import { seedClient } from './client.ts';
-import { backfillPool, POOL_RAISE_COLS, type PoolRaise } from '../_shared/swaps.ts';
+import { backfillPool, POOL_RAISE_COLS, type PoolRaise, mintDecimals } from '../_shared/swaps.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const SECRET = Deno.env.get('CRANK_SECRET') ?? '';
@@ -48,7 +48,7 @@ Deno.serve(async (req) => {
     const { data: known } = await db.from('raises').select('address').in('address', raises.map(r => r.publicKey.toBase58()));
     const have = new Set((known ?? []).map((x: { address: string }) => x.address));
     for (const r of raises.filter(r => !have.has(r.publicKey.toBase58()))) {
-      const a = r.account, addr = r.publicKey.toBase58(), pair = a.pairMint.toBase58(), d = pair === 'So11111111111111111111111111111111111111112' ? 9 : 6, u = (v: unknown) => Number(v) / 10 ** d;
+      const a = r.account, addr = r.publicKey.toBase58(), pair = a.pairMint.toBase58(), d = await mintDecimals(urls[0], pair).catch(() => pair === 'So11111111111111111111111111111111111111112' ? 9 : 6), u = (v: unknown) => Number(v) / 10 ** d;
       let uri: string | null = null; try { uri = (await (program.account as any).raiseMeta.fetch(PublicKey.findProgramAddressSync([new TextEncoder().encode('meta'), r.publicKey.toBuffer()], program.programId)[0])).uri || null; } catch { /* no meta account */ }
       const st = Object.keys(a.status)[0], ev = a.even as { cliffDays: number; intervalDays: number; count: number } | null;
       const { error } = await db.from('raises').upsert({
@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       try {
         const cur = (await db.from('raises').select('raised, backers, status, seed_step, pair_mint').eq('address', id).maybeSingle()).data as { raised: number; backers: number; status: string; seed_step: string | null; pair_mint: string } | null;
         if (cur) {
-          const dec = cur.pair_mint === 'So11111111111111111111111111111111111111112' ? 9 : 6, raised = Number(a.raised) / 10 ** dec, backers = Number(a.backers);
+          const dec = await mintDecimals(conn.rpcEndpoint, cur.pair_mint).catch(() => cur.pair_mint === 'So11111111111111111111111111111111111111112' ? 9 : 6), raised = Number(a.raised) / 10 ** dec, backers = Number(a.backers);
           const patch: Record<string, unknown> = {};
           if (Math.abs(Number(cur.raised) - raised) > 1e-9) patch.raised = raised;
           if (Number(cur.backers) !== backers) patch.backers = backers;
@@ -82,11 +82,19 @@ Deno.serve(async (req) => {
       } catch (e) { fail(`refresh ${id}`, e); }
       if (status === 'live' && Number(a.endsAt) * 1000 <= now) { await client.settle(r.publicKey); note(`settle ${id}`); continue; }
       if (status === 'filled') {
-        if (Number(a.filledAt) * 1000 + seedTimeoutMs <= now) { await client.timeoutRefund(r.publicKey); note(`timeout ${id}`); continue; }
-        if (step === 'filled') { await client.crankMint(r.publicKey); note(`mint ${id}`); }
-        else if (step === 'minted') { await client.crankPool(r.publicKey); note(`pool ${id}`); }
-        else if (step === 'pooled') { await client.crankSeed(r.publicKey); note(`seed ${id}`); }
-        continue;
+        /* seeding first, all three steps in one pass, so the cadence never straddles test mode's three-minute timeout (QA P0-F19):
+           mint, then pool, then seed; a step that fails leaves the raise for the next pass, and only a raise still waiting at
+           'filled' past the timeout is refunded (a seeding under way is finished, not undone) */
+        let cur = step, moved = false;
+        try {
+          if (cur === 'filled') { await client.crankMint(r.publicKey); note(`mint ${id}`); cur = 'minted'; moved = true; }
+          if (cur === 'minted') { await client.crankPool(r.publicKey); note(`pool ${id}`); cur = 'pooled'; moved = true; }
+          if (cur === 'pooled') { await client.crankSeed(r.publicKey); note(`seed ${id}`); moved = true; }
+        } catch (e) {
+          if (cur === 'filled' && Number(a.filledAt) * 1000 + seedTimeoutMs <= now) { await client.timeoutRefund(r.publicKey); note(`timeout ${id} (seeding never started: ${String((e as Error).message).slice(0, 60)})`); continue; }
+          throw e;
+        }
+        if (moved) continue;
       }
       if (status === 'seeded') {
         if (a.pendingPayout && Number(a.payoutEffectiveAt) * 1000 <= now) { await client.applyPayoutChange(r.publicKey); note(`payout ${id}`); }

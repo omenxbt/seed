@@ -1,3 +1,11 @@
+# Status report (2026-10-21, pairs allowlist, 30-day deadline, Helius, seed-qa #29–#30)
+
+- **Needs Josh:** the full spec for the founder fee options (Keep / Split ≤5 / Holder rewards 10–100% / Buyback & burn; per-raise PDA, 15-minute crank, $10 roll-over, 7-day change delay) — the summary arrived, the mechanics (how holder rewards are distributed, the buyback path) did not; mainnet stage 2's go; the takeover policy. Helius: Josh bought more usage, the key stays.
+- **Pairs:** an on-chain allowlist (`PairAsset`, `set_pair`) prices a preset's target in any allowed asset by its own Pyth feed (or $1 when stable); Token-2022 pairs (tokenized stocks) work end to end on DAMM v2; no transfer-fee, hook, permanent-delegate or non-transferable mints; pause stops new raises only. The form's pair segment comes from the allowlist; the admin note has the pair form. Devnet has a $1 Token-2022 test pair, TSTx, with balances in the QA and test wallets.
+- **Deadline:** 24h to 30 days (form, docs, LOOP.md, Config patched on devnet, production inits with it).
+- **Helius:** every server-side read is on api.devnet.solana.com; the crank runs every 5 minutes; Helius is for the webhook and the browser. Expected monthly usage and the mainnet plan: in the 2026-10-21 report to Josh.
+- **seed-qa:** #29 found P0-F15 (the Helius quota) and four site issues, all fixed; #30 found P0-F19 (the 5-minute crank timing out test-mode raises) and P0-F20 (a minted raise's refund failing on the old build) — the crank now seeds first in one pass, and the new build's refund path is proven by a suite test; P2-95 (links by address) and P2-96 (refund counts) are open for the next push. Consecutive clean passes: 0.
+
 # Status report (2026-10-20, Josh's final decisions: presets, no team restrictions, the devnet Test preset)
 
 - **Needs Josh:** the pairs-allowlist / founder-fee-options prompt (Keep / Split / Holder rewards / Buyback & burn) never reached this session — please resend it; the go and funding for mainnet stage 2 (`program/MAINNET.md`); a devnet faucet top-up (deployer 2.28 SOL, the QA wallets nearly empty); the takeover policy on unvested team tokens.

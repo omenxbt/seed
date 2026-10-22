@@ -8,7 +8,7 @@ const SEED = {
   creatorShareBps: 7000,       // of pool fees: 70% to the founder's payout wallet, 30% to Seed, snapshotted at seeding
   presetCapsUsd: [50000, 100000, 150000, 200000],   // the opening market cap presets a founder picks from; the raise is derived (cap × (1 − team) ÷ 2 at the Pyth price). The program's Config carries the same four, set once at init; the site reads those once the config is in
   testCapUsd: 30,              // devnet test mode only: a tiny Test preset so a cycle costs cents; a mainnet build refuses it at init (program/math.rs check_presets)
-  minDeadlineH: 24, maxDeadlineH: 14 * 24,
+  minDeadlineH: 24, maxDeadlineH: 30 * 24,   // 30 days since 2026-10-21 (the devnet config was patched; production inits with it)
   seedTimeoutDays: 3,          // a filled raise that has not seeded by then refunds everyone
   minUnlockDays: 90,           // unused since 2026-10-20 (no minimum on team unlocks); kept for the Config's layout, which still carries the field
   payoutDelayDays: 7,          // a payout wallet change takes effect after this long and shows while pending

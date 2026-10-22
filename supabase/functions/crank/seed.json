@@ -332,41 +332,8 @@
                 "path": "raise"
               },
               {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
+                "kind": "account",
+                "path": "pair_token_program"
               },
               {
                 "kind": "account",
@@ -425,41 +392,8 @@
                 "path": "payout_wallet"
               },
               {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
+                "kind": "account",
+                "path": "pair_token_program"
               },
               {
                 "kind": "account",
@@ -508,6 +442,12 @@
         {
           "name": "treasury_token",
           "writable": true
+        },
+        {
+          "name": "pair_token_program",
+          "docs": [
+            "the pair asset's token program"
+          ]
         },
         {
           "name": "pool_authority",
@@ -619,6 +559,9 @@
           ]
         },
         {
+          "name": "pair_mint"
+        },
+        {
           "name": "wallet_token",
           "writable": true
         },
@@ -632,46 +575,12 @@
                 "path": "raise"
               },
               {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
+                "kind": "account",
+                "path": "token_program"
               },
               {
                 "kind": "account",
-                "path": "raise.pair_mint",
-                "account": "Raise"
+                "path": "pair_mint"
               }
             ],
             "program": {
@@ -714,8 +623,7 @@
           }
         },
         {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+          "name": "token_program"
         }
       ],
       "args": []
@@ -1088,6 +996,9 @@
           "signer": true
         },
         {
+          "name": "pair_mint"
+        },
+        {
           "name": "wallet_token",
           "writable": true
         },
@@ -1101,46 +1012,12 @@
                 "path": "raise"
               },
               {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
+                "kind": "account",
+                "path": "token_program"
               },
               {
                 "kind": "account",
-                "path": "raise.pair_mint",
-                "account": "Raise"
+                "path": "pair_mint"
               }
             ],
             "program": {
@@ -1183,8 +1060,7 @@
           }
         },
         {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+          "name": "token_program"
         },
         {
           "name": "system_program",
@@ -1280,25 +1156,10 @@
         },
         {
           "name": "stage",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  116,
-                  97,
-                  103,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "raise"
-              }
-            ]
-          }
+          "docs": [
+            "under the pair's token program; created here"
+          ],
+          "writable": true
         },
         {
           "name": "pool_payer",
@@ -1320,6 +1181,12 @@
               }
             ]
           }
+        },
+        {
+          "name": "pair_token_program",
+          "docs": [
+            "the pair asset's token program"
+          ]
         },
         {
           "name": "raise_meta",
@@ -1455,41 +1322,8 @@
                 "path": "raise"
               },
               {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
+                "kind": "account",
+                "path": "pair_token_program"
               },
               {
                 "kind": "account",
@@ -1537,24 +1371,62 @@
         },
         {
           "name": "stage",
+          "docs": [
+            "the pair side of the deposit, staged in the pool payer's associated token account (made at step 1)"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
               {
-                "kind": "const",
-                "value": [
-                  115,
-                  116,
-                  97,
-                  103,
-                  101
-                ]
+                "kind": "account",
+                "path": "pool_payer"
               },
               {
                 "kind": "account",
-                "path": "raise"
+                "path": "pair_token_program"
+              },
+              {
+                "kind": "account",
+                "path": "pair_mint"
               }
-            ]
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
           }
         },
         {
@@ -1578,6 +1450,12 @@
               }
             ]
           }
+        },
+        {
+          "name": "pair_token_program",
+          "docs": [
+            "the pair asset's token program"
+          ]
         },
         {
           "name": "position_nft_mint",
@@ -1671,6 +1549,9 @@
           }
         },
         {
+          "name": "pair_mint"
+        },
+        {
           "name": "escrow",
           "writable": true,
           "pda": {
@@ -1680,46 +1561,12 @@
                 "path": "raise"
               },
               {
-                "kind": "const",
-                "value": [
-                  6,
-                  221,
-                  246,
-                  225,
-                  215,
-                  101,
-                  161,
-                  147,
-                  217,
-                  203,
-                  225,
-                  70,
-                  206,
-                  235,
-                  121,
-                  172,
-                  28,
-                  180,
-                  133,
-                  237,
-                  95,
-                  91,
-                  55,
-                  145,
-                  58,
-                  140,
-                  245,
-                  133,
-                  126,
-                  255,
-                  0,
-                  169
-                ]
+                "kind": "account",
+                "path": "token_program"
               },
               {
                 "kind": "account",
-                "path": "raise.pair_mint",
-                "account": "Raise"
+                "path": "pair_mint"
               }
             ],
             "program": {
@@ -1766,11 +1613,138 @@
           "writable": true
         },
         {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+          "name": "token_program"
         }
       ],
       "args": []
+    },
+    {
+      "name": "devnet_set_max_deadline",
+      "docs": [
+        "devnet builds only: the longest deadline, by the program's upgrade authority (production inits with the value it wants)"
+      ],
+      "discriminator": [
+        55,
+        211,
+        195,
+        66,
+        207,
+        237,
+        16,
+        71
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "program_data",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  213,
+                  178,
+                  198,
+                  98,
+                  36,
+                  207,
+                  140,
+                  2,
+                  121,
+                  85,
+                  252,
+                  77,
+                  168,
+                  252,
+                  72,
+                  58,
+                  69,
+                  109,
+                  132,
+                  199,
+                  135,
+                  151,
+                  128,
+                  104,
+                  207,
+                  189,
+                  7,
+                  184,
+                  228,
+                  137,
+                  191
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                2,
+                168,
+                246,
+                145,
+                78,
+                136,
+                161,
+                176,
+                226,
+                16,
+                21,
+                62,
+                247,
+                99,
+                174,
+                43,
+                0,
+                194,
+                185,
+                61,
+                22,
+                193,
+                36,
+                210,
+                192,
+                83,
+                122,
+                16,
+                4,
+                128,
+                0,
+                0
+              ]
+            }
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "max_deadline",
+          "type": "i64"
+        }
+      ]
     },
     {
       "name": "init_config",
@@ -2120,6 +2094,40 @@
           "name": "pair_mint"
         },
         {
+          "name": "pair_token_program",
+          "docs": [
+            "the pair asset's token program: Token, or Token-2022 for a tokenized stock"
+          ]
+        },
+        {
+          "name": "pair",
+          "docs": [
+            "the allowlist entry for a pair other than SOL or USDC, at [\"pair\", mint]"
+          ],
+          "optional": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  105,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pair_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "pair_feed",
+          "optional": true
+        },
+        {
           "name": "escrow",
           "writable": true
         },
@@ -2376,6 +2384,98 @@
       "args": []
     },
     {
+      "name": "set_pair",
+      "docs": [
+        "the admin may change where Seed's fees go and who signs attestations, nothing else: the fee, the split, the",
+        "deadlines and every open raise's terms are out of reach",
+        "the admin allows a pair asset for new raises, or pauses or resumes one: any SPL token (Token or Token-2022) without a",
+        "transfer fee, a transfer hook, a permanent delegate or a non-transferable flag, with the Pyth price account that prices",
+        "it (or `stable` for a dollar). Raises already open in it are untouched. In a devnet build the program's upgrade",
+        "authority may do it too (the devnet config's admin is a browser wallet)."
+      ],
+      "discriminator": [
+        42,
+        150,
+        180,
+        126,
+        54,
+        219,
+        46,
+        191
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "signer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "program_data",
+          "optional": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "feed",
+          "optional": true
+        },
+        {
+          "name": "pair",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  97,
+                  105,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "p",
+          "type": {
+            "defined": {
+              "name": "PairParams"
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "settle",
       "docs": [
         "a live raise past its deadline and short of the target refunds; anyone can settle it"
@@ -2441,10 +2541,6 @@
     },
     {
       "name": "update_config",
-      "docs": [
-        "the admin may change where Seed's fees go and who signs attestations, nothing else: the fee, the split, the",
-        "deadlines and every open raise's terms are out of reach"
-      ],
       "discriminator": [
         29,
         158,
@@ -2536,6 +2632,19 @@
       ]
     },
     {
+      "name": "PairAsset",
+      "discriminator": [
+        235,
+        163,
+        11,
+        246,
+        106,
+        93,
+        182,
+        141
+      ]
+    },
+    {
       "name": "Raise",
       "discriminator": [
         253,
@@ -2600,6 +2709,19 @@
         70,
         139,
         144
+      ]
+    },
+    {
+      "name": "PairSet",
+      "discriminator": [
+        131,
+        21,
+        92,
+        19,
+        59,
+        20,
+        80,
+        231
       ]
     },
     {
@@ -2841,160 +2963,175 @@
     {
       "code": 6013,
       "name": "BadPair",
-      "msg": "The pair asset must be SOL or USDC."
+      "msg": "The pair asset must be SOL, USDC or one the admin has allowed."
     },
     {
       "code": 6014,
+      "name": "PairPaused",
+      "msg": "This pair asset is paused for new raises."
+    },
+    {
+      "code": 6015,
+      "name": "PairExtensions",
+      "msg": "A pair asset cannot carry a transfer fee, a transfer hook, a permanent delegate, or be non-transferable."
+    },
+    {
+      "code": 6016,
+      "name": "BadPairFeed",
+      "msg": "That is not the Pyth price account for this pair asset."
+    },
+    {
+      "code": 6017,
       "name": "BadTeamShare",
       "msg": "The team share must be under 100%."
     },
     {
-      "code": 6015,
+      "code": 6018,
       "name": "ScheduleSum",
       "msg": "The unlocks must add up to exactly 100%."
     },
     {
-      "code": 6016,
+      "code": 6019,
       "name": "ScheduleOrder",
       "msg": "The unlocks are out of order."
     },
     {
-      "code": 6017,
+      "code": 6020,
       "name": "BadSchedule",
       "msg": "The schedule is empty or has too many dates, a slice with no share, two shapes at once, or a team share of zero with a schedule."
     },
     {
-      "code": 6018,
+      "code": 6021,
       "name": "BadName",
       "msg": "The name or ticker is too long or empty."
     },
     {
-      "code": 6019,
+      "code": 6022,
       "name": "BadUri",
       "msg": "The metadata URI must be an https:// or ar:// address of at most 200 characters (Arweave on mainnet)."
     },
     {
-      "code": 6020,
+      "code": 6023,
       "name": "ZeroAmount",
       "msg": "The amount is zero."
     },
     {
-      "code": 6021,
+      "code": 6024,
       "name": "Full",
       "msg": "The raise is full."
     },
     {
-      "code": 6022,
+      "code": 6025,
       "name": "Flagged",
       "msg": "Buying is off: this raise was flagged for fraud."
     },
     {
-      "code": 6023,
+      "code": 6026,
       "name": "Blacklisted",
       "msg": "This X account cannot open a raise."
     },
     {
-      "code": 6024,
+      "code": 6027,
       "name": "BadAttestation",
       "msg": "The attestation is missing, malformed or not from the attestor."
     },
     {
-      "code": 6025,
+      "code": 6028,
       "name": "AttestationExpired",
       "msg": "The attestation has expired."
     },
     {
-      "code": 6026,
+      "code": 6029,
       "name": "NotFounder",
       "msg": "Only the founder can do that."
     },
     {
-      "code": 6027,
+      "code": 6030,
       "name": "NotAdmin",
       "msg": "Only the admin can do that."
     },
     {
-      "code": 6028,
+      "code": 6031,
       "name": "BadPriceAccount",
       "msg": "That is not the Pyth SOL/USD price account, or it is not fully verified."
     },
     {
-      "code": 6029,
+      "code": 6032,
       "name": "BadConfig",
       "msg": "Those terms are out of range."
     },
     {
-      "code": 6030,
+      "code": 6033,
       "name": "OneLiveRaise",
       "msg": "This wallet already has a live raise. One at a time."
     },
     {
-      "code": 6031,
+      "code": 6034,
       "name": "PrevRaiseMissing",
       "msg": "The raise named as this wallet's live one was not passed in."
     },
     {
-      "code": 6032,
+      "code": 6035,
       "name": "XAlreadyLinked",
       "msg": "This raise already has an X account linked."
     },
     {
-      "code": 6033,
+      "code": 6036,
       "name": "RaiseOver",
       "msg": "A refunded raise cannot link an X account."
     },
     {
-      "code": 6034,
+      "code": 6037,
       "name": "XBlacklistMissing",
       "msg": "The X handle's blacklist account was not passed in."
     },
     {
-      "code": 6035,
+      "code": 6038,
       "name": "NotPendingAdmin",
       "msg": "Only the pending admin can accept the handover."
     },
     {
-      "code": 6036,
+      "code": 6039,
       "name": "TestModeNotAllowed",
       "msg": "Test mode exists only in devnet builds, and only with the devnet proof account."
     },
     {
-      "code": 6037,
+      "code": 6040,
       "name": "WrongStep",
       "msg": "That seeding step is not next."
     },
     {
-      "code": 6038,
+      "code": 6041,
       "name": "TimeoutNotPassed",
       "msg": "The seeding timeout has not passed."
     },
     {
-      "code": 6039,
+      "code": 6042,
       "name": "AlreadyClaimed",
       "msg": "Already claimed."
     },
     {
-      "code": 6040,
+      "code": 6043,
       "name": "NothingToClaim",
       "msg": "Nothing to claim."
     },
     {
-      "code": 6041,
+      "code": 6044,
       "name": "ChangeNotDue",
       "msg": "The payout wallet change is not due yet."
     },
     {
-      "code": 6042,
+      "code": 6045,
       "name": "NoChangePending",
       "msg": "No payout wallet change is pending."
     },
     {
-      "code": 6043,
+      "code": 6046,
       "name": "WrongAccount",
       "msg": "The account does not match the raise."
     },
     {
-      "code": 6044,
+      "code": 6047,
       "name": "Overflow",
       "msg": "Arithmetic overflow."
     }
@@ -3462,6 +3599,127 @@
           {
             "name": "max_buy",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PairAsset",
+      "docs": [
+        "A pair asset the admin allowed ([\"pair\", mint]): SOL and USDC need none (they are built in); any other SPL token — a",
+        "tokenized stock, a major token — is added here with the Pyth price account that prices it, so a preset market cap can be",
+        "turned into a target in that asset at opening. `stable` means the asset is a dollar (no feed). `paused` stops new raises",
+        "in it; raises already open are untouched. Mints with a transfer fee, a transfer hook, a permanent delegate or that are",
+        "non-transferable are refused at set_pair."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_program",
+            "type": "pubkey"
+          },
+          {
+            "name": "decimals",
+            "type": "u8"
+          },
+          {
+            "name": "feed",
+            "type": "pubkey"
+          },
+          {
+            "name": "feed_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "stable",
+            "type": "bool"
+          },
+          {
+            "name": "paused",
+            "type": "bool"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "added_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PairParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "feed_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "stable",
+            "type": "bool"
+          },
+          {
+            "name": "paused",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PairSet",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "stable",
+            "type": "bool"
+          },
+          {
+            "name": "paused",
+            "type": "bool"
+          },
+          {
+            "name": "by",
+            "type": "pubkey"
+          },
+          {
+            "name": "at",
+            "type": "i64"
           }
         ]
       }

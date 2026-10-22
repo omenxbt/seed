@@ -6,6 +6,7 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, N
 import { assert } from 'chai';
 import { createHash } from 'crypto';
 import { SeedClient, pda, handleHash, attestIx, decodeMetadata, WSOL, SOL_FEED, PRESET_CAPS_CENTS, TEST_PRESET } from '../client/seed';
+import { ExtensionType, createInitializeMint2Instruction, createInitializeTransferFeeConfigInstruction, createMintToInstruction, getMintLen } from '@solana/spl-token';
 import idl from '../target/idl/seed.json';
 
 const { Keypair, PublicKey, SystemProgram, LAMPORTS_PER_SOL } = web3;
@@ -33,7 +34,7 @@ describe('seed', () => {
     // the config, once; the attestor is fixed by it, which is why the key derives from the wallet. A config that cannot
     // be read (an older layout) or that names another attestor is closed and made again when this wallet is its admin.
     const make = async () => c.send([await c.initConfig({ admin: me.publicKey, attestor: attestor.publicKey, seedTreasury: me.publicKey, solFeed: SOL_FEED, feeBps: 100, creatorShareBps: 7000, poolFeeBps: 125, capUsdCents: new BN(10_000_000),
-      minDeadline: new BN(86400), maxDeadline: new BN(14 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90 /* unused since 2026-10-20 */, payoutDelay: new BN(7 * 86400), testMode: true, minTargetLamports: sol(0.1) /* unused */, presetCapsCents: PRESET_CAPS_CENTS.map(x => new BN(x)), testCapCents: new BN(3000) }, me.publicKey, USDC_DEVNET)]);
+      minDeadline: new BN(86400), maxDeadline: new BN(30 * 86400), seedTimeout: new BN(3 * 86400), minUnlockDays: 90 /* unused since 2026-10-20 */, payoutDelay: new BN(7 * 86400), testMode: true, minTargetLamports: sol(0.1) /* unused */, presetCapsCents: PRESET_CAPS_CENTS.map(x => new BN(x)), testCapCents: new BN(3000) }, me.publicKey, USDC_DEVNET)]);
     try { cfg = await c.fetchConfig(); } catch { cfg = null; }
     if (!cfg) {
       const raw = await provider.connection.getAccountInfo(c.config);
@@ -257,6 +258,79 @@ describe('seed', () => {
     await c.send([await c.adminApproveTakeover(raise, me.publicKey, to)]);
     r = await c.fetchRaise(raise); assert.ok(r.payoutWallet.equals(to)); assert.equal(r.pendingPayout, null); assert.ok(r.takeoverTo.equals(to));
   }));
+
+  // the long ones, after the suite's raise is seeded: they would not fit inside its one-"day" (one-minute) deadline
+  it('pair assets: the allowlist takes a Token-2022 mint priced as a dollar, refuses one with a transfer fee, and a raise in it fills, seeds on DAMM and pays its fees', async function () {
+    this.timeout(400_000);
+    const T22 = TOKEN_2022_PROGRAM_ID, programData = PublicKey.findProgramAddressSync([program.programId.toBuffer()], new PublicKey('BPFLoaderUpgradeab1e11111111111111111111111'))[0];
+    const asAuthority = cfg.admin.equals(me.publicKey) ? null : programData;   // the admin, or on a devnet build the upgrade authority
+    // a plain Token-2022 mint, 6 decimals, owned by this wallet
+    const mk = Keypair.generate(), len = getMintLen([]);
+    await c.send([SystemProgram.createAccount({ fromPubkey: me.publicKey, newAccountPubkey: mk.publicKey, space: len, lamports: await provider.connection.getMinimumBalanceForRentExemption(len), programId: T22 }), createInitializeMint2Instruction(mk.publicKey, 6, me.publicKey, null, T22)], [mk]);
+    await c.send([await c.setPair(mk.publicKey, { symbol: 'TSTx', stable: true }, me.publicKey, asAuthority)]);
+    const pa: any = await (program.account as any).pairAsset.fetch(pda.pair(program.programId, mk.publicKey));
+    assert.equal(pa.symbol, 'TSTx'); assert.ok(pa.stable && !pa.paused && pa.tokenProgram.equals(T22)); assert.equal(pa.decimals, 6);
+    // a mint with a transfer fee is refused
+    const bad = Keypair.generate(), blen = getMintLen([ExtensionType.TransferFeeConfig]);
+    await c.send([SystemProgram.createAccount({ fromPubkey: me.publicKey, newAccountPubkey: bad.publicKey, space: blen, lamports: await provider.connection.getMinimumBalanceForRentExemption(blen), programId: T22 }), createInitializeTransferFeeConfigInstruction(bad.publicKey, me.publicKey, me.publicKey, 100, BigInt(1_000_000), T22), createInitializeMint2Instruction(bad.publicKey, 6, me.publicKey, null, T22)], [bad]);
+    await expectFail(c.send([await c.setPair(bad.publicKey, { symbol: 'FEE', stable: true }, me.publicKey, asAuthority)]), 'PairExtensions');
+    // a raise paired with TSTx at the Test preset: $30 × 100% ÷ 2 = $15 → 15 TSTx; the backer is minted 20 and fills it
+    const f = Keypair.generate(); await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.05 * LAMPORTS_PER_SOL })]);
+    const o = await c.openRaise(f.publicKey, mk.publicKey, null, null, { nonce: nonce + 50, name: 'Paired', ticker: 'PAIR', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: f.publicKey });
+    await c.send(o.ixs, [f]); const pr = await c.fetchRaise(o.raise);
+    assert.ok(pr.pairMint.equals(mk.publicKey)); assert.equal(Number(pr.targetUsdCents), 1500); assert.ok(pr.target.eq(new BN(15_000_000)), 'a $15 raise is 15 TSTx at $1, 6 decimals');
+    const bAta = getAssociatedTokenAddressSync(mk.publicKey, backer.publicKey, false, T22);
+    await c.send([createAssociatedTokenAccountIdempotentInstruction(me.publicKey, bAta, backer.publicKey, mk.publicKey, T22), createMintToInstruction(mk.publicKey, bAta, me.publicKey, 20_000_000, [], T22)]);
+    await c.send([await c.contribute(o.raise, mk.publicKey, backer.publicKey, pr.target, T22)], [backer]);
+    const filled = await c.fetchRaise(o.raise); assert.deepEqual(Object.keys(filled.status)[0], 'filled'); assert.ok(filled.feesHeld.eqn(150_000), '1% of 15 TSTx');
+    const m2 = Keypair.generate(), n2 = Keypair.generate();
+    await c.send([await c.crankMint(o.raise, m2.publicKey, mk.publicKey, me.publicKey, T22)], [m2]);
+    await c.send([web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }), await c.crankPool(o.raise, m2.publicKey, mk.publicKey, n2.publicKey, me.publicKey, T22)], [n2]);
+    const tre = getAssociatedTokenAddressSync(mk.publicKey, cfg.seedTreasury, true, T22);
+    await c.send([createAssociatedTokenAccountIdempotentInstruction(me.publicKey, tre, cfg.seedTreasury, mk.publicKey, T22), await c.crankSeed(o.raise, mk.publicKey, cfg.seedTreasury, T22)]);
+    const seeded = await c.fetchRaise(o.raise); assert.deepEqual(Object.keys(seeded.status)[0], 'seeded');
+    const vaultB = await getAccount(provider.connection, pda.dammVault(mk.publicKey, seeded.pool), 'confirmed', T22); assert.ok(Number(vaultB.amount) >= 15_000_000 - 100, `the pool holds the 15 TSTx to within DAMM's deposit rounding (a Token-2022 pair on DAMM v2): ${vaultB.amount}`);
+    assert.equal(Number((await getAccount(provider.connection, tre, 'confirmed', T22)).amount), 150_000 + (15_000_000 - Number(vaultB.amount)), 'the 1% and the deposit rounding reached the treasury');
+    await c.send([c.ata(backer.publicKey, backer.publicKey, m2.publicKey), await c.claimTokens(o.raise, m2.publicKey, backer.publicKey)], [backer]);
+    assert.equal((await getAccount(provider.connection, getAssociatedTokenAddressSync(m2.publicKey, backer.publicKey))).amount, 500_000_000_000_000n, 'the whole backers half, as the only backer');
+    // paused: no new raise in it
+    await c.send([await c.setPair(mk.publicKey, { symbol: 'TSTx', stable: true, paused: true }, me.publicKey, asAuthority)]);
+    const g = Keypair.generate(); await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: g.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL })]);
+    await expectFail(c.openRaise(g.publicKey, mk.publicKey, null, null, { nonce: nonce + 51, name: 'Paused', ticker: 'PSD', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: g.publicKey }).then(x => c.send(x.ixs, [g])), 'PairPaused');
+    // and a mint nobody allowed is refused at opening
+    const alien = Keypair.generate(), alen = getMintLen([]);
+    await c.send([SystemProgram.createAccount({ fromPubkey: me.publicKey, newAccountPubkey: alien.publicKey, space: alen, lamports: await provider.connection.getMinimumBalanceForRentExemption(alen), programId: T22 }), createInitializeMint2Instruction(alien.publicKey, 6, me.publicKey, null, T22)], [alien]);
+    let refused = false; try { await c.openRaise(g.publicKey, alien.publicKey, null, null, { nonce: nonce + 52, name: 'Alien', ticker: 'ALN', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 0, schedule: [], payoutWallet: g.publicKey }); } catch (e: any) { refused = /pair not allowed/.test(e.message); }
+    assert.ok(refused, 'the client refuses a pair with no allowlist entry before sending');
+  });
+
+  it('a deadline may run to 30 days, no more', async function () {
+    this.timeout(120_000);
+    const f = Keypair.generate(); await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL })]);
+    await expectFail(c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 60, name: 'Long', ticker: 'LONG', uri: KILN_URI, preset: TEST_PRESET, deadline: span(31 * 86400), teamBps: 0, schedule: [], payoutWallet: f.publicKey }).then(x => c.send(x.ixs, [f])), 'BadDeadline');
+    const o = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 61, name: 'Long', ticker: 'LONG', uri: KILN_URI, preset: TEST_PRESET, deadline: span(30 * 86400), teamBps: 0, schedule: [], payoutWallet: f.publicKey });
+    await c.send(o.ixs, [f]); const r30 = await c.fetchRaise(o.raise); assert.ok(Number(r30.endsAt) - Number(r30.openedAt) >= span(30 * 86400) - 2, 'thirty days');
+    await c.send([await c.cancelRaise(o.raise, f.publicKey)], [f]);
+  });
+
+  it('a raise minted but never pooled times out and every backer still gets a refund (QA P0-F20)', async function () {
+    this.timeout(400_000);
+    const f = Keypair.generate(); await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL })]);
+    const o = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 70, name: 'Stuck', ticker: 'STUCK', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 5000, schedule: [{ dayOffset: 0, bps: 10000 }], payoutWallet: f.publicKey });
+    await c.send(o.ixs, [f]); const rs = await c.fetchRaise(o.raise), t = rs.target as BN;
+    const b1 = (await getAccount(provider.connection, getAssociatedTokenAddressSync(NATIVE_MINT, backer.publicKey))).amount;
+    await c.send([await c.contribute(o.raise, WSOL, backer.publicKey, t)], [backer]);
+    const m3 = Keypair.generate(); await c.send([await c.crankMint(o.raise, m3.publicKey, WSOL, me.publicKey)], [m3]);
+    const filled = await c.fetchRaise(o.raise); assert.deepEqual(Object.keys(filled.seedStep)[0], 'minted');
+    // the seeding timeout (3 "days" = 3 minutes in test mode), then anyone refunds it
+    const due = Number(filled.filledAt) + span(Number(cfg.seedTimeout)) + 8;
+    while (((await provider.connection.getBlockTime(await provider.connection.getSlot('confirmed'))) || 0) < due) await new Promise(r => setTimeout(r, 5000));
+    await c.send([await c.timeoutRefund(o.raise)]);
+    const rr = await c.fetchRaise(o.raise); assert.deepEqual(Object.keys(rr.status)[0], 'refunded'); assert.deepEqual(Object.keys(rr.refundReason)[0], 'timeout');
+    await c.send([await c.claimRefund(o.raise, WSOL, backer.publicKey)], [backer]);
+    const b2 = (await getAccount(provider.connection, getAssociatedTokenAddressSync(NATIVE_MINT, backer.publicKey))).amount;
+    assert.equal(b2, b1, 'the deposit and its 1% came back exactly, with the token already minted');
+  });
 
   describe('a cancelled raise, opened by a fresh founder wallet', () => {
     let raise2: web3.PublicKey; const handle2 = handle + '_2';

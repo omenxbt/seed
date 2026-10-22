@@ -43,9 +43,9 @@ clones, admin tests included and at no cost: `PORT=8999 sh scripts/localnet.sh`,
 (a fresh ledger each run: the fraud-flag test blacklists the suite's second founder for good).
 
 **The deploy check.** `scripts/check-deploy.ts production|staging|devnet <rpc> [program id]` reads the live Config and
-the program account and exits non-zero unless they carry the profile's terms: production is 81 SOL, 125 bps on the
-pool, 100 bps on buys, 70/30, no test mode (and, with `SEED_PROD_UPGRADE_AUTHORITY` set, the Squads vault as upgrade
-authority; the four presets and no test preset). A deploy is not done until it prints OK.
+the program account and exits non-zero unless they carry the profile's terms: production is the four presets ($50K,
+$100K, $150K, $200K) and no test preset, 125 bps on the pool, 100 bps on buys, 70/30, no test mode (and, with
+`SEED_PROD_UPGRADE_AUTHORITY` set, the Squads vault as upgrade authority). A deploy is not done until it prints OK.
 
 The build pins a few transitive crates in `Cargo.lock` (blake3, zeroize, hashbrown, indexmap, proc-macro-crate,
 unicode-segmentation) because the SBF toolchain's rustc 1.84 cannot read edition-2024 manifests; `cargo update` will
@@ -115,8 +115,9 @@ the whole path on devnet with the test wallets and prints what Helius DAS (what 
 
 ## Mainnet launch checklist
 
-Before the first public raise on mainnet, one small real raise (a few dollars, a one-day deadline, a wallet that is
-not the admin) run end to end, then checked where traders look:
+The small tests (a seeded raise, a refunded raise, the DEX pick-up) run on the staging program (`MAINNET.md`, stage 2),
+not on production. Production's first raise is a real one at the $50K preset, opened by a real founder from the site; as
+it seeds, it is checked where traders look:
 
 1. **Build and deploy the mainnet program** (`anchor build`, no `devnet` feature: no test mode, no `reset_config`,
    metadata URIs must be Arweave). `init_config` with `pool_fee_bps = 125` (1.25%: Meteora keeps 20%, 1% of volume reaches the position), `fee_bps = 100`, `creator_share_bps = 7000`. Upgrade authority and Config admin to the Squads multisig. `js/config/seed.js`:

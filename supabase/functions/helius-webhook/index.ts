@@ -7,7 +7,7 @@
 // are known), SEED_TOKEN_DECIMALS (the launched tokens' decimals, 6 by default).
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import { eventsInLogs, REFUND_REASON } from '../_shared/events.ts';
-import { indexSwap, readPoolFeeBps, type Tx } from '../_shared/swaps.ts';
+import { indexSwap, mintDecimals, readPoolFeeBps, type Tx } from '../_shared/swaps.ts';
 
 const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, { auth: { persistSession: false } });
 const SECRET = Deno.env.get('HELIUS_WEBHOOK_SECRET') ?? '', RPC_URL = Deno.env.get('SEED_RPC_URL') ?? '';
@@ -26,12 +26,14 @@ async function raiseOf(address: string) {
   const { data } = await db.from('raises').select('id, pair_mint, pool, raised, backers, payout_wallet, fees_founder_claimed, fees_seed_claimed, team_claimed').eq('address', address).maybeSingle();
   return data;
 }
-const dec = (r: { pair_mint: string }) => PAIR_DEC[r.pair_mint] ?? 9;
+const dec = (r: { pair_mint: string }) => PAIR_DEC[r.pair_mint] ?? 9;   // filled in at RaiseOpened for an allowed pair (mintDecimals)
 
 async function apply(name: string, e: Record<string, unknown>, tx: string, blockTime: number) {
   const now = new Date().toISOString(), at = e.at != null ? ts(e.at as bigint) : new Date(blockTime * 1000).toISOString();
   if (name === 'RaiseOpened') {
-    const pairMint = e.pairMint as string, d = PAIR_DEC[pairMint] ?? 9, tr = e.schedule as { dayOffset: number; bps: number }[];
+    const pairMint = e.pairMint as string, tr = e.schedule as { dayOffset: number; bps: number }[];
+    const d = PAIR_DEC[pairMint] ?? (RPC_URL ? await mintDecimals(RPC_URL, pairMint).catch(() => 9) : 9);   // an allowed pair's decimals come from its mint
+    if (PAIR_DEC[pairMint] == null) PAIR_DEC[pairMint] = d;
     await db.from('raises').upsert({
       id: slug(e.ticker as string, e.raise as string), address: e.raise, founder: e.founder, name: e.name, ticker: e.ticker, pair_mint: pairMint,
       target: units(e.target as bigint, d), target_usd: Number(e.targetUsdCents) / 100, sol_usd_at_open: Number(e.solUsdCents) / 100,

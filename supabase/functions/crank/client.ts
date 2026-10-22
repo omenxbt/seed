@@ -45,6 +45,10 @@ export function seedClient(program: Program, conn: web3.Connection) {
     }
   };
   const raiseOf = (k: web3.PublicKey) => (program.account as any).raise.fetch(k);
+  // the pair asset's token program (Token, or Token-2022 for a tokenized stock), from the mint's owner, once per mint
+  const programs = new Map<string, web3.PublicKey>();
+  const pairProgramOf = async (mint: web3.PublicKey) => { const k = mint.toBase58(); if (!programs.has(k)) { const a = await conn.getAccountInfo(mint); if (!a) throw new Error('no mint ' + k); programs.set(k, a.owner); } return programs.get(k)!; };
+  const stageOf = (raise: web3.PublicKey, pairMint: web3.PublicKey, pp: web3.PublicKey) => getAssociatedTokenAddressSync(pairMint, pda.poolPayer(pid, raise), true, pp);
   const m = program.methods as any;
   return {
     // every Raise account, decoded one by one: one from before a layout change fails to decode and is skipped, not fatal
@@ -59,29 +63,29 @@ export function seedClient(program: Program, conn: web3.Connection) {
     timeoutRefund: (raise: web3.PublicKey) => m.timeoutRefund().accounts({ raise, config }).rpc(),
     applyPayoutChange: (raise: web3.PublicKey) => m.applyPayoutChange().accounts({ raise }).rpc(),
     async crankMint(raise: web3.PublicKey) {
-      const r = await raiseOf(raise), mint = Keypair.generate();
-      const ix = await m.crankMint().accounts({ raise, cranker: me, mint: mint.publicKey, backersVault: getAssociatedTokenAddressSync(mint.publicKey, raise, true), poolVault: pda.poolVault(pid, raise), teamVault: PublicKey.findProgramAddressSync([Buffer.from('team'), raise.toBuffer()], pid)[0], pairMint: r.pairMint, stage: pda.stage(pid, raise), poolPayer: pda.poolPayer(pid, raise), raiseMeta: pda.raiseMeta(pid, raise), metadata: pda.metadata(mint.publicKey), tokenMetadataProgram: TOKEN_METADATA_PROGRAM, rent: web3.SYSVAR_RENT_PUBKEY, tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
+      const r = await raiseOf(raise), mint = Keypair.generate(), pp = await pairProgramOf(r.pairMint);
+      const ix = await m.crankMint().accounts({ raise, cranker: me, mint: mint.publicKey, backersVault: getAssociatedTokenAddressSync(mint.publicKey, raise, true), poolVault: pda.poolVault(pid, raise), teamVault: PublicKey.findProgramAddressSync([Buffer.from('team'), raise.toBuffer()], pid)[0], pairMint: r.pairMint, stage: stageOf(raise, r.pairMint, pp), pairTokenProgram: pp, poolPayer: pda.poolPayer(pid, raise), raiseMeta: pda.raiseMeta(pid, raise), metadata: pda.metadata(mint.publicKey), tokenMetadataProgram: TOKEN_METADATA_PROGRAM, rent: web3.SYSVAR_RENT_PUBKEY, tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
       return send([ix], [mint]);
     },
     async crankPool(raise: web3.PublicKey) {
-      const r = await raiseOf(raise), nft = Keypair.generate(), pool = pda.dammPool(r.mint, r.pairMint);
-      const ix = await m.crankPool().accounts({ raise, config, cranker: me, mint: r.mint, pairMint: r.pairMint, poolVault: pda.poolVault(pid, raise), escrow: getAssociatedTokenAddressSync(r.pairMint, raise, true), stage: pda.stage(pid, raise), poolPayer: pda.poolPayer(pid, raise),
+      const r = await raiseOf(raise), nft = Keypair.generate(), pool = pda.dammPool(r.mint, r.pairMint), pp = await pairProgramOf(r.pairMint);
+      const ix = await m.crankPool().accounts({ raise, config, cranker: me, mint: r.mint, pairMint: r.pairMint, poolVault: pda.poolVault(pid, raise), escrow: getAssociatedTokenAddressSync(r.pairMint, raise, true, pp), stage: stageOf(raise, r.pairMint, pp), poolPayer: pda.poolPayer(pid, raise), pairTokenProgram: pp,
         positionNftMint: nft.publicKey, positionNftAccount: pda.dammPositionNftAccount(nft.publicKey), poolAuthority: DAMM_POOL_AUTHORITY, pool, position: pda.dammPosition(nft.publicKey), tokenAVault: pda.dammVault(r.mint, pool), tokenBVault: pda.dammVault(r.pairMint, pool),
         dammEventAuthority: pda.dammEventAuthority(), cpAmmProgram: DAMM, tokenProgram: TOKEN_PROGRAM_ID, token2022Program: TOKEN_2022, systemProgram: SystemProgram.programId }).instruction();
       return send([ix], [nft]);
     },
     async crankSeed(raise: web3.PublicKey) {
-      const r = await raiseOf(raise), cfg = await (program.account as any).config.fetch(config), tre = getAssociatedTokenAddressSync(r.pairMint, cfg.seedTreasury, true);
-      const ix = await m.crankSeed().accounts({ raise, config, escrow: getAssociatedTokenAddressSync(r.pairMint, raise, true), treasuryToken: tre, tokenProgram: TOKEN_PROGRAM_ID }).instruction();
-      return send([createAssociatedTokenAccountIdempotentInstruction(me, tre, cfg.seedTreasury, r.pairMint), ix]);
+      const r = await raiseOf(raise), cfg = await (program.account as any).config.fetch(config), pp = await pairProgramOf(r.pairMint), tre = getAssociatedTokenAddressSync(r.pairMint, cfg.seedTreasury, true, pp);
+      const ix = await m.crankSeed().accounts({ raise, config, pairMint: r.pairMint, escrow: getAssociatedTokenAddressSync(r.pairMint, raise, true, pp), treasuryToken: tre, tokenProgram: pp }).instruction();
+      return send([createAssociatedTokenAccountIdempotentInstruction(me, tre, cfg.seedTreasury, r.pairMint, pp), ix]);
     },
     async claimCreatorFees(raise: web3.PublicKey) {
       const r = await raiseOf(raise), cfg = await (program.account as any).config.fetch(config), pool = r.pool as web3.PublicKey;
-      const payoutToken = getAssociatedTokenAddressSync(r.pairMint, r.payoutWallet, true), tre = getAssociatedTokenAddressSync(r.pairMint, cfg.seedTreasury, true);
-      const ix = await m.claimCreatorFees().accounts({ raise, config, cranker: me, mint: r.mint, pairMint: r.pairMint, poolVault: pda.poolVault(pid, raise), escrow: getAssociatedTokenAddressSync(r.pairMint, raise, true),
-        payoutWallet: r.payoutWallet, payoutToken, treasuryToken: tre, poolAuthority: DAMM_POOL_AUTHORITY, pool, position: r.position, positionNftAccount: pda.dammPositionNftAccount(r.positionNftMint),
+      const pp = await pairProgramOf(r.pairMint), payoutToken = getAssociatedTokenAddressSync(r.pairMint, r.payoutWallet, true, pp), tre = getAssociatedTokenAddressSync(r.pairMint, cfg.seedTreasury, true, pp);
+      const ix = await m.claimCreatorFees().accounts({ raise, config, cranker: me, mint: r.mint, pairMint: r.pairMint, poolVault: pda.poolVault(pid, raise), escrow: getAssociatedTokenAddressSync(r.pairMint, raise, true, pp),
+        payoutWallet: r.payoutWallet, payoutToken, treasuryToken: tre, pairTokenProgram: pp, poolAuthority: DAMM_POOL_AUTHORITY, pool, position: r.position, positionNftAccount: pda.dammPositionNftAccount(r.positionNftMint),
         tokenAVault: pda.dammVault(r.mint, pool), tokenBVault: pda.dammVault(r.pairMint, pool), dammEventAuthority: pda.dammEventAuthority(), cpAmmProgram: DAMM, tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
-      return send([createAssociatedTokenAccountIdempotentInstruction(me, payoutToken, r.payoutWallet, r.pairMint), createAssociatedTokenAccountIdempotentInstruction(me, tre, cfg.seedTreasury, r.pairMint), ix]);
+      return send([createAssociatedTokenAccountIdempotentInstruction(me, payoutToken, r.payoutWallet, r.pairMint, pp), createAssociatedTokenAccountIdempotentInstruction(me, tre, cfg.seedTreasury, r.pairMint, pp), ix]);
     },
     /* unlocked team tokens to the payout wallet, its token account made on the way if it is missing */
     async claimVested(raise: web3.PublicKey) {

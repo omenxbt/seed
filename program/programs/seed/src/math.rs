@@ -52,18 +52,19 @@ pub fn mul_div_ceil(a: u64, b: u64, c: u64) -> Option<u64> {
 }
 
 /// The raise, derived from the opening market cap the founder picked: target = cap × (1 − team share) ÷ 2, in cents, then in
-/// the pair asset — lamports at today's SOL price, or USDC base units (6 dp). Half of what the team does not take is what
-/// backers pay for and all of it goes into the pool, so the pool opens at exactly the cap. Returns (target, target cents, the
-/// SOL price used; 0 for a USDC raise).
-pub fn derive_target(cap_cents: u64, team_bps: u16, is_sol: bool, sol_cents: u64) -> anchor_lang::Result<(u64, u64, u64)> {
+/// the pair asset's base units at its price — `decimals` and `price_cents` are the pair's (SOL: 9 and the Pyth SOL/USD
+/// price; USDC: 6 and 100; an allowed pair: its own). Half of what the team does not take is what backers pay for and all
+/// of it goes into the pool, so the pool opens at exactly the cap. Returns (target units, target cents).
+pub fn derive_target(cap_cents: u64, team_bps: u16, decimals: u8, price_cents: u64) -> anchor_lang::Result<(u64, u64)> {
     use anchor_lang::prelude::*;
     use crate::errors::SeedError;
-    use crate::state::{BPS, LAMPORTS};
+    use crate::state::BPS;
     require!((team_bps as u64) < BPS, SeedError::BadTeamShare);
+    require!(price_cents > 0 && decimals <= 18, SeedError::BadPairFeed);
     let target_cents = mul_div(cap_cents, BPS - team_bps as u64, BPS).ok_or(SeedError::Overflow)? / 2;
-    let target = if is_sol { mul_div(target_cents, LAMPORTS, sol_cents.max(1)).ok_or(SeedError::Overflow)? } else { target_cents.checked_mul(10_000).ok_or(SeedError::Overflow)? };
+    let target = mul_div(target_cents, 10u64.pow(decimals as u32), price_cents).ok_or(SeedError::Overflow)?;
     require!(cap_cents > 0 && target_cents > 0 && target > 0, SeedError::BadPreset);
-    Ok((target, target_cents, if is_sol { sol_cents } else { 0 }))
+    Ok((target, target_cents))
 }
 
 /// The presets a config may be made with: four opening market caps, ascending, every one above zero. The test preset is
@@ -88,21 +89,22 @@ mod preset_tests {
 
     #[test] fn every_preset_at_0_15_and_50_percent_team_at_100_150_and_250_dollars() {
         for &cap in &CAPS { for &team in &[0u16, 1500, 5000] { for &px in &[10_000u64, 15_000, 25_000] {
-            let (lamports, cents, sol) = derive_target(cap, team, true, px).unwrap();
+            let (lamports, cents) = derive_target(cap, team, 9, px).unwrap();
             let want_cents = cap * (10_000 - team as u64) / 10_000 / 2;
             assert_eq!(cents, want_cents, "cap {cap} team {team}: target is cap × (1 − team) ÷ 2");
             assert_eq!(lamports, want_cents * 1_000_000_000 / px, "priced in lamports at ${}", px / 100);
-            assert_eq!(sol, px);
-            let (units, cents_u, sol_u) = derive_target(cap, team, false, px).unwrap();
-            assert_eq!((units, cents_u, sol_u), (want_cents * 10_000, want_cents, 0), "a USDC raise: the same dollars, no SOL price recorded");
+            assert_eq!(derive_target(cap, team, 6, 100).unwrap(), (want_cents * 10_000, want_cents), "a USDC raise: the same dollars at $1, 6 decimals");
+            // an allowed pair: a tokenized stock at $250 with 8 decimals
+            assert_eq!(derive_target(cap, team, 8, 25_000).unwrap(), (want_cents * 100_000_000 / 25_000, want_cents), "a $250 stock token, 8 decimals");
         } } }
         // Josh's example: $100K, 15% team, $150 a SOL → $42,500 → 283.333… SOL
-        assert_eq!(derive_target(10_000_000, 1500, true, 15_000).unwrap(), (283_333_333_333, 4_250_000, 15_000));
-        assert_eq!(derive_target(5_000_000, 0, true, 10_000).unwrap().0, 250_000_000_000, "$50K, no team, $100: 250 SOL");
-        assert_eq!(derive_target(20_000_000, 5000, true, 25_000).unwrap().0, 200_000_000_000, "$200K, half to the team, $250: 200 SOL");
+        assert_eq!(derive_target(10_000_000, 1500, 9, 15_000).unwrap(), (283_333_333_333, 4_250_000));
+        assert_eq!(derive_target(5_000_000, 0, 9, 10_000).unwrap().0, 250_000_000_000, "$50K, no team, $100: 250 SOL");
+        assert_eq!(derive_target(20_000_000, 5000, 9, 25_000).unwrap().0, 200_000_000_000, "$200K, half to the team, $250: 200 SOL");
     }
-    #[test] fn a_hundred_percent_team_share_has_nothing_to_raise() { assert!(code(derive_target(10_000_000, 10_000, true, 15_000)).contains("BadTeamShare")); }
-    #[test] fn the_test_preset_is_tiny() { assert_eq!(derive_target(3_000, 1500, true, 10_500).unwrap(), (121_428_571, 1_275, 10_500), "$30, 15% team, $105: $12.75, 0.121 SOL"); }
+    #[test] fn a_hundred_percent_team_share_has_nothing_to_raise() { assert!(code(derive_target(10_000_000, 10_000, 9, 15_000)).contains("BadTeamShare")); }
+    #[test] fn the_test_preset_is_tiny() { assert_eq!(derive_target(3_000, 1500, 9, 10_500).unwrap(), (121_428_571, 1_275), "$30, 15% team, $105: $12.75, 0.121 SOL"); }
+    #[test] fn a_pair_without_a_price_cannot_size_a_raise() { assert!(code(derive_target(10_000_000, 0, 6, 0)).contains("BadPairFeed")); }
     #[test] fn presets_must_ascend_and_be_set() {
         assert!(check_presets(&CAPS, 0, false).is_ok());
         assert!(code(check_presets(&[5_000_000, 10_000_000, 10_000_000, 20_000_000], 0, false)).contains("BadConfig"));
