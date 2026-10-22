@@ -9,7 +9,7 @@
 //                   is on the webhook's address list), then once an hour
 // The on-chain state is read fresh each pass; the tables are not trusted for what to send.
 //
-// Secrets: SEED_RPC_URL (devnet or mainnet), SEED_CRANK_KEY (the crank wallet's 64-byte secret key, base58),
+// Secrets: SEED_RPC_URL (devnet: the public endpoint, api.devnet.solana.com — Helius is kept for the webhook and the browser; mainnet: a paid RPC), SEED_CRANK_KEY (the crank wallet's 64-byte secret key, base58),
 // SEED_PROGRAM_ID, CRANK_SECRET (the authorization header pg_cron sends). The IDL is bundled at deploy from js/idl/seed.json.
 import { createClient } from 'npm:@supabase/supabase-js@2.45.4';
 import { Connection, Keypair, PublicKey } from 'npm:@solana/web3.js@1.95.3';

@@ -65,7 +65,7 @@ that X sign-in is not switched on, and the demo wallet uses a typed handle that 
   (`SEED_CRANK_KEY`) that holds only SOL for fees; every instruction it sends is permissionless. Schedule it with pg_cron:
 
   ```sql
-  select cron.schedule('seed-crank', '* * * * *', $$ select net.http_post(
+  select cron.schedule('seed-crank', '*/5 * * * *', $$ select net.http_post(
     url := 'https://<ref>.supabase.co/functions/v1/crank', headers := '{"authorization": "<CRANK_SECRET>"}'::jsonb) $$);
   ```
 
@@ -84,7 +84,7 @@ Project `xwokejftvhcwrwxxcykh`, linked from this repo (`supabase/config.toml`; t
 four migrations are applied and `seed`, `helius-webhook` and `crank` are deployed with every secret above set for
 **devnet**: the attestor is the key the program tests derive from the deployer wallet (it is what the on-chain Config
 holds), the crank wallet is `program/keys/crank.json` (`3YYcjx21rw2wyQRPjawRNr2QCwUFs1nDbtJucmJq8CQc`, funded with
-devnet SOL), and pg_cron calls the crank every minute. `program/scripts/secrets.mjs` regenerates the crank and
+devnet SOL), and pg_cron calls the crank every five minutes (2026-10-21; it was every minute). `program/scripts/secrets.mjs` regenerates the crank and
 webhook secrets if they are ever rotated; `program/scripts/config.mjs` prints the on-chain Config. Still to create by
 hand: the Helius webhook (devnet, raw, program id, secret `HELIUS_WEBHOOK_SECRET`) and the X developer app.
 
