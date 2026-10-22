@@ -83,9 +83,11 @@ var chain = {
   registry: {},   // by symbol: { mint, decimals, tokenProgram, stable, paused, feed }
   /* the admin's pair allowlist, read once: each entry becomes an asset the Launch form offers and the page can price in */
   async loadPairs() {
-    if (!(await this.init()) || this.pairsAt) return this.registry; this.pairsAt = Date.now();
+    if (!(await this.init()) || (this.pairsAt && Date.now() - this.pairsAt < 120e3) || (this.pairsTriedAt && Date.now() - this.pairsTriedAt < 15e3)) return this.registry;
+    this.pairsTriedAt = Date.now();   // pairsAt is set only when the read worked: at boot the public RPC rate-limits, and an empty list must not be kept for two minutes
     try {
-      const all = await this.program.account.pairAsset.all();
+      const all = await this.viaRpc(() => this.program.account.pairAsset.all());
+      this.pairsAt = Date.now();   // re-read every two minutes after that, so a pair the admin adds shows up without a reload
       for (const { account: a } of all) {
         const sym = String(a.symbol), mint = a.mint.toBase58();
         this.registry[sym] = { mint, decimals: a.decimals, tokenProgram: a.tokenProgram.toBase58(), stable: !!a.stable, paused: !!a.paused, feed: a.feed.toBase58(), addedAt: Number(a.addedAt) * 1000 };

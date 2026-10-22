@@ -29,7 +29,11 @@ const targetUsdForCap = (capUsd, teamBps) => capUsd * (BPS - teamBps) / BPS / 2;
 /* the SOL price today, live only: the Pyth read, or nothing. On a chain-connected site the demo figure never stands in for it
    (QA P1-F17); the demo site, with no chain, keeps its fixed price */
 const liveSolUsd = () => SEED.solUsdLive || (typeof chain !== 'undefined' && chain.on() ? 0 : SEED.demoSolUsd);
-const targetForCap = (capUsd, teamBps, q) => { const usd = targetUsdForCap(capUsd, teamBps); return q === 'USDC' ? Math.floor(usd * 100) / 100 : liveSolUsd() > 0 ? Math.floor(usd / liveSolUsd() * 1e9) / 1e9 : NaN; };
+/* a pair asset's dollar price on the page: SOL live from Pyth, USDC and a stable pair a dollar, a pair priced by its own feed
+   unknown here (0): the program prices it at the Pyth read the moment the raise opens */
+const pairPriceUsd = q => q === 'SOL' ? liveSolUsd() : q === 'USDC' ? 1 : (typeof chain !== 'undefined' && chain.registry && chain.registry[q] && chain.registry[q].stable) ? 1 : 0;
+const pairDecimals = q => q === 'SOL' ? 9 : q === 'USDC' ? 6 : (typeof chain !== 'undefined' && chain.registry && chain.registry[q] && chain.registry[q].decimals) || 6;
+const targetForCap = (capUsd, teamBps, q) => { const usd = targetUsdForCap(capUsd, teamBps), px = pairPriceUsd(q), dp = Math.min(pairDecimals(q), 9); return px > 0 ? Math.floor(usd / px * 10 ** dp) / 10 ** dp : NaN; };
 const capOf = p => p.capUsd || fdvUsdOf(p);   // the market cap a raise opened at: the preset for a live raise; the FDV at the raise price otherwise (demo data)
 
 /* the supply: team share, then backers and the pool get equal halves of the rest */

@@ -2186,7 +2186,7 @@ function validateDraft(d, da) {
   if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) return `$${d.ticker} is already in use by a live raise. Pick another ticker.`;
   if (da.err) return da.err;
   if (!(d.cap > 0) || d.preset < 0) return 'Pick an opening market cap.';
-  if (!(d.target > 0)) return 'The SOL price has not loaded yet; try again in a moment.';
+  if (!(d.target > 0) && (da.key === 'SOL' || pairPriceUsd(da.key) > 0)) return 'The SOL price has not loaded yet; try again in a moment.';   // a pair priced by its own feed is priced on chain at opening
   return '';
 }
 /* ------------------------------------------------------------- portfolio */
@@ -2531,6 +2531,7 @@ function tick(silent) {
     if (now >= seedDeadline(p)) { p.status = 'refunded'; p.refundReason = 'timeout'; p.resolvedAt = now; changed = true; if (silent !== true) tellOnce(p, `${p.name} did not seed in time. Every backer can claim a refund.`); }
     else if (!p.live) { const last = p.crankAt || p.filledAt; if (now - last > 30e3 && !document.hidden && !busy) { p.crankAt = now; seedCrank(p); } }   // a demo raise runs its own steps, one every half minute, as the crank does for a live one; the button runs them sooner
   }
+  if (chain.ready && !busy && !document.hidden && now - (chain.pairsAt || 0) > 120e3 && now - (chain.pairsTriedAt || 0) > 15e3) chain.loadPairs().then(() => { if (ui.tab === 'launch') renderPairSeg(); }).catch(() => {});   // the allowlist: every two minutes, or again 15 s after a failed read
   if (chain.ready && !busy && !document.hidden && now - (chain.syncedAt || 0) > 20e3) {   // live raises that can still change are re-read from the chain
     chain.syncedAt = now; const open = state.presales.filter(p => p.live && (p.status === 'live' || p.status === 'filled' || p.pendingPayoutWallet)).slice(0, 6);
     if (open.length) Promise.all(open.map(p => chain.sync(p))).then(() => { save(); renderAll(); if (detailBox) renderDetail(true); }).catch(() => {});

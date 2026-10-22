@@ -200,7 +200,7 @@ function validateFields() {
   else if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) err('#fTicker', `$${d.ticker} is in use by a live raise. Pick another.`);
   if (da.err) err('#pairSeg', da.err);
   if (!(d.cap > 0) || d.preset < 0) err('#capSeg', 'Pick an opening market cap.');
-  else if (!(d.target > 0)) err('#capSeg', 'The SOL price has not loaded yet; try again in a moment.');
+  else if (!(d.target > 0) && (da.key === 'SOL' || pairPriceUsd(da.key) > 0)) err('#capSeg', 'The SOL price has not loaded yet; try again in a moment.');
   const mn = numv($('#fMin').value), mx = numv($('#fMax').value), L = lf.lim;
   if (L.min.on && !(mn > 0)) err('#fMin', 'Set the minimum buy, or switch it off.');
   else if (L.min.on && L.min.unit === 'pct' && mn >= 100) err('#fMin', 'Under 100% of the supply.');
@@ -279,13 +279,14 @@ function renderPreview() {
   if (typeof chain !== 'undefined' && chain.on() && !chain.cfg) chain.init().then(() => { if (chain.cfg) renderPreview(); }).catch(() => {});   // and at the chain's floor once the config is read (test mode brings it down)
   $('#capTest').hidden = !testCapUsd(); $$('#capSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === String(draft.cap)))); seg.cap && seg.cap.place();
   const capUsd = d.cap, tUsd = capUsd > 0 ? targetUsdForCap(capUsd, dp.teamBps) : 0;   // the raise line: what the preset derives at today's SOL price
-  $('#raiseLine').textContent = !capUsd ? (draft.cap === 'test' ? 'The Test preset is not in this network\'s config.' : 'Pick an opening market cap.') : !ok ? `Opens at ${fmtMcap(capUsd)} market cap · the SOL price has not loaded yet` : `Opens at ${fmtMcap(capUsd)} market cap · raise ${fmtC(d.target, da.key)} ${sym} (${fmtUsd(tUsd)}), all into the pool`;
+  const fed = da.a && da.a.allowed && !(pairPriceUsd(da.key) > 0);   // a pair priced by its own Pyth feed: the raise is fixed in it the moment the raise opens
+  $('#raiseLine').textContent = !capUsd ? (draft.cap === 'test' ? 'The Test preset is not in this network\'s config.' : 'Pick an opening market cap.') : fed ? `Opens at ${fmtMcap(capUsd)} market cap · raise ${fmtUsd(tUsd)} of ${sym}, priced at its Pyth price when the raise opens, all into the pool` : !ok ? `Opens at ${fmtMcap(capUsd)} market cap · the SOL price has not loaded yet` : `Opens at ${fmtMcap(capUsd)} market cap · raise ${fmtC(d.target, da.key)} ${sym} (${fmtUsd(tUsd)}), all into the pool`;
   $('#targetUsd').textContent = ok && da.key === 'SOL' ? `at $${Number(liveSolUsd().toPrecision(4))} per SOL today; fixed at the Pyth price when the raise opens` : !ok && capUsd ? 'the SOL price has not loaded yet' : '';
   drawSplit(dp); drawDerived(dp, ok, sym);
   const art = pr.art ? `<img class="pv-art" src="${esc(pr.art)}" alt="" style="object-position:${pr.artPos}">` : `<span class="pv-art glyph-art" style="--h:${hashStr(dp.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(dp)}</svg></span>`;
   $('#pvCard').innerHTML = `${pr.banner ? `<div class="pv-banner"><img src="${esc(pr.banner)}" alt="" style="object-position:${pr.bannerPos}"></div>` : ''}<div class="pv-id">${art}<span class="nm"><b>${esc(dp.name)}<span class="tk">$${esc(dp.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div><div class="c-prog"><span class="bar"><i style="width:0%"></i></span><span class="pct num">0%</span></div>`;
   const label = { 24: '24 hours', 72: '3 days', 168: '7 days', 336: '14 days', 720: '30 days' }[d.hours], split = splitOf(dp.teamBps), f = n => Number(n.toFixed(C.dp)).toLocaleString('en-US', { maximumFractionDigits: C.dp });
-  const noTarget = d.cap > 0 ? 'The SOL price has not loaded yet' : 'Pick an opening market cap';   // why there is no figure yet (QA P2-90)
+  const noTarget = d.cap > 0 ? (da.a && da.a.allowed && !(pairPriceUsd(da.key) > 0) ? `Priced in ${sym} at its Pyth price when the raise opens` : 'The SOL price has not loaded yet') : 'Pick an opening market cap';   // why there is no figure yet (QA P2-90)
   const pc = n => (n / SEED.supply * 100).toFixed(n / SEED.supply * 100 % 1 ? 1 : 0) + '%', fees = v => fmtUsd(feeSplit(v).founder);
   $('#pvFacts').innerHTML = [
     ['Opens at', ok ? `<span class="num">${fmtMcap(d.cap)}</span> market cap: the raise is ${fmtMcap(d.cap)} × ${pc(SEED.supply - split.team)} ÷ 2 = <span class="num">${fmtUsd(targetUsdForCap(d.cap, dp.teamBps))}</span>` : noTarget],
