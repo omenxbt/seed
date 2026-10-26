@@ -20,7 +20,7 @@ test('each preset at 0%, 15% and 50% team, at $100, $150 and $250: cap × (1 −
     assert.equal(targetForCap(cap, bps, 'USDC'), usd);
   }
   sandbox.SEED.solUsdLive = 150;
-  assert.ok(Math.abs(targetForCap(100000, 1500, 'SOL') - 283.333333333) < 1e-9, "Josh's example: $100K, 15% team, $150 → 283.33 SOL ($42,500)");
+  assert.ok(Math.abs(targetForCap(100000, 1500, 'SOL') - 283.333333333) < 1e-9, "The owner's example: $100K, 15% team, $150 → 283.33 SOL ($42,500)");
 });
 test('the list is the floor and the ceiling: only a preset on it has a cap and an index', () => {
   assert.deepEqual(presetCaps(), [50000, 100000, 150000, 200000]);

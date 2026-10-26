@@ -33,7 +33,7 @@ Identity and trust
 Admin and program
 - update_config can change only the treasury and attestor. The admin handover is two-step (propose, then accept). Nothing can change fees, the split, existing raises or founder payout wallets.
 - Test mode (a day counts as a minute) exists only in devnet builds.
-- Never decide what happens to unvested team tokens on a takeover. It's an open decision: keep current behaviour and list it under "Needs Josh."
+- Never decide what happens to unvested team tokens on a takeover. It's an open decision: keep current behaviour and list it under "Needs the owner."
 
 ## Never build
 Treasuries, voting, follow-on raises or reserves, bonding curves, launches without a presale, perps or leverage, custodial wallets, bots that trade without the user's signature, KYC or required X, warnings on founder terms, fake or demo data on real raises, and anything that changes "What Seed is." Copy patterns from Axiom and GMGN, never their branding, logos, names or text.
@@ -64,7 +64,7 @@ Each iteration, work the first unticked item in CHECKLIST.md that doesn't need t
 - Something needs mainnet, real money, or deleting data or accounts.
 - The deployer is below 1 SOL and test wallets can't refill it.
 - A change would alter "What Seed is."
-Everything else that needs me goes in a "Needs Josh" list at the top of PROGRESS.md, and you keep going.
+Everything else that needs me goes in a "Needs the owner" list at the top of PROGRESS.md, and you keep going.
 
 ## Finished when
 - Every item in the target feature set works on devnet with real data.

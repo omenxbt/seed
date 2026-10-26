@@ -144,7 +144,7 @@
 .ts-item .chg{font-size:12.5px}
 
 /* ------------------------------------------------------- hero and featured */
-/* the Pools page's top: a hero on the left, the most active raise on the right as a card (the hero's large Seed mark came out, Josh) */
+/* the Pools page's top: a hero on the left, the most active raise on the right as a card (the hero's large Seed mark came out, the owner) */
 .hero-row{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:14px;margin:0 0 16px}
 .hero{position:relative;overflow:hidden;padding:30px 32px;min-height:228px;display:flex;flex-direction:column;justify-content:center;gap:12px}
 .hero h1{font-size:clamp(26px,2.4vw,34px);font-weight:500;letter-spacing:-.045em;line-height:1.05;max-width:13em}

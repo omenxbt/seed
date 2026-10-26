@@ -1,6 +1,6 @@
 # Seed on mainnet, in three stages
 
-Nothing in stages 2 and 3 runs without Josh's go. Stage 1 costs nothing and runs any time.
+Nothing in stages 2 and 3 runs without the owner's go. Stage 1 costs nothing and runs any time.
 
 ## Stage 1 — rehearsal on a local validator that is mainnet as far as Seed can tell
 
@@ -22,7 +22,7 @@ the four presets, 1% buy fee, 125 bps pool, 70/30, no minimum unlock, 7-day payo
 Takes about 90 minutes, almost all of it the 90-minute cliff (`--fast` skips that one wait). Last run 2026-10-21 (UTC) under the
 presets: 34 checks, all passed (SOL at $106.92 from the cloned feed; A's $40,000 raise was 374.11 SOL). **Not covered:** a burn of
 unvested team tokens on a takeover — no such instruction exists; the schedule keeps unlocking to the new payout wallet.
-That policy is open (Needs Josh).
+That policy is open (Needs the owner).
 
 ## Stage 2 — staging: the same source under a second program id, on mainnet, with real but small SOL
 
@@ -42,7 +42,7 @@ GO=1 SEED_PROGRAM_ID=3PzTSUPz… ANCHOR_PROVIDER_URL=<mainnet rpc> ANCHOR_WALLET
 SEED_PROGRAM_ID=3PzTSUPz… ANCHOR_PROVIDER_URL=<mainnet rpc> ANCHOR_WALLET=keys/deployer.json \
   npx ts-node -P tsconfig.json scripts/alt.ts mainnet            # 4. the mainnet lookup table (prints its address)
 npx ts-node -P tsconfig.json scripts/check-deploy.ts staging <mainnet rpc> 3PzTSUPz…   # 5. must print OK
-# 6. the token metadata JSON on Arweave, with the Irys wallet (Needs Josh): about 0.001 SOL for a 1 KB file
+# 6. the token metadata JSON on Arweave, with the Irys wallet (Needs the owner): about 0.001 SOL for a 1 KB file
 npx @irys/cli upload seedtest.json -n mainnet -t solana -w keys/irys.json   # prints https://gateway.irys.xyz/<id>
 GO=1 SEED_PROGRAM_ID=3PzTSUPz… ANCHOR_PROVIDER_URL=<mainnet rpc> ANCHOR_WALLET=keys/deployer.json \
   npx ts-node -P tsconfig.json scripts/staging/seedtest.ts --uri https://gateway.irys.xyz/<id>   # 7. SEEDTEST and REFUNDME
@@ -59,7 +59,7 @@ mainnet webhook on the staging id and `SEED_RPC_URL`/`SEED_PROGRAM_ID` for it �
 |---|---|---|
 | `keys/deployer.json` → `6GTuondHNLSJkYemhVw8GYFTK3ANHPFXdVYUM5JP5zyf` | **5.0 SOL**: ≈ 3.95 SOL program rent (563 KB binary; the buffer's rent becomes the program data account's, so it is paid once), 0.003 ALT, 0.003 Config, ≈ 0.03 SEEDTEST's accounts (raise, meta, founder record, escrow, mint, vaults, metadata), 0.05 fronted for the DAMM pool (≈ 0.025 kept by the pool's rent, the rest back), ≈ 0.02 REFUNDME's founder and accounts, fees, margin | ≈ 0.025 pool-rent change; 0.005 (the 1% on SEEDTEST's fill, since the deployer is the staging treasury); the program rent only by closing the program later (`solana program close`, ≈ 3.95 back) |
 | `keys/staging-backer.json` (make one) | **0.75 SOL**: 0.505 fills SEEDTEST (0.5 to the pool for good, 0.005 fee), 0.101 the REFUNDME buy (refunded), 0.03 trades (0.02 + 0.01 in, half sold back), fees | ≈ 0.101 refund + the sell's proceeds + what the last unwrap returns |
-| Irys wallet (Needs Josh) | 0.01 SOL | — |
+| Irys wallet (Needs the owner) | 0.01 SOL | — |
 
 **Sunk for good: ≈ 0.55 SOL** (0.5 in the pool, pool and account rents, fees) **plus the 3.95 SOL program rent** until the
 staging program is closed. Jupiter routing and DEXScreener want a trade and some liquidity; 0.5 SOL of liquidity is thin,
@@ -67,12 +67,12 @@ so expect DEXScreener and Meteora to show it, Jupiter's quote to route, Birdeye 
 
 ## Stage 3 — production runbook (do not run)
 
-**SOL only at launch (Josh, 2026-10-26).** Every raise pairs with SOL. The pair allowlist stays in the program, so another
+**SOL only at launch (the owner, 2026-10-26).** Every raise pairs with SOL. The pair allowlist stays in the program, so another
 pair can be switched on later with `set_pair` and no upgrade; at launch nobody runs it. A fresh Config has no allowlist
 entries, and `scripts/check-deploy.ts` fails if any entry is active (a paused one is fine). The site offers no pair choice.
 One gap the config cannot close: **USDC is built into the program** (`open_raise` prices it at a dollar without an allowlist
 entry), so the program itself still accepts a USDC raise sent by hand. Closing that needs a program change (make USDC an
-allowlist entry like any other pair) and is waiting on Josh's call; until then only the site keeps raises on SOL.
+allowlist entry like any other pair) and is waiting on the owner's call; until then only the site keeps raises on SOL.
 
 1. **Squads.** Make the multisig (2-of-3 or better) on app.squads.so; note its **vault address** (the signer that holds the
    authority), not the multisig account.
