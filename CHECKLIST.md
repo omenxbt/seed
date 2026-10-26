@@ -11,20 +11,20 @@ with the commit or tx in brackets.
 - Stop the loop when every unticked item is [OWNER].
 
 ## A. Housekeeping
-- [ ] Remove every personal name and alias from tracked files (LOOP.md, PROGRESS.md, BACKLOG.md, DECISIONS.md, QA.md, docs, scripts, comments); use "the owner"; no names in future commits
-- [ ] Confirm Vercel auto-deploys on push; remove the manual deploy step from LOOP.md
-- [ ] Report what the Oct 26 10:21 AM PT CLI production deploy contained. If anything uncommitted shipped, commit it or redeploy main from git
-- [ ] Deployer ≥ 4.6 SOL free on devnet: close leftover buffers, sweep test wallets (keep 0.05 each). If still short → [OWNER] with the exact amount
+- [x] Remove every personal name and alias from tracked files (LOOP.md, PROGRESS.md, BACKLOG.md, DECISIONS.md, QA.md, docs, scripts, comments); use "the owner"; no names in future commits [8d0e1ce]
+- [x] Confirm Vercel auto-deploys on push; remove the manual deploy step from LOOP.md [6bbd066; Git builds READY on their own since: dpl_BL4wLbfx, dpl_28P96Uk2, dpl_548M2PLt, dpl_6pwo4xSc]
+- [x] Report what the Oct 26 10:21 AM PT CLI production deploy contained. If anything uncommitted shipped, commit it or redeploy main from git [dpl_PLUmaCPf was a clean export of commit 7e5f845: tracked files only, nothing uncommitted; main has redeployed from Git since]
+- [x] Deployer ≥ 4.6 SOL free on devnet: close leftover buffers, sweep test wallets (keep 0.05 each). If still short → [OWNER] with the exact amount [11.70 SOL, no buffers left; no sweep needed]
 - [ ] Upgrade the devnet program to 85dc510 or later; refresh js/idl and the crank if the IDL changed; one suite run
 
 ## B. Scope changes
-- [ ] SOL only: no pair selector on the launch form (verify on final-model)
+- [x] SOL only: no pair selector on the launch form (verify on final-model) [03f8677; production serves no selector]
 - [ ] USDC and TSTx paused on chain with set_pair; a raise attempt on either is refused with PairPaused (save the tx)
-- [ ] No program change for USDC; allowlist code stays for later
-- [ ] MAINNET.md + staging/production init scripts set up SOL only
-- [ ] Docs, FAQ and copy say SOL; no "SOL, USDC or an approved asset" anywhere
-- [ ] F21 and F22 moved to BACKLOG.md under "Re-enable other pairs"
-- [ ] "What backers pay" removed from the launch form; buy panel still shows the 1% fee and fee-included total
+- [x] No program change for USDC; allowlist code stays for later [03f8677: no program change; set_pair and the allowlist intact]
+- [x] MAINNET.md + staging/production init scripts set up SOL only [03f8677: MAINNET.md SOL only, check-deploy.ts fails on an active entry (devnet OK), staging init makes no entry]
+- [x] Docs, FAQ and copy say SOL; no "SOL, USDC or an approved asset" anywhere [this commit: the site's meta description, the brand book, banner 05 and its source; the docs in 03f8677. The program's own BadPair message still names USDC: program text, B3]
+- [x] F21 and F22 moved to BACKLOG.md under "Re-enable other pairs" [03f8677]
+- [x] "What backers pay" removed from the launch form; buy panel still shows the 1% fee and fee-included total [03f8677: "Seed fee, 1%, included" on every deposit panel; the amount you deposit is the fee-included total]
 
 ## C. Remaining fixes
 - [ ] Demo raise no longer shows as "Yours" with no wallet connected

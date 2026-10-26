@@ -257,7 +257,7 @@ banner('banner-05-split',
   f'<div style="position:absolute;left:640px;top:0;height:500px;display:flex;flex-direction:column;justify-content:center;gap:28px;width:800px">'
   f'<div class="lockup">{MARK_MUTED}<span class="wm">Seed</span></div>'
   f'<h1 style="font-size:58px"><i>Back the idea,</i><br>at one fixed price.</h1>'
-  f'<div style="display:flex;align-items:center;gap:14px"><span class="btn btn-ink" style="height:46px;padding:0 24px;font-size:16px">Start a raise</span><span style="color:var(--muted);font-size:17px">Raises on Solana, paired with SOL or USDC.</span></div></div>')
+  f'<div style="display:flex;align-items:center;gap:14px"><span class="btn btn-ink" style="height:46px;padding:0 24px;font-size:16px">Start a raise</span><span style="color:var(--muted);font-size:17px">Raises on Solana, paired with SOL.</span></div></div>')
 
 BANNERS = ['banner-01-minimal', 'banner-02-tagline', 'banner-03-terminal', 'banner-04-dotfield', 'banner-05-split']
 

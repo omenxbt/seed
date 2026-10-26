@@ -1,3 +1,15 @@
+# Status report (2026-10-26, the launch checklist loop; CHECKLIST.md)
+
+- **Needs the owner** (in the order to do them):
+  1. **USDC on chain (CHECKLIST B2 against B3).** `open_raise` accepts USDC without reading the allowlist, so `set_pair` cannot make the program refuse it; B3 rules out the program change that would. Either accept that USDC stays open on chain while the site offers SOL only (B2 ticks with TSTx alone), or allow the small change (USDC becomes an allowlist entry like any other pair).
+  2. **The UI comparison (CHECKLIST D, keep or revert).** The trending bar and no background effects are on the original UI (b8abe02); the rest of `ui-simplify` was not wanted. Say "revert" and the branch is deleted, or "keep" to merge it.
+  3. **seed-qa.** Section E needs the seed-qa session running; it is not among the open sessions.
+  4. **Phantom click-through (F):** launch a Test-preset raise, back it, watch it seed, claim, trade.
+  5. **Refund checks (F):** one cancelled raise, one missed deadline.
+  6. **Phone check (F).**
+  7. **Takeover policy for unvested team tokens (F):** burn or keep.
+  8. **Staging presets and mainnet funding (F):** $150/$300/$450/$600 (or $50K in place of $600); deployer 5.0, staging backer 0.75, Irys 0.01 SOL.
+
 # Status report (2026-10-21, pairs allowlist, 30-day deadline, Helius, seed-qa #29–#30)
 
 - **Needs the owner:** the full spec for the founder fee options (Keep / Split ≤5 / Holder rewards 10–100% / Buyback & burn; per-raise PDA, 15-minute crank, $10 roll-over, 7-day change delay) — the summary arrived, the mechanics (how holder rewards are distributed, the buyback path) did not; mainnet stage 2's go; the takeover policy. Helius: the owner bought more usage, the key stays.

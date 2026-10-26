@@ -113,7 +113,7 @@ pages.append(page('what', f'''
 <div class="grid g2" style="gap:60px">
  <div>
   <h2><i>What</i> Seed is</h2>
-  <p class="lead" style="margin-bottom:22px">A launchpad for raises on Solana. Buy into an idea at one fixed price, paired with SOL or USDC. If it fills, the whole raise opens a Meteora pool that is locked for good. If it misses, every wallet gets back exactly what it paid.</p>
+  <p class="lead" style="margin-bottom:22px">A launchpad for raises on Solana. Buy into an idea at one fixed price, paid in SOL. If it fills, the whole raise opens a Meteora pool that is locked for good. If it misses, every wallet gets back exactly what it paid.</p>
   <p style="max-width:58ch">{HERO_P}</p>
   <div class="grid g3" style="margin-top:30px;gap:12px">
    <div class="card"><span class="tag live">Live</span><h3 style="margin-top:12px">Open</h3><p class="small quiet">Backers buy at the fixed price until the target or the deadline.</p></div>
