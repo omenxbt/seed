@@ -760,11 +760,10 @@ a.ico:hover{color:var(--ink)}
 [hidden]{display:none!important}
 </style>
 <link rel="stylesheet" href="css/delta.css">   <!-- the Delta redesign: after the inline rules, so its equal-specificity rules win -->
+<link rel="stylesheet" href="css/simple.css">  <!-- the simplification: fewer boxes, one accent, full width; last, so it wins -->
 </head>
 <body>
 <!-- the dot field behind every page; its script comes first so the field is there at first paint -->
-<canvas id="bg-dither" aria-hidden="true"></canvas>
-<script src="js/bg-dither.js"></script>
 <script src="js/config/seed.js"></script>
 <script src="js/model.js"></script>
 <!-- the mark, from the brand kit: dot n at r = c√n, angle n × 137.508°, sized from 0.72c at the centre to 0.36c at the rim; the innermost dot is the
@@ -1799,7 +1798,7 @@ const timeOf = p => p.status === 'live' ? `<span class="num${p.endsAt - Date.now
 const progBar = p => { const pc = pctOf(p), C = Q(p); return `<span class="prog" title="${fmtC(p.raised, p.q, true)} / ${fmtC(p.target, p.q, true)} ${esc(C.sym)}"><span class="bar"><i data-bar style="width:${pc}%"></i></span><span class="num" data-pct>${Math.floor(pc + 1e-7)}%</span></span>`; };
 /* the board as one table: token, pair, progress, market cap or target, time, a sparkline for a seeded token, the action. Rows
    carry the data- hooks patchRows() and tick() update, so a buy landing patches them in place. */
-const THEAD = '<div class="thead" aria-hidden="true"><span>Token</span><span>Pair</span><span>Progress</span><span>Market cap</span><span>Time</span><span>Graph</span><span></span></div>';
+const THEAD = k => `<div class="thead" aria-hidden="true"><span>Token</span><span>Pair</span><span>Progress</span><span>${k === 'seeded' ? 'Market cap' : 'Target'}</span><span>${k === 'live' || k === 'near' ? 'Ends in' : 'Age'}</span><span>${k === 'seeded' ? 'Graph' : ''}</span><span></span></div>`;
 function trow(p, i, fresh = '') {
   const pc = pctOf(p);
   return `<div class="trow ${p.status}${fresh}" style="--i:${i}" data-row="${p.id}">
@@ -1872,7 +1871,7 @@ function renderTerminal() {
   const name = { live: 'Live', near: 'Near target', seeded: 'Seeded', refunded: 'Refunded' }[k];
   const none = { live: 'Nothing is live right now. <a href="#/launch">Start a raise</a>', near: 'Nothing is past halfway yet.', seeded: 'Nothing has seeded yet.', refunded: 'Nothing has refunded.' };
   const ruled = k !== 'refunded' && filterTotal();
-  feed.innerHTML = list.length ? (grid ? list.map((p, i) => gtile(p, i, fresh(p))).join('') : THEAD + list.map((p, i) => trow(p, i, fresh(p))).join(''))
+  feed.innerHTML = list.length ? (grid ? list.map((p, i) => gtile(p, i, fresh(p))).join('') : THEAD(k) + list.map((p, i) => trow(p, i, fresh(p))).join(''))
     : `<div class="col-empty">${q ? `Nothing in ${name} matches "${esc(q)}".` : ui.watchOnly ? (nw ? `Nothing starred in ${name}.` : 'Your watchlist is empty. Star a raise on its page to follow it.') : ruled ? `Nothing in ${name} passes the filters. <a href="#" data-filt="">Change them</a>` : none[k]}</div>`;
   const more = $('#moreBtn'); more.hidden = all.length <= list.length; more.textContent = `Show more (${all.length - list.length})`;
   loadSparks(list);
@@ -2068,7 +2067,7 @@ function renderWallet() {
     $('#walletName').textContent = (state.wallet.name || 'Demo wallet') + (xl ? ' · ' + state.wallet.addr : '');
     $('#walletBals').innerHTML = balRows() + (state.wallet.stale ? '<p class="where" style="margin-top:8px">Balances could not be loaded from Solana. Open this menu again to retry.</p>' : '');
   }
-  else b.textContent = 'Connect wallet';
+  else b.innerHTML = 'Connect<span class="wl-w">wallet</span>';
   $('#walletX').innerHTML = xMenu(); xRefresh();
   const n = Object.keys(state.positions).filter(id => !state.claimed[id]).length; $('#ctPos').textContent = n || ''; $('#ctPosMenu').textContent = n || '';
   $('#portLink').hidden = !state.wallet;   // the portfolio is a wallet's: its link shows once one is connected, and is in the wallet menu

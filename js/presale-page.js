@@ -71,15 +71,15 @@ const explorer = (a, kind = 'account') => SEED.network === 'devnet' ? `https://s
 function ppHeader(p) {
   const pr = profileOf(p), C = Q(p), risk = riskSummary(riskChecks(p));
   const socials = SOCIALS.filter(s => safeUrl(pr.links && pr.links[s[0]])).map(s => `<a class="soc" href="${esc(safeUrl(pr.links[s[0]]))}" target="_blank" rel="noopener" aria-label="${s[1]}" title="${s[1]}">${ICONS[s[2]]}</a>`).join('');
-  return `<section class="panel pp-id">
-      <div class="pp-banner">${pr.banner ? `<img class="pp-bg" src="${esc(pr.banner)}" alt="" style="object-position:${esc(pr.bannerPos || '50% 50%')}">` : ''}<a class="back" href="#">&larr; All raises</a></div>
-      <div class="pp-idrow">${artHTML(p, 'pp-art')}${statusPill(p)}</div>
+  return `<header class="pp-head">
+      <a class="back" href="#" aria-label="All raises" title="All raises">&larr;</a>${artHTML(p, 'pp-art')}
       <div class="pp-name"><h1>${esc(p.name)}</h1><span class="pp-tk num">$${esc(p.ticker)}</span></div>
-      <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/info" data-jump-risk>${riskChip(risk)}</a>${isMine(p) ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}${p.live ? `<button type="button" class="copy share" data-share="${esc(shareUrl(p))}" aria-label="Share this raise">${ICONS.out}Share</button>` : ''}</div>
-      ${caOf(p) || socials ? `<div class="pp-meta">${caOf(p) ? copyBtn(caOf(p), 'contract address', 'CA ' + shortMint(caOf(p))) : ''}<span class="pp-socials">${socials}</span></div>` : ''}
-      <dl class="pp-stats" data-pstats>${ppStats(p)}</dl>
-    </section>`;
+      <div class="pp-pills">${statusPill(p)}<span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span>${typeof xBadge === 'function' ? xBadge(p) : ''}<a href="#/presale/${esc(p.id)}/info" data-jump-risk>${riskChip(risk)}</a>${isMine(p) ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}</div>
+      <div class="pp-acts">${typeof starBtn === 'function' ? starBtn(p) : ''}${p.live ? `<button type="button" class="copy share" data-share="${esc(shareUrl(p))}" aria-label="Share this raise">${ICONS.out}Share</button>` : ''}${caOf(p) ? copyBtn(caOf(p), 'contract address', 'CA ' + shortMint(caOf(p))) : ''}${socials ? `<span class="pp-socials">${socials}</span>` : ''}</div>
+    </header>`;
 }
+/* the facts under the chart: plain rows, no box */
+const ppFacts = p => `<section class="pp-facts" aria-label="Facts"><dl class="pp-stats" data-pstats>${ppStats(p)}</dl></section>`;
 function ppStats(p) {
   const C = Q(p), sym = esc(C.sym), pr = profileOf(p), st = (k, v, cls = '') => `<div class="${cls}"><dt>${k}</dt><dd class="num">${v}</dd></div>`;
   if (p.status === 'seeded') {
@@ -501,7 +501,7 @@ function tabOverview(p) {
   const pr = profileOf(p), C = Q(p), sym = esc(C.sym), sp = splitOf(p.teamBps), pct = n => `${(n / SUPPLY * 100).toFixed(n / SUPPLY * 100 % 1 ? 1 : 0)}%`, use = p.tokenUseCase && p.tokenUseCase !== 'none' ? p.tokenUseCase : '';
   const links = SOCIALS.filter(s => safeUrl(pr.links && pr.links[s[0]])).map(s => `<a class="link-card" href="${esc(safeUrl(pr.links[s[0]]))}" target="_blank" rel="noopener">${ICONS[s[2]]}<span><b>${s[1]}</b><span>${esc(hostOf(pr.links[s[0]]))}</span></span></a>`).join('');
   const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
-  return `<div class="ov"><div class="ov-a">${tabHead('About', prFrom(p))}<div class="md">${md(pr.description) || `<p class="quiet">The founder has not written a description yet.</p>`}</div>
+  return `${pr.banner ? `<img class="ov-banner" src="${esc(pr.banner)}" alt="" style="object-position:${esc(pr.bannerPos || '50% 50%')}">` : ''}<div class="ov"><div class="ov-a">${tabHead('About', prFrom(p))}<div class="md">${md(pr.description) || `<p class="quiet">The founder has not written a description yet.</p>`}</div>
       <div class="tab-h sub"><h2>What the token does</h2></div><p class="use">${use ? esc(use) : 'None. The founder listed no use for the token: this is a bet on the team.'}</p></div>
     <div class="ov-b"><div class="tab-h sub"><h2>The token</h2></div><dl class="kv kv-wide">
       ${row('Opened at', `<span class="num">${fmtMcap(capOf(p))}</span> market cap${p.capUsd ? ': the raise is the cap × what the team does not take ÷ 2' : ''}`)}${row('Supply', '<span class="num">1,000,000,000</span>, mint and freeze revoked at seeding')}${row('Backers', `<span class="num">${pct(sp.backers)}</span>, claimable at seeding`)}${row('Pool', `<span class="num">${pct(sp.pool)}</span> with the whole raise, locked for good`)}
@@ -775,8 +775,10 @@ function renderDetail(force) {
   if (fresh) { leaveLive(); if (p.live && p.status === 'seeded') pg.tf = '1m'; }   // a new pool reads better minute by minute
   Object.assign(pg, { id: p.id, status: p.status, tab, walletKey: wkey, seen: p.raised, shown: null }); if (fresh) Object.assign(pg, { allBackers: false, allHolders: false, deck: null, pool: null, series: null, trades: null, stats: null, holderCount: null, holdersAt: null });
   else if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (e) {} pg.lw = null; }   // the page is drawn again: the chart mounts on the new box
-  box.innerHTML = `<div class="pp ${p.status}${p.blacklisted ? ' flagged' : ''}"><aside class="pp-side" aria-label="Project and chat">${ppHeader(p)}${ppFounder(p)}${chatPanel(p)}</aside>
-    <div class="pp-main"><div class="pp-annw" data-annwrap>${ppNotices(p)}</div>${ppFill(p)}${p.status === 'seeded' ? ppFees(p) : ''}${ppChart(p)}${ppTabs(p)}</div><aside class="pp-rail" aria-label="Buy and your position">${ppRail(p)}</aside></div>`;
+  const seeded = p.status === 'seeded';
+  box.innerHTML = `<div class="pp ${p.status}${p.blacklisted ? ' flagged' : ''}">${ppHeader(p)}
+    <div class="pp-main"><div class="pp-annw" data-annwrap>${ppNotices(p)}</div>${ppFill(p)}${seeded ? '' : ppChart(p)}${ppFacts(p)}${seeded ? ppFees(p) : ''}${ppFounder(p)}${seeded ? ppChart(p) : ''}${ppTabs(p)}${chatPanel(p)}</div>
+    <aside class="pp-rail" aria-label="Buy and your position">${ppRail(p)}</aside></div>`;
   bindPage(p); renderTab(p); mountChat(p); drawCharts(p); watchCharts(p); loadAsync(p);
   if (fresh && typeof playEnter === 'function') playEnter();   // the page's cards rise into place and the raise line draws itself
 }

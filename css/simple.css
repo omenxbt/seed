@@ -1,0 +1,359 @@
+/* ==========================================================================
+   The simplification (ui-simplify). Loaded last, so what is here wins over presale.css, the inline rules and delta.css.
+   Fewer boxes: sections are plain rows between hairlines, and only the buy panel keeps a frame. One accent, #2E63E7,
+   for actions and progress; a chosen tab or segment is a neutral raised step, not a glow. No dot field behind the data.
+   The whole width of the window, with 24px gutters (16px on a phone). Fonts and tokens are the site's own (:root).
+   ========================================================================== */
+:root{
+  --progress:var(--accent);
+  --panel:transparent; --frost:none; --panel-shadow:none;
+  --gutter:24px;
+  --sel:var(--raised);                                 /* a chosen tab, segment or filter: one step lighter */
+  --grad-btn:var(--accent); --grad-seg:var(--sel); --seg-line:transparent; --glow:none; --glow-sm:none; --lit:none;
+}
+@media (max-width:720px){:root{--gutter:16px}}
+html,body{background:var(--bg)}
+
+/* ------------------------------------------------------------------ boxes */
+.panel,.lane,.tile,.lrow,.toc,.doc-hero,.prose,.aside{box-shadow:none}
+.panel{border:0;border-radius:0;background:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.dtable,.tscroll,.pp-plot,.pp-svg,.donut,.pcols,#prows,.inp.ro{background:none}
+.aside .tick{display:none}
+
+/* --------------------------------------------------------------- controls */
+.btn{border-radius:10px}
+.btn-ink,.btn-navy,.appbar .btn,.tile .qb,.qb.hot,.st.set{background:var(--accent);color:#fff;border-color:transparent;box-shadow:none;filter:none}
+.btn-ink:hover,.btn-navy:hover,.appbar .btn:hover,.tile .qb:hover,.qb.hot:hover{background:var(--accent-hover);filter:none}
+.qb:hover,.row:hover .pill-sm,.pill-sm.hot{background:var(--mist);color:var(--ink);box-shadow:none}
+.btn-ghost{background:none;border:1px solid var(--hair-2)}
+.btn-ghost:hover{background:var(--hover)}
+.seg{background:var(--well);border:1px solid var(--hair)}
+.seg .seg-ind{background:var(--sel);border:0;box-shadow:none}
+.seg button[aria-pressed="true"]{color:var(--ink)}
+.mini-seg button[aria-pressed="true"],.feed-tabs button[aria-selected="true"],.tf-pills button[aria-pressed="true"],.mode-seg button[aria-pressed="true"],.toc a.on{background:var(--sel);color:var(--ink);border-color:transparent;box-shadow:none}
+.side-seg button[data-v="buy"][aria-pressed="true"],.side-seg button[data-v="sell"][aria-pressed="true"]{background:var(--sel);color:var(--ink);border-color:transparent;box-shadow:none}
+.inp:focus-within,.mini:focus-within{border-color:var(--navy);box-shadow:0 0 0 3px var(--ring)}
+.switch[aria-checked="true"]{background:var(--accent);box-shadow:none}
+.rank-badge,.chev,.seed-steps li.now .num,.steps .num{background:var(--chip);border:1px solid var(--hair);box-shadow:none;color:var(--ink-2)}
+:is(.pp,.ws) .rail-card .inp .suf{background:var(--chip);border:1px solid var(--hair);box-shadow:none;color:var(--ink)}
+.rail-card .rail-lab,.rail-card .trade-top .rail-lab{color:var(--muted)}
+.ibtn,.appbar .bell{width:32px;height:32px;border-radius:9px;background:none;border:1px solid var(--hair)}
+.ibtn svg,.appbar .bell svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.ibtn.on,#watchBtn.on{background:var(--sel);color:var(--ink);border-color:transparent}
+.ibtn .ct{margin-left:3px;font-size:11px}
+#watchBtn,#filterBtn{width:auto;min-width:32px;padding:0 8px;display:inline-flex;align-items:center;justify-content:center}
+#watchBtn .ct:empty,#filterBtn .ct:empty{display:none}
+/* status and check chips: a word, not a lit pill; colour only where it is the data (a fail, a move up or down) */
+.st-pill,.pair-pill{background:none;border:1px solid var(--hair);color:var(--ink-2);padding:3px 10px;font-size:12.5px;margin:0}
+.st-pill.live{color:var(--ink)}
+.st-pill.seeded,.st-pill.filled{color:var(--ink-2)}
+.risk-chip{background:none;border-color:var(--hair)}
+.tag,.demo-chip,.demo-pill{background:none;border:1px solid var(--hair);color:var(--muted)}
+.pace-chip{background:none}
+/* progress: the accent, flat */
+.bar{background:var(--hair)}
+.bar i{background:var(--accent)}
+.seeded .bar i{background:var(--accent)}
+.refunded .bar i{background:var(--faint)}
+
+/* ------------------------------------------------------------ the page */
+/* the full width of the window, 24px gutters; no icon rail */
+body.in-app #view-app,body.in-docs #view-app,body.in-docs #view-docs{padding-left:0}
+.appmain{padding:0 var(--gutter) 24px}
+#tab-terminal{width:100%;max-width:none;margin:0;padding:0}
+.appfoot{padding:0 var(--gutter) 16px}
+
+/* ------------------------------------------------------------ the header */
+/* one slim row: the mark and Seed, the three sections, the search, then Start a raise, the portfolio, alerts and the wallet */
+.appbar,#view-app .appbar{display:flex;align-items:center;gap:20px;height:56px;padding:0 var(--gutter);background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none;border-bottom:1px solid var(--hair);grid-template-columns:none}
+#view-app .appbar .brand,.appbar .brand{display:flex;flex:none;gap:8px;font-size:18px}
+.appbar .brand .mark{width:26px;height:26px}
+.navtabs{display:flex;align-items:center;gap:2px;flex:none}
+.navtabs a{padding:6px 11px;border-radius:8px;font-size:14px;color:var(--muted);transition:color var(--fast) var(--ease-out),background var(--fast) var(--ease-out)}
+.navtabs a:hover{color:var(--ink)}
+.navtabs a[aria-current="page"]{color:var(--ink);background:var(--sel)}
+.appbar .mini.search{flex:0 1 340px;height:34px;padding:0 12px;border-radius:9px;background:var(--well)}
+.appbar .mini.search input{width:100%;font-size:13.5px}
+.appbar .mini.search svg{width:15px;height:15px;stroke:var(--muted)}
+.appbar .right{margin-left:auto;display:flex;align-items:center;gap:10px;position:relative}
+.appbar>span:empty{flex:1}
+.appbar .btn{height:34px;padding:0 14px;font-size:13px;border-radius:9px}
+.hport{display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 10px;border-radius:9px;font-size:14px;color:var(--muted)}
+.hport:hover,.hport.on{color:var(--ink);background:var(--sel)}
+.hport .ct{font-size:11px;min-width:16px;height:16px;line-height:16px;padding:0 4px;border-radius:8px;background:var(--accent);color:#fff;text-align:center}
+.hport .ct:empty{display:none}
+#walletBtn,#walletBtn:has(.wdot){background:none;border:1px solid var(--hair-2);color:var(--ink)}   /* Start a raise is the one blue button in the bar */
+#walletBtn:hover{background:var(--hover)}
+#walletBtn{gap:5px}   /* the gap spaces Connect and wallet, and the dot from the address */
+.pop{background:var(--card);border:1px solid var(--hair-2);border-radius:12px;box-shadow:0 20px 50px -20px var(--sh-pop)}
+.pop-link{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-top:1px solid var(--hair);font-size:13.5px}
+.pop-link .ct{font-size:12px;color:var(--muted)}
+.pop-link:hover{color:var(--navy-deep)}
+@media (max-width:720px){.hstart{display:none}}   /* the Launch tab is the same place */
+.appbar .mini.search{min-width:140px}
+@media (max-width:900px){
+  .appbar,#view-app .appbar{flex-wrap:wrap;height:auto;row-gap:10px;padding-top:10px;padding-bottom:10px}
+  .appbar .mini.search{order:9;flex:1 1 100%}
+}
+@media (max-width:720px){
+  .appbar,#view-app .appbar{gap:10px}
+  .appbar .brand-w,.hport{display:none}
+  .navtabs a{padding:6px 8px}
+  #walletBtn{max-width:120px;padding:0 10px;overflow:hidden;text-overflow:ellipsis}
+  #walletBtn .wl-w{display:none}
+  .appbar .bell{display:none}
+  .navtabs{gap:0}
+}
+@media (max-width:520px){
+  .appbar .pop{right:0}
+}
+
+/* --------------------------------------------------------- trending, one line */
+.tstrip{display:flex;align-items:center;gap:16px;height:44px;margin:0 calc(-1 * var(--gutter));padding:0 var(--gutter);border-bottom:1px solid var(--hair);overflow:hidden}
+.tstrip-h{flex:none;font-size:12.5px;color:var(--faint)}
+.tstrip .trend-row{display:flex;align-items:center;gap:24px;overflow-x:auto;padding:0;scroll-snap-type:none;min-width:0;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
+.tstrip .trend-row:empty::after{padding:0}
+.ts-item{flex:none;display:inline-flex;align-items:center;gap:8px;font-size:13.5px;white-space:nowrap;color:var(--ink)}
+.ts-item:hover b{color:var(--navy-deep)}
+.ts-rank{font-size:12px;color:var(--faint)}
+.ts-art{flex:none;width:20px;height:20px;border-radius:5px;object-fit:cover;display:grid;place-items:center}
+.ts-art.glyph-art svg{width:60%;height:60%}
+.ts-item b{font-weight:500}
+.ts-mc{color:var(--ink-2)}
+.chg{font-size:12.5px}
+.chg.up{color:var(--ok-ink)}.chg.down{color:var(--bad-ink)}.chg.quiet{color:var(--faint)}
+
+/* ------------------------------------------------------------- the board */
+.board,.lanes+.board{display:block!important;padding:0;border:0;background:none;overflow:visible}
+.feed-head,.board .feed-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:16px 0 12px;border:0}
+.feed-tabs{display:flex;gap:2px;padding:0;background:none;border:0;border-radius:0}
+.feed-tabs button{padding:6px 11px;border-radius:8px;font-size:14px;color:var(--muted);border:0}
+.feed-tabs button:hover{color:var(--ink)}
+.feed-tabs .ct,.feed-tabs button[aria-selected="true"] .ct{margin-left:6px;font-size:12px;color:var(--faint);background:none;box-shadow:none;padding:0}
+.feed-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.feed-tools .mini{height:32px;border-radius:9px;padding:0 10px;font-size:13px;background:none}
+.feed-tools .mini svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.6}
+.quick{display:inline-flex;align-items:center;gap:6px;width:auto;font-size:13px;font-weight:400;color:var(--muted)}
+.quick[hidden]{display:none}
+.quick .mini{flex:none;height:32px;padding:0 10px;border-radius:9px}
+#qbAsset{flex:none}
+.quick .mini input,.quick .mini:first-of-type input{width:52px;text-align:right;font-size:13px}
+.quick .mini:first-of-type{flex:none}   /* the inline rules stretched it on a narrow window */
+.viewseg{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--hair);border-radius:9px}
+.viewseg button{display:grid;place-items:center;width:28px;height:26px;border-radius:7px;color:var(--muted)}
+.viewseg button[aria-pressed="true"]{background:var(--sel);color:var(--ink)}
+.viewseg svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round}
+/* the table: token, pair, progress, market cap or target, time, the graph, the action */
+.feed-list,.board .col-list,.board .col-list.table{display:block;padding:0}
+.thead,.trow{display:grid;grid-template-columns:minmax(220px,2.4fr) 64px minmax(130px,1.2fr) minmax(90px,.9fr) minmax(84px,.8fr) 104px 116px;gap:18px;align-items:center;padding:0 10px}
+.thead{padding-top:9px;padding-bottom:9px;font-size:12px;color:var(--faint);border-bottom:1px solid var(--hair);white-space:nowrap}
+.thead>span,.trow>span{text-align:left}
+.thead>span:nth-child(4),.trow>span:nth-child(4),.thead>span:nth-child(5),.trow>span:nth-child(5),.thead>span:nth-child(7),.trow>span:nth-child(7){text-align:right}
+.trow{position:relative;padding-top:11px;padding-bottom:11px;border-bottom:1px solid var(--hair);transition:background var(--fast) var(--ease-out)}
+.trow:last-child{border-bottom:1px solid var(--hair)}
+.trow:hover{background:var(--hover)}
+.trow .pick::after{border-radius:0}
+.c-tok{display:flex;align-items:center;gap:12px;min-width:0}
+.tr-av{flex:none;width:36px;height:36px;border-radius:9px;object-fit:cover;display:grid;place-items:center}
+.tr-av.glyph-art svg{width:55%;height:55%}
+.c-tok .nm{min-width:0;display:flex;flex-direction:column;gap:2px}
+.c-tok .nm b{display:flex;align-items:baseline;gap:8px;font-size:14.5px;font-weight:500;min-width:0}
+.c-tok .nm b a{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c-tok .tk,.gtile .tk{font-size:12.5px;font-weight:400;color:var(--muted)}
+.sub{display:flex;align-items:center;gap:6px;min-width:0;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden}
+.sub:empty{display:none}
+.sub .tag,.sub .demo-chip{font-size:10.5px;padding:0 6px}
+.xb{display:inline-flex;align-items:center;gap:4px;color:var(--muted)}
+.xb svg{width:10px;height:10px;fill:currentColor}
+.xb.ok{color:var(--ink-2)}
+.c-pair{font-size:13px;color:var(--muted)}
+.prog{display:flex;align-items:center;gap:10px;width:100%}
+.prog .bar{flex:1;height:4px;border-radius:2px}
+.prog .bar i{border-radius:2px}
+.prog .num{flex:none;width:38px;text-align:right;font-size:13px;color:var(--ink-2)}
+.trow:is(.seeded,.filled) .prog .bar i,.gtile:is(.filled) .prog .bar i{background:var(--hair-2)}   /* done: the bar is full and neutral; blue is for raises still filling */
+.thead>span:nth-child(5),.trow>span:nth-child(5),.thead>span:nth-child(7),.trow>span:nth-child(7){display:block}   /* delta.css hid these under 1280px */
+.c-tok .nm b .tk{display:inline}
+.c-cap .num,.c-time{font-size:13.5px}
+.c-cap em{font-style:normal;font-size:12px;color:var(--faint)}
+.c-time .soon{color:var(--caution-ink)}
+.c-time .quiet{color:var(--muted)}
+.spark{display:block;width:96px;height:26px}
+.spark svg{display:block;width:100%;height:100%;overflow:visible}
+.spark path{fill:none;stroke-width:1.4;vector-effect:non-scaling-stroke}
+.spark .up{stroke:var(--ok)}.spark .down{stroke:var(--bad)}.spark .flat{stroke:var(--faint)}
+.t-act{text-align:right}
+.t-act .qb{padding:5px 10px;font-size:12px;border-radius:8px;background:none}
+.t-act .qb .qb-w{display:none}
+.t-act .qb.hot{background:var(--accent)}
+.col-empty{padding:48px 0;text-align:center;color:var(--muted);font-size:14px;border-bottom:1px solid var(--hair)}
+.col-empty a{color:var(--navy-deep)}
+.feed-more{display:flex;justify-content:center;padding:18px 0 4px}
+.feed-more .btn{height:34px;padding:0 18px;font-size:13px}
+@media (max-width:1180px){.thead,.trow{grid-template-columns:minmax(200px,2.4fr) 56px minmax(110px,1.1fr) minmax(84px,.9fr) minmax(80px,.8fr) 96px 104px;gap:14px}}
+@media (max-width:900px){
+  .thead,.trow{grid-template-columns:minmax(0,2fr) minmax(100px,1fr) minmax(76px,.8fr) minmax(70px,.7fr) auto}
+  .thead>span:nth-child(2),.trow>span:nth-child(2),.thead>span:nth-child(6),.trow>span:nth-child(6){display:none}
+  .feed-tabs button{padding:6px 8px}
+}
+/* a phone: two lines per raise; the token and its figure, then the bar and the time. The raise page has the buy panel. */
+@media (max-width:640px){
+  .thead{display:none}
+  .trow{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"tok cap" "prog time";gap:8px 14px;padding:12px 2px}
+  .trow>.c-tok{grid-area:tok}.trow>.c-cap{grid-area:cap}.trow>.c-prog{grid-area:prog}.trow>.c-time{grid-area:time;text-align:right}
+  .trow>span.c-pair,.trow>span.c-spark,.trow>span.t-act{display:none}
+  .feed-tools{width:100%}
+  .feed-tabs{width:100%;overflow-x:auto}
+}
+/* the grid: art first, then the figures */
+.feed-list.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:28px 20px;padding:14px 0 6px}
+.gtile{position:relative;display:flex;flex-direction:column;gap:6px;min-width:0}
+.gtile .pick::after{border-radius:12px}
+.g-art{display:block;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--chip)}
+.g-img{display:grid;place-items:center;width:100%;height:100%;object-fit:cover;transition:transform .6s var(--ease-out)}
+.g-img.glyph-art svg{width:42%;height:42%}
+.gtile:hover .g-img{transform:scale(1.03)}
+.g-name{display:flex;flex-direction:column;min-width:0}
+.g-name b{font-size:14.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-fig{display:flex;align-items:baseline;gap:8px;font-size:15px}
+.g-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--muted);min-width:0}
+.g-foot>span:first-child{flex:none;white-space:nowrap}
+.gtile .t-act{text-align:left}
+.gtile .t-act:empty{display:none}
+@media (max-width:640px){.feed-list.grid{grid-template-columns:1fr 1fr;gap:22px 14px}}
+/* the line under the board */
+.board-foot{display:flex;align-items:center;flex-wrap:wrap;gap:8px 20px;margin-top:0;padding:16px 0 8px;font-size:12.5px;color:var(--muted)}
+.board-foot .statline{display:inline-flex;gap:16px}
+.board-foot .statline b{color:var(--ink-2);font-weight:500}
+.board-foot .foot-note{margin-left:auto}
+.board-foot .icons{display:inline-flex;gap:12px}
+
+/* --------------------------------------------------------- the raise page */
+/* one header row; the chart, the facts and the rest on the left; the buy panel on the right, pinned while the page scrolls */
+#view-app.on-presale,#view-app.fit.on-presale{display:block;height:auto}
+#view-app.on-presale .appmain,#view-app.fit.on-presale .appmain,#view-app.fit.on-presale .appmain>section{display:block}
+#presalePage{display:block}
+.pp{display:flex;flex-direction:column;gap:0;font-size:15px}
+.pp-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:16px 0;border-bottom:1px solid var(--hair)}
+.pp-head .back{display:grid;place-items:center;width:30px;height:30px;border-radius:8px;border:1px solid var(--hair);color:var(--muted);font-size:15px}
+.pp-head .back:hover{color:var(--ink);background:var(--hover)}
+.pp-head .pp-art{flex:none;width:40px;height:40px;border-radius:10px;border:0;box-shadow:none;object-fit:cover;display:grid;place-items:center;margin:0}
+.pp-head .pp-art.glyph-art svg{width:55%;height:55%}
+.pp-head .pp-name{display:flex;align-items:baseline;gap:8px;min-width:0;margin:0;padding:0}
+.pp-head .pp-name h1{font-family:var(--sans);font-style:normal;font-size:22px;font-weight:600;letter-spacing:-.025em;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pp-head .pp-tk{font-size:14px;color:var(--muted)}
+.pp-head .pp-pills{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0;padding:0}
+.pp-head .xb{font-size:12.5px}
+.pp-head .pp-acts{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pp-head .star{position:static;width:30px;height:30px;border:1px solid var(--hair);border-radius:8px}
+.pp-head .copy{background:none;border-color:var(--hair);border-radius:8px}
+.pp-head .pp-socials{display:inline-flex;gap:10px;margin-left:4px}
+.star.on{color:var(--caution)}
+.star svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.4}
+.star.on svg{fill:currentColor}
+.pp-main{display:flex;flex-direction:column;min-width:0}
+/* each section of the left column is a plain block between hairlines */
+.pp .pp-main>section,.pp .pp-main>.pp-annw:not(:empty),.pp .pp-main>.panel{padding:22px 0;border-bottom:1px solid var(--hair);border-radius:0}
+.pp-main>.pp-annw:empty{display:none}
+:is(.pp,.ws) .pp-card{padding-left:0;padding-right:0}
+.pp .pp-main .rail-card{padding-left:0;padding-right:0;border-radius:0;gap:12px}
+.pp-card-h,.rail-h{margin-bottom:14px}
+.pp-card-h h2,.rail-h h3,.pp-main .rail-card>h3{font-size:16px;font-weight:500;letter-spacing:-.02em}
+.pp .readout .big b{font-size:34px}
+.pp .readout .bar{height:6px;margin:14px 0 12px}
+.chart-bar{background:none;border:0;border-bottom:1px solid var(--hair);border-radius:0;padding:0 0 10px;margin-bottom:12px}
+.chart-foot{border-top:1px solid var(--hair)}
+.pp-ann,.pp-notice{border:0;border-radius:0;background:none;padding:0}
+.pp-notice+.pp-notice,.pp-notice+.pp-ann{margin-top:12px;padding-top:12px;border-top:1px solid var(--hair)}
+/* the facts: label over value, three across, hairlines between rows */
+.pp-facts .pp-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 24px;margin:0;border:0;background:none;border-radius:0;overflow:visible}
+.pp-facts .pp-stats>div{background:none;padding:10px 0;border-bottom:1px solid var(--hair)}
+.pp-facts .pp-stats>div:nth-last-child(-n+3){border-bottom:0}
+.pp-facts .pp-stats dt{font-size:12.5px;color:var(--muted)}
+.pp-facts .pp-stats dd{text-align:left;margin-top:2px;font-size:15px}
+.pp-facts .pp-stats dd em{white-space:normal}
+@media (max-width:720px){.pp-facts .pp-stats{grid-template-columns:1fr 1fr}.pp-facts .pp-stats>div:nth-last-child(-n+3){border-bottom:1px solid var(--hair)}.pp-facts .pp-stats>div:nth-last-child(-n+2){border-bottom:0}}
+/* grids of figures elsewhere on the page and in the portfolio: rows, not tiles */
+.pool-grid,.sums,#pstats,.fee-grid,.unlock-sums{gap:0 24px;background:none;border:0;border-radius:0;overflow:visible}
+.pool-grid>div,.sum,#pstats .sum,.fee-grid>div,.unlock-sums>div{background:none;border:0;border-radius:0;padding:10px 0;text-align:left;-webkit-backdrop-filter:none;backdrop-filter:none}
+.pool-card{margin-top:14px}
+/* tabs: text, the open one underlined in ink */
+.pp-tabs{padding-bottom:0}
+.tabbar{padding:0;border-radius:0;background:none;position:relative;top:auto;gap:18px}
+.tabbar a{padding:10px 0 11px}
+.tabbar a[aria-selected="true"]{color:var(--ink)}
+.tab-ind{background:var(--ink)!important;box-shadow:none!important}
+.tabbody{padding:18px 0 0}
+.ov-banner{display:block;width:100%;aspect-ratio:4/1;object-fit:cover;border-radius:12px;margin-bottom:20px}
+.link-card,.risk-grid li,.pp .risk-grid li,.pp .risk-grid li:first-child,.pp .risk-grid li:last-child{background:none;border:0;border-bottom:1px solid var(--hair);border-radius:0;padding:12px 0}
+.chat{border:0;border-radius:0;background:none}
+.pp .pp-main>.chat-card{padding:22px 0 !important}
+.chat-card>.rail-h{padding:0 0 12px}
+.chat-card .chat{border-top:0}
+.chat-card .msg{padding:10px 0}
+.chat-card .chat-list{min-height:120px}
+.chat-card .chat-compose,.pp .chat-compose{padding:14px 0 0}
+.chat-card>.rail-cap{padding:10px 0 0}
+.x-acct{background:none;border:0;padding:0}
+/* the buy panel: the one framed thing on the page */
+.pp-rail{display:flex;flex-direction:column;gap:0;min-width:0;padding:20px 0}
+.pp-rail>.rail-card,.pp-rail .rail-card[data-trade]{border:1px solid var(--hair-2);border-radius:14px;padding:18px;gap:12px}
+.pp-rail .pp-pos>.rail-card{border:0;border-radius:0;padding:18px 0 0;gap:10px}
+.pp-rail .recv{background:none;border:0;border-top:1px solid var(--hair);border-radius:0;padding:10px 0 0}
+.rail-card .btn-block{height:44px;border-radius:10px;font-size:14px}
+@media (min-width:1024px){
+  .pp{display:grid;grid-template-columns:minmax(0,1fr) 380px;column-gap:32px;align-items:start;grid-template-rows:auto auto}
+  .pp-head{grid-column:1 / -1;grid-row:1}
+  .pp-main{grid-column:1;grid-row:2}
+  .pp .pp-main>*{order:0}   /* presale.css ordered these for its own columns */
+  .pp .pp-rail,.pp:has(.pp-ann) .pp-rail{grid-column:2;grid-row:2}
+  .pp-rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 56px);max-height:calc(100dvh - 56px);overflow-y:auto;overscroll-behavior:contain;align-self:start}
+}
+@media (min-width:1440px){.pp{grid-template-columns:minmax(0,1fr) 420px;column-gap:40px}}
+/* below 1024px one column: the header, the notices and the chart, then the buy panel, then the rest */
+@media (max-width:1023px){
+  .pp-main{display:contents}
+  .pp-head{order:0}
+  .pp-main>*{order:5}
+  .pp-main>.pp-annw{order:1}
+  .pp-main>.pp-fill{order:2}
+  .pp-rail{order:3;padding:18px 0;border-bottom:1px solid var(--hair)}
+  .pp-main>.pp-facts{order:4}
+  .pp-head .pp-acts{margin-left:0;width:100%}
+}
+
+/* ------------------------------------------------- the workspaces: Launch, Portfolio */
+:is(.ws-side,.ws-main,.ws-rail)>.panel{border-bottom:1px solid var(--hair)}
+.ws-side>.panel,.ws-main>.panel{padding-left:0;padding-right:0}
+.pagehead{padding:24px 0 20px}
+.ws-rail>.rail-card,:is(.ws) .ws-rail .rail-card{padding:20px 0;border-radius:0}
+.ws-rail .pcard{border:1px solid var(--hair);border-radius:12px;background:none}
+.ws .rail-card,.ws .panel{border-radius:0}
+fieldset{border-color:var(--hair)}
+
+/* ------------------------------------------------------------- the docs */
+.docs{max-width:none;padding:20px var(--gutter) 72px}
+.doc-hero,.prose,.aside{border:0;border-radius:0;background:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.doc-hero{padding:24px 0 28px;border-bottom:1px solid var(--hair)}
+.toc{border:0;background:none}
+.aside{border-left:1px solid var(--hair);padding-left:20px}
+
+/* the last nested boxes: the X gate on Launch, the demo note, the performance tiles and chart frame on Portfolio */
+.ws-side,.ws-main,.ws-rail{padding-top:4px}
+.gate,.gate.on{background:none;border:0;border-bottom:1px solid var(--hair);border-radius:0;padding:4px 0 18px}
+.demo-note{border:0;border-left:2px solid var(--hair-2);border-radius:0;padding:2px 0 2px 12px}
+.perf-head{padding-right:0}
+#perfBody{padding:4px 0 8px}
+.perf-sums{gap:0 24px}
+.perf-sums div{background:none;border-radius:0;padding:10px 0}
+.pnl-chart{border:0;border-top:1px solid var(--hair);border-radius:0;background:none;padding-left:0;padding-right:0}
+.ws-side .rail-card,.ws-side>section{padding-left:0;padding-right:0}
+.prose{padding-left:0;padding-right:0}
+/* the founder page: full width like the rest */
+.fp{max-width:none;margin:0;padding-top:16px}
+#view-app.fit:has(#tab-founder:not([hidden])){display:block;height:auto}   /* it scrolls as a page, so the foot line follows it (it sat over the tables) */
+#view-app.fit:has(#tab-founder:not([hidden])) .appmain,#view-app.fit:has(#tab-founder:not([hidden])) .appmain>section{display:block}
+.pp-stats.fp-stats{gap:0 24px;margin:16px 0 0;border:0;background:none;border-radius:0}
+.pp-stats.fp-stats>div{background:none;padding:10px 0;border-bottom:1px solid var(--hair)}
+.btag,.btag.ok{background:none;border:1px solid var(--hair);color:var(--ink-2)}
+.fp .dtable,.fp .tscroll{background:none}
