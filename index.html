@@ -57,11 +57,9 @@
 *::-webkit-scrollbar{display:none}
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px);-webkit-text-size-adjust:100%}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
-/* flat charcoal on html (so overscroll on iOS and Mac shows charcoal, not white); body is transparent so the dot field
-   (#bg-dither, fixed, z-index -1, drawn by js/bg-dither.js) shows between the charcoal and the UI. */
+/* flat charcoal on html (so overscroll on iOS and Mac shows charcoal, not white); no background effect behind the UI */
 html{min-height:100vh;background:var(--bg)}
 body{min-height:100vh;background:transparent}
-#bg-dither{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
 b,strong{font-weight:500}
 h1,h2,h3,h4{font-weight:500}
 body{color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -763,8 +761,6 @@ a.ico:hover{color:var(--ink)}
 </head>
 <body>
 <!-- the dot field behind every page; its script comes first so the field is there at first paint -->
-<canvas id="bg-dither" aria-hidden="true"></canvas>
-<script src="js/bg-dither.js"></script>
 <script src="js/config/seed.js"></script>
 <script src="js/model.js"></script>
 <!-- the mark, from the brand kit: dot n at r = c√n, angle n × 137.508°, sized from 0.72c at the centre to 0.36c at the rim; the innermost dot is the
@@ -815,6 +811,8 @@ a.ico:hover{color:var(--ink)}
     </div>
   </div>
 </header>
+<!-- trending, one line under the app bar on the Terminal: rank, art, name, market cap and the move -->
+<section class="tstrip" aria-label="Trending"><span class="tstrip-h">Trending</span><div class="trend-row" id="trendRow"></div></section>
 
 <main class="appmain">
   <!-- ------------------------------------------------------ TERMINAL -->
@@ -839,11 +837,6 @@ a.ico:hover{color:var(--ink)}
       <button type="button" class="mini fbtn" id="watchBtn" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg><span>Watchlist</span></button>
       <button type="button" class="mini fbtn" id="filterBtn" aria-haspopup="dialog"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12l-4.6 5.4V13l-2.8 1V8.9z"/></svg><span>Filters</span><span class="ct num" id="filterCt" hidden></span></button>
     </div>
-    <section class="trend" aria-labelledby="h-trend">
-      <div class="trend-head"><h2 id="h-trend"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Trending</h2><span class="col-note">Most active right now</span>
-        <span class="trend-nav"><button type="button" class="x" data-tr="-1" aria-label="Scroll back">&#8249;</button><button type="button" class="x" data-tr="1" aria-label="Scroll forward">&#8250;</button></span></div>
-      <div class="trend-row" id="trendRow"></div>
-    </section>
     <div class="lanes" id="lanes" aria-label="Raises by stage"></div>
     <section class="panel board" aria-label="All raises">
       <header class="col-head feed-head">
@@ -1826,6 +1819,17 @@ function doingChip(p) {
   if (p.status === 'filled') return '<span class="tr-chg seeded">Filled, seeding</span>';
   return '<span class="tr-chg off">Refunded</span>';
 }
+/* the Trending bar: rank, art, name, market cap and the move. A seeded token moves against its raise price, a live raise by
+   what it took in the last six hours as a share of its target. */
+function moveOf(p) {
+  if (p.status === 'seeded') { const x = spotNow(p) / priceOf(p); return { cls: Math.abs(x - 1) < 0.0005 ? 'quiet' : x >= 1 ? 'up' : 'down', txt: mcChange(x), title: 'Against the raise price' }; }
+  if (p.status === 'live') { const r = (p.raised - raisedAt(p, Date.now() - 6 * H)) / p.target * 100; return r > 0 ? { cls: 'up', txt: `+${r < 10 ? r.toFixed(1) : Math.round(r)}%`, title: 'Raised in the last 6 hours, as a share of the target' } : { cls: 'quiet', txt: '0%', title: 'Nothing raised in the last 6 hours' }; }
+  return { cls: 'quiet', txt: p.status === 'filled' ? 'Seeding' : '', title: '' };
+}
+function trendItem(p, i) {
+  const m = moveOf(p);
+  return `<a class="ts-item ${p.status}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}" aria-label="${esc(p.name)}, trending ${i + 1}"><span class="ts-rank num">${i + 1}</span>${artHTML(p, 'ts-art')}<b>${esc(p.name)}</b><span class="num ts-mc" data-mc>${fmtMcap(mcapUsdOf(p))}</span><span class="num chg ${m.cls}" title="${esc(m.title)}">${m.txt}</span></a>`;
+}
 /* a raise as a tile. The Trending row shows the short form with its rank; the feed adds time, backers, links, checks and the button. */
 function tile(p, i, trend, fresh = '') {
   const C = Q(p), pc = pctOf(p), live = p.status === 'live';
@@ -1888,11 +1892,11 @@ function fillArea(p, W = 320, Hh = 120) {
 function renderFeatured(trend) {
   const el = $('#featured'); if (!el) return;
   const real = typeof chain !== 'undefined' && chain.on(), p = (real && trend.find(x => x.live)) || trend[0];   // on the live site a raise on chain comes first; a demo one is marked
-  if (!p) { el.href = '#/launch'; el.setAttribute('aria-label', 'No raise is moving yet. Start one'); el.innerHTML = '<div class="ft-bg"></div><p class="ft-empty">Nothing is moving yet. The first raise to open shows here.</p>'; return; }
+  if (!p) { el.href = '#/launch'; el.setAttribute('aria-label', 'No raise is moving yet. Start one'); el.innerHTML = '<p class="ft-empty">Nothing is moving yet. The first raise to open shows here.</p>'; return; }
   const C = Q(p), live = p.status === 'live', seeded = p.status === 'seeded', x = seeded ? spotNow(p) / priceOf(p) : null, code = Array.from(p.id).slice(0, 12).map(ch => (ch.charCodeAt(0) % 3 ? '·' : '•')).join('');
   const st = (k, v, cls = '') => `<div><dt>${k}</dt><dd class="num ${cls}" title="${esc(String(v).replace(/<[^>]+>/g, ''))}">${v}</dd></div>`;
   el.href = `#/presale/${p.id}`; el.setAttribute('aria-label', `${p.name}, the most active raise${real && !p.live ? ', a demo raise' : ''}`);
-  el.innerHTML = `<div class="ft-bg"></div><div class="ft-area">${fillArea(p)}</div>
+  el.innerHTML = `<div class="ft-area">${fillArea(p)}</div>
     <div class="ft-head">${artHTML(p, 'ft-art')}<span class="ft-name"><b>${esc(p.name)}</b><span class="num">$${esc(p.ticker)} · ${esc(C.sym)} pair</span></span><span class="ft-right"><span class="ft-chips">${real && !p.live ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${doingChip(p)}</span><span class="ft-code" aria-hidden="true">${code}</span></span></div>
     <dl class="ft-stats">${st('Market cap', fmtMcap(mcapUsdOf(p)))}${seeded ? st('vs raise price', mcChange(x), x >= 1 ? 'up' : 'down') : st('Filled', Math.floor(pctOf(p) + 1e-7) + '%')}${st('Raised', `${fmtC(p.raised, p.q, true)} ${esc(C.sym)}`)}
       ${st('Backers', p.backers)}${st(live ? 'Time left' : seeded ? 'Seeded' : 'Status', live ? fmtLeft(p.endsAt - Date.now()) : seeded ? fmtAgo(Date.now() - (p.resolvedAt || p.endsAt)) : p.status === 'filled' ? 'Seeding' : RAISE_STATE[p.status])}${st('Target', `${fmtC(p.target, p.q, true)} ${esc(C.sym)}`)}</dl>`;
@@ -1914,8 +1918,8 @@ function renderTerminal() {
   for (const k in lists) { const n = $('#n-' + k); if (n) n.textContent = lists[k].length || ''; }
   syncFilterBadges();
   /* trending: the eight most active, whatever the tabs and filters say */
-  const trend = state.presales.filter(p => trendScore(p) >= 0).sort((a, b) => trendScore(b) - trendScore(a) || b.openedAt - a.openedAt).slice(0, 8);
-  $('#trendRow').innerHTML = trend.map((p, i) => tile(p, i, true)).join('');
+  const trend = state.presales.filter(p => trendScore(p) >= 0).sort((a, b) => trendScore(b) - trendScore(a) || b.openedAt - a.openedAt).slice(0, 10);
+  $('#trendRow').innerHTML = trend.map(trendItem).join('');
   renderFeatured(trend); renderStatChips();
   /* the lanes: five columns on a wide screen, each the raises at that stage, newest or most active first */
   const lanesEl = $('#lanes');
@@ -1961,7 +1965,6 @@ function patchRows(p) {
   });
 }
 $('#feedTabs').addEventListener('click', e => { const b = e.target.closest('[data-feed]'); if (b && b.dataset.feed !== ui.feed) { ui.feed = b.dataset.feed; renderTerminal(); } });
-$('.trend-nav').addEventListener('click', e => { const b = e.target.closest('[data-tr]'); if (b) $('#trendRow').scrollBy({ left: +b.dataset.tr * 420, behavior: 'smooth' }); });
 document.addEventListener('click', e => { const w = e.target.closest('[data-watch]'); if (w) { e.preventDefault(); const p = find(w.dataset.watch); if (p) toggleWatch(p); } });
 $('#watchBtn').addEventListener('click', () => { ui.watchOnly = !ui.watchOnly; renderTerminal(); });
 $('.board').addEventListener('click', e => {
