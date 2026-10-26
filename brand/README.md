@@ -3,8 +3,7 @@
 Everything here is derived from the site as it ships (index.html's `:root` tokens, `css/delta.css`, the `#seed21` mark). Regenerate with `python3 _src/build.py && zsh _src/render.sh` from this directory (headless Chrome renders the PNGs and the PDF).
 
 ## brandbook/
-- `index.html` — the brand book, 16 pages: what Seed is, the mark (construction, clear space, size, dos and don'ts), five logo iterations, lockups and the app icon, colour (two pages), typography, interface elements, surfaces and textures, voice and tone, the five banners, file index. Open in a browser.
-- `Seed-brandbook.pdf` — the same, 16 pages at 1280 × 1000.
+- `Seed brand book.html` — the brand book as one self-contained page (it replaces the generated `index.html` and `Seed-brandbook.pdf`; `_src/build.py` still writes `index.html` if it is run). Open in a browser.
 
 ## logo/ (SVG source + PNG render; 1024 px, icons 512 px)
 1. The mark — `seed-mark-dark` (ink dots, navy seed, for charcoal), `seed-mark-light` (charcoal dots, blue seed, for light), `seed-mark-muted` (the rail's #52668F dots)
