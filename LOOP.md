@@ -56,7 +56,7 @@ Dark UI, Instrument Sans + Instrument Serif italic + IBM Plex Mono, accent #2E63
 2. Pick the highest-value item: P0 bugs first, then missing target features, then polish. Keep BACKLOG.md ranked and add what you discover.
 3. Build it. Test on devnet with saved scripted wallets in keys/test/ (gitignored).
 4. Launch a fresh review subagent with the item's acceptance criteria, the diff and the "What Seed is" section. It fails anything that breaks those rules. Fix until it passes.
-5. Commit, push to final-model, then update PROGRESS.md (what shipped, commit, screenshots) and BACKLOG.md.
+5. Commit, push to final-model, then update PROGRESS.md (what shipped, commit, screenshots) and BACKLOG.md. The push is the deploy: Vercel builds final-model as the preview and main as production from GitHub on its own, so there is no manual `vercel deploy` step.
 6. seed-qa findings go into BACKLOG.md at the priority it gave.
 
 ## Stop and push me a notification only if
