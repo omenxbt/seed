@@ -67,6 +67,13 @@ so expect DEXScreener and Meteora to show it, Jupiter's quote to route, Birdeye 
 
 ## Stage 3 — production runbook (do not run)
 
+**SOL only at launch (Josh, 2026-10-26).** Every raise pairs with SOL. The pair allowlist stays in the program, so another
+pair can be switched on later with `set_pair` and no upgrade; at launch nobody runs it. A fresh Config has no allowlist
+entries, and `scripts/check-deploy.ts` fails if any entry is active (a paused one is fine). The site offers no pair choice.
+One gap the config cannot close: **USDC is built into the program** (`open_raise` prices it at a dollar without an allowlist
+entry), so the program itself still accepts a USDC raise sent by hand. Closing that needs a program change (make USDC an
+allowlist entry like any other pair) and is waiting on Josh's call; until then only the site keeps raises on SOL.
+
 1. **Squads.** Make the multisig (2-of-3 or better) on app.squads.so; note its **vault address** (the signer that holds the
    authority), not the multisig account.
 2. **Build.** `anchor build` (no `devnet` feature). Record `sha256sum target/deploy/seed.so`. The production id is the one
@@ -84,10 +91,10 @@ so expect DEXScreener and Meteora to show it, Jupiter's quote to route, Birdeye 
 6. **Hand the program to Squads:** `solana program set-upgrade-authority 8Kr2… --new-upgrade-authority <squads vault> -u <mainnet rpc> -k keys/deployer.json`
    (and `--skip-new-upgrade-authority-signer-check` only if the vault cannot co-sign; prefer a Squads-initiated accept).
 7. **Verify.** `SEED_PROD_UPGRADE_AUTHORITY=<squads vault> npx ts-node -P tsconfig.json scripts/check-deploy.ts production <mainnet rpc>`
-   must print `OK`: the four presets, no test preset, 125 bps, 100 bps, 70/30, no test mode, the vault as upgrade authority. A deploy is not
-   done until it does.
+   must print `OK`: the four presets, no test preset, 125 bps, 100 bps, 70/30, no test mode, no active allowlist entry (SOL only),
+   the vault as upgrade authority. A deploy is not done until it does.
 8. **Site and backend.** `js/config/seed.js`: `network: 'mainnet'`, the mainnet Helius browser key (domain-locked), `programId`,
-   `lookupTable`, `pairMints.USDC = EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`, `xTyped: false`, `admins = [squads vault]`.
+   `lookupTable`, `pairMints.USDC = EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v` (read-only: the site offers SOL only), `xTyped: false`, `admins = [squads vault]`.
    Supabase: `SEED_RPC_URL` mainnet, `SEED_PROGRAM_ID`, `SEED_DEV_X_HANDLES` **unset**, the Irys wallet for metadata uploads,
    the production attestor secret; a mainnet Helius webhook (raw, the program id; pools join as raises seed); redeploy
    `seed`, `crank`, `helius-webhook`. Vercel: the env `SEED_RPC_URL` (a mainnet RPC) and `SEED_PROGRAM_ID` for the link

@@ -4,7 +4,7 @@
 Seed is a trading terminal for fixed-price presales that test product-market fit, on Solana and Meteora: "Axiom/GMGN for presales." The market decides what gets funded. Seed doesn't gate ideas or judge founder terms.
 
 Raise
-- The founder picks an opening market cap preset: $50K, $100K, $150K or $200K. No typed target, no custom option. The raise is derived: target = cap × (1 − team share) ÷ 2, priced in the pair asset (SOL or USDC) at the Pyth SOL/USD price when the raise opens, and all of it goes into the pool. The presets are the floor and the ceiling; there is no separate minimum or maximum. The presets live in the program's Config, set once at init; a devnet build in test mode also allows a tiny Test preset (about $30) that no mainnet build has. The founder also sets a deadline (24h, 3d, 7d, 14d or 30d). Hard cap = target, so there's no partial raise.
+- The founder picks an opening market cap preset: $50K, $100K, $150K or $200K. No typed target, no custom option. The raise is derived: target = cap × (1 − team share) ÷ 2, priced in SOL (every raise pairs with SOL at launch; the program keeps its pair allowlist for later) at the Pyth SOL/USD price when the raise opens, and all of it goes into the pool. The presets are the floor and the ceiling; there is no separate minimum or maximum. The presets live in the program's Config, set once at init; a devnet build in test mode also allows a tiny Test preset (about $30) that no mainnet build has. The founder also sets a deadline (24h, 3d, 7d, 14d or 30d). Hard cap = target, so there's no partial raise.
 - The founder can also set an optional minimum buy and maximum per wallet, enforced by the program. (A whitelist is not built; nothing shows one until the program enforces it.)
 - Price is derived, never typed: price = target ÷ backer tokens.
 - Seed fee: 1% on top of each buy, refunded with the buy if the raise doesn't seed.
@@ -28,7 +28,7 @@ Identity and trust
 - Anyone can file a report, and reports are public. Seed admins act only on fraud: blacklist the founder wallet, plus the X account if linked, and flag the page. Admins can also approve a community takeover, which moves the payout wallet.
 - Team share, unlock schedule and token use case are always shown as plain information, never styled as warnings: the schedule reads as one plain sentence plus the next unlock date, with no warning and no impact figure. Safety checks cover only on-chain facts: mint and freeze authority, LP lock, metadata immutability, holder concentration, fresh and bundled wallets.
 - There is no roadmap or milestones section. The token use case is optional, with "None, this is a bet on the team" allowed.
-- Launch form: no tagline field, no minimum text lengths, only name, ticker, target, deadline and pair required.
+- Launch form: no tagline field, no minimum text lengths, only name, ticker, target and deadline required; no pair choice (SOL only).
 
 Admin and program
 - update_config can change only the treasury and attestor. The admin handover is two-step (propose, then accept). Nothing can change fees, the split, existing raises or founder payout wallets.

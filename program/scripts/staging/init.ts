@@ -1,6 +1,7 @@
 // Stage 2: the staging program's Config on mainnet. Production terms except the opening market cap presets, which are tiny
 // ($150 to $600) so the two staging raises cost about half a SOL each instead of tens of thousands of dollars. No test mode (a mainnet build has no path to it). The deployer is admin
-// and treasury; the attestor key is derived from it as the test suite does. Refuses to run unless GO=1.
+// and treasury; the attestor key is derived from it as the test suite does. SOL only: the init makes no allowlist entry
+// (set_pair is not run), so the only pair it adds is none. Refuses to run unless GO=1.
 //   GO=1 SEED_PROGRAM_ID=<staging id> ANCHOR_PROVIDER_URL=<mainnet rpc> ANCHOR_WALLET=keys/deployer.json npx ts-node -P tsconfig.json scripts/staging/init.ts
 import * as anchor from '@coral-xyz/anchor';
 import { BN, web3 } from '@coral-xyz/anchor';
@@ -20,5 +21,7 @@ const STAGING_CAPS_CENTS = [15_000, 30_000, 45_000, 60_000];   // $150, $300, $4
   const sig = await c.send([ix]);
   const cfg = await c.fetchConfig();
   console.log(`staging config made in ${sig}: presets ${(cfg.presetCapsCents as BN[]).map(x => '$' + Number(x) / 100).join(' ')}, pool fee ${cfg.poolFeeBps} bps, test mode ${cfg.testMode}, admin ${cfg.admin.toBase58()}`);
+  const pairs: any[] = await (program.account as any).pairAsset.all().catch(() => []);
+  console.log(`pairs: SOL; allowlist ${pairs.length ? pairs.map((x: any) => x.account.symbol + (x.account.paused ? ' (paused)' : '')).join(', ') : 'empty'} (SOL only at launch: run no set_pair)`);
   console.log(`attestor ${attestor.publicKey.toBase58()} (the seed function's X_ATTESTOR_KEY must be this key's secret for X links on staging; or open staging raises without X)`);
 })();

@@ -21,6 +21,7 @@ body:has(#view-app.fit:not([hidden])) .toasts{bottom:calc(52px + env(safe-area-i
 .pp-rail{display:flex;flex-direction:column;gap:18px;min-width:0}
 .pp-id,.pp-annw{order:1}.pp-fill{order:2}.pp-rail{order:3}.pp-fees,.pp-chart{order:4}.pp-tabs{order:5}.pp-side>.rail-card{order:6}
 .pp-pos:empty{display:none}
+.rail-fee{display:flex;justify-content:space-between;gap:12px;margin-top:8px;font-size:13px;color:var(--muted)}.rail-fee .num{color:var(--ink-2);text-align:right}
 @media (min-width:1024px) and (max-width:1439px){
   .pp{display:grid;grid-template-columns:minmax(0,1fr) 380px;align-items:start}
   .pp-side>*,.pp-main>*{grid-column:1;min-width:0}

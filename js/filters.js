@@ -50,7 +50,7 @@ document.addEventListener('click', e => {
 const FILTER_KEY = 'seed.filters.v1', COLS = ['new', 'seeding', 'seeded'], COL_NAME = { new: 'New ideas', seeding: 'Seeding', seeded: 'Seeded' };
 const SOCIAL_OPTS = [['website', 'Website'], ['x', 'X'], ['telegram', 'Telegram'], ['discord', 'Discord'], ['github', 'GitHub']];
 const blankFilter = () => ({ q: '', not: '', pairs: [], verified: false, pass: false, noFail: false, maxWarn: '', onPace: false, filled: ['', ''], backers: ['', ''], hours: ['', ''], top10: '', fresh: '', bundled: '', socials: [], deck: false, team: false, ann: false, xOnly: false });
-const filters = (() => { let s = null; try { s = JSON.parse(localStorage.getItem(FILTER_KEY) || 'null'); } catch (e) {} return Object.fromEntries(COLS.map(k => [k, Object.assign(blankFilter(), s && s[k])])); })();
+const filters = (() => { let s = null; try { s = JSON.parse(localStorage.getItem(FILTER_KEY) || 'null'); } catch (e) {} return Object.fromEntries(COLS.map(k => [k, Object.assign(blankFilter(), s && s[k], { pairs: [], verified: false })])); })();   // SOL only: a pair rule saved before is dropped
 function saveFilters() { try { localStorage.setItem(FILTER_KEY, JSON.stringify(filters)); } catch (e) {} }
 const hasRange = r => r[0] !== '' || r[1] !== '';
 /* how many rules a filter set carries, in all and per section */
@@ -95,8 +95,8 @@ function syncFilterBadges() {
 
 /* ---------------------------------------------------------------- the dialog */
 const FUNNEL = '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12l-4.6 5.4V13l-2.8 1V8.9z"/></svg>';
-const fd = { col: 'new', sec: 'pair' };
-const SECS = [['pair', 'Pair'], ['checks', 'Checks'], ['metrics', 'Metrics'], ['socials', 'Socials']];
+const fd = { col: 'new', sec: 'checks' };
+const SECS = [['checks', 'Checks'], ['metrics', 'Metrics'], ['socials', 'Socials']];   // no pair section: every raise pairs with SOL
 function openFilters(col) {
   if (col) fd.col = col; const d = $('#filterDlg'); drawFilters();
   d.onclick = e => { if (e.target === d || e.target.closest('[data-fx]')) closeFilters(); };

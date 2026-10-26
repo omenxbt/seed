@@ -360,6 +360,7 @@ function depositPanel(p) {
     <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" value="${amt}" aria-label="Amount in ${sym}"><span class="suf">${sym}</span></div>
     <div class="chips">${chipsFor(p).filter(c => c <= Math.min(payLeft(p), maxLeft) + 1e-9).map(c => `<button type="button" data-chip="${c}">${fmtC(c, p.q)}</button>`).join('')}<button type="button" data-chip="max">${maxLeft < payLeft(p) ? 'Max' : 'Fill'}</button></div>
     <div class="recv"><span>You receive if it seeds</span><b class="num" data-recv></b></div>
+    <p class="rail-fee"><span>Seed fee, ${SEED.feeBps / 100}%, included</span><span class="num" data-dfee></span></p>
     <p class="rail-meta num">${pr.minBuy ? `Min ${fmtC(pr.minBuy, p.q)} ${sym}${pr.minBuyPct ? ` (${pr.minBuyPct}% of supply)` : ''}` : 'No minimum'} · ${pr.maxBuy ? `Max ${fmtC(pr.maxBuy, p.q)} ${sym}${pr.maxBuyPct ? ` (${pr.maxBuyPct}% of supply)` : ''} per wallet` : 'No maximum per wallet'}</p>
     <p class="rail-err" data-buyerr role="alert"></p>
     <button type="button" class="btn btn-navy btn-block" data-go>Deposit</button>
@@ -869,6 +870,7 @@ function bindRail(p) {
       go.textContent = !state.wallet ? 'Connect wallet to trade' : `${sell ? 'Sell' : 'Buy'} $${cur.ticker}`;
     } else {
       $('[data-recv]', panel).textContent = `${fmtTok(n > 0 ? tokensFor(cur, Math.min(amountFor(n), leftOf(cur))) : 0)} $${cur.ticker}`;   // the buy inside the payment, capped at the room left
+      const df = $('[data-dfee]', panel); if (df) { const pay = n > 0 ? Math.min(n, payLeft(cur)) : 0; df.textContent = `${fmtExact(pay - amountFor(pay), cur.q)} ${C.sym}, refunded on a miss`; }   // the 1% on top, out of what you pay
       const buy = amountFor(n);   // the limits are on the buy itself, like positions; n is the payment with the 1% fee on top (QA P2-85)
       // the minimum does not apply to the buy that fills the raise, as the program allows (QA P1-F18)
       if (!msg && n > 0) msg = pr.minBuy && buy < pr.minBuy - 1e-9 && buy < leftOf(cur) - 1e-9 ? `The minimum deposit is ${fmtC(pr.minBuy, cur.q)} ${C.sym}.` : pr.maxBuy && buy + (state.positions[cur.id] || 0) > pr.maxBuy + 1e-9 ? `A wallet can put in at most ${fmtC(pr.maxBuy, cur.q)} ${C.sym}.`
