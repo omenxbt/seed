@@ -52,6 +52,7 @@ Dark UI, Instrument Sans + Instrument Serif italic + IBM Plex Mono, accent #2E63
 8. Docs page in plain English. Every page works at 390px.
 
 ## Each iteration
+Each iteration, work the first unticked item in CHECKLIST.md that doesn't need the owner; tick it only when verified, with the commit or tx in brackets.
 1. Read BACKLOG.md, PROGRESS.md, QA.md and any new seed-qa messages.
 2. Pick the highest-value item: P0 bugs first, then missing target features, then polish. Keep BACKLOG.md ranked and add what you discover.
 3. Build it. Test on devnet with saved scripted wallets in keys/test/ (gitignored).
