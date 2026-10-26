@@ -2,6 +2,12 @@
 
 Layout and product calls made while building, with the reason. "What Seed is" in LOOP.md is never changed here.
 
+- **SOL only at launch (Josh, 2026-10-26).** Every new raise pairs with SOL: the Launch form has no pair choice and no
+  "What backers pay" block (backers see the 1% fee on the raise page's deposit panel), the board and the Filters dialog
+  offer no pair, and the docs say SOL. On devnet TSTx is paused with `set_pair` (tx 3iMigYj8…xa6icaJ), so the program
+  refuses it (PairPaused). The allowlist stays in the program so a pair comes back without an upgrade; older USDC and
+  TSTx raises stay visible as history. USDC is built into `open_raise` and cannot be paused by config (BACKLOG, Re-enable
+  other pairs).
 - **Terminal lanes (Oct 2026).** At desktop width the Terminal shows three columns by stage — New raises (under 90%),
   Almost full (90%+ and seeding), Seeded & trading — each scrolling on its own and ending at the window's bottom (Josh
   dropped the Filling fast and Seeding lanes: five were too narrow to read), the way Axiom's Pulse and GMGN's

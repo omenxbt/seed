@@ -7,7 +7,7 @@
    Uploads go to Supabase Storage (signed upload URL from the Edge Function) when it is configured; until then they are a
    preview in this browser only. The banner is saved at 1500 x 500 and the token art as a square, cropped where the founder
    dragged the preview. A deck can be a PDF, a slide file (PowerPoint, Keynote, OpenDocument) or an image.
-   The pair asset (draft, draftAsset: SOL, USDC or an allowed pair from chain.loadPairs), readDraft and validateDraft stay in index.html.
+   The pair asset (draft, draftAsset: SOL only at launch; the on-chain allowlist stays for later), readDraft and validateDraft stay in index.html.
    ========================================================================== */
 const lf = {
   team: [{ name: '', role: 'Founder', x: '', github: '', linkedin: '', wallet: '' }],
@@ -198,7 +198,6 @@ function validateFields() {
   if (!d.name) err('#fName', 'Give the project a name.');
   if (!/^[A-Z0-9]{1,6}$/.test(d.ticker)) err('#fTicker', 'A ticker is 1 to 6 letters or digits.');
   else if (state.presales.some(p => p.ticker === d.ticker && p.status === 'live')) err('#fTicker', `$${d.ticker} is in use by a live raise. Pick another.`);
-  if (da.err) err('#pairSeg', da.err);
   if (!(d.cap > 0) || d.preset < 0) err('#capSeg', 'Pick an opening market cap.');
   else if (!(d.target > 0) && (da.key === 'SOL' || pairPriceUsd(da.key) > 0)) err('#capSeg', 'The SOL price has not loaded yet; try again in a moment.');
   const mn = numv($('#fMin').value), mx = numv($('#fMax').value), L = lf.lim;
@@ -273,7 +272,6 @@ function clampTip(t) {
 let founderLooked = '';
 function renderPreview() {
   const d = readDraft(), da = draftAsset(), C = da.a || { sym: 'TOKEN', dp: 2, verified: false }, ok = !isNaN(d.target) && d.target > 0, sym = esc(C.sym), dp = draftPresale(), pr = dp.profile;
-  $('#pairHint').textContent = da.a && da.a.allowed ? `${C.name || C.sym}: an asset Seed allowed${da.a.paused ? ', paused for new raises' : ''}${C.decimals != null ? `, ${C.decimals} decimals` : ''}.` : 'Backers buy in with this asset and the Meteora pool is paired against it: SOL, USDC, or an asset Seed has allowed, such as a tokenized stock.';
   $('#fCur').textContent = C.sym; $$('[data-cur]').forEach(e => e.textContent = C.sym);
   if (typeof chain !== 'undefined' && chain.on() && !SEED.solUsdLive) chain.refreshSolUsd().then(v => { if (v) renderPreview(); });   // the first preview before the feed is read is redrawn at today's price
   if (typeof chain !== 'undefined' && chain.on() && !chain.cfg) chain.init().then(() => { if (chain.cfg) renderPreview(); }).catch(() => {});   // and at the chain's floor once the config is read (test mode brings it down)
@@ -282,7 +280,7 @@ function renderPreview() {
   const fed = da.a && da.a.allowed && !(pairPriceUsd(da.key) > 0);   // a pair priced by its own Pyth feed: the raise is fixed in it the moment the raise opens
   $('#raiseLine').textContent = !capUsd ? (draft.cap === 'test' ? 'The Test preset is not in this network\'s config.' : 'Pick an opening market cap.') : fed ? `Opens at ${fmtMcap(capUsd)} market cap · raise ${fmtUsd(tUsd)} of ${sym}, priced at its Pyth price when the raise opens, all into the pool` : !ok ? `Opens at ${fmtMcap(capUsd)} market cap · the SOL price has not loaded yet` : `Opens at ${fmtMcap(capUsd)} market cap · raise ${fmtC(d.target, da.key)} ${sym} (${fmtUsd(tUsd)}), all into the pool`;
   $('#targetUsd').textContent = ok && da.key === 'SOL' ? `at $${Number(liveSolUsd().toPrecision(4))} per SOL today; fixed at the Pyth price when the raise opens` : !ok && capUsd ? 'the SOL price has not loaded yet' : '';
-  drawSplit(dp); drawDerived(dp, ok, sym);
+  drawSplit(dp);
   const art = pr.art ? `<img class="pv-art" src="${esc(pr.art)}" alt="" style="object-position:${pr.artPos}">` : `<span class="pv-art glyph-art" style="--h:${hashStr(dp.ticker) % 360}"><svg viewBox="0 0 24 24" aria-hidden="true">${glyph(dp)}</svg></span>`;
   $('#pvCard').innerHTML = `${pr.banner ? `<div class="pv-banner"><img src="${esc(pr.banner)}" alt="" style="object-position:${pr.bannerPos}"></div>` : ''}<div class="pv-id">${art}<span class="nm"><b>${esc(dp.name)}<span class="tk">$${esc(dp.ticker)}</span></b><span class="meta"><span class="chain${C.verified ? '' : ' unv'}">Pairs with ${sym}</span>${C.verified || !da.a ? '' : '<span class="tag warn">Unverified</span>'}</span></span></div><div class="c-prog"><span class="bar"><i style="width:0%"></i></span><span class="pct num">0%</span></div>`;
   const label = { 24: '24 hours', 72: '3 days', 168: '7 days', 336: '14 days', 720: '30 days' }[d.hours], split = splitOf(dp.teamBps), f = n => Number(n.toFixed(C.dp)).toLocaleString('en-US', { maximumFractionDigits: C.dp });
@@ -308,13 +306,6 @@ function renderPreview() {
   $('#upNote').textContent = supa.configured() ? 'Uploads go to Seed’s storage when you open the raise.' : 'Uploads are previewed in this browser only until Supabase storage is configured.';
 }
 function syncOpenBtn() { const b = $('#openBtn'); if (b && !b.disabled) b.textContent = !state.wallet ? 'Connect wallet to open' : 'Open raise'; }
-/* what the raise shows as the price, and the pool it opens: read-only, derived from the target and the team share */
-function drawDerived(dp, ok, sym) {
-  const sp = splitOf(dp.teamBps), row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
-  $('#derivedRows').innerHTML = row('Price', ok ? `<span class="num">${fmtPrice(priceOf(dp))} ${sym}</span> per token: the raise over the backers' ${fmtTok(sp.backers)} tokens` : `${dp.capUsd > 0 ? 'The SOL price has not loaded yet' : 'Pick an opening market cap'}. The price is the raise over the backers' ${fmtTok(sp.backers)} tokens`) +
-    row('Fee', `<span class="num">1%</span> on top of each buy, to Seed; refunded with the buy if the raise does not seed`) +
-    row('At seeding', ok ? `<span class="num">${fmtC(dp.target, dp.q)} ${sym}</span> and <span class="num">${fmtTok(sp.pool)}</span> $${esc(dp.ticker)} open a Meteora pool at the raise price, locked for good` : 'The whole raise and the pool tokens open a Meteora pool at the raise price, locked for good');
-}
 /* the X sign-in gate at the top of the form */
 /* linking X is optional: it adds a verified badge to the raise, nothing more */
 function drawGate() {
@@ -354,7 +345,7 @@ async function openPresale() {
     if (!supa.configured()) lf.urls.deck = '';   // the page keeps showing the local deck, so its preview URL is not released
     lf.lim.min = { on: false, unit: 'q' }; lf.lim.max = { on: false, unit: 'q' }; syncLim();
     ['banner', 'art', 'deck'].forEach(k => { if (lf.files[k]) clearFile(k); }); renderPreview();   // the cleared form, in the preview too
-    if (ui.fAsset !== 'any') ui.fAsset = da.key; ui.feed = 'live'; ui.sel = p.id;   // the new raise is on the board's Live tab when you go back
+    ui.feed = 'live'; ui.sel = p.id;   // the new raise is on the board's Live tab when you go back
     toast(`Opened ${p.name}. It is live until ${fmtDate(p.endsAt)}`);
     location.hash = '#/presale/' + p.id;
   } catch (e) { $('#fErr').textContent = e.message; if (da.custom && !state.presales.some(x => x.q === da.key)) delete state.custom[da.key]; }
