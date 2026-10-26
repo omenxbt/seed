@@ -36,18 +36,22 @@ document.addEventListener('keydown', e => {
 });
 addEventListener('resize', () => closeMenu(false)); addEventListener('scroll', () => closeMenu(false), true);
 
-/* the sort menu of each column, and the quick-deposit asset */
-const SORT_ITEMS = k => [...(k === 'all' ? [{ v: 'trend', label: 'Trending' }] : []), { v: 'ending', label: k === 'seeded' ? 'Recently seeded' : k === 'refunded' ? 'Recently closed' : k === 'all' ? 'Ending soon' : 'Ending soon' }, { v: 'filled', label: 'Most filled' }, { v: 'new', label: 'Newest' }];
+/* the sort menu of each tab, the pair menu and the quick-buy asset. Seeded raises are all at 100%, refunded ones have no
+   market cap: those tabs leave that sort out. */
+const SORT_ITEMS = k => [{ v: 'new', label: 'Newest' }, ...(k === 'refunded' ? [] : [{ v: 'mcap', label: 'Market cap' }]), ...(k === 'seeded' ? [] : [{ v: 'filled', label: '% to target' }]), { v: 'ending', label: k === 'seeded' ? 'Recently seeded' : k === 'refunded' ? 'Recently closed' : 'Ending soon' }];
+const pairKeys = () => [...new Set(['SOL', 'USDC', ...Object.keys(ASSETS).filter(k => ASSETS[k].allowed).sort(), ...state.presales.map(p => p.q)])];   // the built-in pairs, the allowlist, and any pair a raise uses
 const sortLabel = (k, v) => (SORT_ITEMS(k).find(i => i.v === v) || SORT_ITEMS(k)[0]).label;
 document.addEventListener('click', e => {
   const s = e.target.closest('button[data-sort]');
-  if (s) { const k = s.dataset.sort === 'feed' ? ui.feed : s.dataset.sort; return openMenu(s, SORT_ITEMS(k), ui.sort[k], v => { ui.sort[k] = v; $('[data-label]', s).textContent = sortLabel(k, v); renderTerminal(); }); }
+  if (s) { const k = s.dataset.sort === 'feed' ? ui.feed : s.dataset.sort; return openMenu(s, SORT_ITEMS(k), ui.sort[k], v => { ui.sort[k] = v; $('[data-label]', s).textContent = sortLabel(k, v); showBoard(); }); }
+  const pb = e.target.closest('#pairBtn');
+  if (pb) return openMenu(pb, [{ v: 'any', label: 'Any pair' }, ...pairKeys().map(k => ({ v: k, label: asset(k).sym }))], ui.fAsset, v => { ui.fAsset = v; showBoard(); });
   const a = e.target.closest('#qbAsset');
   if (a) { const keys = quickKeys(); return openMenu(a, keys.map(k => ({ v: k, label: asset(k).sym, sub: k === 'SOL' || k === 'USDC' ? '' : 'live raise' })), ui.qbAsset, v => { ui.qbAsset = v; syncQuickUI(); }); }
 });
 
 /* ---------------------------------------------------------------- the filters */
-const FILTER_KEY = 'seed.filters.v1', COLS = ['new', 'seeding', 'seeded'], COL_NAME = { new: 'New ideas', seeding: 'Seeding', seeded: 'Seeded' };
+const FILTER_KEY = 'seed.filters.v1', COLS = ['new', 'seeding', 'seeded'], COL_NAME = { new: 'Live, under 50%', seeding: 'Near target', seeded: 'Seeded' };
 const SOCIAL_OPTS = [['website', 'Website'], ['x', 'X'], ['telegram', 'Telegram'], ['discord', 'Discord'], ['github', 'GitHub']];
 const blankFilter = () => ({ q: '', not: '', pairs: [], verified: false, pass: false, noFail: false, maxWarn: '', onPace: false, filled: ['', ''], backers: ['', ''], hours: ['', ''], top10: '', fresh: '', bundled: '', socials: [], deck: false, team: false, ann: false, xOnly: false });
 const filters = (() => { let s = null; try { s = JSON.parse(localStorage.getItem(FILTER_KEY) || 'null'); } catch (e) {} return Object.fromEntries(COLS.map(k => [k, Object.assign(blankFilter(), s && s[k])])); })();

@@ -354,7 +354,7 @@ async function openPresale() {
     if (!supa.configured()) lf.urls.deck = '';   // the page keeps showing the local deck, so its preview URL is not released
     lf.lim.min = { on: false, unit: 'q' }; lf.lim.max = { on: false, unit: 'q' }; syncLim();
     ['banner', 'art', 'deck'].forEach(k => { if (lf.files[k]) clearFile(k); }); renderPreview();   // the cleared form, in the preview too
-    ui.fAsset = da.key; seg.assetF.set(da.key); ui.sel = p.id;
+    if (ui.fAsset !== 'any') ui.fAsset = da.key; ui.feed = 'live'; ui.sel = p.id;   // the new raise is on the board's Live tab when you go back
     toast(`Opened ${p.name}. It is live until ${fmtDate(p.endsAt)}`);
     location.hash = '#/presale/' + p.id;
   } catch (e) { $('#fErr').textContent = e.message; if (da.custom && !state.presales.some(x => x.q === da.key)) delete state.custom[da.key]; }

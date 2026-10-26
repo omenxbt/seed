@@ -774,41 +774,20 @@ a.ico:hover{color:var(--ink)}
 <!-- ######################################################################
      APP
      ###################################################################### -->
-<!-- the icon rail (from 1024px): the mark, the three sections, then X, Discord and the docs. route() lights the open one. -->
-<nav class="rail-nav" id="railNav" aria-label="Sections">
-  <a href="#" class="brand" aria-label="Seed home"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg></a>
-  <a class="rn" href="#" data-rn="terminal" aria-label="Terminal" title="Terminal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 17.5l5.5-6 4 3.5 7.5-8.5"/><path d="M15.5 6.5h5v5"/></svg></a>
-  <a class="rn" href="#/launch" data-rn="launch" aria-label="Launch" title="Launch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg></a>
-  <a class="rn" href="#/portfolio" data-rn="portfolio" aria-label="Portfolio" title="Portfolio"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18M15.5 14.5h2.5"/></svg><span class="ct num" id="ctPosRail"></span></a>
-  <span class="rn-foot">
-    <a class="rn" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
-    <span class="rn off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg class="fill" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span>
-    <a class="rn" href="#/docs" data-rn="docs" aria-label="Docs" title="Docs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8.5L19 8v12.5H6z"/><path d="M14 3.5V8.5h5M9 12.5h7M9 16h7"/></svg></a>
-  </span>
-</nav>
-
 <div class="view" id="view-app">
 <header class="appbar">
-  <a href="#" class="brand" aria-label="Seed home"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>Seed</a>
-  <div class="seg tabs" id="tabSeg" role="group" aria-label="App sections">
-    <span class="seg-ind" aria-hidden="true"></span>
-    <button data-v="terminal" aria-pressed="true">Terminal</button>
-    <button data-v="launch" aria-pressed="false">Launch</button>
-    <button data-v="portfolio" aria-pressed="false">Portfolio<span class="ct" id="ctPos"></span></button>
-  </div>
-  <!-- the search works from every page: typing on another page opens the board. The chips count what is live right now. -->
-  <div class="search-wrap">
-    <label class="mini search"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="bq" placeholder="Search raises by name, ticker, CA or X handle" autocomplete="off" aria-label="Search the board"></label>
-    <div class="statchips" id="statChips" aria-label="Right now"></div>
-  </div>
+  <a href="#" class="brand" aria-label="Seed home"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg><span class="brand-w">Seed</span></a>
+  <nav class="navtabs" id="navTabs" aria-label="Sections"><a href="#" data-nav="terminal" aria-current="page">Raises</a><a href="#/launch" data-nav="launch">Launch</a><a href="#/docs" data-nav="docs">Docs</a></nav>
+  <!-- the search works from every page: typing on another page opens the board -->
+  <label class="mini search hsearch"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input id="bq" placeholder="Search name, ticker, CA or X handle" autocomplete="off" aria-label="Search the board"></label>
   <div class="right">
-    <button type="button" class="ibtn" id="refreshBtn" aria-label="Refresh the board" title="Refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/></svg></button>
-    <span class="icons"><a class="ico" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><span class="ico off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span><a class="ico" href="#/docs" aria-label="Docs" title="Docs"><svg class="line" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8.5L19 8v12.5H6z"/><path d="M14 3.5V8.5h5M9 12.5h7M9 16h7"/></svg></a></span>
-    <a class="textlink" href="#/docs">Docs</a>
+    <a class="btn btn-ink hstart" href="#/launch">Start a raise</a>
+    <a class="hport" id="portLink" href="#/portfolio" hidden>Portfolio<span class="ct num" id="ctPos"></span></a>
     <span class="bell-wrap"><button type="button" class="ico bell" id="bellBtn" aria-haspopup="true" aria-expanded="false" aria-label="Alerts"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM9.5 20a2.5 2.5 0 0 0 5 0"/></svg><span class="ct num" id="bellCt" hidden></span></button><div class="pop bell-pop" id="bellPop" hidden></div></span>
-    <button class="btn btn-ink" id="walletBtn" aria-haspopup="true" aria-expanded="false">Connect wallet</button>
+    <button class="btn btn-wallet" id="walletBtn" aria-haspopup="true" aria-expanded="false">Connect wallet</button>
     <div class="pop" id="walletPop" role="menu">
       <h4 id="walletName">Demo wallet</h4>
+      <a class="pop-link" href="#/portfolio">Portfolio<span class="ct num" id="ctPosMenu"></span></a>
       <div id="walletBals"></div>
       <div id="walletX"></div>
       <button id="disconnectBtn">Disconnect</button>
@@ -819,45 +798,29 @@ a.ico:hover{color:var(--ink)}
 <main class="appmain">
   <!-- ------------------------------------------------------ TERMINAL -->
   <section id="tab-terminal">
-    <!-- the top of the board, as the Figma's Pools page: a hero beside the most active raise -->
-    <div class="hero-row">
-      <section class="panel hero" aria-labelledby="h-hero">
-        <h1 id="h-hero"><i>Back the idea,</i> at one fixed price.</h1>
-        <p>A raise sells its token at a price set by its target. Fill it and the whole raise opens a Meteora pool, locked for good. Miss it and every wallet is refunded, fee included.</p>
-        <div class="hero-acts"><a class="btn btn-ink" href="#/launch">Start a raise</a><a class="btn btn-ghost" href="#/docs">How it works</a></div>
-      </section>
-      <a class="panel featured" id="featured" href="#" aria-label="The most active raise"></a>
-    </div>
-    <div class="xbar">
-      <div class="quick"><span>Quick deposit</span>
-        <label class="mini"><input id="qbAmt" inputmode="decimal" aria-label="Quick deposit amount"></label>
-        <button type="button" class="mini" id="qbAsset" aria-haspopup="listbox" aria-expanded="false" aria-label="Quick deposit asset"><span class="num" data-label>SOL</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button>
-      </div>
-      <a class="btn btn-ink" href="#/launch"><span aria-hidden="true">+</span> Start a raise</a>
-    </div>
-    <div class="filters">
-      <div class="seg" id="assetSeg" role="group" aria-label="Pair asset"><span class="seg-ind" aria-hidden="true"></span>
-        <button data-v="SOL" aria-pressed="true">SOL</button><button data-v="USDC" aria-pressed="false">USDC</button></div>
-      <button type="button" class="mini fbtn" id="watchBtn" aria-pressed="false"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg><span>Watchlist</span></button>
-      <button type="button" class="mini fbtn" id="filterBtn" aria-haspopup="dialog"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12l-4.6 5.4V13l-2.8 1V8.9z"/></svg><span>Filters</span><span class="ct num" id="filterCt" hidden></span></button>
-    </div>
-    <section class="trend" aria-labelledby="h-trend">
-      <div class="trend-head"><h2 id="h-trend"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Trending</h2><span class="col-note">Most active right now</span>
-        <span class="trend-nav"><button type="button" class="x" data-tr="-1" aria-label="Scroll back">&#8249;</button><button type="button" class="x" data-tr="1" aria-label="Scroll forward">&#8250;</button></span></div>
-      <div class="trend-row" id="trendRow"></div>
-    </section>
-    <div class="lanes" id="lanes" aria-label="Raises by stage"></div>
-    <section class="panel board" aria-label="All raises">
-      <header class="col-head feed-head">
-        <h2 class="feed-title">Raises</h2>
-        <div class="feed-tabs" role="tablist" id="feedTabs"><button type="button" role="tab" data-feed="all" aria-selected="true">All<span class="ct num" id="n-all"></span></button><button type="button" role="tab" data-feed="new" aria-selected="false">New ideas<span class="ct num" id="n-new"></span></button><button type="button" role="tab" data-feed="seeding" aria-selected="false">Seeding<span class="ct num" id="n-seeding"></span></button><button type="button" role="tab" data-feed="seeded" aria-selected="false">Seeded<span class="ct num" id="n-seeded"></span></button><button type="button" role="tab" data-feed="refunded" aria-selected="false">Refunded<span class="ct num" id="n-refunded"></span></button></div>
-        <div class="col-side"><span class="col-note" id="feedNote"></span><button type="button" class="col-filt" id="feedFilt" hidden></button><button type="button" class="mini col-sort" data-sort="feed" aria-haspopup="listbox" aria-expanded="false" aria-label="Sort"><span data-label>Trending</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button></div>
+    <!-- trending: one line, the most active raises by rank -->
+    <section class="tstrip" aria-label="Trending"><span class="tstrip-h">Trending</span><div class="trend-row" id="trendRow"></div></section>
+    <section class="board" aria-label="All raises">
+      <header class="feed-head">
+        <div class="feed-tabs" role="tablist" id="feedTabs"><button type="button" role="tab" data-feed="live" aria-selected="true">Live<span class="ct num" id="n-live"></span></button><button type="button" role="tab" data-feed="near" aria-selected="false">Near target<span class="ct num" id="n-near"></span></button><button type="button" role="tab" data-feed="seeded" aria-selected="false">Seeded<span class="ct num" id="n-seeded"></span></button><button type="button" role="tab" data-feed="refunded" aria-selected="false">Refunded<span class="ct num" id="n-refunded"></span></button></div>
+        <div class="feed-tools">
+          <span class="quick" id="quickWrap" title="The amount a row's buy button deposits"><span class="quick-l">Quick buy</span><label class="mini"><input id="qbAmt" inputmode="decimal" aria-label="Quick buy amount"></label><button type="button" class="mini" id="qbAsset" aria-haspopup="listbox" aria-expanded="false" aria-label="Quick buy asset"><span class="num" data-label>SOL</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button></span>
+          <button type="button" class="mini fsel" id="pairBtn" aria-haspopup="listbox" aria-expanded="false" aria-label="Pair"><span data-label>Any pair</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button>
+          <button type="button" class="mini fsel col-sort" data-sort="feed" aria-haspopup="listbox" aria-expanded="false" aria-label="Sort"><span data-label>Ending soon</span><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg></button>
+          <button type="button" class="ibtn" id="watchBtn" aria-pressed="false" aria-label="Watchlist only" title="Watchlist"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg><span class="ct num" id="watchCt"></span></button>
+          <button type="button" class="ibtn" id="filterBtn" aria-haspopup="dialog" aria-label="Filters" title="Filters"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12l-4.6 5.4V13l-2.8 1V8.9z"/></svg><span class="ct num" id="filterCt" hidden></span></button>
+          <button type="button" class="ibtn" id="refreshBtn" aria-label="Refresh the board" title="Refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v4.5h-4.5"/></svg></button>
+          <div class="viewseg" id="viewSeg" role="group" aria-label="View"><button type="button" data-view="list" aria-pressed="true" aria-label="List" title="List"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 4h11M2.5 8h11M2.5 12h11"/></svg></button><button type="button" data-view="grid" aria-pressed="false" aria-label="Grid" title="Grid"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="9" y="2.5" width="4.5" height="4.5" rx="1"/><rect x="2.5" y="9" width="4.5" height="4.5" rx="1"/><rect x="9" y="9" width="4.5" height="4.5" rx="1"/></svg></button></div>
+        </div>
       </header>
-      <div class="col-list feed-list" id="feed"></div>
+      <div class="feed-list" id="feed"></div>
+      <div class="feed-more"><button type="button" class="btn btn-ghost" id="moreBtn" hidden>Show more</button></div>
     </section>
     <div class="board-foot">
       <p class="board-note" id="tryHint" hidden></p><p class="board-note" id="refundNote" hidden></p>
+      <span class="statline" id="statChips" aria-label="Right now"></span>
       <span class="foot-legal"><a href="#/docs/terms">Terms</a> · <a href="#/docs/privacy">Privacy</a> · <a href="#/docs/risk">Risk disclosure</a></span><span class="foot-note"><span data-foot>Live on Solana devnet: real transactions, test SOL with no value, and a day counts as a minute. Demo raises are marked; a connected wallet signs its own transactions.</span> <button data-reset>Reset demo</button></span>
+      <span class="icons"><a class="ico" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><span class="ico off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span></span>
     </div>
   </section>
 
@@ -1021,9 +984,10 @@ a.ico:hover{color:var(--ink)}
      ###################################################################### -->
 <div class="view" id="view-docs" hidden>
 <header class="appbar">
-  <a href="#" class="brand" aria-label="Seed home"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>Seed <small>docs</small></a>
+  <a href="#" class="brand" aria-label="Seed home"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg><span class="brand-w">Seed</span></a>
+  <nav class="navtabs" aria-label="Sections"><a href="#" data-nav="terminal">Raises</a><a href="#/launch" data-nav="launch">Launch</a><a href="#/docs" data-nav="docs" aria-current="page">Docs</a></nav>
   <span></span>
-  <div class="right"><span class="icons"><a class="ico" href="https://x.com/" target="_blank" rel="noopener" aria-label="Seed on X" title="X"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a><span class="ico off" role="img" aria-label="Discord, coming soon" title="Discord, coming soon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg></span></span><a class="textlink" href="#">Terminal</a></div>
+  <div class="right"><a class="btn btn-ink hstart" href="#/launch">Start a raise</a></div>
 </header>
 <div class="docs">
   <nav class="toc" id="toc" aria-label="Docs sections"></nav>
@@ -1585,7 +1549,7 @@ function addr(seed) {
 
 const QUICK0 = () => ({ SOL: 2, USDC: 250, JUP: 500, BONK: 5000000, NVDAx: 1 });
 let state = { wallet: null, presales: [], positions: {}, claimed: {}, tokens: {}, quick: QUICK0(), custom: {} };
-const ui = { view: '', tab: 'terminal', sel: null, fAsset: 'SOL', bq: '', feed: 'all', watchOnly: false, sort: { all: 'trend', new: 'new', seeding: 'filled', seeded: 'ending', refunded: 'ending' }, qbAsset: 'SOL' };
+const ui = { view: '', tab: 'terminal', sel: null, fAsset: 'any', bq: '', feed: 'live', watchOnly: false, sort: { live: 'ending', near: 'filled', seeded: 'mcap', refunded: 'ending' }, qbAsset: 'SOL', layout: (() => { try { return localStorage.getItem('seed.layout') === 'grid' ? 'grid' : 'list'; } catch (e) { return 'list'; } })(), limit: 25 };
 function fresh() { return { at: Date.now(), wallet: null, presales: seedData(), positions: Object.assign({}, DEMO_WALLET_BUYS), claimed: {}, tokens: {}, quick: QUICK0(), custom: {} }; }
 function load() {
   try { const s = JSON.parse(localStorage.getItem(KEY) || 'null'); if (s && Array.isArray(s.presales) && s.presales.length && s.presales[0].hist && s.presales[0].q && s.presales[0].buys) {
@@ -1767,57 +1731,50 @@ function renderPairSeg() {
 /* bars sweep in only for rows that were not already on screen, so a buy or a re-sort does not replay every bar */
 const shown = { term: new Set() };
 function freshIn(k, list) { const prev = shown[k] || (shown[k] = new Set()); shown[k] = new Set(list.map(p => p.id)); return p => prev.has(p.id) ? '' : ' fresh'; }
-/* the pair filter applies to all three columns */
-const pairOk = p => p.q === ui.fAsset;   // the board shows one pair at a time: SOL or USDC
-/* each column sorts on its own. Ending soon: live raises by deadline; in the seeded column it is the most recently seeded first.
-   Most filled: by percentage, then newest. Newest: by when it opened. */
+/* the pair filter: any pair, or one of them */
+const pairOk = p => ui.fAsset === 'any' || p.q === ui.fAsset;
+/* the tabs over the table. Live: every raise taking deposits. Near target: past halfway, or filled and seeding. Seeded: the
+   pool is open. Refunded: missed, cancelled or timed out. The filter sets (filters.js) stay per stage: under 50%, past 50%
+   or seeding, seeded. */
+const FEEDS = ['live', 'near', 'seeded', 'refunded'];
+const PAGE = 25;
+function feedLists() {
+  const q = ui.bq.trim().toLowerCase(), under = boardHit('new'), near = boardHit('seeding');
+  const refunded = state.presales.filter(p => p.status === 'refunded' && pairOk(p) && matchQ(p, q) && (!ui.watchOnly || isWatched(p)));
+  return { live: [...under, ...near.filter(p => p.status === 'live')], near, seeded: boardHit('seeded'), refunded };
+}
+/* each tab sorts on its own. Ending soon: live raises by deadline, a filled one by when its seeding must be done; on Seeded
+   and Refunded it is the most recent first. Market cap: in dollars. % to target: by percentage. Newest: by when it opened. */
+const endKey = p => p.status === 'live' ? p.endsAt : p.status === 'filled' ? seedDeadline(p) : -(p.resolvedAt || p.endsAt || 0);
 function sorter(k) {
-  const s = ui.sort[k];
-  if (s === 'trend') return (a, b) => trendScore(b) - trendScore(a) || b.openedAt - a.openedAt;
-  if (k === 'refunded') return s === 'new' ? (a, b) => b.openedAt - a.openedAt : s === 'filled' ? (a, b) => pctOf(b) - pctOf(a) : (a, b) => (b.resolvedAt || 0) - (a.resolvedAt || 0);
-  if (s === 'filled') return (a, b) => pctOf(b) - pctOf(a) || b.openedAt - a.openedAt;
-  if (s === 'new') return (a, b) => b.openedAt - a.openedAt;
-  return k === 'seeded' ? (a, b) => (b.resolvedAt || 0) - (a.resolvedAt || 0) : (a, b) => a.endsAt - b.endsAt;
+  const s = ui.sort[k], newest = (a, b) => b.openedAt - a.openedAt;
+  if (s === 'new') return newest;
+  if (s === 'mcap') return (a, b) => mcapUsdOf(b) - mcapUsdOf(a) || newest(a, b);
+  if (s === 'filled') return (a, b) => pctOf(b) - pctOf(a) || newest(a, b);
+  return (a, b) => endKey(a) - endKey(b) || newest(a, b);
 }
 const qbLabel = p => fmtC(Math.min(quickFor(p), payLeft(p)), p.q);
 const BOLT = '<svg class="qb-bolt" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.2 1 3 9h4l-.8 6L13 6.8H8.6z"/></svg>';
-/* a board row's second line: time, the project's links as small icons with its X account by handle, and its backers */
-const ROW_ICON = {
-  clock: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M8 4.6V8l2.2 1.5"/></svg>',
-  done: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2"/><path d="M5.4 8.2l1.8 1.8 3.4-3.7"/></svg>',
-  horn: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 6.4v3.2h2.2l5.3 3V3.4l-5.3 3zM12.2 6.2a2.6 2.6 0 0 1 0 3.6M4.9 9.8l.8 3.2h1.9l-.7-2.6"/></svg>',
-  people: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6" cy="5.4" r="2.4"/><path d="M1.6 13.4c.3-2.4 2-3.8 4.4-3.8s4.1 1.4 4.4 3.8M10.6 3.2a2.4 2.4 0 0 1 0 4.4M12 9.9c1.4.5 2.2 1.7 2.4 3.5"/></svg>'
-};
 const xHandle = u => { const m = /^https?:\/\/(?:www\.)?(?:x|twitter)\.com\/@?([A-Za-z0-9_]{1,15})\/?(?:[?#].*)?$/i.exec(u || ''); return m ? '@' + m[1] : ''; };
-/* how many announcements the team has posted; lit while the latest is under two days old */
-function rowAnn(p) {
-  const l = updatesAdapter.list(p); if (!l.length) return '';
-  const age = Date.now() - l[0].postedAt;
-  return `<span class="br-stat${age < 2 * D ? ' fresh-ann' : ''}" title="${l.length} announcement${l.length > 1 ? 's' : ''} from the team, latest ${fmtAgo(age)}">${ROW_ICON.horn}<span class="num">${l.length}</span></span>`;
-}
-function rowLinks(p) {
-  const l = profileOf(p).links || {}, h = safeUrl(l.x) && xHandle(l.x), ext = 'target="_blank" rel="noopener"';
-  const icons = SOCIALS.filter(x => safeUrl(l[x[0]])).map(x => `<a class="br-ico${x[0] === 'x' && h ? ' is-x' : ''}" href="${esc(safeUrl(l[x[0]]))}" ${ext} title="${x[1]}" aria-label="${esc(p.name)}: ${x[1]}">${ICONS[x[2]]}</a>`).join('');
-  return icons || h ? `<span class="br-links">${icons}${h ? `<a class="br-handle" href="${esc(safeUrl(l.x))}" ${ext} title="X account">${ICONS.x}<span>${esc(h)}</span></a>` : ''}</span>` : '';
-}
 function actCell(p) {
   const C = Q(p), pos = state.positions[p.id];
   if (p.status === 'filled') return `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Seeding ${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1}/4</a>`;
   if (p.status === 'live') return `<button class="qb" data-qb="${p.id}">${BOLT}<span class="qb-w">Deposit </span><span><span class="num" data-qbamt>${qbLabel(p)}</span> ${esc(C.sym)}</span></button>`;
   if (pos && !state.claimed[p.id]) return `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
   if (p.status === 'seeded') return `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Trade</a>`;   // a seeded token is bought and sold on its page
-  return '';   // the card's status chip already says refunded
+  return '';
 }
-/* which column a raise sits in. Refunded ones are not on the board: they are named under it, and claims live in the portfolio. */
-const colOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'filled' ? 'seeding' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : 'seeding') : null;   // a filled raise sits with the seeding ones until it seeds
-/* the Terminal's lanes: where a raise is in its life. New under 50%, filling fast from 50 to 90, almost full above, then seeding and trading. */
-const LANES = [['new', 'New raises'], ['full', 'Almost full'], ['seeded', 'Seeded & trading']];   // under 90%; 90%+ and seeding; trading
-const laneOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'filled' ? 'full' : p.status === 'live' ? (pctOf(p) < 90 ? 'new' : 'full') : null;
+/* which stage a raise is at, for the filter sets. Refunded ones have their own tab. */
+const colOf = p => p.status === 'seeded' ? 'seeded' : p.status === 'filled' ? 'seeding' : p.status === 'live' ? (pctOf(p) < 50 ? 'new' : 'seeding') : null;   // a filled raise sits with the near-target ones until it seeds
 /* the search box matches a name, a ticker, a contract address, a raise account or an X handle */
 const matchQ = (p, q) => { if (!q) return true; const s = q.toLowerCase().replace(/^[@$]/, ''); return [p.name, p.ticker, p.mint, p.address, p.xAccount && p.xAccount.handle].some(v => v && String(v).toLowerCase().includes(s)); };
-/* the watchlist: starred raises, kept with the demo state; alerts and the Watchlist toggle read it */
+/* the watchlist: starred raises, kept with the demo state; alerts and the Watchlist toggle read it. The star is on the raise page. */
 const isWatched = p => !!(state.watch && state.watch[p.id]);
-function toggleWatch(p) { state.watch = state.watch || {}; if (state.watch[p.id]) delete state.watch[p.id]; else state.watch[p.id] = Date.now(); save(); renderTerminal(); }
+function toggleWatch(p) {
+  state.watch = state.watch || {}; if (state.watch[p.id]) delete state.watch[p.id]; else state.watch[p.id] = Date.now(); save();
+  const on = isWatched(p); $$(`[data-watch="${p.id}"]`).forEach(b => { b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); b.setAttribute('aria-label', `${on ? 'Remove from' : 'Add to'} watchlist`); });
+  renderTerminal();
+}
 const starBtn = p => `<button type="button" class="star${isWatched(p) ? ' on' : ''}" data-watch="${p.id}" aria-pressed="${isWatched(p)}" aria-label="${isWatched(p) ? 'Remove from' : 'Add to'} watchlist" title="Watchlist"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg></button>`;
 /* what is moving: a live raise by what it took in the last six hours as a share of its target, a seeded token by how recently
    it seeded. Refunded raises never trend. */
@@ -1828,129 +1785,107 @@ function trendScore(p) {
   if (p.status === 'seeded') return Math.max(0, 40 - (now - (p.resolvedAt || now)) / D * 5);
   return -1;
 }
-/* what a raise is doing, as a chip: a live one by its last six hours, a seeded one by when it seeded */
-function doingChip(p) {
-  const now = Date.now();
-  if (p.status === 'live') { const r = (p.raised - raisedAt(p, now - 6 * H)) / p.target * 100; return r > 0 ? `<span class="tr-chg up">+${r < 10 ? r.toFixed(1) : Math.round(r)}% · 6h</span>` : '<span class="tr-chg">Quiet · 6h</span>'; }
-  if (p.status === 'seeded') return `<span class="tr-chg seeded">Seeded ${fmtAgo(now - (p.resolvedAt || now))}</span>`;
-  if (p.status === 'filled') return '<span class="tr-chg seeded">Filled, seeding</span>';
-  return '<span class="tr-chg off">Refunded</span>';
+const isDemo = p => !p.live && typeof chain !== 'undefined' && chain.on();   // on the live site a demo raise is marked
+const DEMO_CHIP = '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>';
+/* the move: a seeded token against its raise price, a live raise by what it took in the last six hours */
+function moveOf(p) {
+  if (p.status === 'seeded') { const x = spotNow(p) / priceOf(p); return { cls: Math.abs(x - 1) < 0.0005 ? 'quiet' : x >= 1 ? 'up' : 'down', txt: mcChange(x), title: 'Against the raise price' }; }
+  if (p.status === 'live') { const r = (p.raised - raisedAt(p, Date.now() - 6 * H)) / p.target * 100; return r > 0 ? { cls: 'up', txt: `+${r < 10 ? r.toFixed(1) : Math.round(r)}%`, title: 'Raised in the last 6 hours, as a share of the target' } : { cls: 'quiet', txt: '0%', title: 'Nothing raised in the last 6 hours' }; }
+  return { cls: 'quiet', txt: p.status === 'filled' ? 'Seeding' : '', title: '' };
 }
-/* a raise as a tile. The Trending row shows the short form with its rank; the feed adds time, backers, links, checks and the button. */
-function tile(p, i, trend, fresh = '') {
-  const C = Q(p), pc = pctOf(p), live = p.status === 'live';
-  return `<div class="tile ${p.status}${trend ? ' tr-card' : fresh}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
-    <span class="tr-art">${artHTML(p, 'tr-img')}${trend ? `<span class="tr-rank">${i + 1}</span>` : ''}<span class="tr-pct" data-pct>${Math.floor(pc + 1e-7)}%</span><span class="bar"><i data-bar style="width:${pc}%"></i></span></span>
-    <span class="tr-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${trend ? '' : starBtn(p)}${trend ? '' : `${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}`}</span>
-    <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></b>${doingChip(p)}${trend && !p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}</span>
-    ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span>${p.status === 'refunded' ? '' : `<span class="br-stat" title="${p.status === 'seeded' ? '' : 'At the raise price. '}${esc(mcTitle(p, spotNow(p)))}"><span class="num" data-mc>MC ${fmtMcap(mcapUsdOf(p))}</span></span>`}${rowAnn(p)}${rowLinks(p)}</span>
-    <span class="tile-flags">${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
-    <span class="t-act">${actCell(p)}</span>`}</div>`;
+/* trending, one line: rank, art, ticker, market cap and the move */
+function trendItem(p, i) {
+  const m = moveOf(p);
+  return `<a class="ts-item ${p.status}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}" aria-label="${esc(p.name)}, trending ${i + 1}"><span class="ts-rank num">${i + 1}</span>${artHTML(p, 'ts-art')}<b>${esc(p.name)}</b><span class="num ts-mc" data-mc>${fmtMcap(mcapUsdOf(p))}</span><span class="num chg ${m.cls}" title="${esc(m.title)}">${m.txt}</span></a>`;
 }
-/* the lanes end at the bottom of the window, whatever sits above them: each scrolls inside */
-function fitLanes() { const el = $('#lanes'); if (!el || !el.offsetParent) return; const top = el.getBoundingClientRect().top + scrollY; el.style.setProperty('--lanes-h', `calc(100vh - ${Math.round(top)}px - 18px)`); }
-addEventListener('resize', () => fitLanes());
-/* a lane's row: the compact card, the way Pulse lists a token: art, ticker, the one figure that matters at this stage, age or
-   time left, backers, chips. The big art stays in Trending and the board. */
-function laneRow(p, i, fresh = '') {
-  const C = Q(p), pc = pctOf(p), live = p.status === 'live', seeded = p.status === 'seeded', spot = seeded ? spotNow(p) : null, x = spot ? spot / priceOf(p) : null;
-  const fig = seeded ? `<b class="num" data-mc title="${esc(mcTitle(p, spot))}">MC ${fmtMcap(mcapUsdOf(p))}</b><span class="num ${x >= 1 ? 'up' : 'down'}" data-mcx title="Against the raise price">${mcChange(x)}</span>` : `<b class="num">${Math.floor(pc + 1e-7)}%</b><span class="num">${fmtC(p.raised, p.q, true)} / ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</span>`;
-  return `<a class="lrow ${p.status}${fresh}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}" style="--i:${i};--h:${hashStr(p.ticker) % 360}">${artHTML(p, 'lr-art')}
-    <span class="lr-main"><span class="lr-name"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span>${starBtn(p)}</span>
-      <span class="lr-meta">${live ? `<span class="num${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span data-time>${timeCell(p)}</span></span>` : `<span class="num">${seeded ? fmtAgo(Date.now() - (p.resolvedAt || p.endsAt)) : timeCell(p)}</span>`}<span class="num" title="Backers">${ROW_ICON.people}<span data-rbackers>${p.backers}</span></span>${seeded && p.holderCount != null ? `<span class="num" title="Holders">${p.holderCount} holders</span>` : ''}</span>
-      <span class="lr-chips">${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip">Demo</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span></span>
-    <span class="lr-fig">${fig}${live ? `<span class="bar"><i data-bar style="width:${pc}%"></i></span>` : ''}</span></a>`;
-}
-/* the board as a table (from 1001px; tiles below that): rank, token, market cap, the move, raised with its bar, backers, time, a
-   barcode strip lit to the fill, and the action. Rows share the tiles' data- hooks, so a buy landing patches them the same way. */
-const CARET = up => `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${up ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'}"/></svg>`;
-const CHEV = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
-const tableMode = () => innerWidth > 1000;
-function rowChange(p) {
-  if (p.status === 'seeded') { const x = spotNow(p) / priceOf(p); return `<span class="chg ${x >= 1 ? 'up' : 'down'}" data-mcx title="Against the raise price">${CARET(x >= 1)}${mcChange(x)}</span>`; }
-  if (p.status === 'live') { const r = (p.raised - raisedAt(p, Date.now() - 6 * H)) / p.target * 100; return r > 0 ? `<span class="chg up">${CARET(true)}+${r < 10 ? r.toFixed(1) : Math.round(r)}%<em>6h</em></span>` : '<span class="chg quiet">Quiet<em>6h</em></span>'; }
-  return p.status === 'filled' ? '<span class="chg">Seeding</span>' : '<span class="chg quiet">Refunded</span>';
-}
+/* the founder's X account, when one is linked: verified when they signed in with X */
+const xBadge = p => { const x = p.xAccount; return x && x.handle ? `<span class="xb${x.verified ? ' ok' : ''}" title="${x.verified ? 'Verified X' : 'Linked X'}: @${esc(x.handle)}">${X_GLYPH}<span>@${esc(x.handle)}</span></span>` : ''; };
+const rowSub = p => `${xBadge(p)}${isDemo(p) ? DEMO_CHIP : ''}${p.mine ? '<span class="tag">Yours</span>' : ''}${Q(p).verified ? '' : '<span class="tag warn">Unverified</span>'}`;
+/* the figure that matters: a seeded token's market cap, otherwise the target */
+const capCell = p => p.status === 'seeded' ? `<span class="num" data-mc title="${esc(mcTitle(p, spotNow(p)))}">${fmtMcap(mcapUsdOf(p))}</span>` : `<span class="num" title="Target">${fmtC(p.target, p.q, true)} <em>${esc(Q(p).sym)}</em></span>`;
+/* time: left on a live raise, the seeding step on a filled one, otherwise how long ago it seeded or closed */
+const timeOf = p => p.status === 'live' ? `<span class="num${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" data-time>${fmtLeft(p.endsAt - Date.now())}</span>` : p.status === 'filled' ? `<span>Seeding ${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1}/4</span>` : `<span class="quiet">${fmtAgo(Date.now() - (p.resolvedAt || p.endsAt))}</span>`;
+const progBar = p => { const pc = pctOf(p), C = Q(p); return `<span class="prog" title="${fmtC(p.raised, p.q, true)} / ${fmtC(p.target, p.q, true)} ${esc(C.sym)}"><span class="bar"><i data-bar style="width:${pc}%"></i></span><span class="num" data-pct>${Math.floor(pc + 1e-7)}%</span></span>`; };
+/* the board as one table: token, pair, progress, market cap or target, time, a sparkline for a seeded token, the action. Rows
+   carry the data- hooks patchRows() and tick() update, so a buy landing patches them in place. */
+const THEAD = '<div class="thead" aria-hidden="true"><span>Token</span><span>Pair</span><span>Progress</span><span>Market cap</span><span>Time</span><span>Graph</span><span></span></div>';
 function trow(p, i, fresh = '') {
-  const C = Q(p), pc = pctOf(p), live = p.status === 'live';
-  const chips = `${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}`;
-  return `<div class="trow ${p.status}${fresh}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
-    <span class="c-proj"><span class="rank-badge num">${i + 1}</span>${artHTML(p, 'tr-av')}<span class="nm"><b><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled">$${esc(p.ticker)}</a><span class="tk">${esc(p.name)}</span></b><span class="meta">${chips}</span></span>${starBtn(p)}</span>
-    ${p.status === 'refunded' ? '<span class="num quiet" title="No token was minted">—</span>' : `<span class="num" data-mc title="${p.status === 'seeded' ? '' : 'At the raise price. '}${esc(mcTitle(p, spotNow(p)))}">${fmtMcap(mcapUsdOf(p))}</span>`}
-    <span>${rowChange(p)}</span>
-    <span class="num c-raised"><span><span data-raised>${fmtC(p.raised, p.q, true)}</span><em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></span><span class="bar"><i data-bar style="width:${pc}%"></i></span></span>
-    <span class="num" data-rbackers title="Backers">${p.backers}</span>
-    <span class="num c-time${live && p.endsAt - Date.now() < 6 * H ? ' soon' : ''}"><span data-time>${timeCell(p)}</span></span>
-    <span><span class="strip" title="${Math.floor(pc + 1e-7)}% filled"><i data-strip style="width:${pc}%"></i></span></span>
-    <span class="t-act">${actCell(p) || `<a class="chev" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)}">${CHEV}</a>`}</span></div>`;
+  const pc = pctOf(p);
+  return `<div class="trow ${p.status}${fresh}" style="--i:${i}" data-row="${p.id}">
+    <span class="c-tok">${artHTML(p, 'tr-av')}<span class="nm"><b><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled">${esc(p.name)}</a><span class="tk">${esc(p.ticker)}</span></b><span class="sub">${rowSub(p)}</span></span></span>
+    <span class="c-pair">${esc(Q(p).sym)}</span>
+    <span class="c-prog">${progBar(p)}</span>
+    <span class="c-cap">${capCell(p)}</span>
+    <span class="c-time">${timeOf(p)}</span>
+    <span class="c-spark">${p.status === 'seeded' ? `<span class="spark" data-spark="${p.id}">${sparkSVG(sparkPts(p))}</span>` : ''}</span>
+    <span class="t-act">${actCell(p)}</span></div>`;
 }
-const THEAD = '<div class="thead" aria-hidden="true"><span>Raise</span><span>Market cap</span><span>Change</span><span>Raised</span><span>Backers</span><span>Time</span><span>Fill</span><span></span></div>';
-let wasTable = null;
-addEventListener('resize', () => { if (wasTable != null && tableMode() !== wasTable && ui.tab === 'terminal') renderTerminal(); });   // crossing 1000px swaps rows for tiles
-/* the featured card: the raise that is moving most, with a sketch of how it has filled behind its numbers */
-function fillArea(p, W = 320, Hh = 120) {
-  const t0 = p.openedAt, t1 = p.status === 'live' ? Math.max(Date.now(), t0 + 1) : (p.resolvedAt || p.endsAt), pts = (p.hist || []).filter(h => h[0] >= t0 && h[0] <= t1).concat([[t1, p.raised]]);
-  if (pts.length < 2) pts.unshift([t0, 0]);
-  const X = t => (t - t0) / ((t1 - t0) || 1) * W, Y = v => Hh - 6 - Math.min(1, v / p.target) * (Hh - 12), line = pts.map((h, i) => `${i ? 'L' : 'M'}${X(h[0]).toFixed(1)} ${Y(h[1]).toFixed(1)}`).join(' ');
-  return `<svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="ftFade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5B8CFF" stop-opacity=".32"/><stop offset="1" stop-color="#5B8CFF" stop-opacity="0"/></linearGradient></defs>
-    <path d="${line} L${W} ${Hh} L0 ${Hh} Z" fill="url(#ftFade)"/><path d="${line}" fill="none" stroke="#5B8CFF" stroke-opacity=".8" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
+/* the grid: the same raise as a card, art first */
+function gtile(p, i, fresh = '') {
+  const m = moveOf(p);
+  return `<div class="gtile ${p.status}${fresh}" style="--i:${i}" data-row="${p.id}">
+    <span class="g-art">${artHTML(p, 'g-img')}</span>
+    <span class="g-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab"><b>${esc(p.name)}</b></a><span class="tk">${esc(p.ticker)} · ${esc(Q(p).sym)}</span></span>
+    <span class="g-fig">${capCell(p)}${m.txt ? `<span class="num chg ${m.cls}" title="${esc(m.title)}">${m.txt}</span>` : ''}</span>
+    ${p.status === 'seeded' ? '' : progBar(p)}
+    <span class="g-foot">${timeOf(p)}<span class="sub">${rowSub(p)}</span></span>
+    <span class="t-act">${actCell(p)}</span></div>`;
 }
-function renderFeatured(trend) {
-  const el = $('#featured'); if (!el) return;
-  const real = typeof chain !== 'undefined' && chain.on(), p = (real && trend.find(x => x.live)) || trend[0];   // on the live site a raise on chain comes first; a demo one is marked
-  if (!p) { el.href = '#/launch'; el.setAttribute('aria-label', 'No raise is moving yet. Start one'); el.innerHTML = '<div class="ft-bg"></div><p class="ft-empty">Nothing is moving yet. The first raise to open shows here.</p>'; return; }
-  const C = Q(p), live = p.status === 'live', seeded = p.status === 'seeded', x = seeded ? spotNow(p) / priceOf(p) : null, code = Array.from(p.id).slice(0, 12).map(ch => (ch.charCodeAt(0) % 3 ? '·' : '•')).join('');
-  const st = (k, v, cls = '') => `<div><dt>${k}</dt><dd class="num ${cls}" title="${esc(String(v).replace(/<[^>]+>/g, ''))}">${v}</dd></div>`;
-  el.href = `#/presale/${p.id}`; el.setAttribute('aria-label', `${p.name}, the most active raise${real && !p.live ? ', a demo raise' : ''}`);
-  el.innerHTML = `<div class="ft-bg"></div><div class="ft-area">${fillArea(p)}</div>
-    <div class="ft-head">${artHTML(p, 'ft-art')}<span class="ft-name"><b>${esc(p.name)}</b><span class="num">$${esc(p.ticker)} · ${esc(C.sym)} pair</span></span><span class="ft-right"><span class="ft-chips">${real && !p.live ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${doingChip(p)}</span><span class="ft-code" aria-hidden="true">${code}</span></span></div>
-    <dl class="ft-stats">${st('Market cap', fmtMcap(mcapUsdOf(p)))}${seeded ? st('vs raise price', mcChange(x), x >= 1 ? 'up' : 'down') : st('Filled', Math.floor(pctOf(p) + 1e-7) + '%')}${st('Raised', `${fmtC(p.raised, p.q, true)} ${esc(C.sym)}`)}
-      ${st('Backers', p.backers)}${st(live ? 'Time left' : seeded ? 'Seeded' : 'Status', live ? fmtLeft(p.endsAt - Date.now()) : seeded ? fmtAgo(Date.now() - (p.resolvedAt || p.endsAt)) : p.status === 'filled' ? 'Seeding' : RAISE_STATE[p.status])}${st('Target', `${fmtC(p.target, p.q, true)} ${esc(C.sym)}`)}</dl>`;
+/* sparklines: a seeded token's last two days of hourly closes. A demo token's come from its own price walk; a pool on chain's
+   from the candles the raise page reads (tradesAdapter.candles), fetched for the rows on screen and kept five minutes. */
+const sparks = {};
+function sparkPts(p) { if (!p.live) return typeof demoSeries === 'function' ? demoSeries(p, '1h', 48).map(c => c[4]) : null; const s = sparks[p.id]; return s && s.pts; }
+function sparkSVG(pts) {
+  if (!pts || pts.length < 2) return '';
+  const W = 96, Hh = 26, lo = Math.min(...pts), hi = Math.max(...pts), flat = hi - lo < hi * 1e-6;
+  const y = v => flat ? Hh / 2 : Hh - 3 - (v - lo) / (hi - lo) * (Hh - 6);
+  const d = pts.map((v, i) => `${i ? 'L' : 'M'}${(i / (pts.length - 1) * W).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  return `<svg viewBox="0 0 ${W} ${Hh}" preserveAspectRatio="none" aria-hidden="true"><path class="${flat ? 'flat' : pts[pts.length - 1] >= pts[0] ? 'up' : 'down'}" d="${d}"/></svg>`;
 }
-/* the chips in the app bar: how many raises are open, what they hold, the SOL price the caps are quoted at */
+async function loadSparks(list) {
+  if (typeof tradesAdapter === 'undefined') return;
+  const want = list.filter(p => p.live && p.status === 'seeded' && !(sparks[p.id] && (sparks[p.id].busy || Date.now() - sparks[p.id].at < 5 * 60e3)));
+  want.forEach(p => { sparks[p.id] = Object.assign(sparks[p.id] || { at: 0, pts: null }, { busy: true }); });
+  for (let i = 0; i < want.length; i += 4) await Promise.all(want.slice(i, i + 4).map(async p => {
+    let pts = sparks[p.id].pts; try { pts = (await tradesAdapter.candles(p, '1h', 48)).map(c => c[4]); } catch (e) {}
+    sparks[p.id] = { at: Date.now(), pts, busy: false };
+    $$(`[data-spark="${p.id}"]`).forEach(el => { el.innerHTML = sparkSVG(pts); });
+  }));
+}
+/* the line under the board: how many raises are open, what they hold, the SOL price the caps are quoted at */
 function renderStatChips() {
   const el = $('#statChips'); if (!el) return;
-  const real = typeof chain !== 'undefined' && chain.on(), pool = real ? state.presales.filter(p => p.live) : state.presales;   // on the live site the chips count what is on chain, never the demo set
+  const real = typeof chain !== 'undefined' && chain.on(), pool = real ? state.presales.filter(p => p.live) : state.presales;   // on the live site the line counts what is on chain, never the demo set
   const open = pool.filter(p => p.status === 'live'), held = pool.filter(p => p.status !== 'refunded').reduce((a, p) => a + usdNow(p, p.raised), 0), sol = SEED.solUsdLive || (real ? null : SEED.demoSolUsd);   // on the live site, no figure until Pyth (or its cached last reading) has answered
-  el.innerHTML = `<span class="statchip" title="Raises open right now${real ? ' on ' + esc(SEED.network) : ''}"><svg viewBox="0 0 24 24"><path d="M3.5 17.5l5.5-6 4 3.5 7.5-8.5"/><path d="M15.5 6.5h5v5"/></svg><b>${open.length}</b><em>live</em></span>
-    <span class="statchip" title="Raised across every ${real ? 'on-chain ' : ''}raise that did not refund, in dollars today"><svg viewBox="0 0 24 24"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M17.4 10.3A5.5 5.5 0 1 1 10.3 17.4"/><path d="M8.5 5.8v5.4M6.6 8.5h3.8"/></svg><b>${sol ? fmtUsd(held) : '—'}</b><em>raised</em></span>
-    <span class="statchip" title="${SEED.solUsdLive ? 'SOL in dollars, from Pyth' : sol ? 'SOL in dollars, the demo price' : 'Reading the SOL price from Pyth'}"><svg class="fill" viewBox="0 0 24 24"><path d="M6.6 4.2H22l-4.6 4.4H2zM2 9.8h15.4l4.6 4.4H6.6zM6.6 15.4H22l-4.6 4.4H2z"/></svg><b>${sol ? '$' + Number(sol.toPrecision(4)) : '—'}</b><em>SOL</em></span>`;
+  el.innerHTML = `<span title="Raises open right now${real ? ' on ' + esc(SEED.network) : ''}"><b class="num">${open.length}</b> live</span><span title="Raised across every ${real ? 'on-chain ' : ''}raise that did not refund, in dollars today"><b class="num">${sol ? fmtUsd(held) : '—'}</b> raised</span><span title="${SEED.solUsdLive ? 'SOL in dollars, from Pyth' : sol ? 'SOL in dollars, the demo price' : 'Reading the SOL price from Pyth'}">SOL <b class="num">${sol ? '$' + Number(sol.toPrecision(4)) : '—'}</b></span>`;
 }
-const FEED_NOTE = { all: 'Live and seeded', new: 'Under 50% filled', seeding: 'Past halfway, or filled and seeding', seeded: 'Pool open', refunded: 'Missed, cancelled or timed out' };
+const FEED_NOTE = { live: 'Taking deposits', near: 'Past halfway, or filled and seeding', seeded: 'Pool open', refunded: 'Missed, cancelled or timed out' };
 function renderTerminal() {
-  const q = ui.bq.trim(), cols = {}; for (const k of ['new', 'seeding', 'seeded']) cols[k] = boardHit(k);
-  const ql = q.toLowerCase(), refunded = state.presales.filter(p => p.status === 'refunded' && pairOk(p) && matchQ(p, ql) && (!ui.watchOnly || isWatched(p)));
-  const lists = { all: [...cols.new, ...cols.seeding, ...cols.seeded], new: cols.new, seeding: cols.seeding, seeded: cols.seeded, refunded };
-  for (const k in lists) { const n = $('#n-' + k); if (n) n.textContent = lists[k].length || ''; }
+  const q = ui.bq.trim(), lists = feedLists();
+  for (const k of FEEDS) { const n = $('#n-' + k); if (n) n.textContent = lists[k].length || ''; }
   syncFilterBadges();
-  /* trending: the eight most active, whatever the tabs and filters say */
-  const trend = state.presales.filter(p => trendScore(p) >= 0).sort((a, b) => trendScore(b) - trendScore(a) || b.openedAt - a.openedAt).slice(0, 8);
-  $('#trendRow').innerHTML = trend.map((p, i) => tile(p, i, true)).join('');
-  renderFeatured(trend); renderStatChips();
-  /* the lanes: five columns on a wide screen, each the raises at that stage, newest or most active first */
-  const lanesEl = $('#lanes');
-  if (lanesEl) {
-    const inLane = {}; LANES.forEach(([k]) => inLane[k] = []);
-    [...cols.new, ...cols.seeding, ...cols.seeded].forEach(p => { const l = laneOf(p); if (l && inLane[l]) inLane[l].push(p); });
-    const order = { new: sorter('new'), full: sorter('seeding'), seeded: sorter('seeded') };
-    if (typeof chain !== 'undefined') chain.refreshSpots(inLane.seeded);
-    lanesEl.innerHTML = LANES.map(([k, name]) => { const l = inLane[k].slice().sort(order[k]), fr = freshIn('lane-' + k, l);
-      return `<section class="lane" data-lane="${k}" aria-label="${name}"><header class="lane-h"><h2>${name}</h2><span class="ct num">${l.length || ''}</span></header><div class="lane-list">${l.length ? l.map((p, i) => laneRow(p, i, fr(p))).join('') : `<div class="lane-empty">${ui.watchOnly ? (Object.keys(state.watch || {}).length ? 'Nothing starred here.' : 'Your watchlist is empty. Star a raise to follow it.') : q ? 'No match.' : { new: 'No live raises right now.', full: 'Nothing above 90% or seeding.', seeded: 'Nothing trading yet.' }[k]}</div>`}</div></section>`; }).join('');
-  }
-  if (lanesEl) fitLanes();
-  const wb = $('#watchBtn'); if (wb) { const n = Object.keys(state.watch || {}).length; wb.classList.toggle('on', !!ui.watchOnly); wb.setAttribute('aria-pressed', String(!!ui.watchOnly)); $('span', wb).textContent = n ? `Watchlist ${n}` : 'Watchlist'; }
-  /* the feed */
-  const k = ui.feed, list = lists[k].slice().sort(sorter(k)), fresh = freshIn('term', list);
-  $$('#feedTabs [data-feed]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.feed === k)));
-  $('#feedNote').textContent = FEED_NOTE[k]; $('.col-sort[data-sort="feed"] [data-label]').textContent = sortLabel(k, ui.sort[k]);
-  const fb = $('#feedFilt'), fn = k === 'refunded' ? 0 : COLS.includes(k) ? ruleCounts(filters[k]).all : filterTotal();
-  fb.hidden = !fn; fb.dataset.filt = COLS.includes(k) ? k : ''; fb.innerHTML = `${FUNNEL}${fn}`; fb.title = `${fn} filter${fn > 1 ? 's' : ''} on this tab`;
-  const none = { all: 'Nothing is live or seeded right now. <a href="#/launch">Start a raise</a>', new: 'No new ideas right now. <a href="#/launch">Start one</a>', seeding: 'Nothing is past halfway yet.', seeded: 'Nothing has seeded yet.', refunded: 'Nothing has refunded.' };
-  const name = { new: 'New ideas', seeding: 'Seeding', seeded: 'Seeded' }[k];
-  const table = wasTable = tableMode(); $('#feed').classList.toggle('table', table && list.length > 0);
-  if (table && typeof chain !== 'undefined') chain.refreshSpots(list.filter(p => p.status === 'seeded'));   // the table quotes the pool's price on its seeded rows
-  $('#feed').innerHTML = list.length ? (table ? THEAD + list.map((p, i) => trow(p, i, fresh(p))).join('') : list.map((p, i) => tile(p, i, false, fresh(p))).join(''))
-    : `<div class="col-empty"><svg class="mark" viewBox="0 0 100 100" aria-hidden="true"><use href="#seed21"/></svg>${q ? `Nothing here matches "${esc(q)}".` : name && ruleCounts(filters[k]).all ? `Nothing in ${name} passes its filters. <a href="#" data-filt="${k}">Change them</a>` : k === 'all' && filterTotal() && (state.presales.some(p => colOf(p))) ? 'Nothing passes the filters. <a href="#" data-filt="">Change them</a>' : `Nothing here pairs with ${ui.fAsset}.`}</div>`;
+  /* trending: the ten most active, whatever the tabs and filters say */
+  const trend = state.presales.filter(p => trendScore(p) >= 0).sort((a, b) => trendScore(b) - trendScore(a) || b.openedAt - a.openedAt).slice(0, 10);
+  $('#trendRow').innerHTML = trend.map(trendItem).join('');
+  renderStatChips();
+  const nw = Object.keys(state.watch || {}).length, wb = $('#watchBtn');
+  wb.classList.toggle('on', !!ui.watchOnly); wb.setAttribute('aria-pressed', String(!!ui.watchOnly)); $('#watchCt').textContent = nw || '';
+  $('#pairBtn [data-label]').textContent = ui.fAsset === 'any' ? 'Any pair' : asset(ui.fAsset).sym;
+  $$('#viewSeg [data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === ui.layout)));
+  /* the table */
+  const k = ui.feed, all = lists[k].slice().sort(sorter(k)), list = all.slice(0, ui.limit), fresh = freshIn('term', list), grid = ui.layout === 'grid';
+  $$('#feedTabs [data-feed]').forEach(b => { b.setAttribute('aria-selected', String(b.dataset.feed === k)); b.title = FEED_NOTE[b.dataset.feed]; });
+  $('.col-sort[data-sort="feed"] [data-label]').textContent = sortLabel(k, ui.sort[k]);
+  $('#quickWrap').hidden = !all.some(p => p.status === 'live');
+  if (typeof chain !== 'undefined') chain.refreshSpots(list.filter(p => p.status === 'seeded'));   // the table quotes the pool's price on its seeded rows
+  const feed = $('#feed'); feed.classList.toggle('table', !grid && list.length > 0); feed.classList.toggle('grid', grid && list.length > 0);
+  const name = { live: 'Live', near: 'Near target', seeded: 'Seeded', refunded: 'Refunded' }[k];
+  const none = { live: 'Nothing is live right now. <a href="#/launch">Start a raise</a>', near: 'Nothing is past halfway yet.', seeded: 'Nothing has seeded yet.', refunded: 'Nothing has refunded.' };
+  const ruled = k !== 'refunded' && filterTotal();
+  feed.innerHTML = list.length ? (grid ? list.map((p, i) => gtile(p, i, fresh(p))).join('') : THEAD + list.map((p, i) => trow(p, i, fresh(p))).join(''))
+    : `<div class="col-empty">${q ? `Nothing in ${name} matches "${esc(q)}".` : ui.watchOnly ? (nw ? `Nothing starred in ${name}.` : 'Your watchlist is empty. Star a raise on its page to follow it.') : ruled ? `Nothing in ${name} passes the filters. <a href="#" data-filt="">Change them</a>` : ui.fAsset !== 'any' ? `Nothing in ${name} pairs with ${esc(asset(ui.fAsset).sym)}.` : none[k]}</div>`;
+  const more = $('#moreBtn'); more.hidden = all.length <= list.length; more.textContent = `Show more (${all.length - list.length})`;
+  loadSparks(list);
   const os = find('osprey'), mo = find('moss'), hint = $('#tryHint'), show = os && mo && os.status === 'live' && mo.status === 'live';
   hint.hidden = !show; if (show) hint.textContent = 'To see both endings: quick-deposit into Osprey from the board until it fills and it seeds on the spot. Deposit into Moss and its deadline passes in about three minutes.';
   const dead = state.presales.filter(p => p.status === 'refunded'), owed = dead.some(p => state.positions[p.id] && !state.claimed[p.id]), note = $('#refundNote');
@@ -1970,10 +1905,12 @@ function patchRows(p) {
     s('[data-qbamt]', e => roll(e, qbLabel(p))); s('[data-pacechip]', e => e.innerHTML = paceChip(paceInfo(p)));
   });
 }
-$('#feedTabs').addEventListener('click', e => { const b = e.target.closest('[data-feed]'); if (b && b.dataset.feed !== ui.feed) { ui.feed = b.dataset.feed; renderTerminal(); } });
-$('.trend-nav').addEventListener('click', e => { const b = e.target.closest('[data-tr]'); if (b) $('#trendRow').scrollBy({ left: +b.dataset.tr * 420, behavior: 'smooth' }); });
+const showBoard = () => { ui.limit = PAGE; renderTerminal(); };   // a new tab, sort, pair, view or search starts from the first page
+$('#feedTabs').addEventListener('click', e => { const b = e.target.closest('[data-feed]'); if (b && b.dataset.feed !== ui.feed) { ui.feed = b.dataset.feed; showBoard(); } });
 document.addEventListener('click', e => { const w = e.target.closest('[data-watch]'); if (w) { e.preventDefault(); const p = find(w.dataset.watch); if (p) toggleWatch(p); } });
-$('#watchBtn').addEventListener('click', () => { ui.watchOnly = !ui.watchOnly; renderTerminal(); });
+$('#watchBtn').addEventListener('click', () => { ui.watchOnly = !ui.watchOnly; showBoard(); });
+$('#viewSeg').addEventListener('click', e => { const b = e.target.closest('[data-view]'); if (!b || b.dataset.view === ui.layout) return; ui.layout = b.dataset.view; try { localStorage.setItem('seed.layout', ui.layout); } catch (x) {} showBoard(); });
+$('#moreBtn').addEventListener('click', () => { ui.limit += PAGE; renderTerminal(); });
 $('.board').addEventListener('click', e => {
   const qb = e.target.closest('[data-qb]'), cl = e.target.closest('[data-claim]');
   if (qb) return quickBuy(find(qb.dataset.qb), qb);
@@ -2143,8 +2080,9 @@ function renderWallet() {
   }
   else b.textContent = 'Connect wallet';
   $('#walletX').innerHTML = xMenu(); xRefresh();
-  const n = Object.keys(state.positions).filter(id => !state.claimed[id]).length; $('#ctPos').textContent = n || ''; const cr = $('#ctPosRail'); if (cr) cr.textContent = n || '';
-  syncOpenBtn(); seg.tabs && seg.tabs.place();
+  const n = Object.keys(state.positions).filter(id => !state.claimed[id]).length; $('#ctPos').textContent = n || ''; $('#ctPosMenu').textContent = n || '';
+  $('#portLink').hidden = !state.wallet;   // the portfolio is a wallet's: its link shows once one is connected, and is in the wallet menu
+  syncOpenBtn();
 }
 /* positions are simulated, so they belong to the demo wallet: a real wallet starts with none and hands them back when it leaves */
 function enterReal() { if (!state.demoBook) { state.demoBook = { positions: state.positions, claimed: state.claimed, tokens: state.tokens || {} }; state.positions = {}; state.claimed = {}; state.tokens = {}; } }
@@ -2530,7 +2468,7 @@ function route() {
   document.title = pg ? `${pg.name} ($${pg.ticker}) raise on Seed` : view === 'docs' ? 'Seed docs: how it works, in plain terms'
     : ui.tab === 'launch' ? 'Start a raise on Seed' : ui.tab === 'portfolio' ? 'Your positions on Seed' : ui.tab === 'founder' ? 'Founder on Seed' : 'Seed';
   if (view === 'app') {
-    ['terminal', 'launch', 'portfolio', 'presale', 'founder'].forEach(t => $('#tab-' + t).hidden = t !== ui.tab); seg.tabs.set(ui.tab === 'presale' || ui.tab === 'founder' ? 'terminal' : ui.tab);
+    ['terminal', 'launch', 'portfolio', 'presale', 'founder'].forEach(t => $('#tab-' + t).hidden = t !== ui.tab);
     $('#view-app').classList.toggle('wide', ui.tab === 'terminal');
     $('#view-app').classList.toggle('on-presale', ui.tab === 'presale');
     $('#view-app').classList.toggle('fit', ui.tab !== 'terminal');   // these pages are workspaces: columns that fill the window on a wide screen
@@ -2539,9 +2477,10 @@ function route() {
     if (sec && $('#d-' + sec)) $('#d-' + sec).scrollIntoView(); else if (changed) scrollTo(0, 0);
     initDocs.spy && initDocs.spy();
   }
-  /* the rail: the open section is lit; a raise or founder page counts as the Terminal */
-  const rn = view === 'docs' ? 'docs' : ui.tab === 'presale' || ui.tab === 'founder' ? 'terminal' : ui.tab;
-  $$('#railNav [data-rn]').forEach(a => { if (a.dataset.rn === rn) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  /* the header: the open section is marked; a raise or founder page counts as Raises, the portfolio as none */
+  const nav = view === 'docs' ? 'docs' : ui.tab === 'presale' || ui.tab === 'founder' ? 'terminal' : ui.tab;
+  $$('.navtabs [data-nav]').forEach(a => { if (a.dataset.nav === nav) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  const pl = $('#portLink'); if (pl) pl.classList.toggle('on', ui.view === 'app' && ui.tab === 'portfolio');
   requestAnimationFrame(placeSegs);
 }
 addEventListener('hashchange', route);
@@ -2649,15 +2588,13 @@ function syncQuickUI() {
 /* ------------------------------------------------------------------ boot */
 function boot() {
   load();
-  seg.tabs = initSeg($('#tabSeg'), v => { location.hash = v === 'terminal' ? '#' : '#/' + v; });
   seg.perf = initSeg($('#perfSeg'), v => { ui.perf.mode = v; renderPerf(); });
-  seg.assetF = initSeg($('#assetSeg'), v => { ui.fAsset = v; renderTerminal(); });
   seg.minUnit = initSeg($('#minUnit'), v => setLimUnit('min', v)); seg.maxUnit = initSeg($('#maxUnit'), v => setLimUnit('max', v));
   seg.time = initSeg($('#timeSeg'), v => { draft.hours = +v; renderPreview(); });
   seg.cap = initSeg($('#capSeg'), v => { draft.cap = v === 'test' ? 'test' : +v; $('#fErr').textContent = ''; renderPreview(); });
   renderPairSeg();
   seg.pmode = initSeg($('#pmodeSeg'), v => { ui.pmode = v; renderCreator(); });
-  $('#bq').addEventListener('input', e => { ui.bq = e.target.value; if (ui.view === 'app' && ui.tab !== 'terminal' && e.target.value) { location.hash = '#'; } else renderTerminal(); });   // the search sits in the app bar: typing on another page opens the board
+  $('#bq').addEventListener('input', e => { ui.bq = e.target.value; if (ui.view === 'app' && ui.tab !== 'terminal' && e.target.value) { location.hash = '#'; } else showBoard(); });   // the search sits in the app bar: typing on another page opens the board
   $('#refreshBtn').addEventListener('click', async e => {   // re-read the live raises now, instead of waiting for the next sync
     const b = e.currentTarget; if (b.classList.contains('busy')) return; b.classList.add('busy');
     try { if (typeof chain !== 'undefined' && chain.on()) { const got = await chain.loadLive(); if (got) save(); } renderAll(); if (detailBox) renderDetail(true); } catch (x) { toast('Could not refresh: ' + x.message); }
