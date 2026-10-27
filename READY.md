@@ -13,8 +13,8 @@ Open P2s: P2-111 (a refund claim bundled with
 settle fails if the crank settles first; the retry lands), P2-112 (the refund toast rounds 0.0101 to 0.01), P2-113 (the
 deposit prefill offers an amount under the minimum when a wallet's remaining maximum is below it), P2-114 (the page marks
 a stalled live raise refunded before the chain does), P2-115 (one stalled-seeding event toasts twice, with two different texts, from the tick and from the alert), and the buy toast rounding 0.0202
-to 0.02 (with P2-112). Fixes for all of them are ready and held on seed-cc's branch qa-p2-111-113 (5faf0b6 for P2-111 to
-113, fc21800 for P2-114, P2-115 and the toast), a fast-forward from final-model: landing them before final testing means
+to 0.02 (with P2-112). Fixes for all of them are ready and held on seed-cc's branch qa-p2-111-113 (in ~/Desktop/seed-qa-fix, local, three commits),
+a fast-forward from final-model: landing them before final testing means
 two more full passes, so that is the owner's call. P2-74 was re-measured as fixed in pass #35. USDC is still accepted
 on chain: the owner's open call (CHECKLIST B2 against B3).
 
@@ -50,6 +50,6 @@ on chain: the owner's open call (CHECKLIST B2 against B3).
 4. Decide the takeover policy for unvested team tokens (burn or keep).
 5. Staging presets and mainnet funding.
 6. The admin actions seed-qa could not run: flag fraud on Q34X, approve the takeover on Q34D (PROGRESS.md has the steps).
-7. Whether the held P2 fixes (5faf0b6 and fc21800, P2-111 to P2-115) land before final testing (two more full passes) or after it.
+7. Whether the held P2 fixes (seed-cc's branch qa-p2-111-113 (in ~/Desktop/seed-qa-fix, local, three commits), P2-111 to P2-115) land before final testing (two more full passes) or after it.
 8. When production (main) moves to the final code.
 9. USDC on chain (CHECKLIST B2 against B3), and keep or revert for ui-simplify (D4).

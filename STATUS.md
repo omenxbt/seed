@@ -18,7 +18,7 @@
 - F3 the "Ready for final testing" notification, sent with the share link
 - BACKLOG: P2-71 to P2-76 as seed-qa closed them
 
-**In progress:** nothing in the loop. seed-cc holds the fixes for P2-111 to P2-115 unlanded on branch qa-p2-111-113 (5faf0b6, fc21800), pending the owner's call. seed-qa leaves the ui-simplify pass (D3) until the owner says keep. 
+**In progress:** nothing in the loop. seed-cc holds the fixes for P2-111 to P2-115 unlanded on seed-cc's branch qa-p2-111-113 (in ~/Desktop/seed-qa-fix, local, three commits), pending the owner's call. seed-qa leaves the ui-simplify pass (D3) until the owner says keep. 
 
 **Blocked:** B2's USDC half since 16:00 PT, waiting on the owner (no config can make open_raise refuse USDC, and B3 rules out the program change).
 
@@ -26,7 +26,7 @@
 1. USDC (B2 against B3): accept that USDC stays open on chain while the site offers SOL only, or allow the small program change.
 2. ui-simplify (D4): "revert" deletes the branch (its two kept pieces are on the original), "keep" merges it (the QA count restarts).
 3. Admin actions for seed-qa, signed in your Phantom (the Config admin): flag fraud on QA Q34X (raise G1aiNZzasd81rXfNcNTjia1tRFhQYPU422rs26xkQW7B); approve the takeover on QA Pass 34D (Eev4YwcBrHH85jXmKps7LHcFSXv3WCqZZzK5GZ2dEzA6) to 6D8kCB4YDGqxpWCjShRVy6g5RoV6id1WerD7SeY8cm1Q; send seed-qa the signatures.
-4. The held P2 fixes (5faf0b6 and fc21800, P2-111 to P2-115): land before final testing (two more full passes) or after. And when production (main, now 0fc8490) moves to 895ec60.
+4. The held P2 fixes (seed-cc's branch qa-p2-111-113 (in ~/Desktop/seed-qa-fix, local, three commits), P2-111 to P2-115): land before final testing (two more full passes) or after. And when production (main, now 0fc8490) moves to 895ec60.
 5. Phantom click-through on the share link: launch a Test-preset raise, back it, watch it seed, claim, trade.
 6. Refund checks: one cancelled raise, one missed deadline.
 7. Phone check.
