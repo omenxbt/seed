@@ -356,11 +356,13 @@ function seedingPanel(p) {
 /* the deposit field's opening amount: never more than the wallet may still put in, fee included (the limits live on the profile, QA P2-85) */
 const maxLeftOf = p => { const pr = profileOf(p); return pr.maxBuy > 0 ? paidFor(Math.max(0, pr.maxBuy - ((state.positions && state.positions[p.id]) || 0))) : Infinity; };
 const depositAmt = p => Math.min(quickFor(p), payLeft(p), maxLeftOf(p));
+/* a field's asset label: SOL carries the Solana mark (the sprite's #solMark), any other asset is its symbol */
+const symLabel = sym => sym === 'SOL' ? '<svg class="sol-ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#solMark"/></svg>SOL' : esc(sym);
 function depositPanel(p) {
   const C = Q(p), sym = esc(C.sym), pr = profileOf(p), maxLeft = maxLeftOf(p), amt = depositAmt(p);
   return `<section class="panel rail-card" data-trade="deposit"><h3>Deposit into $${esc(p.ticker)}</h3>
     <div class="trade-top"><label class="rail-lab" for="ppAmt">You deposit</label><span class="rail-bal num" data-bal></span></div>
-    <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" value="${amt}" aria-label="Amount in ${sym}"><span class="suf">${sym}</span></div>
+    <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" value="${amt}" aria-label="Amount in ${sym}"><span class="suf">${symLabel(C.sym)}</span></div>
     <div class="chips">${chipsFor(p).filter(c => c <= Math.min(payLeft(p), maxLeft) + 1e-9).map(c => `<button type="button" data-chip="${c}">${fmtC(c, p.q)}</button>`).join('')}<button type="button" data-chip="max">${maxLeft < payLeft(p) ? 'Max' : 'Fill'}</button></div>
     <div class="recv"><span>You receive if it seeds</span><b class="num" data-recv></b></div>
     <p class="rail-fee"><span>Seed fee, ${SEED.feeBps / 100}%, included</span><span class="num" data-dfee></span></p>
@@ -393,7 +395,7 @@ function liveTradePanel(p, side) {
     <div class="pri" data-pri><span class="quiet">Priority fee</span><div class="seg mini-seg"><button type="button" data-pv="auto" aria-pressed="${damm.priority === 'auto'}">Auto</button><button type="button" data-pv="custom" aria-pressed="${damm.priority !== 'auto'}">Custom</button></div><span class="slip num"${damm.priority === 'auto' ? ' hidden' : ''}><input data-prival inputmode="decimal" value="${damm.priority === 'auto' ? '0.0001' : damm.priority}" aria-label="Priority fee in SOL"><span class="quiet">SOL</span></span></div>
     <div class="seg mini-seg side-seg" data-side role="group" aria-label="Buy or sell">${['buy', 'sell'].map(v => `<button type="button" data-v="${v}" aria-pressed="${side === v}">${v === 'buy' ? 'Buy' : 'Sell'}</button>`).join('')}</div>
     <div class="trade-top"><label class="rail-lab" for="ppAmt">You pay</label><span class="rail-bal num" data-bal></span></div>
-    <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Amount to pay"><span class="suf" data-paysym>${side === 'sell' ? '$' + esc(p.ticker) : sym}</span></div>
+    <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="Amount to pay"><span class="suf" data-paysym>${side === 'sell' ? '$' + esc(p.ticker) : symLabel(C.sym)}</span></div>
     <div class="chips" data-tchips></div>
     <div class="recv"><span>You receive</span><b class="num" data-recv>—</b></div>
     <dl class="kv"><div><dt>Price</dt><dd data-tprice>—</dd></div><div><dt>Price impact</dt><dd data-timpact>—</dd></div><div><dt>Minimum received</dt><dd data-tmin>—</dd></div><div><dt>Pool fee</dt><dd data-tfee>${poolFeePct(p)}%</dd></div></dl>
@@ -897,7 +899,7 @@ function bindRail(p) {
     if (swap) {
       panel.dataset.now = sell ? 'sell' : 'buy';   // buying is green, selling is red
       const q = quoteSwap(cur, pg.side, n > 0 ? n : 0), imp = q.impact * 100;
-      $('[data-paysym]', panel).textContent = sell ? '$' + cur.ticker : C.sym;
+      $('[data-paysym]', panel).innerHTML = sell ? '$' + esc(cur.ticker) : symLabel(C.sym);
       $('[data-recv]', panel).textContent = sell ? `${fmtAmt(q.out, cur.q)} ${C.sym}` : `${fmtTok(q.out)} $${cur.ticker}`;
       $('[data-tprice]', panel).textContent = `${fmtPrice(q.price)} ${C.sym}`;
       const ti = $('[data-timpact]', panel); ti.textContent = !(n > 0) ? '0%' : imp < 0.01 ? 'under 0.01%' : imp.toFixed(2) + '%'; ti.className = imp >= 5 ? 'down' : '';
@@ -954,7 +956,7 @@ function bindLiveTrade(p, panel) {
     const cur = now(), raw = (inp.value || '').replace(/,/g, ''), n = parseFloat(raw), s = sell(), bal = on() ? (s ? heldOf(cur) : balOf(cur.q)) : 0, my = ++pg.quoteSeq;
     pg.shownQuote = null;
     panel.dataset.now = s ? 'sell' : 'buy';
-    $('[data-paysym]', panel).textContent = s ? '$' + cur.ticker : C.sym;
+    $('[data-paysym]', panel).innerHTML = s ? '$' + esc(cur.ticker) : symLabel(C.sym);
     $('[data-bal]', panel).textContent = on() ? `Balance ${s ? fmtTok(bal) + ' $' + cur.ticker : fmtAmt(bal, cur.q) + ' ' + C.sym}` : '';
     const sl = parseFloat(slip.value); if (sl > 0 && sl <= 50) damm.slippage = sl;
     let msg = !raw ? '' : !(n > 0) ? 'Enter an amount above zero.' : !(sl > 0 && sl <= 50) ? 'Slippage must be between 0 and 50%.' : '';

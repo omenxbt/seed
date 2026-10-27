@@ -802,3 +802,6 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 /* the DEXScreener profile kit on a seeded raise's Info tab */
 .lk .lk-img{display:block;border-radius:8px;object-fit:cover;background:var(--tile)}.lk .lk-img.sq{width:56px;height:56px}.lk .lk-img.wide{width:180px;height:60px}
 .lk-acts{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:12px}
+/* the Solana mark beside SOL in a field's asset label */
+.suf .sol-ico{flex:none;width:14px;height:14px;margin-right:5px;vertical-align:-2px}
+:is(.pp,.ws) .rail-card .inp .suf:has(.sol-ico){display:inline-flex;align-items:center}
