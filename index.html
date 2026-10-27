@@ -1081,8 +1081,8 @@ a.ico:hover{color:var(--ink)}
         <h3>How a raise ends</h3>
         <dl class="kv">
           <div><dt>Fills</dt><dd class="t">The target lands before the deadline</dd></div>
-          <div><dt>Seeds</dt><dd class="t">All four steps land within 3 days of filling</dd></div>
-          <div><dt>Refunds</dt><dd class="t">Short at the deadline, cancelled by the founder, or not seeded in 3 days</dd></div>
+          <div><dt>Seeds</dt><dd class="t">The four steps land with no 3-day stall between them</dd></div>
+          <div><dt>Refunds</dt><dd class="t">Short at the deadline, cancelled by the founder, or seeding stalls for 3 days before the pool opens</dd></div>
         </dl>
       </div>
     </section>
@@ -1330,7 +1330,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-terminal" data-t="Reading the terminal">
       <div class="prose">
         <h2>Reading the terminal</h2>
-        <p>The terminal lists every live and seeded raise as one ranked table. <b>All</b> is every live and seeded raise; the other tabs cut it by stage: <b>New ideas</b> (under 50% filled), <b>Seeding</b> (half full to seeded), <b>Seeded</b> (trading) and <b>Refunded</b>, which sits apart because those raises are over. Above the table, the featured card follows the most active raise and Trending shows the eight most active, whatever the filters say. Each row carries the numbers needed to judge a raise at a glance; on a phone the same raises are cards.</p>
+        <p>The terminal lists every live and seeded raise as one ranked table. <b>All</b> is every live and seeded raise; the other tabs cut it by stage: <b>New ideas</b> (under 50% filled), <b>Seeding</b> (half full to seeded), <b>Seeded</b> (trading) and <b>Refunded</b>, which sits apart because those raises are over. Above the table, the featured card follows the most active raise and Trending shows the ten most active, whatever the filters say. Each row carries the numbers needed to judge a raise at a glance; on a phone the same raises are cards.</p>
         <ul>
           <li><b>Market cap</b> is in dollars: the pool's price over the whole supply on a seeded raise, at today's SOL price; on a live raise, the market cap it will open at. Hover it for the figure in SOL.</li>
           <li><b>Change</b> is the pool's price against the raise price on a seeded raise. On a live raise it is the share of the target gained in the last six hours (<b>+10% 6h</b>), or Quiet when nothing came in; a filled raise reads Seeding while its pool is being made.</li>
@@ -1397,7 +1397,7 @@ a.ico:hover{color:var(--ink)}
         <ul>
           <li><b>Price after the open.</b> The refund guarantee ends when a raise seeds. From then on the token is a market asset and can lose value.</li>
           <li><b>Team tokens.</b> A founder can sell team tokens as they unlock. The share and the schedule are on the page before you buy; read them as part of the price.</li>
-          <li><b>Locked funds.</b> A buy cannot be reversed while the raise is live. Your funds are tied up until it resolves, which can take the full deadline plus three days of seeding.</li>
+          <li><b>Locked funds.</b> A buy cannot be reversed while the raise is live. Your funds are tied up until it resolves, which can take the full deadline and then the seeding: a stall refunds only after three days without a step, counted again from the mint.</li>
           <li><b>SOL's price.</b> A refund returns the SOL you paid, not its dollar value on the day you bought. If SOL falls while the raise is live, so does the value of your refund.</li>
           <li><b>Founders.</b> The program enforces the raise rules. It does not enforce that a founder builds what they described. Reports and the two admin instructions are the recourse, and neither returns your money.</li>
           <li><b>Admins.</b> A flag or a takeover is a judgement call by Seed's multisig. It can be wrong in either direction.</li>
@@ -1411,7 +1411,7 @@ a.ico:hover{color:var(--ink)}
           <tbody>
             <tr><td>Raise misses its target</td><td class="num">Yes, 100%</td></tr>
             <tr><td>Founder cancels a live raise</td><td class="num">Yes, 100%</td></tr>
-            <tr><td>Raise fills but does not seed in 3 days</td><td class="num">Yes, 100%</td></tr>
+            <tr><td>Raise fills but seeding stalls for 3 days before the pool opens</td><td class="num">Yes, 100%</td></tr>
             <tr><td>SOL falls while the raise is live</td><td class="num">No</td></tr>
             <tr><td>Token falls after it opens</td><td class="num">No</td></tr>
             <tr><td>Founder is flagged after seeding</td><td class="num">No</td></tr>
@@ -1484,7 +1484,7 @@ a.ico:hover{color:var(--ink)}
             <tr><td>Deadline</td><td>24 hours to 30 days</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Seed fee, f</td><td>1% on top of each buy, returned on a refund</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Refund</td><td>100% of what each backer paid, on a miss, a cancel or a seeding timeout</td><td class="num"><span class="st set">Set</span></td></tr>
-            <tr><td>Seeding timeout</td><td>3 days after filling</td><td class="num"><span class="st set">Set</span></td></tr>
+            <tr><td>Seeding timeout</td><td>3 days without a step, from the fill and then from the mint; none once the pool opens</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Token supply, S</td><td>1,000,000,000, minted at seeding, mint and freeze authorities revoked</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Team share, b</td><td>0% to under 100%, set by the founder</td><td class="num"><span class="st set">Set</span></td></tr>
             <tr><td>Backers and pool</td><td>Half of the rest each; backers' tokens claimable at seeding, no vesting</td><td class="num"><span class="st set">Set</span></td></tr>
@@ -1928,7 +1928,7 @@ function renderTerminal() {
   const lists = { all: [...cols.new, ...cols.seeding, ...cols.seeded], new: cols.new, seeding: cols.seeding, seeded: cols.seeded, refunded };
   for (const k in lists) { const n = $('#n-' + k); if (n) n.textContent = lists[k].length || ''; }
   syncFilterBadges();
-  /* trending: the eight most active, whatever the tabs and filters say */
+  /* trending: the ten most active, whatever the tabs and filters say */
   const trend = state.presales.filter(p => trendScore(p) >= 0).sort((a, b) => trendScore(b) - trendScore(a) || b.openedAt - a.openedAt).slice(0, 10);
   renderTrend(trend);
   renderFeatured(trend); renderStatChips();
