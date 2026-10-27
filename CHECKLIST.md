@@ -32,9 +32,9 @@ with the commit or tx in brackets.
 - [x] /r preview links use the request host, not the hard-coded production domain [e5b4152 siteOf(); production's /r names seed-nu-ten.vercel.app]
 - [x] Raise links work by address [account address since f4f0d65; by mint too, 88ebc1a: /r and the page both resolve QMNt9Fdm… to Upgr]
 - [x] "Refunds claimed 0/0" fixed [f4f0d65 + the 2026-10-22 backfill: Q33A 0 / 1, QALIM 2 / 2 and 1 / 1]
-- [ ] Every other open P2 in QA.md fixed or moved to BACKLOG.md with a reason
-- [ ] Axiom and GMGN trade buttons on every seeded raise page
-- [ ] DexScreener profile data (logo, socials, description) prepared at seed time for mainnet
+- [x] Every other open P2 in QA.md fixed or moved to BACKLOG.md with a reason [dfcc7f6, branch checklist-next until pass #34 ends: P2-97 to P2-104 fixed (e5b4152, 88ebc1a) and verified; P2-71, 72, 73, 75, 76 to BACKLOG with the reason (QA.md never describes them); P2-74, P2-26, P2-4, P2-15 to 19 were already there]
+- [x] Axiom and GMGN trade buttons on every seeded raise page [658f153, branch checklist-next: on mainnet they open the token; on devnet they show disabled with the reason]
+- [x] DexScreener profile data (logo, socials, description) prepared at seed time for mainnet [7fd0803, branch checklist-next: the Info tab's DEXScreener profile, ready at seeding, Copy as JSON and the form link]
 
 ## D. UI simplification (branch ui-simplify, not merged)
 - [ ] Restore green Buy / red Sell on the trade toggle
