@@ -383,7 +383,7 @@ function swapPanel(p) {
     <p class="rail-err" data-buyerr role="alert"></p>
     <button type="button" class="btn btn-navy btn-block" data-go>Buy</button>
     <p class="rail-cap">${p.live ? `Swaps on the raise's Meteora pool, signed in your wallet.` : 'Simulated pool, on the demo wallet. No transaction is sent.'}</p>
-    ${standin && !p.live ? `<p class="standin-note">In-app trades run against a simulated $${esc(p.ticker)} pool that opened at the raise price. The chart and the pool figures beside it are the stand-in pool’s.</p>` : ''}</section>`;
+    ${standin && !p.live ? `<p class="standin-note">In-app trades run against a simulated $${esc(p.ticker)} pool that opened at the raise price. The chart and the pool figures beside it are the stand-in pool’s.</p>` : ''}${tradeOn(p)}</section>`;
 }
 /* a token on chain trades against its DAMM v2 pool right here: Meteora's SDK quotes it, the wallet signs it. The slippage
    setting bounds what the swap may return; a price impact above 5% is called out before the button. */
@@ -401,12 +401,16 @@ function liveTradePanel(p, side) {
     <button type="button" class="btn btn-navy btn-block" data-go>${side === 'sell' ? 'Sell' : 'Buy'} $${esc(p.ticker)}</button>
     <p class="rail-cap">A swap on the raise's Meteora DAMM v2 pool, signed in your wallet. The pool's ${poolFeePct(p)}% fee, less Meteora's ${SEED.dammProtocolPct}%, pays the founder and Seed 70/30.</p>${tradeOn(p)}</section>`;
 }
-/* where else the token trades, with the mint filled in. Mainnet only: none of these index devnet. Each URL form was checked
-   against the live site (Axiom /t/<mint> forwards to the pool page; Birdeye's canonical path is /solana/token/<mint>). */
+/* where else the token trades, with the mint filled in. Axiom and GMGN are buttons on every seeded raise; the rest are links.
+   None of them indexes devnet, so off mainnet the two buttons show but do not open (a demo raise has no real mint either).
+   Each URL form was checked against the live site (Axiom /t/<mint> forwards to the pool page; Birdeye's canonical path is
+   /solana/token/<mint>). */
 const TRADE_ON = [['Axiom', m => `https://axiom.trade/t/${m}`], ['GMGN', m => `https://gmgn.ai/sol/token/${m}`], ['DEXScreener', m => `https://dexscreener.com/solana/${m}`], ['Birdeye', m => `https://birdeye.so/solana/token/${m}`], ['Jupiter', m => `https://jup.ag/tokens/${m}`]];
 function tradeOn(p) {
-  if (SEED.network !== 'mainnet' || !p.mint) return '';
-  return `<div class="trade-on"><span class="quiet">Trade on</span>${TRADE_ON.map(([n, f]) => `<a href="${esc(f(p.mint))}" target="_blank" rel="noopener">${n} ${ICONS.out}</a>`).join('')}</div>`;
+  const open = SEED.network === 'mainnet' && p.live && !!p.mint, [main, rest] = [TRADE_ON.slice(0, 2), TRADE_ON.slice(2)];
+  const btn = ([n, f]) => open ? `<a class="btn btn-ghost to-btn" href="${esc(f(p.mint))}" target="_blank" rel="noopener">Trade on ${n} ${ICONS.out}</a>`
+    : `<span class="btn btn-ghost to-btn off" aria-disabled="true" title="${n} lists mainnet tokens; this opens there once the raise is on mainnet">Trade on ${n}</span>`;
+  return `<div class="trade-on"><div class="to-btns">${main.map(btn).join('')}</div>${open ? `<span class="quiet">Also on</span>${rest.map(([n, f]) => `<a href="${esc(f(p.mint))}" target="_blank" rel="noopener">${n} ${ICONS.out}</a>`).join('')}` : `<span class="quiet">Axiom and GMGN list mainnet tokens only; on mainnet these open the token.</span>`}</div>`;
 }
 /* the fee of this raise's pool, in percent: the pool's own once it has been read, the site's setting before that; `net` is what
    reaches the position after Meteora's share */

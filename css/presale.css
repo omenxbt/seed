@@ -775,7 +775,7 @@ svg.line{fill:none!important;stroke:currentColor;stroke-width:1.6;stroke-linecap
 @keyframes rowFlash{from{background:rgba(91,140,255,.18)}to{background:transparent}}
 .pool-grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}   /* six figures on a live pool: they wrap */
 .pri{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-6px 0 12px;font-size:12.5px}.pri .mini-seg button{padding:4px 10px;font-size:12.5px}
-.trade-on{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:12px;font-size:13px}.trade-on a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--hair-2)}.trade-on a:hover{border-color:var(--ink)}
+.trade-on{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:12px;font-size:13px}.to-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}.to-btn{height:38px;font-size:13px}.to-btn.off{opacity:.5;cursor:not-allowed}.trade-on .quiet{font-size:12.5px}.trade-on a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--hair-2)}.trade-on a:hover{border-color:var(--ink)}
 
 /* the founder profile */
 .fp{display:flex;flex-direction:column;gap:14px;max-width:1100px;margin:0 auto}
