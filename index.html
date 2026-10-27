@@ -1119,9 +1119,9 @@ a.ico:hover{color:var(--ink)}
       </div>
     </section>
 
-    <section class="doc-sec" id="d-assets" data-t="SOL and the cap">
+    <section class="doc-sec" id="d-assets" data-t="SOL and the opening cap">
       <div class="prose">
-        <h2>SOL and the cap</h2>
+        <h2>SOL and the opening market cap</h2>
         <p>Every raise is priced and paid for in SOL, and its pool pairs the token with SOL. The SOL price is read from Pyth on chain when the raise opens, so the raise is sized in SOL once and never moves.</p>
         <p>Backers buy in with that asset. The fee is held in it, the Meteora pool is paired against it, the pool's fees are collected in it, and a refund returns it. Nothing is swapped along the way, so there is no slippage inside a raise.</p>
         <p>There is no typed target. The founder picks an opening market cap from four presets, $50K, $100K, $150K or $200K, and the raise is derived from it: target = cap × (1 − team share) ÷ 2, priced in SOL at the Pyth SOL/USD price the moment the raise opens. Backers pay for half of what the team does not take, the pool gets the other half, and the whole raise goes into the pool, so the pool opens at exactly that market cap. The presets are the floor and the ceiling: there is no separate minimum or maximum. They live in the program's Config, set once at init. On devnet, in test mode, a tiny Test preset (about $30) lets a cycle cost cents; no mainnet build has it.</p>
@@ -1362,7 +1362,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-solana" data-t="The program and Meteora">
       <div class="prose">
         <h2>The program and Meteora</h2>
-        <p><b>Seed's program</b> holds the raise. It is an Anchor program with one config account and, per raise, a raise account, an escrow for the buys, a contribution account per backer, and a program-owned account that holds the pool position after seeding. It takes buys, enforces the cap, the deadline, the refunds and the unlock rules, runs the four seeding steps, splits the pool's fees on claim, and carries the two admin instructions. Nothing in it can move the locked position.</p>
+        <p><b>Seed's program</b> holds the raise. It is an Anchor program with one config account and, per raise, a raise account, an escrow for the buys, a contribution account per backer, and a program-owned account that holds the pool position after seeding. It takes buys, enforces the preset, the deadline, the refunds and the unlock rules, runs the four seeding steps, splits the pool's fees on claim, and carries the two admin instructions. Nothing in it can move the locked position.</p>
         <p><b>DAMM v2</b> is the pool. The raise and the pool's tokens go in across the full price range with SOL as token B, the fee mode set to collect in token B only, a flat 1.25% fee with the dynamic fee and the fee scheduler off, and the position locked at creation. Aggregators such as Jupiter can route to it as soon as it opens.</p>
         <p><b>Off chain</b>, a Supabase backend indexes the program's events for the site, signs the X attestations, keeps reports and announcements, and runs the schedules that crank seeding and claim fees. None of it holds funds.</p>
         <p>On devnet the program's upgrade authority is a developer key. On mainnet it moves to a Squads multisig. Any Solana wallet works, including Phantom, Solflare and Backpack.</p>
@@ -1707,7 +1707,7 @@ const fmtDay = ms => new Date(ms).toLocaleDateString(undefined, { month: 'short'
 function paceOf(p) { const h = (p.endsAt - Date.now()) / H; return h > 0 ? leftOf(p) / h : Infinity; }
 function paceTxt(p) { if (p.status !== 'live') return ''; const v = paceOf(p); return isFinite(v) ? `${v >= 1e4 ? fmtC(v, p.q) : fmtSig(v)} ${Q(p).sym}/h` : ''; }
 function timeCell(p) { return p.status === 'live' ? fmtLeft(p.endsAt - Date.now()) : p.status === 'filled' ? 'Filled ' + fmtAgo(Date.now() - p.filledAt) : (p.status === 'seeded' ? 'Seeded ' : 'Closed ') + fmtDay(p.resolvedAt || p.endsAt); }
-const find = id => state.presales.find(p => p.id === id) || (id && id.length >= 32 ? state.presales.find(p => p.address === id) : undefined);   // by the site's short id, or by the Raise account's address (QA P2-95)
+const find = id => state.presales.find(p => p.id === id) || (id && id.length >= 32 ? state.presales.find(p => p.address === id || p.mint === id) : undefined);   // by the site's short id, the Raise account's address (QA P2-95) or the token's mint, the CA people share
 
 function glyph(p) {
   let h = hashStr(p.ticker + '/' + p.name), c = '';
@@ -1835,7 +1835,7 @@ function tile(p, i, trend, fresh = '') {
   const C = Q(p), pc = pctOf(p), live = p.status === 'live';
   return `<div class="tile ${p.status}${trend ? ' tr-card' : fresh}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
     <span class="tr-art">${artHTML(p, 'tr-img')}${trend ? `<span class="tr-rank">${i + 1}</span>` : ''}<span class="tr-pct" data-pct>${Math.floor(pc + 1e-7)}%</span><span class="bar"><i data-bar style="width:${pc}%"></i></span></span>
-    <span class="tr-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${trend ? '' : starBtn(p)}${trend ? '' : `${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}`}</span>
+    <span class="tr-name"><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled"><b>$${esc(p.ticker)}</b><span>${esc(p.name)}</span></a>${trend ? '' : starBtn(p)}${trend ? '' : `${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${isMine(p) ? '<span class="tag">Yours</span>' : ''}`}</span>
     <span class="tr-fig"><b class="num"><span data-raised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${esc(C.sym)}</em></b>${doingChip(p)}${trend && !p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}</span>
     ${trend ? '' : `<span class="tile-meta">${live ? `<span class="br-stat time${p.endsAt - Date.now() < 6 * H ? ' soon' : ''}" title="Time left">${ROW_ICON.clock}<span class="num" data-time>${timeCell(p)}</span></span>` : `<span class="br-stat">${ROW_ICON.done}${timeCell(p)}</span>`}<span class="br-stat" title="Backers">${ROW_ICON.people}<span class="num" data-rbackers>${p.backers}</span></span>${p.status === 'refunded' ? '' : `<span class="br-stat" title="${p.status === 'seeded' ? '' : 'At the raise price. '}${esc(mcTitle(p, spotNow(p)))}"><span class="num" data-mc>MC ${fmtMcap(mcapUsdOf(p))}</span></span>`}${rowAnn(p)}${rowLinks(p)}</span>
     <span class="tile-flags">${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}</span>
@@ -1867,7 +1867,7 @@ function rowChange(p) {
 }
 function trow(p, i, fresh = '') {
   const C = Q(p), pc = pctOf(p), live = p.status === 'live';
-  const chips = `${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${p.mine ? '<span class="tag">Yours</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}`;
+  const chips = `${!p.live && typeof chain !== 'undefined' && chain.on() ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}${C.verified ? '' : '<span class="tag warn">Unverified</span>'}${isMine(p) ? '<span class="tag">Yours</span>' : ''}${p.xAccount && p.xAccount.handle && p.xAccount.verified ? `<span class="xv-chip" title="Verified X: @${esc(p.xAccount.handle)}">${X_GLYPH}Verified</span>` : ''}${riskChip(riskSummary(riskChecks(p)))}${live ? `<span data-pacechip>${paceChip(paceInfo(p))}</span>` : ''}`;
   return `<div class="trow ${p.status}${fresh}" style="--i:${i};--h:${hashStr(p.ticker) % 360}" data-row="${p.id}">
     <span class="c-proj"><span class="rank-badge num">${i + 1}</span>${artHTML(p, 'tr-av')}<span class="nm"><b><a class="pick" href="#/presale/${p.id}" target="_blank" rel="noopener" aria-label="Open ${esc(p.name)} in a new tab, ${Math.floor(pc + 1e-7)} percent filled">$${esc(p.ticker)}</a><span class="tk">${esc(p.name)}</span></b><span class="meta">${chips}</span></span>${starBtn(p)}</span>
     ${p.status === 'refunded' ? '<span class="num quiet" title="No token was minted">—</span>' : `<span class="num" data-mc title="${p.status === 'seeded' ? '' : 'At the raise price. '}${esc(mcTitle(p, spotNow(p)))}">${fmtMcap(mcapUsdOf(p))}</span>`}
