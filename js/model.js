@@ -144,6 +144,9 @@ const seedDeadline = p => {
   if (p.live && p.seedStep === 'minted' && pr == null) return Infinity;
   return (pr >= f && pr <= Date.now() ? pr : f) + SEED.seedTimeoutDays * dayOf(p);
 };
+/* a live raise past its seeding window is still filled on chain until someone settles it: a backer's refund claim does (it carries
+   timeout_refund), and until then a late crank can still seed it, so the page offers the refund without calling it refunded (QA P2-114) */
+const seedStalled = p => !!p.live && p.status === 'filled' && Date.now() >= seedDeadline(p);
 const SEED_STEPS = ['filled', 'minted', 'pooled', 'seeded'];
 /* the pending payout wallet change, if any, and whether it is due */
 const payoutChange = p => p.pendingPayoutWallet ? { to: p.pendingPayoutWallet, at: p.payoutEffectiveAt, due: Date.now() >= p.payoutEffectiveAt } : null;

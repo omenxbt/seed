@@ -2008,7 +2008,7 @@ async function executeBuy(p, amt) {
   state.wallet.bal[p.q] = r6(balOf(p.q) - pay);
   p.raised = r6(p.raised + net); record(p, walletId(), pay, true);
   if (p.raised >= p.target - 1e-6) { p.raised = p.target; fillRaise(p); toast(`${p.name} filled. Seeding has started; tokens are claimable the moment it lands.`); }
-  else toast(`Bought ${fmtC(net, p.q)} ${C.sym} of ${p.name} (${fmtC(pay, p.q)} ${C.sym} with the fee)`);
+  else toast(`Bought ${fmtExact(net, p.q)} ${C.sym} of ${p.name} (${fmtExact(pay, p.q)} ${C.sym} with the fee)`);   // exact, as the panel shows it (QA P2-112)
   save(); renderAll();
   $$(`[data-row="${p.id}"]`).forEach(r => r.classList.add('flash'));
   return true;
@@ -2614,7 +2614,11 @@ function tick(silent) {
   }
   for (const p of state.presales) if (p.pendingPayoutWallet && now >= p.payoutEffectiveAt) { p.payoutWallet = p.pendingPayoutWallet; p.pendingPayoutWallet = null; p.payoutEffectiveAt = null; changed = true; }
   for (const p of state.presales) if (p.status === 'filled') {
-    if (now >= seedDeadline(p)) { p.status = 'refunded'; p.refundReason = 'timeout'; p.resolvedAt = now; changed = true; if (silent !== true) tellOnce(p, `${p.name} did not seed in time. Every backer can claim a refund.`); }
+    // one notice per event: a raise this wallet follows is told by its alert (the bell, and a toast unless its page is open), the
+    // open page and every other raise by the toast here (QA P2-115)
+    const ours = silent !== true && alertScope(p), tell = msg => { if (silent !== true && (!ours || (ui.tab === 'presale' && ui.sel === p.id))) toast(msg); };
+    if (seedStalled(p)) { if (p.stallSeen !== seedDeadline(p)) { p.stallSeen = seedDeadline(p); changed = true; const msg = `${p.name}'s seeding has stalled. Backers can claim a refund; until one does, anyone can still run the next step.`; if (ours) pushAlert(p, 'stalled-' + p.stallSeen, msg); tell(msg); if (detailBox && pg.id === p.id) renderDetail(true); } }   // still filled on chain: a refund claim settles it, a late crank can still seed it (QA P2-114)
+    else if (now >= seedDeadline(p)) { p.status = 'refunded'; p.refundReason = 'timeout'; p.resolvedAt = now; changed = true; tell(`${p.name} did not seed in time. Every backer can claim a refund.`); }
     else if (!p.live) { const last = p.crankAt || p.filledAt; if (now - last > 30e3 && !document.hidden && !busy) { p.crankAt = now; seedCrank(p); } }   // a demo raise runs its own steps, one every half minute, as the crank does for a live one; the button runs them sooner
   }
   if (chain.ready && !busy && !document.hidden && now - (chain.pairsAt || 0) > 120e3 && now - (chain.pairsTriedAt || 0) > 15e3) chain.loadPairs().then(() => { if (ui.tab === 'launch') renderPairSeg(); }).catch(() => {});   // the allowlist: every two minutes, or again 15 s after a failed read

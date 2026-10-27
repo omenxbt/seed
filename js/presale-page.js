@@ -94,7 +94,7 @@ function ppStats(p) {
       st('Refunds claimed', `${claimed} <em>/ ${rows.length || p.backers || 0}</em>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Closed', fmtDay(p.resolvedAt || p.endsAt));   // the backers count stands in until the list is read (QA P2-96)
   }
   if (p.status === 'filled') return st('Raised', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Backers', p.backers) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) +
-    st('Filled', fmtAgo(Date.now() - p.filledAt)) + st('Seeding', `${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1} <em>/ ${SEED_STEPS.length}</em>`) + (isFinite(seedDeadline(p)) ? st('Refunds if no step by', fmtDate(seedDeadline(p))) : '');
+    st('Filled', fmtAgo(Date.now() - p.filledAt)) + st('Seeding', `${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1} <em>/ ${SEED_STEPS.length}</em>`) + (isFinite(seedDeadline(p)) ? st(seedStalled(p) ? 'Refund open since' : 'Refunds if no step by', fmtDate(seedDeadline(p))) : '');
   return st('Raised', `<span data-sraised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Filled', `<span data-spct>${Math.floor(pctOf(p) + 1e-7)}%</span>`) +
     st('Backers', `<span data-sbackers>${p.backers}</span>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Time left', `<span data-stime>${fmtLeft(p.endsAt - Date.now())}</span>`) +
     st('Fee', `1% <em>on top, refunded on a miss</em>`);
@@ -353,7 +353,7 @@ function seedingPanel(p) {
   const i = SEED_STEPS.indexOf(p.seedStep || 'filled'), names = ['Target reached', 'Token minted, authorities revoked', 'Pool opened and locked', 'Seeded'];
   return `<section class="panel rail-card" data-seeding><h3>Seeding $${esc(p.ticker)}</h3>
     <ol class="seed-steps">${SEED_STEPS.map((k, j) => `<li class="${j < i ? 'done' : j === i ? 'now' : ''}"><span class="num">${j + 1}</span>${names[j]}</li>`).join('')}</ol>
-    <p class="rail-meta">Anyone can run the next step. ${isFinite(seedDeadline(p)) ? `If no step lands by ${fmtDate(seedDeadline(p))}, every backer claims a refund instead.` : p.seedStep === 'pooled' ? 'The pool holds the raise now, so seeding only finishes from here; there is no refund.' : ''}</p>
+    <p class="rail-meta">Anyone can run the next step. ${seedStalled(p) ? `Seeding has stalled: no step since ${fmtDate(seedDeadline(p) - SEED.seedTimeoutDays * dayOf(p))}. Backers can claim a refund now, which settles the raise; until one does, the next step can still run.` : isFinite(seedDeadline(p)) ? `If no step lands by ${fmtDate(seedDeadline(p))}, every backer claims a refund instead.` : p.seedStep === 'pooled' ? 'The pool holds the raise now, so seeding only finishes from here; there is no refund.' : ''}</p>
     <button class="btn btn-navy btn-block" data-crank>Run the next step</button></section>`;
 }
 /* the deposit field's opening amount: never more than the wallet may still put in, fee included (the limits live on the profile, QA P2-85) */
@@ -439,7 +439,7 @@ function positionPanel(p) {
   if (!pos) return `<section class="panel rail-card" data-position><h3>Your position</h3>${holding ? `<dl class="kv">${holding}</dl>` : `<p class="rail-meta">${esc(state.wallet.addr)} has not backed ${esc(p.name)}.</p>`}</section>`;
   const tok = tokensFor(p, pos), share = pos / (p.raised || 1) * 100;
   let act = '';
-  if (p.status === 'refunded') act = claimed ? `<div class="mine"><span>Refund claimed</span><span class="num">${fmtAmt(pos, p.q)} ${sym}</span></div>` : `<button class="btn btn-navy btn-block" data-dclaim>Claim refund of ${fmtAmt(pos, p.q)} ${sym}</button>`;
+  if (p.status === 'refunded' || seedStalled(p)) act = claimed ? `<div class="mine"><span>Refund claimed</span><span class="num">${fmtAmt(pos, p.q)} ${sym}</span></div>` : `<button class="btn btn-navy btn-block" data-dclaim>Claim refund of ${fmtAmt(pos, p.q)} ${sym}</button>`;
   else if (p.status === 'seeded') act = claimed ? `<div class="mine"><span>Claimed</span><span class="num">${fmtTok(tok)} $${esc(p.ticker)}</span></div>` : `<button class="btn btn-navy btn-block" data-dclaim>Claim ${fmtTok(tok)} $${esc(p.ticker)}</button>`;
   return `<section class="panel rail-card" data-position><h3>Your position</h3><dl class="kv">${row('Amount in', `${fmtAmt(pos, p.q)} ${sym}`)}${row(p.status === 'refunded' ? 'Tokens' : 'Tokens owed', p.status === 'refunded' ? 'None, it refunded' : `${fmtTok(tok)} $${esc(p.ticker)}`)}
     ${row('Share of raise', share.toFixed(share < 1 ? 3 : 2) + '%')}${p.status === 'live' ? row('If it refunds', `${fmtAmt(pos, p.q)} ${sym} back`) : ''}${holding}</dl>${act}</section>`;

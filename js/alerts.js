@@ -26,7 +26,8 @@ function checkAlerts() {
     if (prev.status !== cur.status) {
       if (cur.status === 'filled') pushAlert(p, 'filled', `${p.name} filled. Seeding has started.`);
       else if (cur.status === 'seeded') pushAlert(p, 'seeded', `${p.name} seeded. $${p.ticker} is trading${state.positions[p.id] ? ' and your tokens are ready to claim' : ''}.`);
-      else if (cur.status === 'refunded') pushAlert(p, 'refunded', `${p.name} ${refundReason(p)}. ${state.positions[p.id] ? `Your ${fmtExact(paidFor(state.positions[p.id]), p.q)} ${sym} refund is ready to claim.` : 'Refunds are open.'}`);
+      // a timeout the stall alert already told, or a refund this wallet has claimed, is not told again (QA P2-115)
+      else if (cur.status === 'refunded' && !state.claimed[p.id] && !(p.refundReason === 'timeout' && (state.alerts || []).some(a => a.id === p.id && a.kind.startsWith('stalled-')))) pushAlert(p, 'refunded', `${p.name} ${refundReason(p)}. ${state.positions[p.id] ? `Your ${fmtExact(paidFor(state.positions[p.id]), p.q)} ${sym} refund is ready to claim.` : 'Refunds are open.'}`);
       changed = true;
     }
     if (cur.status === 'seeded' && cur.unlocked > (prev.unlocked || 0)) { pushAlert(p, 'unlock-' + cur.unlocked, `${p.name}: a team unlock passed, ${(cur.unlocked / 100).toFixed(cur.unlocked % 100 ? 1 : 0)}% of the team tokens are unlocked.`); changed = true; }
