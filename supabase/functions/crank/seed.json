@@ -49,7 +49,10 @@
     {
       "name": "admin_approve_takeover",
       "docs": [
-        "admin: creator fees and the remaining unlocks go to a wallet the backers chose"
+        "admin: a community takeover of a seeded raise. The creator fees go to a wallet the backers chose, and the team's",
+        "allocation ends (the owner's policy): what the schedule has released and not yet been paid goes to the payout wallet of",
+        "before, every team token not yet unlocked is burned, so the supply falls by that much, and no unlock follows (claim_vested",
+        "is refused). Tokens already paid out stay where they are. In a devnet build the program's upgrade authority may sign too"
       ],
       "discriminator": [
         12,
@@ -86,10 +89,148 @@
         },
         {
           "name": "admin",
-          "signer": true,
+          "docs": [
+            "the admin (checked in the handler, with the devnet upgrade authority); pays for the old payout wallet's token account if it has none"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "program_data",
+          "optional": true
+        },
+        {
+          "name": "mint",
+          "writable": true,
           "relations": [
-            "config"
+            "raise"
           ]
+        },
+        {
+          "name": "team_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  101,
+                  97,
+                  109
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "raise"
+              }
+            ]
+          }
+        },
+        {
+          "name": "payout_wallet"
+        },
+        {
+          "name": "payout_token",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "account",
+                "path": "payout_wallet"
+              },
+              {
+                "kind": "const",
+                "value": [
+                  6,
+                  221,
+                  246,
+                  225,
+                  215,
+                  101,
+                  161,
+                  147,
+                  217,
+                  203,
+                  225,
+                  70,
+                  206,
+                  235,
+                  121,
+                  172,
+                  28,
+                  180,
+                  133,
+                  237,
+                  95,
+                  91,
+                  55,
+                  145,
+                  58,
+                  140,
+                  245,
+                  133,
+                  126,
+                  255,
+                  0,
+                  169
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                140,
+                151,
+                37,
+                143,
+                78,
+                36,
+                137,
+                241,
+                187,
+                61,
+                16,
+                41,
+                20,
+                142,
+                13,
+                131,
+                11,
+                90,
+                19,
+                153,
+                218,
+                255,
+                16,
+                132,
+                4,
+                142,
+                123,
+                216,
+                219,
+                233,
+                248,
+                89
+              ]
+            }
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "associated_token_program",
+          "address": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
         }
       ],
       "args": [
@@ -103,7 +244,8 @@
       "name": "admin_flag_fraud",
       "docs": [
         "admin: the raise is flagged, buying stops, and the founder wallet is blacklisted from opening another, with the",
-        "X account too when one is linked (its blacklist account comes as the first remaining account)"
+        "X account too when one is linked (its blacklist account comes as the first remaining account). In a devnet build the",
+        "program's upgrade authority may sign too, with the ProgramData account, as for set_pair"
       ],
       "discriminator": [
         196,
@@ -140,11 +282,15 @@
         },
         {
           "name": "admin",
+          "docs": [
+            "the admin, or a devnet build's upgrade authority (checked in the handler); pays for the blacklist accounts"
+          ],
           "writable": true,
-          "signer": true,
-          "relations": [
-            "config"
-          ]
+          "signer": true
+        },
+        {
+          "name": "program_data",
+          "optional": true
         },
         {
           "name": "wallet_blacklist",
@@ -2858,6 +3004,19 @@
       ]
     },
     {
+      "name": "TeamBurned",
+      "discriminator": [
+        222,
+        32,
+        66,
+        12,
+        251,
+        62,
+        177,
+        66
+      ]
+    },
+    {
       "name": "TokensClaimed",
       "discriminator": [
         25,
@@ -3142,6 +3301,11 @@
       "code": 6048,
       "name": "AlreadyPooled",
       "msg": "The pool already holds the raise; it can only be seeded, never refunded."
+    },
+    {
+      "code": 6049,
+      "name": "UnlocksEnded",
+      "msg": "A community takeover ended the team's unlocks: the team tokens not yet unlocked were burned."
     }
   ],
   "types": [
@@ -4331,6 +4495,43 @@
           {
             "name": "by",
             "type": "pubkey"
+          },
+          {
+            "name": "at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TeamBurned",
+      "docs": [
+        "a takeover's end of the team allocation: `paid` (unlocked, not yet paid) went to `payout_wallet`, the wallet of before, and",
+        "`burned` (not yet unlocked) was burned, leaving the mint's supply at `supply`. Emitted beside TakeoverApproved, and beside a",
+        "VestedClaimed for `paid` when it is not 0"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "raise",
+            "type": "pubkey"
+          },
+          {
+            "name": "payout_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "paid",
+            "type": "u64"
+          },
+          {
+            "name": "burned",
+            "type": "u64"
+          },
+          {
+            "name": "supply",
+            "type": "u64"
           },
           {
             "name": "at",

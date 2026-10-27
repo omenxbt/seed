@@ -149,12 +149,21 @@ export class SeedClient {
   }
   requestPayoutChange(raise: web3.PublicKey, founder: web3.PublicKey, to: web3.PublicKey) { return this.program.methods.requestPayoutChange(to).accounts({ raise, founder, config: this.config }).instruction(); }
   applyPayoutChange(raise: web3.PublicKey) { return this.program.methods.applyPayoutChange().accounts({ raise }).instruction(); }
-  /* admin_flag_fraud: the founder wallet's blacklist account, plus the handle's as a remaining account when the raise has one */
-  adminFlagFraud(raise: web3.PublicKey, admin: web3.PublicKey, founder: web3.PublicKey, handleHash: Buffer | null) {
-    return this.program.methods.adminFlagFraud().accounts({ raise, config: this.config, admin, walletBlacklist: pda.blacklist(this.pid, founder), systemProgram: SystemProgram.programId })
+  /* this program's ProgramData account: with it, a devnet build lets the upgrade authority sign set_pair and the two admin instructions */
+  get programData() { return PublicKey.findProgramAddressSync([this.pid.toBuffer()], new PublicKey('BPFLoaderUpgradeab1e11111111111111111111111'))[0]; }
+  /* admin_flag_fraud: the founder wallet's blacklist account, plus the handle's as a remaining account when the raise has one.
+     `asAuthority` signs as a devnet build's upgrade authority (the ProgramData account rides along) */
+  adminFlagFraud(raise: web3.PublicKey, admin: web3.PublicKey, founder: web3.PublicKey, handleHash: Buffer | null, asAuthority = false) {
+    return this.program.methods.adminFlagFraud().accounts({ raise, config: this.config, admin, programData: asAuthority ? this.programData : null, walletBlacklist: pda.blacklist(this.pid, founder), systemProgram: SystemProgram.programId })
       .remainingAccounts(handleHash ? [{ pubkey: pda.blacklist(this.pid, handleHash), isSigner: false, isWritable: true }] : []).instruction();
   }
-  adminApproveTakeover(raise: web3.PublicKey, admin: web3.PublicKey, to: web3.PublicKey) { return this.program.methods.adminApproveTakeover(to).accounts({ raise, config: this.config, admin }).instruction(); }
+  /* admin_approve_takeover on a seeded raise: what had unlocked and not been paid goes to the payout wallet of before (its token
+     account is made if missing, paid by the signer), the rest of the team vault is burned, and the payout moves to `to` */
+  async adminApproveTakeover(raise: web3.PublicKey, admin: web3.PublicKey, to: web3.PublicKey, asAuthority = false) {
+    const r = await this.fetchRaise(raise);
+    return this.program.methods.adminApproveTakeover(to).accounts({ raise, config: this.config, admin, programData: asAuthority ? this.programData : null, mint: r.mint, teamVault: pda.teamVault(this.pid, raise),
+      payoutWallet: r.payoutWallet, payoutToken: getAssociatedTokenAddressSync(r.mint, r.payoutWallet, true), tokenProgram: TOKEN_PROGRAM_ID, associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID, systemProgram: SystemProgram.programId }).instruction();
+  }
 
   /* the idempotent ATA instruction the claims need before they run */
   ata(payer: web3.PublicKey, owner: web3.PublicKey, mint: web3.PublicKey) { return createAssociatedTokenAccountIdempotentInstruction(payer, getAssociatedTokenAddressSync(mint, owner, true), owner, mint); }

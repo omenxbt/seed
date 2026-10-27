@@ -51,4 +51,5 @@ pub enum SeedError {
     #[msg("The account does not match the raise.")] WrongAccount,
     #[msg("Arithmetic overflow.")] Overflow,
     #[msg("The pool already holds the raise; it can only be seeded, never refunded.")] AlreadyPooled,
+    #[msg("A community takeover ended the team's unlocks: the team tokens not yet unlocked were burned.")] UnlocksEnded,
 }

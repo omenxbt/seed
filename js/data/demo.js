@@ -323,7 +323,9 @@ function seedData() {
     p.hist = histFromBuys(p, p.buys, end);
     return p;
   };
-  const every = (cliffDays, intervalDays, bpsPerInterval) => ({ cliffDays, intervalDays, bpsPerInterval });
+  /* a demo schedule as "after the cliff, this share every interval", in the program's shapes (an even schedule, or one date
+     for a single unlock); the older { bpsPerInterval } form matched neither, so these raises read as having no team tokens */
+  const every = (cliffDays, intervalDays, bpsPerInterval) => intervalDays > 0 && bpsPerInterval < 10000 ? { cliffDays, intervalDays, count: Math.ceil(10000 / bpsPerInterval) } : { tranches: [{ dayOffset: cliffDays, bps: 10000 }] };
   return [
     /* live: a SOL raise past halfway, 15% team on a 30-day cliff then 10% a month */
     mk({ id: 'osprey', name: 'Osprey', ticker: 'OSPR', q: 'SOL', target: 85, pct: .62, backers: 212, openedAgo: 1.75 * D, dur: 3 * D, teamBps: 1500, teamSchedule: every(30, 30, 1000),

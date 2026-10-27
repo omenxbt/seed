@@ -14,15 +14,51 @@ the four presets, 1% buy fee, 125 bps pool, 70/30, no minimum unlock, 7-day payo
 
 | raise | what it proves |
 |---|---|
-| A, the $100K preset, 20% team (a $40,000 raise), one unlock at day 90 | a preset off the list refused, the Test preset refused on a config without one; the target derived at the cloned Pyth price (374.11 SOL at $106.92); two buys with 1% on top, the last trimmed to the room; mint (1B, authorities revoked, immutable Metaplex metadata under the raise PDA); DAMM v2 pool with the whole raise (to within DAMM's deposit rounding, a few µSOL) and 400M tokens, position NFT owned by the raise; 1% of the raise (3.74 SOL) of held fees to the treasury; backers' claims 60/40; buy, sell, buy through Meteora's SDK; the fee crank's 70/30 of the position's fees; a payout change that waits 7 days; the admin's takeover; the whole team share (200M) unlocking at day 90 to the takeover wallet, nothing before and nothing after |
+| A, the $100K preset, 20% team (a $40,000 raise), one unlock at day 90 | a preset off the list refused, the Test preset refused on a config without one; the target derived at the cloned Pyth price (374.11 SOL at $106.92); two buys with 1% on top, the last trimmed to the room; mint (1B, authorities revoked, immutable Metaplex metadata under the raise PDA); DAMM v2 pool with the whole raise (to within DAMM's deposit rounding, a few µSOL) and 400M tokens, position NFT owned by the raise; 1% of the raise (3.74 SOL) of held fees to the treasury; backers' claims 60/40; buy, sell, buy through Meteora's SDK; the fee crank's 70/30 of the position's fees; a payout change that waits 7 days; the admin's takeover, which inside the 90-day cliff burns the whole team share (200M off the supply) and after which `claim_vested` is refused (UnlocksEnded) |
 | B, $100K preset, no team ($50,000), cancelled after two buys | both refunds exact, fee included |
 | C, $50,000, filled and never seeded | `timeout_refund` refused before the 3-day timeout, refunds after it |
 | D, $50,000, one-day deadline, one buy | `settle` marks it missed after the deadline; the refund is exact |
 
-Takes about 90 minutes, almost all of it the 90-minute cliff (`--fast` skips that one wait). Last run 2026-10-21 (UTC) under the
-presets: 34 checks, all passed (SOL at $106.92 from the cloned feed; A's $40,000 raise was 374.11 SOL). **Not covered:** a burn of
-unvested team tokens on a takeover — no such instruction exists; the schedule keeps unlocking to the new payout wallet.
-That policy is open (Needs the owner).
+Last run 2026-10-21 (UTC) under the presets: 34 checks, all passed (SOL at $106.92 from the cloned feed; A's $40,000 raise was
+374.11 SOL); that run waited out the 90-minute cliff to unlock the team share to the takeover wallet. Since the takeover burn
+(2026-10-27, the owner's policy) raise A's takeover burns the team share instead and no unlock follows, so the run has no long
+wait; it has not been run again since that change. Run it before stage 2.
+
+## The takeover burn (2026-10-27, the owner's policy)
+
+`admin_approve_takeover` ends the team's allocation on a seeded raise: what the schedule has released and not yet been paid
+goes to the payout wallet of before (its token account is made if missing, the signer pays), every team token not yet
+unlocked is burned from the team vault (the mint's supply falls by that much), the payout moves to the wallet the backers chose,
+and `claim_vested` is refused from then on (UnlocksEnded, 6049). Before seeding it is refused (NotSeeded, or at account
+validation when the raise has no mint yet). The Raise layout is unchanged: the takeover is `takeover_to`, the amount paid joins
+`team_claimed`, and the TeamBurned event carries paid, burned and the supply after. Proven by 7 unit tests in `state.rs` (both
+builds) and the suite on a local validator and on devnet (nothing unlocked: all burned; a quarter paid, a quarter due, half
+locked: the due quarter to the old payout wallet, half burned; a second takeover burns nothing; refused before seeding). On
+mainnet only the Config admin (the Squads vault) can sign it.
+
+## Security audit: what the auditor must review
+
+The program is not audited. Before production the auditor reviews at least these, each against the code named:
+
+1. **The takeover burn** (`admin_approve_takeover`, `Raise::takeover_split`, `claim_vested`): paid + burned equals the vault and
+   neither can exceed it; only the team vault burns, never the backers' or the pool's; the old payout wallet's token account is
+   the associated one (`init_if_needed`, admin pays); the supply in TeamBurned is read after the burn; claim_vested is refused
+   after any takeover; only a seeded raise.
+2. **Who can sign the admin instructions** (`admin_or_devnet_authority`): on a mainnet build only `Config.admin`. The devnet
+   build also accepts the program's upgrade authority, shown by this program's ProgramData account (its address and the
+   loader's ownership are checked) for `set_pair`, `admin_flag_fraud` and `admin_approve_takeover`; that code is under
+   `#[cfg(feature = "devnet")]` and must be absent from the production binary.
+3. **Devnet-only code compiled out of production:** test mode (a day is a minute), `reset_config`, `migrate_config`,
+   `devnet_set_max_deadline`, the Test preset. `check-deploy.ts` and the build's IDL show none of them.
+4. **The locked pool:** no instruction transfers the position NFT or removes liquidity; the NFT is owned by the raise PDA.
+5. **Money paths:** `contribute` (1% on top, the last buy trimmed, min_buy / max_buy), `claim_refund` (exact, fee included),
+   `claim_tokens`, `claim_creator_fees` (70/30), the held fees to the treasury at seeding, Token-2022 pair checks in `set_pair`.
+6. **Seeding and the timeout:** `crank_mint`, `crank_pool`, `crank_seed`, `progress_at`, `timeout_refund` refused once pooled
+   (AlreadyPooled), `settle` after the deadline.
+7. **Prices and attestations:** Pyth staleness and verification in `pyth.rs`; the X attestation's ed25519 instruction
+   introspection in `attest.rs`; the target derived from the preset on chain.
+8. **USDC stays open on chain** while the site offers SOL only (the owner's decision, 2026-10-27): `open_raise` accepts
+   USDC without an allowlist entry; the auditor confirms a USDC raise is as safe as a SOL one.
 
 ## Stage 2 — staging: the same source under a second program id, on mainnet, with real but small SOL
 

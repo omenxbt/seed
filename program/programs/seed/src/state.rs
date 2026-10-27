@@ -174,6 +174,69 @@ impl Raise {
         let bps = crate::math::unlocked_bps(days, &self.schedule, self.even.as_ref());
         (self.team_units() as u128 * bps as u128 / BPS as u128) as u64
     }
+    /// a community takeover ends the team's allocation (the owner's policy): of the `vault` the team holds, what the schedule
+    /// has released by `now` and not yet been paid goes to the payout wallet of before, and the rest, every team token not
+    /// yet unlocked, is burned. Returns (paid, burned); they sum to the vault, so it ends empty
+    pub fn takeover_split(&self, now: i64, vault: u64) -> (u64, u64) {
+        let paid = self.unlocked_units(now).saturating_sub(self.team_claimed).min(vault);
+        (paid, vault - paid)
+    }
+}
+
+#[cfg(test)]
+mod takeover_tests {
+    use super::*;
+    const DAY: i64 = 60;   // test mode: a day is a minute
+    fn raise(team_bps: u16, schedule: Vec<Tranche>, even: Option<EvenUnlocks>) -> Raise {
+        Raise { founder: Pubkey::default(), nonce: 0, x_handle_hash: None, pair_mint: Pubkey::default(), target: 1, target_usd_cents: 0, sol_usd_cents: 0,
+            time_unit: DAY, fee_bps: 100, creator_share_bps: 7000, team_bps, schedule, payout_wallet: Pubkey::default(), pending_payout: None, payout_effective_at: 0,
+            status: RaiseStatus::Seeded, seed_step: SeedStep::Seeded, refund_reason: None, raised: 1, fees_held: 0, backers: 1, opened_at: 0, ends_at: 0, filled_at: 0,
+            seeded_at: 1_000, mint: Pubkey::default(), pool: Pubkey::default(), position: Pubkey::default(), position_nft_mint: Pubkey::default(), team_claimed: 0,
+            blacklisted: false, flagged_at: 0, takeover_to: None, takeover_at: 0, name: String::new(), ticker: String::new(), bump: 0, even, cap_usd_cents: 0, preset: 0,
+            min_buy: 0, max_buy: 0, progress_at: 0 }
+    }
+    fn tr(v: &[(u32, u16)]) -> Vec<Tranche> { v.iter().map(|&(d, b)| Tranche { day_offset: d, bps: b }).collect() }
+    const T15: u64 = SUPPLY_UNITS / 100 * 15;   // a 15% team share
+
+    #[test] fn nothing_unlocked_burns_it_all() {
+        let r = raise(1500, vec![], Some(EvenUnlocks { cliff_days: 90, interval_days: 30, count: 12 }));
+        assert_eq!(r.team_units(), T15);
+        assert_eq!(r.takeover_split(1_000 + 89 * DAY, T15), (0, T15), "during the cliff every team token burns");
+    }
+    #[test] fn unlocked_and_paid_stays_unlocked_and_unpaid_goes_to_the_old_payout_the_rest_burns() {
+        let mut r = raise(1500, tr(&[(0, 2500), (10, 2500), (20, 5000)]), None);
+        // day 12: 50% has unlocked; the crank paid the first 25%, the second 25% is due and unpaid
+        r.team_claimed = T15 / 4;
+        let vault = T15 - r.team_claimed;
+        let (paid, burned) = r.takeover_split(1_000 + 12 * DAY, vault);
+        assert_eq!(paid, T15 / 4, "the unlocked but unpaid quarter goes to the payout wallet of before");
+        assert_eq!(burned, T15 / 2, "the half not yet unlocked burns");
+        assert_eq!(r.team_claimed + paid + burned, T15, "paid before, paid now and burned make the whole team share");
+    }
+    #[test] fn fully_unlocked_burns_nothing() {
+        let mut r = raise(1500, tr(&[(0, 5000), (10, 5000)]), None);
+        assert_eq!(r.takeover_split(1_000 + 10 * DAY, T15), (T15, 0), "all unlocked, none paid: all of it is paid, nothing burns");
+        r.team_claimed = T15;
+        assert_eq!(r.takeover_split(1_000 + 10 * DAY, 0), (0, 0), "all unlocked and paid: the vault is empty, nothing moves");
+    }
+    #[test] fn at_seeding_unlock_burns_nothing() {
+        let r = raise(1500, tr(&[(0, 10000)]), None);
+        assert_eq!(r.takeover_split(1_000, T15), (T15, 0));
+    }
+    #[test] fn no_team_share_has_nothing_to_burn() {
+        let r = raise(0, vec![], None);
+        assert_eq!(r.team_units(), 0);
+        assert_eq!(r.takeover_split(1_000 + 400 * DAY, 0), (0, 0));
+    }
+    #[test] fn a_second_takeover_finds_an_empty_vault() {
+        let mut r = raise(1500, tr(&[(0, 2500), (10, 7500)]), None);
+        r.team_claimed = T15 / 4;   // after the first takeover: a quarter paid, the rest burned, the vault empty
+        assert_eq!(r.takeover_split(1_000 + 30 * DAY, 0), (0, 0), "nothing is paid or burned twice, however much the schedule says is due");
+    }
+    #[test] fn never_more_than_the_vault() {
+        let r = raise(1500, tr(&[(0, 10000)]), None);
+        assert_eq!(r.takeover_split(1_000, T15 / 2), (T15 / 2, 0), "a vault short of what is due pays what it holds and burns nothing");
+    }
 }
 
 #[account]

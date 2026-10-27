@@ -113,8 +113,9 @@ Deno.serve(async (req) => {
         if (row?.pool && row.mint && row.pair_mint && (fresh || new Date(now).getMinutes() === 0)) {
           try { const n = await backfillPool(db, Deno.env.get('SEED_RPC_URL')!, row, 100, fresh ? 3600 : 2 * 3600); if (n) note(`backfill ${id} ${n}`); } catch (e) { fail(`backfill ${id}`, e); }
         }
-        /* team tokens past their unlock: the schedule's tranches up to now, less what was claimed, with the config's unit (a minute in test mode) */
-        if (Number(a.teamBps) > 0) {
+        /* team tokens past their unlock: the schedule's tranches up to now, less what was claimed, with the config's unit (a minute in test mode).
+           None after a community takeover: it paid what had unlocked, burned the rest and ended the unlocks (claim_vested says UnlocksEnded) */
+        if (Number(a.teamBps) > 0 && !a.takeoverTo) {
           const unit = Number(cfg.testMode ? 60 : 86400), since = (now / 1000 - Number(a.seededAt)) / unit, team = Number(a.teamBps) / 10000 * 1e9 * 1e6;
           const ev = a.even as { cliffDays: number; intervalDays: number; count: number } | null;
           const unlockedBps = ev   // an even schedule: unlock k at cliff + k × interval, floor(passed × 10000 / count) bps in all (math.rs unlocked_bps)

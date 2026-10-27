@@ -24,4 +24,8 @@ pub struct RaiseOpened {
 #[event] pub struct FraudFlagged { pub raise: Pubkey, pub founder: Pubkey, pub x_handle_hash: Option<[u8; 32]>, pub by: Pubkey, pub at: i64 }
 #[event] pub struct XLinked { pub raise: Pubkey, pub founder: Pubkey, pub x_handle_hash: [u8; 32], pub at: i64 }
 #[event] pub struct TakeoverApproved { pub raise: Pubkey, pub from: Pubkey, pub to: Pubkey, pub by: Pubkey, pub at: i64 }
+/// a takeover's end of the team allocation: `paid` (unlocked, not yet paid) went to `payout_wallet`, the wallet of before, and
+/// `burned` (not yet unlocked) was burned, leaving the mint's supply at `supply`. Emitted beside TakeoverApproved, and beside a
+/// VestedClaimed for `paid` when it is not 0
+#[event] pub struct TeamBurned { pub raise: Pubkey, pub payout_wallet: Pubkey, pub paid: u64, pub burned: u64, pub supply: u64, pub at: i64 }
 #[event] pub struct PairSet { pub mint: Pubkey, pub symbol: String, pub stable: bool, pub paused: bool, pub by: Pubkey, pub at: i64 }

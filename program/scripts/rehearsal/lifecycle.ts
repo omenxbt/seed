@@ -9,7 +9,7 @@
 //   D  81 SOL, one-day deadline, one buy: settles as missed, then the refund
 // Nothing here is sent anywhere but the local validator. Writes scripts/rehearsal/report-<date>.md.
 //   ANCHOR_PROVIDER_URL=http://127.0.0.1:8999 ANCHOR_WALLET=keys/deployer.json npx ts-node -P tsconfig.json scripts/rehearsal/lifecycle.ts [--fast]
-// --fast skips the 90-minute wait for the unlock (everything else runs).
+// --fast is still accepted: the takeover burn left no 90-minute unlock wait to skip.
 import * as anchor from '@coral-xyz/anchor';
 import { BN, web3 } from '@coral-xyz/anchor';
 import { CpAmm } from '@meteora-ag/cp-amm-sdk';
@@ -169,21 +169,15 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
   await waitUntil(Number((await c.fetchRaise(A)).payoutEffectiveAt), `the payout delay, ${minutes(7)}`);
   await c.send([await c.applyPayoutChange(A)]); a = await c.fetchRaise(A); check(a.payoutWallet.equals(newPayout), 'A: the payout wallet moved after 7 days');
   try { await c.send([await c.adminApproveTakeover(A, backer1.publicKey, takeoverTo)], [backer1]); check(false, 'A: only the admin approves a takeover'); } catch (e: any) { check(/NotAdmin/.test(e.message), 'A: only the admin approves a takeover', 'NotAdmin'); }
-  await c.send([await c.adminApproveTakeover(A, me.publicKey, takeoverTo)]); a = await c.fetchRaise(A);
-  check(a.payoutWallet.equals(takeoverTo) && a.takeoverTo.equals(takeoverTo), 'A: the admin\'s takeover moves the payout wallet (and the unvested team tokens with it)');
-  log('NOTE  no instruction burns unvested team tokens on a takeover: the schedule keeps unlocking to the new payout wallet. That policy is open (Needs the owner).');
-
-  // the unlock: nothing before day 90, everything at it, to the wallet the takeover named
-  await c.send([c.ata(me.publicKey, takeoverTo, mint.publicKey)]);   // on its own: a refused claim would roll the account's creation back with it
-  try { await c.send([await c.claimVested(A, mint.publicKey, takeoverTo, me.publicKey)]); check(false, 'A: nothing unlocks before the cliff'); } catch (e: any) { check(/NothingToClaim/.test(e.message), 'A: nothing unlocks before the cliff', 'NothingToClaim'); }
-  if (fast) log('SKIP  the 90-day unlock (--fast)');
-  else {
-    await waitUntil(Number(a.seededAt) + 90 * 60, `the cliff, ${minutes(90)}`);
-    await c.send([await c.claimVested(A, mint.publicKey, takeoverTo, me.publicKey)]);
-    const got = (await getAccount(conn, getAssociatedTokenAddressSync(mint.publicKey, takeoverTo, true))).amount;
-    check(got === 200_000_000_000_000n, 'A: at day 90 the whole team share (200M) unlocks to the takeover wallet', `${Number(got) / 1e6} tokens`);
-    try { await c.send([await c.claimVested(A, mint.publicKey, takeoverTo, me.publicKey)]); check(false, 'A: nothing left after the last unlock'); } catch (e: any) { check(/NothingToClaim/.test(e.message), 'A: nothing left after the last unlock'); }
-  }
+  const asAuth = !(await c.fetchConfig()).admin.equals(me.publicKey);   // devnet: the upgrade authority signs in place of the admin's browser wallet
+  const supply0 = (await getMint(conn, mint.publicKey)).supply;
+  await c.send([await c.adminApproveTakeover(A, me.publicKey, takeoverTo, asAuth)]); a = await c.fetchRaise(A);
+  check(a.payoutWallet.equals(takeoverTo) && a.takeoverTo.equals(takeoverTo), 'A: the admin\'s takeover moves the payout wallet');
+  // the takeover burn: inside the 90-day cliff nothing had unlocked, so the whole team share (200M) burns and no unlock follows
+  const supply1 = (await getMint(conn, mint.publicKey)).supply;
+  check(supply0 - supply1 === 200_000_000_000_000n, 'A: the takeover burned the whole team share, nothing having unlocked', `${Number(supply0 - supply1) / 1e6} tokens`);
+  await c.send([c.ata(me.publicKey, takeoverTo, mint.publicKey)]);
+  try { await c.send([await c.claimVested(A, mint.publicKey, takeoverTo, me.publicKey)]); check(false, 'A: no unlock after a takeover'); } catch (e: any) { check(/UnlocksEnded/.test(e.message), 'A: no unlock after a takeover', 'UnlocksEnded'); }
 
   log(`\n${fails ? `${fails} FAILED` : 'ALL PASSED'} · ${lines.filter(l => l.startsWith('PASS')).length} checks · ${((Date.now() - t0) / 60_000).toFixed(1)} minutes · ended ${new Date().toISOString()} · pool ${pool.toBase58()} · mint ${mint.publicKey.toBase58()}`);
   const file = `scripts/rehearsal/report-${new Date().toISOString().slice(0, 10)}.md`; writeFileSync(file, lines.join('\n') + '\n'); console.log('written', file);

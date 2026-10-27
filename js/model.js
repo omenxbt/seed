@@ -76,11 +76,18 @@ const atSeeding = s => !!(s && s.tranches && s.tranches.length === 1 && s.tranch
 /* what the schedule has released by `now`, given the seeding time; tokens, bps, the next tranche and the one after */
 function unlockState(p, now = Date.now()) {
   const team = splitOf(p.teamBps).team, t = tranchesOf(p.teamSchedule), at = p.seededAt;
-  if (!team || !t.length) return { team, unlockedBps: 0, unlocked: 0, claimable: 0, next: null, done: !team };
-  const days = at ? (now - at) / dayOf(p) : -Infinity, doneT = t.filter(x => x.dayOffset <= days), unlockedBps = doneT.reduce((a, x) => a + x.bps, 0);
+  if (!team || !t.length) return { team, unlockedBps: 0, unlocked: 0, claimable: 0, next: null, done: !team, burned: 0, ended: null };
+  /* a community takeover ends the schedule (the program's admin_approve_takeover): what had unlocked by then went to the payout
+     wallet of before, every team token not yet unlocked was burned, and nothing unlocks after it. On chain the amount paid is
+     exact (team_claimed after the takeover); a demo raise counts it from the schedule */
+  const ended = p.status === 'seeded' && p.takeover && p.takeover.at ? (+new Date(p.takeover.at) || Date.now()) : null;   // the indexer's row carries an ISO time, the chain a number
+  const days = at ? (Math.min(now, ended || now) - at) / dayOf(p) : -Infinity, doneT = t.filter(x => x.dayOffset <= days), unlockedBps = doneT.reduce((a, x) => a + x.bps, 0);
+  if (ended) { const unlocked = p.live && p.teamClaimed != null ? Math.min(team, p.teamClaimed) : Math.floor(team * unlockedBps / BPS); return { team, unlockedBps: Math.round(unlocked / team * BPS), unlocked, next: null, done: true, burned: team - unlocked, ended }; }
   const next = t.find(x => x.dayOffset > days) || null;
-  return { team, unlockedBps, unlocked: Math.floor(team * unlockedBps / BPS), next: next && { at: (at || now) + next.dayOffset * dayOf(p), tokens: Math.floor(team * next.bps / BPS), bps: next.bps, dayOffset: next.dayOffset }, done: !next };
+  return { team, unlockedBps, unlocked: Math.floor(team * unlockedBps / BPS), next: next && { at: (at || now) + next.dayOffset * dayOf(p), tokens: Math.floor(team * next.bps / BPS), bps: next.bps, dayOffset: next.dayOffset }, done: !next, burned: 0, ended: null };
 }
+/* the supply now: the billion minted at seeding, less the team tokens a takeover burned */
+const supplyNow = p => SUPPLY - (p.status === 'seeded' ? unlockState(p).burned : 0);
 /* the rules a schedule must meet before a raise opens: the program's (math.rs check_schedule), said plainly */
 function scheduleProblem(s, teamBps) {
   if (!teamBps) return '';

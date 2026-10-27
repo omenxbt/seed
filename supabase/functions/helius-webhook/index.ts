@@ -23,7 +23,7 @@ const slug = (ticker: string, raise: string) => `${ticker.toLowerCase()}-${raise
 
 /* the raise row an event belongs to, by the Raise account's address */
 async function raiseOf(address: string) {
-  const { data } = await db.from('raises').select('id, pair_mint, pool, raised, backers, payout_wallet, fees_founder_claimed, fees_seed_claimed, team_claimed').eq('address', address).maybeSingle();
+  const { data } = await db.from('raises').select('id, pair_mint, pool, raised, backers, payout_wallet, fees_founder_claimed, fees_seed_claimed, team_claimed, takeover').eq('address', address).maybeSingle();
   return data;
 }
 const dec = (r: { pair_mint: string }) => PAIR_DEC[r.pair_mint] ?? 9;   // filled in at RaiseOpened for an allowed pair (mintDecimals)
@@ -80,7 +80,10 @@ async function apply(name: string, e: Record<string, unknown>, tx: string, block
       await db.from('payout_changes').update({ applied_tx: tx, applied_at: at }).eq('raise_id', r.id).eq('to_wallet', e.to as string).is('applied_tx', null);
       await up({ payout_wallet: e.to, pending_payout: null, payout_effective_at: null }); break;
     case 'FraudFlagged': await up({ blacklisted: true, flag: { at, by: e.by, tx } }); break;
-    case 'TakeoverApproved': await up({ payout_wallet: e.to, pending_payout: null, payout_effective_at: null, takeover: { from: e.from, to: e.to, at, by: e.by, tx } }); break;
+    /* a takeover's transaction carries TeamBurned (what went to the payout wallet of before, what was burned, the supply after)
+       and then TakeoverApproved: both land in the row's takeover record */
+    case 'TeamBurned': await up({ takeover: { ...(r.takeover?.tx === tx ? r.takeover : {}), paid: units(e.paid as bigint, TOKEN_DEC), burned: units(e.burned as bigint, TOKEN_DEC), supply: units(e.supply as bigint, TOKEN_DEC), tx } }); break;
+    case 'TakeoverApproved': await up({ payout_wallet: e.to, pending_payout: null, payout_effective_at: null, takeover: { ...(r.takeover?.tx === tx ? r.takeover : {}), from: e.from, to: e.to, at, by: e.by, tx } }); break;
   }
 }
 

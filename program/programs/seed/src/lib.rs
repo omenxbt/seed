@@ -6,7 +6,8 @@
 //! refunds every backer in full (claim_refund). After seeding backers claim their tokens (claim_tokens), anyone claims
 //! the pool's fees for the payout wallet and Seed (claim_creator_fees), team tokens unlock on the schedule
 //! (claim_vested), the founder can move the payout wallet with a delay (request_payout_change, apply_payout_change),
-//! and the admin has exactly two instructions (admin_flag_fraud, admin_approve_takeover).
+//! and the admin has exactly two instructions (admin_flag_fraud, admin_approve_takeover). A takeover burns every team
+//! token not yet unlocked and ends the unlocks.
 //!
 //! The raise PDA owns everything: the escrow, the token vaults, the pool position NFT. There is no instruction that
 //! transfers the position NFT or removes liquidity; the position is permanently locked at creation.
@@ -14,7 +15,7 @@
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::instructions::ID as INSTRUCTIONS_ID;
 use anchor_spl::associated_token::AssociatedToken;
-use anchor_spl::token::{self, Mint, SetAuthority, Token, TokenAccount, Transfer};
+use anchor_spl::token::{self, Burn, Mint, SetAuthority, Token, TokenAccount, Transfer};
 use anchor_spl::token_interface::{self, Mint as PairMint, TokenAccount as PairTokenAccount, TokenInterface, TransferChecked};
 use anchor_spl::token::spl_token::instruction::AuthorityType;
 use anchor_spl::metadata::{self, CreateMetadataAccountsV3, mpl_token_metadata::types::DataV2};
@@ -120,10 +121,7 @@ pub mod seed {
     pub fn set_pair(ctx: Context<SetPair>, p: PairParams) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
         let signer = ctx.accounts.signer.key();
-        let mut allowed = signer == ctx.accounts.config.admin;
-        #[cfg(feature = "devnet")]
-        if !allowed { if let Some(pd) = &ctx.accounts.program_data { let d = pd.try_borrow_data()?; allowed = d.len() >= 45 && d[0..4] == 3u32.to_le_bytes() && d[12] == 1 && Pubkey::try_from(&d[13..45]).unwrap() == signer; } }
-        require!(allowed, SeedError::NotAdmin);
+        require!(admin_or_devnet_authority(&ctx.accounts.config, &signer, ctx.accounts.program_data.as_deref()), SeedError::NotAdmin);
         require!(!p.symbol.is_empty() && p.symbol.len() <= MAX_PAIR_SYMBOL, SeedError::BadName);
         let mint_ai = ctx.accounts.mint.to_account_info();
         let tp = *mint_ai.owner;
@@ -525,6 +523,7 @@ pub mod seed {
         let now = Clock::get()?.unix_timestamp;
         let r = &ctx.accounts.raise;
         require!(r.status == RaiseStatus::Seeded, SeedError::NotSeeded);
+        require!(r.takeover_to.is_none(), SeedError::UnlocksEnded);   // a takeover paid what had unlocked and burned the rest
         let due = r.unlocked_units(now).saturating_sub(r.team_claimed).min(ctx.accounts.team_vault.amount);
         require!(due > 0, SeedError::NothingToClaim);
         let seeds: &[&[u8]] = &[RAISE_SEED, r.founder.as_ref(), &r.nonce.to_le_bytes(), &[r.bump]];
@@ -552,8 +551,10 @@ pub mod seed {
     }
 
     /// admin: the raise is flagged, buying stops, and the founder wallet is blacklisted from opening another, with the
-    /// X account too when one is linked (its blacklist account comes as the first remaining account)
+    /// X account too when one is linked (its blacklist account comes as the first remaining account). In a devnet build the
+    /// program's upgrade authority may sign too, with the ProgramData account, as for set_pair
     pub fn admin_flag_fraud<'info>(ctx: Context<'_, '_, '_, 'info, AdminFlag<'info>>) -> Result<()> {
+        require!(admin_or_devnet_authority(&ctx.accounts.config, &ctx.accounts.admin.key(), ctx.accounts.program_data.as_deref()), SeedError::NotAdmin);
         let now = Clock::get()?.unix_timestamp; let r = &mut ctx.accounts.raise;
         r.blacklisted = true; r.flagged_at = now;
         let raise_key = r.key(); let founder = r.founder; let hash = r.x_handle_hash;
@@ -570,11 +571,27 @@ pub mod seed {
         Ok(())
     }
 
-    /// admin: creator fees and the remaining unlocks go to a wallet the backers chose
-    pub fn admin_approve_takeover(ctx: Context<AdminOnly>, to: Pubkey) -> Result<()> {
-        let now = Clock::get()?.unix_timestamp; let r = &mut ctx.accounts.raise;
+    /// admin: a community takeover of a seeded raise. The creator fees go to a wallet the backers chose, and the team's
+    /// allocation ends (the owner's policy): what the schedule has released and not yet been paid goes to the payout wallet of
+    /// before, every team token not yet unlocked is burned, so the supply falls by that much, and no unlock follows (claim_vested
+    /// is refused). Tokens already paid out stay where they are. In a devnet build the program's upgrade authority may sign too
+    pub fn admin_approve_takeover(ctx: Context<AdminTakeover>, to: Pubkey) -> Result<()> {
+        require!(admin_or_devnet_authority(&ctx.accounts.config, &ctx.accounts.admin.key(), ctx.accounts.program_data.as_deref()), SeedError::NotAdmin);
+        let now = Clock::get()?.unix_timestamp;
+        let r = &ctx.accounts.raise;
+        require!(r.status == RaiseStatus::Seeded, SeedError::NotSeeded);   // before seeding there are no team tokens and no unlocks to end
+        let (paid, burned) = r.takeover_split(now, ctx.accounts.team_vault.amount);
+        let seeds: &[&[u8]] = &[RAISE_SEED, r.founder.as_ref(), &r.nonce.to_le_bytes(), &[r.bump]];
+        let tp = ctx.accounts.token_program.to_account_info(); let auth = r.to_account_info();
+        if paid > 0 { token::transfer(CpiContext::new_with_signer(tp.clone(), Transfer { from: ctx.accounts.team_vault.to_account_info(), to: ctx.accounts.payout_token.to_account_info(), authority: auth.clone() }, &[seeds]), paid)?; }
+        if burned > 0 { token::burn(CpiContext::new_with_signer(tp, Burn { mint: ctx.accounts.mint.to_account_info(), from: ctx.accounts.team_vault.to_account_info(), authority: auth }, &[seeds]), burned)?; }
+        ctx.accounts.mint.reload()?; let supply = ctx.accounts.mint.supply;
+        let r = &mut ctx.accounts.raise;
         let from = r.payout_wallet;
+        r.team_claimed += paid;
         r.payout_wallet = to; r.pending_payout = None; r.payout_effective_at = 0; r.takeover_to = Some(to); r.takeover_at = now;
+        if paid > 0 { emit!(VestedClaimed { raise: r.key(), tokens: paid, at: now }); }
+        emit!(TeamBurned { raise: r.key(), payout_wallet: from, paid, burned, supply, at: now });
         emit!(TakeoverApproved { raise: r.key(), from, to, by: ctx.accounts.admin.key(), at: now });
         Ok(())
     }
@@ -592,6 +609,20 @@ fn check_attest(ix_sysvar: &AccountInfo, attestor: &Pubkey, founder: &Pubkey, x:
     let msg = attest::expected_message(founder, &x.handle_hash, x.expiry);
     let ix_index = anchor_lang::solana_program::sysvar::instructions::load_current_index_checked(ix_sysvar)?;
     attest::verify(ix_sysvar, ix_index, attestor, &msg)
+}
+/// the config's admin, or in a devnet build the program's upgrade authority, shown by this program's ProgramData account (at
+/// its address, owned by the loader: [3u32][slot u64][Some = 1][authority 32]). A mainnet build accepts the admin alone
+fn admin_or_devnet_authority(config: &Config, signer: &Pubkey, program_data: Option<&AccountInfo>) -> bool {
+    if *signer == config.admin { return true; }
+    #[cfg(feature = "devnet")]
+    if let Some(pd) = program_data {
+        let loader = anchor_lang::solana_program::bpf_loader_upgradeable::ID;
+        if *pd.owner != loader || *pd.key != Pubkey::find_program_address(&[crate::ID.as_ref()], &loader).0 { return false; }
+        let Ok(d) = pd.try_borrow_data() else { return false };
+        return d.len() >= 45 && d[0..4] == 3u32.to_le_bytes() && d[12] == 1 && d[13..45] == signer.to_bytes();
+    }
+    let _ = program_data;
+    false
 }
 fn blacklist_key(subject: &[u8; 32]) -> Pubkey { Pubkey::find_program_address(&[BLACKLIST_SEED, subject], &crate::ID).0 }
 /// a Blacklist account at its PDA, made by hand so the wallet's and the handle's can share one instruction
@@ -894,17 +925,31 @@ pub struct ClaimVested<'info> {
 }
 
 #[derive(Accounts)]
-pub struct AdminOnly<'info> {
-    #[account(mut)] pub raise: Account<'info, Raise>,
-    #[account(seeds = [CONFIG_SEED], bump = config.bump, has_one = admin @ SeedError::NotAdmin)] pub config: Account<'info, Config>,
-    pub admin: Signer<'info>,
+pub struct AdminTakeover<'info> {
+    #[account(mut, has_one = mint @ SeedError::WrongAccount)] pub raise: Box<Account<'info, Raise>>,
+    #[account(seeds = [CONFIG_SEED], bump = config.bump)] pub config: Box<Account<'info, Config>>,
+    /// the admin (checked in the handler, with the devnet upgrade authority); pays for the old payout wallet's token account if it has none
+    #[account(mut)] pub admin: Signer<'info>,
+    /// CHECK: this program's ProgramData, for a devnet build's upgrade authority (checked in the handler); None otherwise
+    pub program_data: Option<UncheckedAccount<'info>>,
+    #[account(mut)] pub mint: Box<Account<'info, Mint>>,
+    #[account(mut, seeds = [b"team", raise.key().as_ref()], bump)] pub team_vault: Box<Account<'info, TokenAccount>>,
+    /// CHECK: the payout wallet before the takeover, as the raise names it; it receives what had unlocked and not been paid
+    #[account(address = raise.payout_wallet @ SeedError::WrongAccount)] pub payout_wallet: UncheckedAccount<'info>,
+    #[account(init_if_needed, payer = admin, associated_token::mint = mint, associated_token::authority = payout_wallet)] pub payout_token: Box<Account<'info, TokenAccount>>,
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct AdminFlag<'info> {
     #[account(mut)] pub raise: Account<'info, Raise>,
-    #[account(seeds = [CONFIG_SEED], bump = config.bump, has_one = admin @ SeedError::NotAdmin)] pub config: Account<'info, Config>,
+    #[account(seeds = [CONFIG_SEED], bump = config.bump)] pub config: Account<'info, Config>,
+    /// the admin, or a devnet build's upgrade authority (checked in the handler); pays for the blacklist accounts
     #[account(mut)] pub admin: Signer<'info>,
+    /// CHECK: this program's ProgramData, for a devnet build's upgrade authority (checked in the handler); None otherwise
+    pub program_data: Option<UncheckedAccount<'info>>,
     /// CHECK: the founder wallet's blacklist account at seeds ["blacklist", founder]; created here if it does not exist
     #[account(mut, seeds = [BLACKLIST_SEED, raise.founder.as_ref()], bump)] pub wallet_blacklist: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,

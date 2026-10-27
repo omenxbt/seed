@@ -1217,7 +1217,8 @@ a.ico:hover{color:var(--ink)}
         <h2>Team tokens and unlocks</h2>
         <p>A team allocation is optional and off by default. Off means 0% to the team: backers and the pool split the supply. When the founder switches it on, the team share can be anything from 0% up to, but not including, 100%, and the team tokens unlock either all at seeding or on a schedule the founder sets: evenly every day, week or month for a number of them, after an optional cliff, or on custom dates with their own shares.</p>
         <p>There is no minimum length, no maximum, no cap on a slice and no rate limit. The program checks only what matters: the slices add up to exactly 100% of the team share, the dates increase, and the whole schedule is written into the raise when it opens and cannot be changed after that. Backers see it on the raise page as one plain sentence with the next unlock date, as a fact and never as a warning.</p>
-        <p>Unlocked tokens are claimed to the payout wallet, by the founder or by anyone else; they go to the payout wallet either way. If a community takeover has moved the payout wallet, the remaining unlocks follow it.</p>
+        <p>Unlocked tokens are claimed to the payout wallet, by the founder or by anyone else; they go to the payout wallet either way.</p>
+        <p><b>A community takeover ends the unlocks.</b> If backers report an abandoned project and Seed's admins approve a takeover, every team token not yet unlocked is burned on the spot, so the supply falls by that much. Team tokens that had already unlocked stay with the team's payout wallet, and nothing unlocks after the takeover. Creator fees go to the wallet the backers chose.</p>
         <p>Backers' tokens are not vested. They are claimable the moment the raise seeds.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
@@ -1238,6 +1239,12 @@ a.ico:hover{color:var(--ink)}
           <div><dt>5% team, at seeding</dt><dd class="t">All 50M tokens to the payout wallet at seeding</dd></div>
           <div><dt>Custom: day 30 (50%), day 60 (50%)</dt><dd class="t">Two unlocks, in order, summing to 100%</dd></div>
           <div><dt>Custom: 60% and 60%</dt><dd class="t">Refused: not 100%</dd></div>
+        </dl>
+        <h3>A community takeover</h3>
+        <dl class="kv">
+          <div><dt>Not yet unlocked</dt><dd class="t">Burned. The supply falls by that much</dd></div>
+          <div><dt>Already unlocked</dt><dd class="t">Stays with the team's payout wallet</dd></div>
+          <div><dt>After it</dt><dd class="t">No more unlocks. Creator fees go to the wallet the backers chose</dd></div>
         </dl>
       </div>
     </section>
@@ -1271,7 +1278,7 @@ a.ico:hover{color:var(--ink)}
         <p><b>A wallet is enough; X is optional.</b> A founder opens a raise with a connected wallet. There is no KYC. A wallet can have one live raise at a time, and a wallet flagged for fraud cannot open another. Linking an X account, at opening or later, adds a verified badge: the account shows on the raise page with its age and follower count. The link is checked by the program: Seed's backend signs a short-lived attestation that ties the wallet to the account, and the instruction verifies that signature on chain. A raise without one shows nothing more than that none is linked.</p>
         <p><b>The payout wallet.</b> Creator fees and team unlocks go to the payout wallet the founder set at opening. A founder can move it, and the change takes effect seven days after the request; the raise page shows the pending change for the whole week.</p>
         <p><b>Reports.</b> Anyone with a wallet can report a raise. Reports are signed by the wallet, kept off chain and shown publicly on the raise page. Seed acts on fraud; it does not referee disagreements about a founder's promises.</p>
-        <p><b>What admins can do.</b> Seed's admin multisig has exactly two instructions. <i>Flag fraud</i> marks the raise, blacklists the founder wallet from opening another (and the X account, when one is linked), and disables buying through Seed. <i>Approve a takeover</i> moves the payout wallet to one the backers chose, so creator fees and the remaining unlocks go to the community instead of the founder. Neither touches the pool, which stays locked, or backers' tokens, which are already theirs.</p>
+        <p><b>What admins can do.</b> Seed's admin multisig has exactly two instructions. <i>Flag fraud</i> marks the raise, blacklists the founder wallet from opening another (and the X account, when one is linked), and disables buying through Seed. <i>Approve a takeover</i> moves the payout wallet to one the backers chose, so creator fees go to the community instead of the founder, and burns every team token not yet unlocked: the founder keeps only what had unlocked, and no unlock follows. Neither touches the pool, which stays locked, or backers' tokens, which are already theirs.</p>
         <p><b>What admins cannot do.</b> Withdraw liquidity, mint tokens, change a fee split, change a schedule, or take a refund. None of those instructions exist.</p>
       </div>
       <div class="aside"><span class="tick tl"></span><span class="tick tr"></span><span class="tick bl"></span><span class="tick br"></span>
@@ -2248,7 +2255,7 @@ $('#prows').addEventListener('click', e => { const cl = e.target.closest('[data-
 ui.pmode = 'backer';
 const myRaises = () => !state.wallet ? [] : isReal() ? state.presales.filter(p => p.live && p.founderWallet === state.wallet.pk) : state.presales.filter(p => p.mine || (p.creator && (p.creator === walletId() || p.creator === state.wallet.pk)));
 const isMine = p => !!state.wallet && (isReal() ? !!p.live && p.founderWallet === state.wallet.pk : !!(p.mine || (p.creator && p.creator === walletId())));   // the "Yours" tag: the demo founder's raises are nobody's until the demo wallet is connected (QA P2-97)
-const teamClaimable = p => { const u = unlockState(p); return Math.max(0, u.unlocked - (p.teamClaimed || 0)); };
+const teamClaimable = p => { const u = unlockState(p); return u.ended ? 0 : Math.max(0, u.unlocked - (p.teamClaimed || 0)); };   // after a takeover nothing is left to claim
 function renderCreator() {
   const box = $('#pCreator'); $('#pBacker').hidden = ui.pmode !== 'backer'; box.hidden = ui.pmode !== 'creator'; if (box.hidden) return;
   const list = myRaises();
@@ -2261,7 +2268,7 @@ function renderCreator() {
     const t = byQ[p.q] || (byQ[p.q] = { p, earned: 0, claimable: 0, reading: false }); t.earned += f.founder; t.claimable += f.founderUnclaimed; t.reading = t.reading || !!f.reading;
     const fees = seeded ? `<b class="num">${f.reading ? '…' : fmtExact(f.founder, p.q) + ' ' + sym}</b><span>earned from ${fmtExact(f.volume, p.q)} ${sym} traded</span><span class="num">${f.reading ? '…' : fmtExact(f.founderUnclaimed, p.q) + ' ' + sym} claimable</span>${f.founderUnclaimed > 0 ? `<button class="qb hot" data-cfees="${p.id}">Claim fees</button>` : ''}` : `<span>${p.status === 'live' ? 'Fees start when the pool opens' : p.status === 'filled' ? 'Seeding; fees start when the pool opens' : 'No pool: it refunded'}</span>`;
     const team = !sp.team ? '<span>No team tokens</span>' : !seeded ? `<b class="num">${fmtTok(sp.team)} $${esc(p.ticker)}</b><span>${esc(fmtSchedule(p.teamSchedule))}, from seeding</span>` :
-      `<b class="num">${fmtTok(u.unlocked)} <em>/ ${fmtTok(sp.team)} $${esc(p.ticker)}</em></b><span>unlocked${u.next ? `, next ${(u.next.bps / 100).toFixed(u.next.bps % 100 ? 2 : 0)}% ${fmtDay(u.next.at)}` : ', all released'}</span><span class="num">${fmtTok(tc)} claimable</span>${tc > 0 ? `<button class="qb hot" data-cteam="${p.id}">Claim tokens</button>` : ''}`;
+      `<b class="num">${fmtTok(u.unlocked)} <em>/ ${fmtTok(sp.team)} $${esc(p.ticker)}</em></b><span>unlocked${u.next ? `, next ${(u.next.bps / 100).toFixed(u.next.bps % 100 ? 2 : 0)}% ${fmtDay(u.next.at)}` : u.ended ? `; the takeover burned the other ${fmtTok(u.burned)}` : ', all released'}</span><span class="num">${fmtTok(tc)} claimable</span>${tc > 0 ? `<button class="qb hot" data-cteam="${p.id}">Claim tokens</button>` : ''}`;
     const payout = `<span class="num">${esc(shortMint(p.payoutWallet || ''))}</span>${p.payoutWallet ? `<button class="copy" data-copy="${esc(p.payoutWallet)}" aria-label="Copy payout wallet">${ICONS.copy}</button>` : ''}${p.takeover ? `<span class="tag">${esc(p.takeover.label || 'Community')}</span>` : ''}${pc ? `<span class="fee-pend">Moving to ${esc(shortMint(pc.to))} ${pc.due ? 'now' : fmtDate(pc.at)}</span>` : p.takeover ? '' : `<button class="linkbtn" data-cpayout="${p.id}">Change</button>`}`;
     return `<div class="crow"><div class="c-proj"><a href="#/presale/${esc(p.id)}">${avatar(p)}</a><span class="nm"><b>${esc(p.name)}<span class="tk">$${esc(p.ticker)}</span></b><span class="meta"><span class="tag${p.status === 'live' ? ' in' : ''}">${p.blacklisted ? 'Flagged' : RAISE_STATE[p.status]}</span></span></span></div>
       <div class="c-cell"><dt>Creator fees, your ${(p.creatorShareBps || SEED.creatorShareBps) / 100}%</dt>${fees}</div><div class="c-cell"><dt>Team tokens</dt>${team}</div><div class="c-cell c-pay"><dt>Payout wallet</dt>${payout}</div>
@@ -2522,7 +2529,8 @@ async function adminFlag(p, reportId) {
 }
 async function adminTakeover(p, reportId, to, label) {
   if (!isAdmin() || busy) return; busy = true;
-  try { await adapter.adminTakeover(p, to); p.takeover = { from: p.payoutWallet, to, at: Date.now(), reportId, by: walletId(), label }; p.payoutWallet = to; p.pendingPayoutWallet = null; p.payoutEffectiveAt = null; const r = (p.reports || []).find(x => x.id === reportId); if (r) r.status = 'takeover'; toast(`Payout wallet moved to ${label}`); }
+  try { const u = unlockState(p); await adapter.adminTakeover(p, to); if (p.status === 'seeded' && !u.ended) p.teamClaimed = u.unlocked;   // the program paid what had unlocked and burned the rest
+    p.takeover = { from: p.payoutWallet, to, at: Date.now(), reportId, by: walletId(), label }; p.payoutWallet = to; p.pendingPayoutWallet = null; p.payoutEffectiveAt = null; const r = (p.reports || []).find(x => x.id === reportId); if (r) r.status = 'takeover'; toast(`Payout wallet moved to ${label}`); }
   catch (e) { toast(e.message); }
   busy = false; save(); renderAll(); if (detailBox) renderDetail(true);
 }

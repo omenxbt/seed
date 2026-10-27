@@ -21,7 +21,8 @@ export const EVENTS: Record<string, Field[]> = {
   PayoutChanged: [['pubkey', 'raise'], ['pubkey', 'to'], ['i64', 'at']],
   FraudFlagged: [['pubkey', 'raise'], ['pubkey', 'founder'], ['opt_hash32', 'xHandleHash'], ['pubkey', 'by'], ['i64', 'at']],
   XLinked: [['pubkey', 'raise'], ['pubkey', 'founder'], ['hash32', 'xHandleHash'], ['i64', 'at']],
-  TakeoverApproved: [['pubkey', 'raise'], ['pubkey', 'from'], ['pubkey', 'to'], ['pubkey', 'by'], ['i64', 'at']]
+  TakeoverApproved: [['pubkey', 'raise'], ['pubkey', 'from'], ['pubkey', 'to'], ['pubkey', 'by'], ['i64', 'at']],
+  TeamBurned: [['pubkey', 'raise'], ['pubkey', 'payoutWallet'], ['u64', 'paid'], ['u64', 'burned'], ['u64', 'supply'], ['i64', 'at']]
 };
 export const REFUND_REASON = ['missed', 'cancelled', 'timeout'];
 

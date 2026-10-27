@@ -252,12 +252,99 @@ describe('seed', () => {
     await expectFail(c.send([await c.applyPayoutChange(raise)]), 'ChangeNotDue');
   });
 
-  it('admin: a takeover moves the payout wallet', asAdmin(async () => {
-    const to = Keypair.generate().publicKey;
-    await expectFail(c.send([await c.adminApproveTakeover(raise, backer.publicKey, to)], [backer]), 'NotAdmin');
-    await c.send([await c.adminApproveTakeover(raise, me.publicKey, to)]);
-    r = await c.fetchRaise(raise); assert.ok(r.payoutWallet.equals(to)); assert.equal(r.pendingPayout, null); assert.ok(r.takeoverTo.equals(to));
-  }));
+  /* the takeover burn (the owner's policy): every team token not yet unlocked is burned, what had unlocked stays with the payout
+     wallet of before, and the unlocks end. The admin signs, or on a devnet build whose admin is another wallet, the upgrade authority */
+  const asAuth = () => !cfg.admin.equals(me.publicKey);
+  const supplyOf = async (m: web3.PublicKey) => (await getMint(provider.connection, m)).supply;
+  const teamLeft = async (rk: web3.PublicKey) => (await getAccount(provider.connection, pda.teamVault(program.programId, rk))).amount;
+  const tokensOf = async (m: web3.PublicKey, w: web3.PublicKey) => { try { return (await getAccount(provider.connection, getAssociatedTokenAddressSync(m, w, true))).amount; } catch { return 0n; } };
+
+  it('takeover: on the suite\'s raise, inside its cliff, every team token burns, the payout moves and the unlocks end', async () => {
+    r = await c.fetchRaise(raise); const km: web3.PublicKey = r.mint;   // the chain's mint: on devnet the live crank may have run the steps
+    const to = Keypair.generate().publicKey, team = 100_000_000_000_000n, was = r.payoutWallet;
+    await expectFail(c.send([await c.adminApproveTakeover(raise, backer.publicKey, to, true)], [backer]), 'NotAdmin');   // neither the admin nor the upgrade authority
+    const supply0 = await supplyOf(km), held0 = await tokensOf(km, was);
+    assert.equal(supply0, BigInt(SUPPLY_UNITS.toString())); assert.equal(await teamLeft(raise), team);
+    await c.send([await c.adminApproveTakeover(raise, me.publicKey, to, asAuth())]);
+    r = await c.fetchRaise(raise); assert.ok(r.payoutWallet.equals(to)); assert.equal(r.pendingPayout, null, 'the founder\'s pending change is gone'); assert.ok(r.takeoverTo.equals(to));
+    assert.equal(await teamLeft(raise), 0n, 'the team vault is empty'); assert.equal(await supplyOf(km), supply0 - team, 'the supply fell by the whole 10%');
+    assert.equal(await tokensOf(km, was), held0, 'nothing had unlocked, so nothing went to the payout wallet of before'); assert.equal(Number(r.teamClaimed), 0);
+    await c.send([c.ata(me.publicKey, to, km)]);
+    await expectFail(c.send([await c.claimVested(raise, km, to, me.publicKey)]), 'UnlocksEnded');
+    // a second takeover moves the payout again and burns nothing more
+    const to2 = Keypair.generate().publicKey;
+    await c.send([await c.adminApproveTakeover(raise, me.publicKey, to2, asAuth())]);
+    r = await c.fetchRaise(raise); assert.ok(r.payoutWallet.equals(to2)); assert.equal(await supplyOf(km), supply0 - team);
+  });
+
+  describe('takeover mid-schedule: a quarter paid, a quarter due, half locked', () => {
+    /* a 20% team share unlocking 25% at seeding, 25% a day later and 50% at day 10,000. The crank pays the first quarter at
+       seeding; a day on, the second quarter is due and unpaid when the takeover lands: it goes to the payout wallet of before,
+       the locked half burns, and no unlock follows */
+    const f = Keypair.generate(), payout = Keypair.generate().publicKey, to = Keypair.generate().publicKey, mk = Keypair.generate(), nk = Keypair.generate();
+    let rk: web3.PublicKey, rr: any, lm: web3.PublicKey; const team = 200_000_000_000_000n;
+    /* a seeding step, unless someone ran it first (on devnet the live crank cranks every filled raise) */
+    const step = async (done: (x: any) => boolean, ixs: () => Promise<web3.TransactionInstruction[]>, signers: web3.Keypair[] = []) => {
+      if (done(await c.fetchRaise(rk))) return false;
+      try { await c.send(await ixs(), signers); } catch (e) { if (!done(await c.fetchRaise(rk))) throw e; return false; }
+      return true;
+    };
+    const past = (x: any, s: string) => ['minted', 'pooled', 'seeded'].indexOf(Object.keys(x.seedStep)[0]) >= ['minted', 'pooled', 'seeded'].indexOf(s);
+    it('opens, fills and mints; a takeover before seeding is refused', async function () {
+      this.timeout(120_000);
+      const ata = getAssociatedTokenAddressSync(NATIVE_MINT, me.publicKey);
+      await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: f.publicKey, lamports: 0.03 * LAMPORTS_PER_SOL }), SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: ata, lamports: 0.12 * LAMPORTS_PER_SOL }), createSyncNativeInstruction(ata)]);
+      const o = await c.openRaise(f.publicKey, WSOL, null, null, { nonce: nonce + 70, name: 'Ledge', ticker: 'LDG', uri: KILN_URI, preset: TEST_PRESET, deadline: span(86400), teamBps: 2000, schedule: [{ dayOffset: 0, bps: 2500 }, { dayOffset: 1, bps: 2500 }, { dayOffset: 10_000, bps: 5000 }], payoutWallet: payout });
+      await c.send(o.ixs, [f]); rk = o.raise; rr = await c.fetchRaise(rk);
+      await c.send([await c.contribute(rk, WSOL, me.publicKey, rr.target)]);
+      await step(x => past(x, 'minted'), async () => [await c.crankMint(rk, mk.publicKey, WSOL, me.publicKey)], [mk]);
+      rr = await c.fetchRaise(rk); lm = rr.mint;
+      if (Object.keys(rr.status)[0] !== 'filled') return this.skip();   // the live crank seeded it already: nothing before seeding to refuse
+      assert.equal(await teamLeft(rk), team);
+      await expectFail(c.send([await c.adminApproveTakeover(rk, me.publicKey, to, asAuth())]), 'NotSeeded');
+    });
+    it('seeds; the crank pays the quarter that unlocks at seeding', async function () {
+      this.timeout(120_000);
+      await step(x => past(x, 'pooled'), async () => [web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 600_000 }), await c.crankPool(rk, lm, WSOL, nk.publicKey, me.publicKey)], [nk]);
+      await step(x => Object.keys(x.status)[0] === 'seeded', async () => [await c.crankSeed(rk, WSOL, cfg.seedTreasury)]);
+      await c.send([c.ata(me.publicKey, payout, lm)]);
+      try { await c.send([await c.claimVested(rk, lm, payout, me.publicKey)]); } catch (e: any) { if (!String(e.message).includes('NothingToClaim')) throw e; }   // the live crank may have paid it
+      assert.equal(await tokensOf(lm, payout), team / 4n);
+      await expectFail(c.send([await c.claimVested(rk, lm, payout, me.publicKey)]), 'NothingToClaim');
+    });
+    it('a day on, the takeover pays the due quarter to the payout wallet of before, burns the locked half and ends the unlocks', async function () {
+      this.timeout(240_000);
+      rr = await c.fetchRaise(rk);
+      const due = Number(rr.seededAt) + Number(rr.timeUnit) + 2;   // one unlock "day" after seeding
+      while (((await provider.connection.getBlockTime(await provider.connection.getSlot('confirmed'))) || 0) < due) await new Promise(res => setTimeout(res, 5000));
+      const supply0 = await supplyOf(lm), paidBefore = await tokensOf(lm, payout);   // a quarter, or half when the live crank paid the due quarter first
+      const sig = await c.send([await c.adminApproveTakeover(rk, me.publicKey, to, asAuth())]);
+      console.log(`      takeover ${rk.toBase58()}: ${typeof sig === 'string' ? sig : ''} (the due quarter ${paidBefore === team / 4n ? 'paid by the takeover' : 'already paid by the crank'})`);
+      rr = await c.fetchRaise(rk);
+      assert.equal(await tokensOf(lm, payout), team / 2n, 'the quarter paid at seeding stayed, the due quarter joined it');
+      assert.equal(await teamLeft(rk), 0n); assert.equal(await supplyOf(lm), supply0 - team / 2n, 'the locked half was burned');
+      assert.equal(BigInt(rr.teamClaimed.toString()), team / 2n); assert.ok(rr.payoutWallet.equals(to)); assert.ok(rr.takeoverTo.equals(to));
+      await c.send([c.ata(me.publicKey, to, lm)]);
+      await expectFail(c.send([await c.claimVested(rk, lm, to, me.publicKey)]), 'UnlocksEnded');
+      assert.equal(await tokensOf(lm, to), 0n, 'the new payout wallet gets the creator fees, never team tokens');
+    });
+    it('devnet build: the upgrade authority may sign in place of the admin; anyone else is refused, ProgramData or not', async function () {
+      this.timeout(120_000);
+      const pd = await provider.connection.getAccountInfo(c.programData);
+      if (!pd) return this.skip();   // a validator that loaded the program without its ProgramData (an older localnet.sh)
+      const tmp = Keypair.generate(), handOver = cfg.admin.equals(me.publicKey);
+      if (handOver) { await c.send([SystemProgram.transfer({ fromPubkey: me.publicKey, toPubkey: tmp.publicKey, lamports: 0.01 * LAMPORTS_PER_SOL }), await c.proposeAdmin(tmp.publicKey, me.publicKey)]); await c.send([await c.acceptAdmin(tmp.publicKey)], [tmp]); }
+      try {
+        const to3 = Keypair.generate().publicKey;
+        await expectFail(c.send([await c.adminApproveTakeover(rk, me.publicKey, to3)]), 'NotAdmin');   // not the admin, and no ProgramData
+        await expectFail(c.send([await c.adminApproveTakeover(rk, backer.publicKey, to3, true)], [backer]), 'NotAdmin');
+        await c.send([await c.adminApproveTakeover(rk, me.publicKey, to3, true)]);
+        assert.ok((await c.fetchRaise(rk)).payoutWallet.equals(to3));
+      } finally {
+        if (handOver) { await c.send([await c.proposeAdmin(me.publicKey, tmp.publicKey)], [tmp]); await c.send([await c.acceptAdmin(me.publicKey)]); cfg = await c.fetchConfig(); assert.ok(cfg.admin.equals(me.publicKey)); }
+      }
+    });
+  });
 
   // the long ones, after the suite's raise is seeded: they would not fit inside its one-"day" (one-minute) deadline
   it('pair assets: the allowlist takes a Token-2022 mint priced as a dollar, refuses one with a transfer fee, and a raise in it fills, seeds on DAMM and pays its fees', async function () {

@@ -19,7 +19,7 @@ with the commit or tx in brackets.
 
 ## B. Scope changes
 - [x] SOL only: no pair selector on the launch form (verify on final-model) [03f8677; production serves no selector]
-- [ ] USDC and TSTx paused on chain with set_pair; a raise attempt on either is refused with PairPaused (save the tx) [TSTx: tx 3iMigYj8EgUg5wNRX2QWg145oUrJEP4PjdGAhB6v1CbgLdY4pH9z1FabGzsVuq8smq2hSAspcj1ozojf4xa6icaJ, a simulated open_raise fails PairPaused 6014. USDC: open_raise accepts it without the allowlist, so no set_pair can make it refuse, and B3 rules out the change → [OWNER] decide, see PROGRESS.md]
+- [x] USDC and TSTx paused on chain with set_pair; a raise attempt on either is refused with PairPaused (save the tx) [TSTx: tx 3iMigYj8EgUg5wNRX2QWg145oUrJEP4PjdGAhB6v1CbgLdY4pH9z1FabGzsVuq8smq2hSAspcj1ozojf4xa6icaJ, a simulated open_raise fails PairPaused 6014. USDC: open_raise accepts it without the allowlist, so no set_pair can make it refuse, and B3 rules out the change → [OWNER] decide, see PROGRESS.md. USDC: accepted by the owner 2026-10-27, it stays open on chain while the site offers SOL only (DECISIONS.md)]
 - [x] No program change for USDC; allowlist code stays for later [03f8677: no program change; set_pair and the allowlist intact]
 - [x] MAINNET.md + staging/production init scripts set up SOL only [03f8677: MAINNET.md SOL only, check-deploy.ts fails on an active entry (devnet OK), staging init makes no entry]
 - [x] Docs, FAQ and copy say SOL; no "SOL, USDC or an approved asset" anywhere [this commit: the site's meta description, the brand book, banner 05 and its source; the docs in 03f8677. The program's own BadPair message still names USDC: program text, B3]
@@ -36,11 +36,11 @@ with the commit or tx in brackets.
 - [x] Axiom and GMGN trade buttons on every seeded raise page [658f153, branch checklist-next: on mainnet they open the token; on devnet they show disabled with the reason]
 - [x] DexScreener profile data (logo, socials, description) prepared at seed time for mainnet [7fd0803, branch checklist-next: the Info tab's DEXScreener profile, ready at seeding, Copy as JSON and the form link]
 
-## D. UI simplification (branch ui-simplify, not merged)
+## D. UI simplification (branch ui-simplify, kept and merged 2026-10-27)
 - [x] Restore green Buy / red Sell on the trade toggle [29a8215 on ui-simplify]
 - [x] Keep ui-simplify rebased on final-model, so the preview includes sections B and C [eee8ff7: final-model 0fc8490 merged in, all 17 actions pass; merged again whenever final-model moves]
 - [x] Hand seed-qa a pass on the ui-simplify preview (all actions, tabs, sort, List/Grid, Show more, 1440/1024/390) [handed to seed-qa (session seed-9b) 2026-10-26 17:35 PT, queued after the final-model gate]
-- [ ] [OWNER] Keep or revert. Keep: merge into final-model, and the QA clean-pass count restarts. Revert: delete the branch.
+- [x] [OWNER] Keep or revert. Keep: merge into final-model, and the QA clean-pass count restarts. Revert: delete the branch. [keep, the owner 2026-10-27: squash-merged into final-model as aa33cd7, the clean-pass count restarted]
 
 ## E. QA gate
 - [x] Tell seed-qa the scope (SOL only; F21/F22 and paused-pair UI out of scope) and start full pass #33 once A and B are live [seed-qa (session seed-9b) is running pass #33 since 03f8677; scope and commits sent 2026-10-26 17:08 PT]
@@ -58,8 +58,17 @@ with the commit or tx in brackets.
 - [ ] [OWNER] Phantom click-through: launch a Test-preset raise, back it, watch it seed, claim, trade
 - [ ] [OWNER] Refund checks: one cancelled raise, one missed deadline
 - [ ] [OWNER] Phone check
-- [ ] [OWNER] Takeover policy for unvested team tokens: burn or keep (list what each changes in the program; don't implement)
-- [ ] [OWNER] Staging presets ($150/$300/$450/$600, or swap $600 for $50K) and mainnet funding: deployer 5.0, staging backer 0.75, Irys 0.01
+- [x] [OWNER] Takeover policy for unvested team tokens: burn or keep (list what each changes in the program; don't implement) [burn, the owner 2026-10-27: implemented, see G3]
+- [ ] [OWNER] Staging presets ($150/$300/$450/$600, or swap $600 for $50K) and mainnet funding: deployer 5.0, staging backer 0.75, Irys 0.01 [presets: $150/$300/$450/$600 stay unless the owner says otherwise (2026-10-27); mainnet funding still the owner's]
+
+## G. The owner's decisions of 2026-10-27
+- [x] Land seed-cc's P2-111 to P2-115 and the buy-toast rounding into final-model [7ca3ef2, a fast-forward]
+- [x] Merge ui-simplify into final-model, green Buy / red Sell kept [aa33cd7, squashed; the owner's later raise-page asks kept]
+- [ ] Burn on takeover: the program change, unit tests, the devnet upgrade and one suite run on devnet; docs, FAQ and the raise page say so; MAINNET.md and the audit list
+- [ ] Refresh js/idl and the crank; push; the Vercel build READY
+- [ ] QA gate on the new final code: the #36–#37 scope plus the new UI and burn on takeover; two consecutive clean full passes
+- [ ] READY.md refreshed (tx links with the burn), a new 23-hour share link, STATUS.md, the "Ready for final testing" notification
+- [ ] [OWNER] Move production (main) after the final click-through
 
 ## Status reports
 At the end, and after every 5 loop iterations, write STATUS.md in the repo root. No names of any person anywhere in it. Format:

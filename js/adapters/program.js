@@ -445,11 +445,17 @@ var chain = {
   async adminFlag(p) {
     await this.init(); const raise = this.raiseKey(p), a = await this.program.account.raise.fetch(raise);
     const rem = a.xHandleHash ? [{ pubkey: this.pda.blacklist(Uint8Array.from(a.xHandleHash)), isSigner: false, isWritable: true }] : [];   // the handle's blacklist too, when one is linked
-    await this.send([await this.program.methods.adminFlagFraud().accounts({ raise, config: this.pda.config(), admin: this.me(), walletBlacklist: this.pda.blacklist(a.founder), systemProgram: this.pk(PROG.SYSTEM) }).remainingAccounts(rem).instruction()]); this.later(p);
+    await this.send([await this.program.methods.adminFlagFraud().accounts({ raise, config: this.pda.config(), admin: this.me(), programData: this.adminProgramData(), walletBlacklist: this.pda.blacklist(a.founder), systemProgram: this.pk(PROG.SYSTEM) }).remainingAccounts(rem).instruction()]); this.later(p);
   },
+  /* a takeover pays what had unlocked to the payout wallet of before (its token account is made if missing), burns the rest
+     of the team vault and moves the payout */
   async adminTakeover(p, to) {
-    await this.init(); await this.send([await this.program.methods.adminApproveTakeover(this.pk(to)).accounts({ raise: this.raiseKey(p), config: this.pda.config(), admin: this.me() }).instruction()]); this.later(p);
+    await this.init(); const raise = this.raiseKey(p), a = await this.program.account.raise.fetch(raise);
+    await this.send([await this.program.methods.adminApproveTakeover(this.pk(to)).accounts({ raise, config: this.pda.config(), admin: this.me(), programData: this.adminProgramData(), mint: a.mint, teamVault: this.pda.teamVault(raise),
+      payoutWallet: a.payoutWallet, payoutToken: this.ata(a.payoutWallet, a.mint), tokenProgram: this.pk(PROG.TOKEN), associatedTokenProgram: this.pk(PROG.ATA), systemProgram: this.pk(PROG.SYSTEM) }).instruction()]); this.later(p);
   },
+  /* the program's ProgramData when the wallet is not the config's admin: a devnet build lets its upgrade authority sign the admin instructions */
+  adminProgramData() { return this.cfg.admin.equals(this.me()) ? null : this.find([this.pid.toBytes()], this.pk('BPFLoaderUpgradeab1e11111111111111111111111')); },
   /* the admin handover's second step, by the wallet the admin named */
   async acceptAdmin() {
     await this.init(); await this.send([await this.program.methods.acceptAdmin().accounts({ config: this.pda.config(), newAdmin: this.me() }).instruction()]);

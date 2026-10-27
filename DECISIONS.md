@@ -2,6 +2,21 @@
 
 Layout and product calls made while building, with the reason. "What Seed is" in LOOP.md is never changed here.
 
+- **A community takeover burns the team tokens not yet unlocked (the owner, 2026-10-27).** When the admin approves a
+  takeover of a seeded raise, the program pays what the schedule had released and not yet been paid to the payout wallet of
+  before, burns every team token still locked (the supply falls by that much), moves the payout to the wallet the backers
+  chose, and refuses every unlock after (UnlocksEnded). Tokens already paid out stay where they are. A takeover before
+  seeding is refused. The Raise layout did not change. MAINNET.md has it, and it heads the audit list there.
+- **On devnet builds the upgrade authority may sign the admin instructions (2026-10-27).** The Config admin on devnet is the
+  owner's browser wallet, so testing the takeover burn and the fraud flag each pass would need the owner every time. As
+  `set_pair` already allowed, a devnet build also accepts the program's upgrade authority with the program's own
+  ProgramData account (address and loader owner checked, which also closes QA P1-F31: set_pair used to read any account's
+  bytes). A mainnet build accepts the Config admin alone; the code is under the devnet feature.
+- **USDC stays open on chain; the site stays SOL only (the owner, 2026-10-27).** `open_raise` keeps accepting USDC without an
+  allowlist entry, no program change; nothing on the site offers it. CHECKLIST B2 is closed as accepted by the owner.
+- **ui-simplify kept (the owner, 2026-10-27).** Squash-merged into final-model with green Buy / red Sell, keeping the owner's
+  later raise-page asks (Creator fees in their own window, no "How it raised" on a seeded raise, the pool's figures in the
+  facts, the rolling Trending bar). Squashed so the branch's commit messages stay off final-model.
 - **SOL only at launch (the owner, 2026-10-26).** Every new raise pairs with SOL: the Launch form has no pair choice and no
   "What backers pay" block (backers see the 1% fee on the raise page's deposit panel), the board and the Filters dialog
   offer no pair, and the docs say SOL. On devnet TSTx is paused with `set_pair` (tx 3iMigYj8…xa6icaJ), so the program
