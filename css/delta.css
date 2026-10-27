@@ -147,6 +147,7 @@
 .ts-item b{font-weight:500}
 .ts-mc{color:var(--ink-2)}
 .ts-item .chg{font-size:12.5px}
+.ts-item .demo-chip{font-size:10.5px;padding:1px 7px}
 
 /* ------------------------------------------------------- hero and featured */
 /* the Pools page's top: a hero on the left, the most active raise on the right as a card (the hero's large Seed mark came out, the owner) */
