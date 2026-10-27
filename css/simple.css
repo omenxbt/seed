@@ -31,7 +31,7 @@ html,body{background:var(--bg)}
 .seg .seg-ind{background:var(--sel);border:0;box-shadow:none}
 .seg button[aria-pressed="true"]{color:var(--ink)}
 .mini-seg button[aria-pressed="true"],.feed-tabs button[aria-selected="true"],.tf-pills button[aria-pressed="true"],.mode-seg button[aria-pressed="true"],.toc a.on{background:var(--sel);color:var(--ink);border-color:transparent;box-shadow:none}
-.side-seg button[data-v="buy"][aria-pressed="true"],.side-seg button[data-v="sell"][aria-pressed="true"]{background:var(--sel);color:var(--ink);border-color:transparent;box-shadow:none}
+/* the trade toggle keeps its colours: green Buy, red Sell (presale.css and delta.css) */
 .inp:focus-within,.mini:focus-within{border-color:var(--navy);box-shadow:0 0 0 3px var(--ring)}
 .switch[aria-checked="true"]{background:var(--accent);box-shadow:none}
 .rank-badge,.chev,.seed-steps li.now .num,.steps .num{background:var(--chip);border:1px solid var(--hair);box-shadow:none;color:var(--ink-2)}
