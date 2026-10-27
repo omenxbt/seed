@@ -37,9 +37,9 @@ with the commit or tx in brackets.
 - [x] DexScreener profile data (logo, socials, description) prepared at seed time for mainnet [7fd0803, branch checklist-next: the Info tab's DEXScreener profile, ready at seeding, Copy as JSON and the form link]
 
 ## D. UI simplification (branch ui-simplify, not merged)
-- [ ] Restore green Buy / red Sell on the trade toggle
-- [ ] Keep ui-simplify rebased on final-model, so the preview includes sections B and C
-- [ ] Hand seed-qa a pass on the ui-simplify preview (all actions, tabs, sort, List/Grid, Show more, 1440/1024/390)
+- [x] Restore green Buy / red Sell on the trade toggle [29a8215 on ui-simplify]
+- [x] Keep ui-simplify rebased on final-model, so the preview includes sections B and C [eee8ff7: final-model 0fc8490 merged in, all 17 actions pass; merged again whenever final-model moves]
+- [x] Hand seed-qa a pass on the ui-simplify preview (all actions, tabs, sort, List/Grid, Show more, 1440/1024/390) [handed to seed-qa (session seed-9b) 2026-10-26 17:35 PT, queued after the final-model gate]
 - [ ] [OWNER] Keep or revert. Keep: merge into final-model, and the QA clean-pass count restarts. Revert: delete the branch.
 
 ## E. QA gate
