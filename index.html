@@ -2067,7 +2067,7 @@ async function claim(p, btn) {
   busy = true; btn.disabled = true; btn.textContent = 'Confirm in wallet…';
   try {
     if (p.status === 'seeded') { await adapter.claimTokens(p); const had = (state.tokens = state.tokens || {})[p.id] || 0; state.tokens[p.id] = had + Math.round(tokensFor(p, amt)); state.claimed[p.id] = 'tokens'; toast(`Claimed ${fmtTok(tokensFor(p, amt))} $${p.ticker}`); }
-    else { await adapter.claimRefund(p); const back = paidFor(amt); state.wallet.bal[p.q] = r6(balOf(p.q) + back); state.claimed[p.id] = 'refund'; toast(`Refund claimed: ${fmtAmt(back, p.q)} ${C.sym} is back in your wallet, fee included`); }
+    else { await adapter.claimRefund(p); const back = paidFor(amt); state.wallet.bal[p.q] = r6(balOf(p.q) + back); state.claimed[p.id] = 'refund'; toast(`Refund claimed: ${fmtExact(back, p.q)} ${C.sym} is back in your wallet, fee included`); }
   } catch (e) { toast(e.message); }
   busy = false; save(); renderAll();
 }

@@ -376,7 +376,18 @@ var chain = {
     await this.send(ixs); this.later(p);
   },
   async claimRefund(p) {
-    await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), pp = this.pairProgram(p), wt = this.ata(me, pairMint, pp), a = await this.program.account.raise.fetch(raise), st = Object.keys(a.status)[0], now = Date.now() / 1000;
+    await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), pp = this.pairProgram(p), wt = this.ata(me, pairMint, pp);
+    const first = await this.refundIxs(p, me, raise, pairMint, pp, wt);
+    try { await this.send(first.ixs); }
+    catch (e) {   // the crank settled the raise between the read and the send, so the bundled settle failed: the claim goes again without it (QA P2-111)
+      if (!first.settles || /Cancelled in the wallet/.test(e.message)) throw e;
+      const again = await this.refundIxs(p, me, raise, pairMint, pp, wt); if (again.settles) throw e;
+      await this.send(again.ixs);
+    }
+    this.later(p);
+  },
+  async refundIxs(p, me, raise, pairMint, pp, wt) {
+    const a = await this.program.account.raise.fetch(raise), st = Object.keys(a.status)[0], now = Date.now() / 1000;
     const ixs = [];
     // the raise settles on chain before the first refund if the crank has not been by yet: a miss, or a seeding that stalled
     // (the timeout counts from the last seeding step, the fill or the mint; a raise the pool already holds is only ever seeded)
@@ -384,9 +395,10 @@ var chain = {
     if (st === 'live' && now >= Number(a.endsAt)) ixs.push(await this.program.methods.settle().accounts({ raise }).instruction());
     else if (st === 'filled' && step !== 'pooled' && now >= since + tmo) ixs.push(await this.program.methods.timeoutRefund().accounts({ raise, config: this.pda.config() }).instruction());
     else if (st !== 'refunded') { this.apply(p, a); throw new Error(st === 'seeded' ? 'This raise seeded; there is no refund, the tokens are yours to claim.' : st === 'filled' ? 'This raise is being seeded; there is no refund while seeding is under way.' : 'This raise is still open.'); }
+    const settles = ixs.length > 0;
     ixs.push(this.ixAtaIdem(me, wt, me, pairMint, pp), await this.program.methods.claimRefund().accounts({ raise, contribution: this.pda.contribution(raise, me), wallet: me, pairMint, walletToken: wt, escrow: this.ata(raise, pairMint, pp), tokenProgram: pp }).instruction());
     if (p.q === 'SOL') ixs.push(this.ixClose(wt, me, me));
-    await this.send(ixs); this.later(p);
+    return { ixs, settles };
   },
   async claimTokens(p) {
     await this.init(); const me = this.me(), raise = this.raiseKey(p), mint = this.pk(p.mint), wt = this.ata(me, mint);

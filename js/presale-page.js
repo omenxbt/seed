@@ -358,7 +358,11 @@ function seedingPanel(p) {
 }
 /* the deposit field's opening amount: never more than the wallet may still put in, fee included (the limits live on the profile, QA P2-85) */
 const maxLeftOf = p => { const pr = profileOf(p); return pr.maxBuy > 0 ? paidFor(Math.max(0, pr.maxBuy - ((state.positions && state.positions[p.id]) || 0))) : Infinity; };
-const depositAmt = p => Math.min(quickFor(p), payLeft(p), maxLeftOf(p));
+/* the wallet's room under its maximum is below the minimum and does not fill the raise: it can add nothing more, so the panel
+   offers no amount and says why (QA P2-113) */
+const roomLeftOf = p => profileOf(p).maxBuy - ((state.positions && state.positions[p.id]) || 0);
+const stuckBelowMin = p => { const pr = profileOf(p); if (!state.wallet || !(pr.minBuy > 0 && pr.maxBuy > 0)) return false; const left = roomLeftOf(p); return left > 1e-9 && left < pr.minBuy - 1e-9 && left < leftOf(p) - 1e-9; };
+const depositAmt = p => stuckBelowMin(p) ? '' : Math.min(quickFor(p), payLeft(p), maxLeftOf(p));
 /* a field's asset label: SOL carries the Solana mark (the sprite's #solMark), any other asset is its symbol */
 const symLabel = sym => sym === 'SOL' ? '<svg class="sol-ico" viewBox="0 0 24 24" aria-hidden="true"><use href="#solMark"/></svg>SOL' : esc(sym);
 function depositPanel(p) {
@@ -366,7 +370,7 @@ function depositPanel(p) {
   return `<section class="panel rail-card" data-trade="deposit"><h3>Deposit into $${esc(p.ticker)}</h3>
     <div class="trade-top"><label class="rail-lab" for="ppAmt">You deposit</label><span class="rail-bal num" data-bal></span></div>
     <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" value="${amt}" aria-label="Amount in ${sym}"><span class="suf">${symLabel(C.sym)}</span></div>
-    <div class="chips">${chipsFor(p).filter(c => c <= Math.min(payLeft(p), maxLeft) + 1e-9).map(c => `<button type="button" data-chip="${c}">${fmtC(c, p.q)}</button>`).join('')}<button type="button" data-chip="max">${maxLeft < payLeft(p) ? 'Max' : 'Fill'}</button></div>
+    <div class="chips">${chipsFor(p).filter(c => !stuckBelowMin(p) && c <= Math.min(payLeft(p), maxLeft) + 1e-9).map(c => `<button type="button" data-chip="${c}">${fmtC(c, p.q)}</button>`).join('')}<button type="button" data-chip="max">${maxLeft < payLeft(p) ? 'Max' : 'Fill'}</button></div>
     <div class="recv"><span>You receive if it seeds</span><b class="num" data-recv></b></div>
     <p class="rail-fee"><span>Seed fee, ${SEED.feeBps / 100}%, included</span><span class="num" data-dfee></span></p>
     <p class="rail-meta num">${pr.minBuy ? `Min ${fmtC(pr.minBuy, p.q)} ${sym}${pr.minBuyPct ? ` (${pr.minBuyPct}% of supply)` : ''}` : 'No minimum'} · ${pr.maxBuy ? `Max ${fmtC(pr.maxBuy, p.q)} ${sym}${pr.maxBuyPct ? ` (${pr.maxBuyPct}% of supply)` : ''} per wallet` : 'No maximum per wallet'}</p>
@@ -933,6 +937,7 @@ function bindRail(p) {
       $('[data-recv]', panel).textContent = `${fmtTok(n > 0 ? tokensFor(cur, Math.min(amountFor(n), leftOf(cur))) : 0)} $${cur.ticker}`;   // the buy inside the payment, capped at the room left
       const df = $('[data-dfee]', panel); if (df) { const pay = n > 0 ? Math.min(n, payLeft(cur)) : 0; df.textContent = `${fmtExact(pay - amountFor(pay), cur.q)} ${C.sym}, refunded on a miss`; }   // the 1% on top, out of what you pay
       const buy = amountFor(n);   // the limits are on the buy itself, like positions; n is the payment with the 1% fee on top (QA P2-85)
+      if (!msg && stuckBelowMin(cur)) msg = `This wallet has ${fmtC(roomLeftOf(cur), cur.q)} ${C.sym} left under the ${fmtC(pr.maxBuy, cur.q)} ${C.sym} maximum, less than the ${fmtC(pr.minBuy, cur.q)} ${C.sym} minimum, so it cannot add more.`;
       // the minimum does not apply to the buy that fills the raise, as the program allows (QA P1-F18)
       if (!msg && n > 0) msg = pr.minBuy && buy < pr.minBuy - 1e-9 && buy < leftOf(cur) - 1e-9 ? `The minimum deposit is ${fmtC(pr.minBuy, cur.q)} ${C.sym}.` : pr.maxBuy && buy + (state.positions[cur.id] || 0) > pr.maxBuy + 1e-9 ? `A wallet can put in at most ${fmtC(pr.maxBuy, cur.q)} ${C.sym}.`
         : n > payLeft(cur) ? `Only ${fmtExact(payLeft(cur), cur.q)} ${C.sym} fits in this raise, the 1% fee included.` : state.wallet && n > bal ? `Your wallet holds ${fmtAmt(bal, cur.q)} ${C.sym}.` : '';
@@ -947,6 +952,7 @@ function bindRail(p) {
     if (side) { pg.side = side.dataset.v; $$('[data-side] button', panel).forEach(b => b.setAttribute('aria-pressed', String(b === side))); inp.value = ''; chips(); sync(); inp.focus(); return; }
     if (chip) {
       const room = maxLeftOf(cur);   // what the wallet may still pay, the fee included, as the prefill takes it (QA P2-106)
+      if (chip.dataset.chip === 'max' && !swap && stuckBelowMin(cur)) { inp.value = ''; sync(); return; }   // nothing to offer; sync says why (QA P2-113)
       if (chip.dataset.chip === 'max' && state.wallet && spendable(cur) <= 0) { inp.value = ''; sync(); err.textContent = `This wallet has nothing to spend: add ${Q(cur).sym} first${cur.q === 'SOL' && isReal() ? ', keeping about 0.01 SOL for the fees' : ''}.`; return; }
       inp.value = chip.dataset.pct ? (chip.dataset.pct === '100' ? heldOf(cur) : Math.floor(heldOf(cur) * chip.dataset.pct / 100))
         : chip.dataset.chip !== 'max' ? chip.dataset.chip : swap ? balOf(cur.q) : r6(Math.min(spendable(cur), payLeft(cur), room));
