@@ -1,16 +1,24 @@
-# Seed status — 2026-10-26, 17:10 PT
-**Where it stands:** QA gate: full pass #33 in progress and not clean (F24 and F25 fixed mid-pass, F27 open); 0 of 2 clean passes.
+# Seed status — 2026-10-26, 17:38 PT
+**Where it stands:** QA gate: pass #33 not clean (F24, F25, F27 since fixed); full pass #34 running on 88ebc1a; 0 of 2 clean passes.
 
 | Section | Done | Total | State |
 |---|---|---|---|
 | A. Housekeeping | 5 | 5 | done |
 | B. Scope changes | 6 | 7 | blocked: B2's USDC half needs the owner |
-| C. Remaining fixes | 5 | 8 | in progress |
-| D. UI simplification | 0 | 4 | in progress (the owner kept two pieces on the original UI, b8abe02) |
+| C. Remaining fixes | 8 | 8 | done (C6-C8 on branch checklist-next, merging after pass #34) |
+| D. UI simplification | 3 | 4 | waiting on the owner: keep or revert |
 | E. QA gate | 2 | 4 | in progress: pass #33 running |
 | F. Final testing | 0 | 9 | not started |
 
-**Done since last update:**
+**Done since last update (17:38):**
+- C6 the remaining P2s: P2-97 to P2-104 verified fixed; P2-71, 72, 73, 75, 76 to BACKLOG (QA.md never describes them) [dfcc7f6]
+- C7 Axiom and GMGN buttons on every seeded raise page; disabled with the reason on devnet [658f153]
+- C8 a seeded raise's Info tab carries its DEXScreener profile (icon, header, plain-text description, links), Copy as JSON and the form link [7fd0803]
+- D1 green Buy / red Sell back on ui-simplify [29a8215]
+- D2 ui-simplify up to date with final-model [eee8ff7]
+- D3 the ui-simplify pass handed to seed-qa, queued behind the gate
+
+**Done before (17:10):**
 - A1 personal names out of tracked files [8d0e1ce]
 - A2 Vercel builds every push on its own [6bbd066; dpl_BL4wLbfx, dpl_28P96Uk2, dpl_548M2PLt, dpl_6pwo4xSc]
 - A3 the 10:21 AM CLI deploy was a clean export of commit 7e5f845: nothing uncommitted shipped [dpl_PLUmaCPf]
@@ -31,7 +39,7 @@
 - E4 QA wallets above 0.05 SOL
 - Also, outside the checklist: the one-line Trending bar and no background effects on the original UI [b8abe02]
 
-**In progress:** C6, the remaining P2s in QA.md: P2-97 to P2-104 verified fixed on the live code; P2-71 to P2-76, which QA.md names without a description, go to BACKLOG.md with that reason. seed-cc is fixing seed-qa's pass #33 findings (F25 done in 66ea505, F27 next).
+**In progress:** seed-qa's full pass #34 on 88ebc1a (re-testing P2-97 to P2-104 too); seed-cc fixes what it finds. final-model takes only fixes until #34 ends, so C6-C8 wait on branch checklist-next and merge after. main stays at 0fc8490: main is production and moves only after seed-qa passes the change.
 
 **Blocked:**
 - B2 (USDC refused on chain), since 16:00 PT: `open_raise` takes USDC without the allowlist, and B3 rules out the program change. Waiting on the owner.
@@ -45,6 +53,6 @@
 6. Takeover policy for unvested team tokens: burn or keep.
 7. Staging presets ($150/$300/$450/$600, or $50K in place of $600) and mainnet funding: deployer 5.0, staging backer 0.75, Irys 0.01 SOL.
 
-**QA:** pass #33 (seed-qa, started on 03f8677): not clean. P1-F24 fixed (9969833), P0-F25 fixed (66ea505), P1-F27 open; out of scope: F21, F22. Consecutive clean: 0. Open P2s: being sorted under C6.
+**QA:** pass #33 (on 03f8677): not clean (P0-F25, P1-F24, P1-F27; fixed in 9969833 and 66ea505). Pass #34 running on 88ebc1a. Consecutive clean: 0. Out of scope: F21, F22, paused-pair UI; USDC accepted on chain is the owner's open call. Open P2s: P2-105 (two browser confirm() dialogs; seed-cc, queued after #34).
 
-**Live:** final-model and main 88ebc1a, https://seed-nu-ten.vercel.app (production builds from main on every push). ui-simplify c91608e, preview on Vercel's ui-simplify branch URL (it carries the account slug, so it is not written here). Devnet program 8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn at slot 515474928 (the 85dc510 build). Deployer 10.00 SOL; crank 1.12; QA founder 0.335, backer1 0.250, backer2 0.268.
+**Live:** final-model 0fc8490, main 0fc8490 (production; 88ebc1a's code), https://seed-nu-ten.vercel.app (production builds from main on every push). ui-simplify eee8ff7, preview on Vercel's ui-simplify branch URL (it carries the account slug, so it is not written here). Devnet program 8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn at slot 515474928 (the 85dc510 build). Deployer 10.00 SOL; crank 1.12; QA founder 0.335, backer1 0.250, backer2 0.268.
