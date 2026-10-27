@@ -44,17 +44,17 @@ with the commit or tx in brackets.
 
 ## E. QA gate
 - [x] Tell seed-qa the scope (SOL only; F21/F22 and paused-pair UI out of scope) and start full pass #33 once A and B are live [seed-qa (session seed-9b) is running pass #33 since 03f8677; scope and commits sent 2026-10-26 17:08 PT]
-- [ ] Fix every P0/P1 seed-qa reports, push, wait for READY, have seed-qa run a full pass again
-- [ ] Two consecutive clean full passes (zero P0, zero P1) on the final code (merged UI, if kept)
+- [x] Fix every P0/P1 seed-qa reports, push, wait for READY, have seed-qa run a full pass again [seed-cc's fixes 9969833, 66ea505, 2bb0188, 81d3ca3, 895ec60, each READY before the next pass; passes #33 to #37]
+- [x] Two consecutive clean full passes (zero P0, zero P1) on the final code (merged UI, if kept) [#36 and #37 clean on 895ec60, dpl_5RDu6RCH; the ui-simplify UI was not merged]
 - [x] Keep QA wallets ≥ 0.05 SOL from the deployer [founder 0.335, backer1 0.250, backer2 0.268 at 17:09 PT; topped up from the deployer when one nears 0.05]
 
 ## F. Ready for final testing
-- [ ] Write READY.md:
+- [x] Write READY.md: [READY.md]
   - final commit, deploy URL, both clean pass numbers, open P2s
   - devnet balances
   - tx links proving: seed to Meteora, claims, 70/30 fees, cancel refund, deadline refund, timeout refund, PairPaused refusal
-- [ ] Make a 23-hour share link for the final-model preview and put it in READY.md
-- [ ] Push a notification: "Ready for final testing", with the share link
+- [x] Make a 23-hour share link for the final-model preview and put it in READY.md [dpl_5RDu6RCH share link, expires 2026-10-28 01:27 PT]
+- [x] Push a notification: "Ready for final testing", with the share link [sent 2026-10-26 19:46 PT, with the dpl_5RDu6RCH share link]
 - [ ] [OWNER] Phantom click-through: launch a Test-preset raise, back it, watch it seed, claim, trade
 - [ ] [OWNER] Refund checks: one cancelled raise, one missed deadline
 - [ ] [OWNER] Phone check

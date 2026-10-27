@@ -1,14 +1,20 @@
-# Ready for final testing (draft: completed when seed-qa reports full pass #37)
+# Ready for final testing
 
 **Final code:** final-model at 895ec60 (site and program client), devnet program 8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn
 at slot 515474928 (the 85dc510 build). Commits after 895ec60 are docs only (STATUS.md, PROGRESS.md, BACKLOG.md, this file).
 
-**Deploy:** _(filled in when the gate is met: production URL, the final-model preview and its 23-hour share link)_
+**Deploy:** the final code's preview, deployment dpl_5RDu6RCHKWof6UMq37L4i9ATPxJ3 (the build seed-qa passed). A 23-hour share
+link opens it without a Vercel login, until 2026-10-28 01:27 PT:
+https://seed-hshov08uk-omenxbts-projects.vercel.app/?_vercel_share=35RYBT7w8yMMiEBeUqgP9BmKda2CPsDg
+Production (https://seed-nu-ten.vercel.app, main) still runs 0fc8490: it moves to the final code on the owner's word.
 
-**QA gate:** full pass #36 on 895ec60 CLEAN (0 P0, 0 P1); full pass #37 _(pending)_.
+**QA gate: passed.** Full passes #36 and #37 on 895ec60, both CLEAN (0 P0, 0 P1), consecutive (seed-qa, QA.md).
 Open P2s: P2-74 (an idle tab rewrites ~758 KB of local storage on price ticks), P2-111 (a refund claim bundled with
 settle fails if the crank settles first; the retry lands), P2-112 (the refund toast rounds 0.0101 to 0.01), P2-113 (the
-deposit prefill offers an amount under the minimum when a wallet's remaining maximum is below it). USDC is still accepted
+deposit prefill offers an amount under the minimum when a wallet's remaining maximum is below it), P2-114 (the page marks
+a stalled live raise refunded before the chain does), P2-115 (one stalled-seeding event toasts twice, with two different texts, from the tick and from the alert), and the buy toast rounding 0.0202
+to 0.02. Fixes for P2-111 to 113 are ready (seed-cc's 7b5bae0) and held: landing them before final testing means two more
+full passes, so that is the owner's call. USDC is still accepted
 on chain: the owner's open call (CHECKLIST B2 against B3).
 
 ## The raise, end to end on devnet (from seed-qa's pass #36, raise A6 unless named)
@@ -43,3 +49,6 @@ on chain: the owner's open call (CHECKLIST B2 against B3).
 4. Decide the takeover policy for unvested team tokens (burn or keep).
 5. Staging presets and mainnet funding.
 6. The admin actions seed-qa could not run: flag fraud on Q34X, approve the takeover on Q34D (PROGRESS.md has the steps).
+7. Whether the held P2 fixes (7b5bae0) land before final testing (two more full passes) or after it.
+8. When production (main) moves to the final code.
+9. USDC on chain (CHECKLIST B2 against B3), and keep or revert for ui-simplify (D4).
