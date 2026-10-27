@@ -77,7 +77,7 @@ function ppHeader(p) {
       <div class="pp-name"><h1>${esc(p.name)}</h1><span class="pp-tk num">$${esc(p.ticker)}</span></div>
       <div class="pp-pills"><span class="pair-pill${C.verified ? '' : ' unv'}">${esc(C.sym)} pair</span><a href="#/presale/${esc(p.id)}/info" data-jump-risk>${riskChip(risk)}</a>${isMine(p) ? '<span class="tag">Yours</span>' : ''}${pr.demo ? DEMO_PILL : ''}${p.live ? `<button type="button" class="copy share" data-share="${esc(shareUrl(p))}" aria-label="Share this raise">${ICONS.out}Share</button>` : ''}</div>
       ${caOf(p) || socials ? `<div class="pp-meta">${caOf(p) ? copyBtn(caOf(p), 'contract address', 'CA ' + shortMint(caOf(p))) : ''}<span class="pp-socials">${socials}</span></div>` : ''}
-      <dl class="pp-stats" data-pstats>${ppStats(p)}</dl>
+      <dl class="pp-stats" data-pstats>${ppStats(p)}</dl>${p.status === 'seeded' ? '<div class="pp-poolcard" data-poolcard></div>' : ''}
     </section>`;
 }
 function ppStats(p) {
@@ -179,6 +179,9 @@ function ppFees(p) {
       <button type="button" class="btn btn-ink btn-sm" data-claimfees${f.founderUnclaimed > 0 && !f.reading ? '' : ' disabled'}>Claim fees</button></div>
     <p class="quiet">The claim is permissionless: whoever sends it pays the transaction and the fees still go to the payout wallet and Seed. Seed also claims on a schedule.</p></section>`;
 }
+/* Creator fees in their own window, opened from the founder card (the payout wallet, or the button under it), so the raise
+   page leads with the market, not the founder's income */
+const feesDialog = p => `<dialog class="fees-dlg" data-feesdlg aria-label="Creator fees"><div class="sheet"><button type="button" class="x fees-x" data-feesx aria-label="Close">&times;</button>${ppFees(p)}</div></dialog>`;
 function ppTrading(p) {
   /* the toolbar, as the Figma's chart: timeframe pills on the left, the Price / Market cap switch on the right; a foot line under the plot */
   return `<section class="panel pp-card pp-fill" data-trading><div class="pp-card-h"><h2>${pg.mode === 'mcap' ? 'Market cap' : 'Price'}</h2>${p.live ? LIVE_PILL : ''}</div>
@@ -187,7 +190,7 @@ function ppTrading(p) {
     <div class="pp-plot" data-cplot><div class="pp-svg candles" data-candles><div class="pp-loading">Loading the pool…</div></div>
       <div class="cx" data-ccross aria-hidden="true"><i class="cx-line"></i><i class="cx-hline"></i><span class="cx-tag num"></span><span class="cx-read num"></span></div></div>
     <div class="chart-foot"><span>Hover a candle to read it${p.live ? '<span class="cf-zoom">; drag to pan, scroll to zoom</span>' : ''}.</span><span class="num">Pool fee ${poolFeePct(p)}% · liquidity locked for good</span></div>
-    <div class="pool-card" data-poolcard></div></section>`;
+    </section>`;
 }
 /* Candles, drawn at the column's width: price gridlines labelled on the right, the last price tagged on that axis, times along
    the foot, volume under the candles. pg.cg keeps the geometry so candleHover() can read any candle back. */
@@ -282,16 +285,16 @@ async function refreshPoolCard(p) {
   if (p.live) {
     if (Date.now() - (pg.statsAt || 0) > 15e3) { pg.statsAt = Date.now(); try { pg.stats = await tradesAdapter.stats(p); } catch (e) {} if (pg.holdersAt == null || Date.now() - pg.holdersAt > 60e3) { pg.holdersAt = Date.now(); backersAdapter.holderCount(p).then(n => { pg.holderCount = n; if (pg.id === p.id) refreshPoolCard(p); }).catch(() => {}); } }
     const st = pg.stats || { volume24h: 0, trades24h: 0 }, price = p.spot || v.price, x = price / priceOf(p);
-    card.innerHTML = `<div class="pool-grid"><div><dt>Pair</dt><dd>${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${v.liquidity != null ? q(v.liquidity) : '<span class="quiet" title="The RPC did not answer for the pool just now">—</span>'}</dd></div>
+    card.innerHTML = `<dl class="pp-stats pool-stats"><div><dt>Pair</dt><dd class="num">${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${v.liquidity != null ? q(v.liquidity) : '<span class="quiet" title="The RPC did not answer for the pool just now">—</span>'}</dd></div>
       <div><dt>vs raise price</dt><dd class="num ${x >= 1 ? 'up' : 'down'}">${x.toFixed(2)}×</dd></div><div><dt>24h volume</dt><dd class="num">${q(st.volume24h)}</dd></div>
-      <div><dt>24h trades</dt><dd class="num">${st.trades24h}</dd></div><div><dt>Holders</dt><dd class="num">${pg.holderCount != null ? pg.holderCount : '—'}</dd></div></div>
+      <div><dt>24h trades</dt><dd class="num">${st.trades24h}</dd></div><div><dt>Holders</dt><dd class="num">${pg.holderCount != null ? pg.holderCount : '—'}</dd></div></dl>
       <div class="pool-foot"><span class="num">${esc(v.dex)} pool ${esc(shortMint(v.address))}</span>${copyBtn(v.address, 'pool address')}<span class="pool-lock">${RISK_ICON.pass}Liquidity locked for good</span>
         <a class="bar-link" href="${esc(v.url)}" target="_blank" rel="noopener">Pool on Meteora ${ICONS.out}</a>${srcPill(pg.pool.from)}</div>`;
     return;
   }
   const x = v.price / raiseIn(p, v.quote);
-  card.innerHTML = `<div class="pool-grid"><div><dt>Pair</dt><dd>${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.liquidity) : `${fmtC(v.liquidity, p.q)} ${esc(v.quote)}`}</dd></div>
-      <div><dt>vs raise price</dt><dd class="num ${x >= 1 ? 'up' : 'down'}">${x.toFixed(2)}×</dd></div><div><dt>24h volume</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.volume24h) : fmtC(v.volume24h, p.q)}</dd></div></div>
+  card.innerHTML = `<dl class="pp-stats pool-stats"><div><dt>Pair</dt><dd class="num">${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.liquidity) : `${fmtC(v.liquidity, p.q)} ${esc(v.quote)}`}</dd></div>
+      <div><dt>vs raise price</dt><dd class="num ${x >= 1 ? 'up' : 'down'}">${x.toFixed(2)}×</dd></div><div><dt>24h volume</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.volume24h) : fmtC(v.volume24h, p.q)}</dd></div></dl>
       <div class="pool-foot"><span class="num">${esc(v.dex)} pool ${esc(shortMint(v.address))}</span>${copyBtn(v.address, 'pool address')}<span class="pool-lock">${RISK_ICON.pass}Liquidity locked for good</span>
         <a class="bar-link" href="${esc(isRealAddr(v.address) ? explorer(v.address) : v.url)}" target="_blank" rel="noopener">Position on chain ${ICONS.out}</a>${srcPill(pg.pool.from)}</div>`;
 }
@@ -303,8 +306,8 @@ async function loadTrading(p) {
     if (ui.sel !== p.id) return;
     pg.series = ser.value; box.innerHTML = candleSVG(ser.value, pg.mode, pool.value.supply * (pool.value.quote === 'USD' ? 1 : usdNow(p, 1)), pool.value.quote, raiseIn(p, pool.value.quote));   // a market cap is in dollars
     const v = pool.value, x = v.price / raiseIn(p, v.quote);
-    card.innerHTML = `<div class="pool-grid"><div><dt>Pair</dt><dd>${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.liquidity) : `${fmtC(v.liquidity, p.q)} ${esc(v.quote)}`}</dd></div>
-      <div><dt>vs raise price</dt><dd class="num ${x >= 1 ? 'up' : 'down'}">${x.toFixed(2)}×</dd></div><div><dt>24h volume</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.volume24h) : fmtC(v.volume24h, p.q)}</dd></div></div>
+    card.innerHTML = `<dl class="pp-stats pool-stats"><div><dt>Pair</dt><dd class="num">${esc(v.pair)}</dd></div><div><dt>Liquidity</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.liquidity) : `${fmtC(v.liquidity, p.q)} ${esc(v.quote)}`}</dd></div>
+      <div><dt>vs raise price</dt><dd class="num ${x >= 1 ? 'up' : 'down'}">${x.toFixed(2)}×</dd></div><div><dt>24h volume</dt><dd class="num">${v.quote === 'USD' ? fmtUsd(v.volume24h) : fmtC(v.volume24h, p.q)}</dd></div></dl>
       <div class="pool-foot"><span class="num">${esc(v.dex)} pool ${esc(shortMint(v.address))}</span>${copyBtn(v.address, 'pool address')}<span class="pool-lock">${RISK_ICON.pass}Liquidity locked for good</span>
         <a class="bar-link" href="${esc(isRealAddr(v.address) ? explorer(v.address) : v.url)}" target="_blank" rel="noopener">Position on chain ${ICONS.out}</a>${srcPill(pool.from)}</div>
       `;
@@ -480,8 +483,8 @@ function ppFounder(p) {
     ${x.handle ? `<a class="x-acct" href="${esc(xUrl(x.handle))}" target="_blank" rel="noopener">${ICONS.x}<span><b>@${esc(x.handle)}</b><span class="num">${x.verified ? 'Verified X' : x.typed ? 'Typed on devnet' : 'Linked'}${x.followers != null ? ` · ${plural(Number(x.followers), 'follower')}` : ''}${age != null ? ` · account ${fmtDays(age)} old` : ''}</span></span>${x.verified ? `<span class="vbadge x-ok" title="Verified: signed in with X">${RISK_ICON.pass}</span>` : ''}</a>`
       : `<p class="rail-meta">Opened with a wallet. No X account linked.</p>${isFounder(p) && p.status !== 'refunded' && (p.live || !isReal()) ? `<button type="button" class="qb" data-linkx>Link your X</button><p class="quiet">Adds a verified badge to this raise. Optional.</p>` : ''}`}
     <dl class="kv">${p.blacklisted ? row('Blacklisted', `<span class="bad">the founder wallet${x.handle ? ' and @' + esc(x.handle) : ''}</span>`) : ''}${past.length ? `<div class="wide"><dt>Raises on Seed</dt><dd><a class="past-list" href="#/founder/${esc(fw)}" title="The founder's profile">${past.slice(0, 4).map(r => `<span class="past">$${esc(r.ticker)} ${outcome(r)}</span>`).join('')}${past.length > 4 ? `<span class="past quiet">+${past.length - 4} more</span>` : ''}</a></dd></div>` : row('Raises on Seed', `<a href="#/founder/${esc(fw)}" title="The founder's profile">This is the first</a>`)}
-      ${row('Payout wallet', p.payoutWallet ? `<span class="num">${esc(shortMint(p.payoutWallet))}</span>${copyBtn(p.payoutWallet, 'payout wallet')}` : 'Set at opening')}${p.takeover ? row('Held by', esc(p.takeover.label || 'the community')) : ''}</dl>
-    ${past.some(r => r.note) ? `<p class="quiet">${past.filter(r => r.note).map(r => `$${esc(r.ticker)}: ${esc(r.note)}`).join(' ')}</p>` : ''}</section>`;
+      ${row('Payout wallet', p.payoutWallet ? `${p.status === 'seeded' ? `<button type="button" class="linkbtn num" data-openfees title="The creator fees this wallet is paid">${esc(shortMint(p.payoutWallet))}</button>` : `<span class="num">${esc(shortMint(p.payoutWallet))}</span>`}${copyBtn(p.payoutWallet, 'payout wallet')}` : 'Set at opening')}${p.takeover ? row('Held by', esc(p.takeover.label || 'the community')) : ''}</dl>
+    ${past.some(r => r.note) ? `<p class="quiet">${past.filter(r => r.note).map(r => `$${esc(r.ticker)}: ${esc(r.note)}`).join(' ')}</p>` : ''}${p.status === 'seeded' ? '<button type="button" class="qb fees-open" data-openfees>Creator fees</button>' : ''}</section>`;
 }
 /* the strips at the top of the page: a fraud flag, a community takeover, a payout wallet on the move, the latest announcement */
 function ppNotices(p) {
@@ -799,10 +802,10 @@ function renderDetail(force) {
   if (fresh) { leaveLive(); if (p.live && p.status === 'seeded') pg.tf = '1m'; }   // a new pool reads better minute by minute
   Object.assign(pg, { id: p.id, status: p.status, tab, walletKey: wkey, seen: p.raised, shown: null }); if (fresh) Object.assign(pg, { allBackers: false, allHolders: false, deck: null, pool: null, series: null, trades: null, stats: null, holderCount: null, holdersAt: null });
   else if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (e) {} pg.lw = null; }   // the page is drawn again: the chart mounts on the new box
-  const kept = fresh ? null : keepAmount(box);
+  const kept = fresh ? null : keepAmount(box), feesOpen = !fresh && !!($('[data-feesdlg]', box) || {}).open;
   box.innerHTML = `<div class="pp ${p.status}${p.blacklisted ? ' flagged' : ''}"><aside class="pp-side" aria-label="Project and chat">${ppHeader(p)}${ppFounder(p)}${chatPanel(p)}</aside>
-    <div class="pp-main"><div class="pp-annw" data-annwrap>${ppNotices(p)}</div>${ppFill(p)}${p.status === 'seeded' ? ppFees(p) : ''}${ppChart(p)}${ppTabs(p)}</div><aside class="pp-rail" aria-label="Buy and your position">${ppRail(p)}</aside></div>`;
-  bindPage(p); if (kept) kept(box); renderTab(p); mountChat(p); drawCharts(p); watchCharts(p); loadAsync(p);
+    <div class="pp-main"><div class="pp-annw" data-annwrap>${ppNotices(p)}</div>${ppFill(p)}${p.status === 'seeded' ? '' : ppChart(p)}${ppTabs(p)}</div><aside class="pp-rail" aria-label="Buy and your position">${ppRail(p)}</aside>${p.status === 'seeded' ? feesDialog(p) : ''}</div>`;
+  bindPage(p); if (kept) kept(box); if (feesOpen) { const d = $('[data-feesdlg]', box); if (d) d.showModal(); } renderTab(p); mountChat(p); drawCharts(p); watchCharts(p); loadAsync(p);
   if (fresh && typeof playEnter === 'function') playEnter();   // the page's cards rise into place and the raise line draws itself
 }
 /* what the backer typed outlives the page being drawn again (the 20 s chain sync, a realtime update, a wallet change): when the
@@ -827,7 +830,7 @@ function drawCharts(p) {
 let chartRO = null;
 function watchCharts(p) {
   if (chartRO) chartRO.disconnect();
-  const el = detailBox && $('[data-dchart]', detailBox); if (!el || !('ResizeObserver' in window)) return;
+  const el = detailBox && $('[data-dchart],[data-candles]', detailBox); if (!el || !('ResizeObserver' in window)) return;
   let w = el.clientWidth;
   chartRO = new ResizeObserver(() => { if (!el.isConnected) return chartRO.disconnect(); if (Math.abs(el.clientWidth - w) < 2) return; w = el.clientWidth; const cur = find(p.id); if (cur && pg.id === cur.id) drawCharts(cur); });
   chartRO.observe(el);
@@ -835,6 +838,8 @@ function watchCharts(p) {
 function bindPage(p) {
   const box = detailBox;
   box.onclick = e => {
+    if (e.target.closest('[data-openfees]')) { e.preventDefault(); const d = $('[data-feesdlg]', box); if (d && !d.open) d.showModal(); return; }
+    if (e.target.matches('[data-feesdlg]') || e.target.closest('[data-feesx]')) { const d = $('[data-feesdlg]', box); if (d) d.close(); return; }   // the × or the backdrop
     const c = e.target.closest('[data-copy]');
     if (c) { e.preventDefault(); try { navigator.clipboard.writeText(c.dataset.copy).catch(() => {}); } catch (x) {} toast(`${c.dataset.copyLabel[0].toUpperCase() + c.dataset.copyLabel.slice(1)} copied`); return; }
     if (e.target.closest('[data-jump-risk],[data-jump-ann]')) { setTimeout(() => { const r = $('.pp-tabs', box); if (r) r.scrollIntoView({ block: 'start' }); }, 0); return; }   // the link opens its tab; this brings the tab into view

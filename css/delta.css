@@ -132,7 +132,12 @@
 #view-app:not(.wide)>.tstrip{display:none}
 @media (min-width:1024px){.tstrip{padding:0 20px}}
 .tstrip-h{flex:none;font-size:12.5px;color:var(--faint)}
-.tstrip .trend-row{display:flex;align-items:center;gap:24px;overflow-x:auto;padding:0;scroll-snap-type:none;min-width:0;-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent)}
+.tstrip .trend-row{display:flex;align-items:center;overflow:hidden;padding:0;scroll-snap-type:none;min-width:0;flex:1;-webkit-mask-image:linear-gradient(90deg,transparent,#000 32px,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,transparent,#000 32px,#000 calc(100% - 40px),transparent)}
+.ts-track{display:flex;width:max-content;animation:tsRoll var(--ts-dur,40s) linear infinite}
+.ts-set{display:flex;align-items:center;gap:24px;padding-right:24px}
+.tstrip:hover .ts-track,.tstrip:focus-within .ts-track{animation-play-state:paused}
+@keyframes tsRoll{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ts-track{animation:none}.tstrip .trend-row{overflow-x:auto}.ts-set[aria-hidden]{display:none}}
 .tstrip .trend-row:empty::after{padding:0;font-size:13px}
 .ts-item{flex:none;display:inline-flex;align-items:center;gap:8px;font-size:13.5px;white-space:nowrap;color:var(--ink)}
 .ts-item:hover b{color:var(--navy-deep)}
@@ -288,3 +293,16 @@
 
 /* ---------------------------------------------------------------- docs */
 .toc a.on{font-weight:500}
+
+/* a seeded raise's pool figures continue the token's stats in the left panel: one grid, the pool line under it */
+.pp-id .pp-stats:has(+ .pp-poolcard:not(:empty)){border-bottom-left-radius:0;border-bottom-right-radius:0}
+.pp-poolcard .pool-stats{margin:0 22px;border-top:0;border-top-left-radius:0;border-top-right-radius:0}
+.pp-poolcard .pool-foot{margin:12px 22px 0;gap:8px 10px;font-size:12.5px}
+@media (max-width:720px){.pp-poolcard .pool-stats,.pp-poolcard .pool-foot{margin-left:18px;margin-right:18px}}
+/* Creator fees, in their own window from the founder card */
+.fees-dlg .sheet{position:relative;width:min(760px,calc(100vw - 32px))}
+.fees-dlg .pp-fees{border:0;background:none;padding:0;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none}
+.fees-dlg .pp-fees .pp-card-h{padding-right:40px}
+.fees-x{position:absolute;top:18px;right:18px;margin:0;z-index:3}
+.fees-open{align-self:flex-start;margin-top:12px}
+.pp-founder .linkbtn.num{font-family:var(--mono);color:var(--navy-deep);border-bottom:1px solid var(--hair-2)}

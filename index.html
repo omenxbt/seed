@@ -1830,6 +1830,17 @@ function trendItem(p, i) {
   const m = moveOf(p);
   return `<a class="ts-item ${p.status}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}" aria-label="${esc(p.name)}, trending ${i + 1}"><span class="ts-rank num">${i + 1}</span>${artHTML(p, 'ts-art')}<b>${esc(p.name)}</b><span class="num ts-mc" data-mc>${fmtMcap(mcapUsdOf(p))}</span><span class="num chg ${m.cls}" title="${esc(m.title)}">${m.txt}</span></a>`;
 }
+/* the bar rolls on without end: the items twice over on one track that slides by half its width, so the second copy takes the
+   first one's place seamlessly. The track stays put between renders (a buy or a sync only refreshes what it shows), so the
+   roll never jumps back to the start; it pauses under the pointer or focus, and stands still for reduced motion. */
+function renderTrend(trend) {
+  const row = $('#trendRow'); if (!trend.length) { row.innerHTML = ''; return; }
+  let track = $('.ts-track', row);
+  if (!track) { row.innerHTML = '<div class="ts-track"><div class="ts-set"></div><div class="ts-set" aria-hidden="true"></div></div>'; track = $('.ts-track', row); }
+  const html = trend.map(trendItem).join(''), [a, b] = $$('.ts-set', track);
+  if (a.innerHTML !== html) { a.innerHTML = html; b.innerHTML = html.replace(/<a /g, '<a tabindex="-1" '); }
+  track.style.setProperty('--ts-dur', `${Math.max(20, trend.length * 4)}s`);
+}
 /* a raise as a tile. The Trending row shows the short form with its rank; the feed adds time, backers, links, checks and the button. */
 function tile(p, i, trend, fresh = '') {
   const C = Q(p), pc = pctOf(p), live = p.status === 'live';
@@ -1919,7 +1930,7 @@ function renderTerminal() {
   syncFilterBadges();
   /* trending: the eight most active, whatever the tabs and filters say */
   const trend = state.presales.filter(p => trendScore(p) >= 0).sort((a, b) => trendScore(b) - trendScore(a) || b.openedAt - a.openedAt).slice(0, 10);
-  $('#trendRow').innerHTML = trend.map(trendItem).join('');
+  renderTrend(trend);
   renderFeatured(trend); renderStatChips();
   /* the lanes: five columns on a wide screen, each the raises at that stage, newest or most active first */
   const lanesEl = $('#lanes');
