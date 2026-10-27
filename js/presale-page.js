@@ -901,7 +901,7 @@ function bindRail(p) {
     if (pv) { const custom = pv.dataset.pv === 'custom'; damm.priority = custom ? (parseFloat(priVal.value) || 0.0001) : 'auto'; $$('[data-pv]', panel).forEach(b => b.setAttribute('aria-pressed', String(b === pv))); priVal.parentElement.hidden = !custom; return; }
     if (side) { pg.side = side.dataset.v; $$('[data-side] button', panel).forEach(b => b.setAttribute('aria-pressed', String(b === side))); inp.value = ''; chips(); sync(); inp.focus(); return; }
     if (chip) {
-      const room = profileOf(cur).maxBuy ? Math.max(0, profileOf(cur).maxBuy - (state.positions[cur.id] || 0)) : Infinity;
+      const room = maxLeftOf(cur);   // what the wallet may still pay, the fee included, as the prefill takes it (QA P2-106)
       if (chip.dataset.chip === 'max' && state.wallet && spendable(cur) <= 0) { inp.value = ''; sync(); err.textContent = `This wallet has nothing to spend: add ${Q(cur).sym} first${cur.q === 'SOL' && isReal() ? ', keeping about 0.01 SOL for the fees' : ''}.`; return; }
       inp.value = chip.dataset.pct ? (chip.dataset.pct === '100' ? heldOf(cur) : Math.floor(heldOf(cur) * chip.dataset.pct / 100))
         : chip.dataset.chip !== 'max' ? chip.dataset.chip : swap ? balOf(cur.q) : r6(Math.min(spendable(cur), payLeft(cur), room));
