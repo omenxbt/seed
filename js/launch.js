@@ -57,7 +57,7 @@ const extOf = name => (/\.([a-z0-9]+)$/i.exec(name || '') || [, ''])[1].toLowerC
 const deckInfo = file => DECK_EXT[extOf(file.name)] || Object.values(DECK_EXT).find(d => d[1] === file.type) || null;
 const MAX_UPLOAD = 10 * 1024 * 1024;
 const numv = v => { const n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : NaN; };
-/* any link goes in, with or without its scheme (Josh): "x.com/seedraises" is as good as "https://x.com/seedraises". A link
+/* any link goes in, with or without its scheme (the owner): "x.com/seedraises" is as good as "https://x.com/seedraises". A link
    still has to look like one (a host with a dot, no spaces), which keeps javascript: and data: out; it is stored with https:// */
 const isUrl = v => !(v = String(v || '').trim()) || /^(https?:\/\/)?[^\s\/:]+\.[^\s]+$/i.test(v);   // trimmed: a paste leaves a trailing space (QA P2-83)
 const fullUrl = v => { v = (v || '').trim(); return v ? (/^https?:\/\//i.test(v) ? v : 'https://' + v) : null; };
@@ -353,7 +353,7 @@ async function openPresale() {
 }
 
 /* the Metaplex token standard JSON: name, symbol, description, image, links. Devnet keeps it in Supabase storage; mainnet
-   puts it on Arweave through Irys (see PROGRESS.md, Needs Josh: an Irys node wallet) */
+   puts it on Arweave through Irys (see PROGRESS.md, Needs the owner: an Irys node wallet) */
 async function uploadTokenJson(p, profile) {
   const links = profile.links || {}, ext = {};
   if (safeUrl(links.website)) ext.website = safeUrl(links.website);

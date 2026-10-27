@@ -97,7 +97,7 @@ mod preset_tests {
             // an allowed pair: a tokenized stock at $250 with 8 decimals
             assert_eq!(derive_target(cap, team, 8, 25_000).unwrap(), (want_cents * 100_000_000 / 25_000, want_cents), "a $250 stock token, 8 decimals");
         } } }
-        // Josh's example: $100K, 15% team, $150 a SOL → $42,500 → 283.333… SOL
+        // the owner's example: $100K, 15% team, $150 a SOL → $42,500 → 283.333… SOL
         assert_eq!(derive_target(10_000_000, 1500, 9, 15_000).unwrap(), (283_333_333_333, 4_250_000));
         assert_eq!(derive_target(5_000_000, 0, 9, 10_000).unwrap().0, 250_000_000_000, "$50K, no team, $100: 250 SOL");
         assert_eq!(derive_target(20_000_000, 5000, 9, 25_000).unwrap().0, 200_000_000_000, "$200K, half to the team, $250: 200 SOL");

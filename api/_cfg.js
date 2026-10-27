@@ -10,8 +10,8 @@ const RPC = process.env.SEED_RPC_URL || 'https://api.devnet.solana.com', PROGRAM
 export const fmtMcap = n => n >= 1e6 ? `$${(n / 1e6).toFixed(n % 1e6 ? 1 : 0)}M` : n >= 1e3 ? `$${(n / 1e3).toFixed(n % 1e3 ? 1 : 0)}K` : `$${Math.round(n)}`;
 /* one raise, by the site's short id or the Raise account's address, as the indexer has it */
 export async function raiseById(id) {
-  const col = /^[A-Za-z0-9]{32,44}$/.test(id) && !/-/.test(id) ? 'address' : 'id';
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/raises?select=id,address,name,ticker,pair_mint,target,raised,backers,status,ends_at,cap_usd,target_usd,metadata_uri&${col}=eq.${encodeURIComponent(id)}&limit=1`, { headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` } });
+  const byAddr = /^[A-Za-z0-9]{32,44}$/.test(id) && !/-/.test(id);   // an address is the Raise account's or the token's mint
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/raises?select=id,address,name,ticker,pair_mint,target,raised,backers,status,ends_at,cap_usd,target_usd,metadata_uri&${byAddr ? `or=(address.eq.${encodeURIComponent(id)},mint.eq.${encodeURIComponent(id)})` : `id=eq.${encodeURIComponent(id)}`}&limit=1`, { headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` } });
   if (!r.ok) return null; const rows = await r.json(); return rows[0] || null;
 }
 /* the pair asset's symbol: SOL and USDC built in, every other mint from the program's PairAsset accounts (the admin's allowlist),

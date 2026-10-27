@@ -6,7 +6,7 @@
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#16171A">
 <title>Seed</title>
-<meta name="description" content="Seeded in full, or refunded in full. A launchpad for raises on Solana, built on Meteora. Buy into an idea at one fixed price, paired with SOL or USDC. If it misses its target by the deadline, every wallet gets back what it paid.">
+<meta name="description" content="Seeded in full, or refunded in full. A launchpad for raises on Solana, built on Meteora. Buy into an idea at one fixed price, paid in SOL. If it misses its target by the deadline, every wallet gets back what it paid.">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Seed"><meta property="og:title" content="Seed: seeded in full, or refunded in full"><meta property="og:description" content="Raises on Solana, built on Meteora. Pick an opening market cap; the pool opens there, locked for good."><meta property="og:url" content="https://seed-nu-ten.vercel.app/"><meta property="og:image" content="https://seed-nu-ten.vercel.app/api/og"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Seed: seeded in full, or refunded in full"><meta name="twitter:description" content="Raises on Solana, built on Meteora. Pick an opening market cap; the pool opens there, locked for good."><meta name="twitter:image" content="https://seed-nu-ten.vercel.app/api/og">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='42.00' cy='56.70' r='6.91' fill='%232E63E7'/%3E%3Ccircle cx='50.27' cy='36.69' r='6.74' fill='%2352668F'/%3E%3Ccircle cx='59.20' cy='63.42' r='6.57' fill='%2352668F'/%3E%3Ccircle cx='30.17' cy='46.87' r='6.39' fill='%2352668F'/%3E%3Ccircle cx='67.19' cy='38.70' r='6.22' fill='%2352668F'/%3E%3Ccircle cx='42.97' cy='72.93' r='6.05' fill='%2352668F'/%3E%3Ccircle cx='37.37' cy='27.67' r='5.88' fill='%2352668F'/%3E%3Ccircle cx='74.59' cy='59.53' r='5.70' fill='%2352668F'/%3E%3Ccircle cx='22.45' cy='61.21' r='5.53' fill='%2352668F'/%3E%3Ccircle cx='61.95' cy='22.72' r='5.36' fill='%2352668F'/%3E%3Ccircle cx='58.61' cy='80.60' r='5.18' fill='%2352668F'/%3E%3Ccircle cx='20.30' cy='33.54' r='5.01' fill='%2352668F'/%3E%3Ccircle cx='82.89' cy='42.79' r='4.84' fill='%2352668F'/%3E%3Ccircle cx='28.42' cy='79.61' r='4.67' fill='%2352668F'/%3E%3Ccircle cx='44.30' cy='13.34' r='4.49' fill='%2352668F'/%3E%3Ccircle cx='78.45' cy='74.97' r='4.32' fill='%2352668F'/%3E%3Ccircle cx='9.52' cy='51.85' r='4.15' fill='%2352668F'/%3E%3Ccircle cx='77.95' cy='21.48' r='3.98' fill='%2352668F'/%3E%3Ccircle cx='47.15' cy='92.03' r='3.80' fill='%2352668F'/%3E%3Ccircle cx='21.57' cy='17.25' r='3.63' fill='%2352668F'/%3E%3Ccircle cx='92.69' cy='56.09' r='3.46' fill='%2352668F'/%3E%3C/svg%3E">
@@ -57,11 +57,9 @@
 *::-webkit-scrollbar{display:none}
 html{scroll-padding-top:calc(env(safe-area-inset-top,0px) + 96px);-webkit-text-size-adjust:100%}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
-/* flat charcoal on html (so overscroll on iOS and Mac shows charcoal, not white); body is transparent so the dot field
-   (#bg-dither, fixed, z-index -1, drawn by js/bg-dither.js) shows between the charcoal and the UI. */
+/* flat charcoal on html (so overscroll on iOS and Mac shows charcoal, not white); no background effect behind the UI */
 html{min-height:100vh;background:var(--bg)}
 body{min-height:100vh;background:transparent}
-#bg-dither{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none}
 b,strong{font-weight:500}
 h1,h2,h3,h4{font-weight:500}
 body{color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.55;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;overflow-x:hidden}
@@ -1090,9 +1088,9 @@ a.ico:hover{color:var(--ink)}
       </div>
     </section>
 
-    <section class="doc-sec" id="d-assets" data-t="SOL and the cap">
+    <section class="doc-sec" id="d-assets" data-t="SOL and the opening cap">
       <div class="prose">
-        <h2>SOL and the cap</h2>
+        <h2>SOL and the opening market cap</h2>
         <p>Every raise is priced and paid for in SOL, and its pool pairs the token with SOL. The SOL price is read from Pyth on chain when the raise opens, so the raise is sized in SOL once and never moves.</p>
         <p>Backers buy in with that asset. The fee is held in it, the Meteora pool is paired against it, the pool's fees are collected in it, and a refund returns it. Nothing is swapped along the way, so there is no slippage inside a raise.</p>
         <p>There is no typed target. The founder picks an opening market cap from four presets, $50K, $100K, $150K or $200K, and the raise is derived from it: target = cap × (1 − team share) ÷ 2, priced in SOL at the Pyth SOL/USD price the moment the raise opens. Backers pay for half of what the team does not take, the pool gets the other half, and the whole raise goes into the pool, so the pool opens at exactly that market cap. The presets are the floor and the ceiling: there is no separate minimum or maximum. They live in the program's Config, set once at init. On devnet, in test mode, a tiny Test preset (about $30) lets a cycle cost cents; no mainnet build has it.</p>
@@ -1333,7 +1331,7 @@ a.ico:hover{color:var(--ink)}
     <section class="doc-sec" id="d-solana" data-t="The program and Meteora">
       <div class="prose">
         <h2>The program and Meteora</h2>
-        <p><b>Seed's program</b> holds the raise. It is an Anchor program with one config account and, per raise, a raise account, an escrow for the buys, a contribution account per backer, and a program-owned account that holds the pool position after seeding. It takes buys, enforces the cap, the deadline, the refunds and the unlock rules, runs the four seeding steps, splits the pool's fees on claim, and carries the two admin instructions. Nothing in it can move the locked position.</p>
+        <p><b>Seed's program</b> holds the raise. It is an Anchor program with one config account and, per raise, a raise account, an escrow for the buys, a contribution account per backer, and a program-owned account that holds the pool position after seeding. It takes buys, enforces the preset, the deadline, the refunds and the unlock rules, runs the four seeding steps, splits the pool's fees on claim, and carries the two admin instructions. Nothing in it can move the locked position.</p>
         <p><b>DAMM v2</b> is the pool. The raise and the pool's tokens go in across the full price range with SOL as token B, the fee mode set to collect in token B only, a flat 1.25% fee with the dynamic fee and the fee scheduler off, and the position locked at creation. Aggregators such as Jupiter can route to it as soon as it opens.</p>
         <p><b>Off chain</b>, a Supabase backend indexes the program's events for the site, signs the X attestations, keeps reports and announcements, and runs the schedules that crank seeding and claim fees. None of it holds funds.</p>
         <p>On devnet the program's upgrade authority is a developer key. On mainnet it moves to a Squads multisig. Any Solana wallet works, including Phantom, Solflare and Backpack.</p>
@@ -1678,7 +1676,7 @@ const fmtDay = ms => new Date(ms).toLocaleDateString(undefined, { month: 'short'
 function paceOf(p) { const h = (p.endsAt - Date.now()) / H; return h > 0 ? leftOf(p) / h : Infinity; }
 function paceTxt(p) { if (p.status !== 'live') return ''; const v = paceOf(p); return isFinite(v) ? `${v >= 1e4 ? fmtC(v, p.q) : fmtSig(v)} ${Q(p).sym}/h` : ''; }
 function timeCell(p) { return p.status === 'live' ? fmtLeft(p.endsAt - Date.now()) : p.status === 'filled' ? 'Filled ' + fmtAgo(Date.now() - p.filledAt) : (p.status === 'seeded' ? 'Seeded ' : 'Closed ') + fmtDay(p.resolvedAt || p.endsAt); }
-const find = id => state.presales.find(p => p.id === id) || (id && id.length >= 32 ? state.presales.find(p => p.address === id) : undefined);   // by the site's short id, or by the Raise account's address (QA P2-95)
+const find = id => state.presales.find(p => p.id === id) || (id && id.length >= 32 ? state.presales.find(p => p.address === id || p.mint === id) : undefined);   // by the site's short id, the Raise account's address (QA P2-95) or the token's mint, the CA people share
 
 function glyph(p) {
   let h = hashStr(p.ticker + '/' + p.name), c = '';

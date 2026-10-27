@@ -33,7 +33,7 @@ Identity and trust
 Admin and program
 - update_config can change only the treasury and attestor. The admin handover is two-step (propose, then accept). Nothing can change fees, the split, existing raises or founder payout wallets.
 - Test mode (a day counts as a minute) exists only in devnet builds.
-- Never decide what happens to unvested team tokens on a takeover. It's an open decision: keep current behaviour and list it under "Needs Josh."
+- Never decide what happens to unvested team tokens on a takeover. It's an open decision: keep current behaviour and list it under "Needs the owner."
 
 ## Never build
 Treasuries, voting, follow-on raises or reserves, bonding curves, launches without a presale, perps or leverage, custodial wallets, bots that trade without the user's signature, KYC or required X, warnings on founder terms, fake or demo data on real raises, and anything that changes "What Seed is." Copy patterns from Axiom and GMGN, never their branding, logos, names or text.
@@ -52,6 +52,7 @@ Dark UI, Instrument Sans + Instrument Serif italic + IBM Plex Mono, accent #2E63
 8. Docs page in plain English. Every page works at 390px.
 
 ## Each iteration
+Each iteration, work the first unticked item in CHECKLIST.md that doesn't need the owner; tick it only when verified, with the commit or tx in brackets.
 1. Read BACKLOG.md, PROGRESS.md, QA.md and any new seed-qa messages.
 2. Pick the highest-value item: P0 bugs first, then missing target features, then polish. Keep BACKLOG.md ranked and add what you discover.
 3. Build it. Test on devnet with saved scripted wallets in keys/test/ (gitignored).
@@ -63,7 +64,7 @@ Dark UI, Instrument Sans + Instrument Serif italic + IBM Plex Mono, accent #2E63
 - Something needs mainnet, real money, or deleting data or accounts.
 - The deployer is below 1 SOL and test wallets can't refill it.
 - A change would alter "What Seed is."
-Everything else that needs me goes in a "Needs Josh" list at the top of PROGRESS.md, and you keep going.
+Everything else that needs me goes in a "Needs the owner" list at the top of PROGRESS.md, and you keep going.
 
 ## Finished when
 - Every item in the target feature set works on devnet with real data.

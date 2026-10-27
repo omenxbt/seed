@@ -353,8 +353,11 @@ function seedingPanel(p) {
     <p class="rail-meta">Anyone can run the next step. If seeding has not finished by ${fmtDate(seedDeadline(p))}, every backer claims a refund instead.</p>
     <button class="btn btn-navy btn-block" data-crank>Run the next step</button></section>`;
 }
+/* the deposit field's opening amount: never more than the wallet may still put in, fee included (the limits live on the profile, QA P2-85) */
+const maxLeftOf = p => { const pr = profileOf(p); return pr.maxBuy > 0 ? paidFor(Math.max(0, pr.maxBuy - ((state.positions && state.positions[p.id]) || 0))) : Infinity; };
+const depositAmt = p => Math.min(quickFor(p), payLeft(p), maxLeftOf(p));
 function depositPanel(p) {
-  const C = Q(p), sym = esc(C.sym), pr = profileOf(p), maxLeft = pr.maxBuy > 0 ? paidFor(Math.max(0, pr.maxBuy - ((state.positions && state.positions[p.id]) || 0))) : Infinity, amt = Math.min(quickFor(p), payLeft(p), maxLeft);   // never more than the wallet may still put in: the limits live on the profile (QA P2-85)
+  const C = Q(p), sym = esc(C.sym), pr = profileOf(p), maxLeft = maxLeftOf(p), amt = depositAmt(p);
   return `<section class="panel rail-card" data-trade="deposit"><h3>Deposit into $${esc(p.ticker)}</h3>
     <div class="trade-top"><label class="rail-lab" for="ppAmt">You deposit</label><span class="rail-bal num" data-bal></span></div>
     <div class="inp"><input id="ppAmt" inputmode="decimal" autocomplete="off" value="${amt}" aria-label="Amount in ${sym}"><span class="suf">${sym}</span></div>
@@ -775,12 +778,24 @@ function renderDetail(force) {
   if (fresh) { leaveLive(); if (p.live && p.status === 'seeded') pg.tf = '1m'; }   // a new pool reads better minute by minute
   Object.assign(pg, { id: p.id, status: p.status, tab, walletKey: wkey, seen: p.raised, shown: null }); if (fresh) Object.assign(pg, { allBackers: false, allHolders: false, deck: null, pool: null, series: null, trades: null, stats: null, holderCount: null, holdersAt: null });
   else if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (e) {} pg.lw = null; }   // the page is drawn again: the chart mounts on the new box
-  const seeded = p.status === 'seeded';
+  const seeded = p.status === 'seeded', kept = fresh ? null : keepAmount(box);
   box.innerHTML = `<div class="pp ${p.status}${p.blacklisted ? ' flagged' : ''}">${ppHeader(p)}
     <div class="pp-main"><div class="pp-annw" data-annwrap>${ppNotices(p)}</div>${ppFill(p)}${seeded ? '' : ppChart(p)}${ppFacts(p)}${seeded ? ppFees(p) : ''}${ppFounder(p)}${seeded ? ppChart(p) : ''}${ppTabs(p)}${chatPanel(p)}</div>
     <aside class="pp-rail" aria-label="Buy and your position">${ppRail(p)}</aside></div>`;
-  bindPage(p); renderTab(p); mountChat(p); drawCharts(p); watchCharts(p); loadAsync(p);
+  bindPage(p); if (kept) kept(box); renderTab(p); mountChat(p); drawCharts(p); watchCharts(p); loadAsync(p);
   if (fresh && typeof playEnter === 'function') playEnter();   // the page's cards rise into place and the raise line draws itself
+}
+/* what the backer typed outlives the page being drawn again (the 20 s chain sync, a realtime update, a wallet change): when the
+   same panel comes back, an amount they changed comes back with it, and the focus and the caret; a field they left alone takes
+   the new opening amount (QA P1-F27). Returns the restore, to run once the new panel is bound */
+function keepAmount(box) {
+  const inp = $('[data-trade] #ppAmt', box); if (!inp) return null;
+  const kind = inp.closest('[data-trade]').dataset.trade, v = inp.value, typed = v !== inp.defaultValue, focus = document.activeElement === inp, s = inp.selectionStart, e = inp.selectionEnd;
+  return at => {
+    const i = $('[data-trade] #ppAmt', at); if (!i || i.closest('[data-trade]').dataset.trade !== kind) return;
+    if (typed) { i.value = v; i.dispatchEvent(new Event('input')); }   // the panel's own handler redraws what follows the amount
+    if (focus) { i.focus({ preventScroll: true }); try { i.setSelectionRange(s, e); } catch (x) {} }
+  };
 }
 function leaveLive() { if (pg.unwatch) { pg.unwatch(); pg.unwatch = null; } pg.pendingTrades = null; if (pg.lw) { try { pg.lw.ro.disconnect(); pg.lw.chart.remove(); } catch (e) {} pg.lw = null; } }
 /* the charts are drawn again once the page is in the document, and whenever their column changes width */
@@ -898,7 +913,7 @@ function bindRail(p) {
     const n = num(); if (go.disabled || !(n > 0)) return;
     go.disabled = true; go.textContent = 'Confirming…';
     const ok = swap ? await executeSwap(cur, pg.side, n) : await executeBuy(cur, n);
-    if (ok && swap) { const i = detailBox && $('#ppAmt', detailBox); if (i) i.value = ''; }
+    if (ok) { const i = detailBox && $('#ppAmt', detailBox); if (i) i.value = swap ? '' : (i.defaultValue = depositAmt(now())); }   // a deposit that landed puts the field back to its opening amount, which a redraw then takes afresh
     if (pg.syncTrade) pg.syncTrade();
   };
   pg.syncTrade = sync; chips(); sync();

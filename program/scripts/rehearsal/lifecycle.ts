@@ -171,7 +171,7 @@ const minutes = (n: number) => `${n} "day${n === 1 ? '' : 's'}" (${n} min here)`
   try { await c.send([await c.adminApproveTakeover(A, backer1.publicKey, takeoverTo)], [backer1]); check(false, 'A: only the admin approves a takeover'); } catch (e: any) { check(/NotAdmin/.test(e.message), 'A: only the admin approves a takeover', 'NotAdmin'); }
   await c.send([await c.adminApproveTakeover(A, me.publicKey, takeoverTo)]); a = await c.fetchRaise(A);
   check(a.payoutWallet.equals(takeoverTo) && a.takeoverTo.equals(takeoverTo), 'A: the admin\'s takeover moves the payout wallet (and the unvested team tokens with it)');
-  log('NOTE  no instruction burns unvested team tokens on a takeover: the schedule keeps unlocking to the new payout wallet. That policy is open (Needs Josh).');
+  log('NOTE  no instruction burns unvested team tokens on a takeover: the schedule keeps unlocking to the new payout wallet. That policy is open (Needs the owner).');
 
   // the unlock: nothing before day 90, everything at it, to the wallet the takeover named
   await c.send([c.ata(me.publicKey, takeoverTo, mint.publicKey)]);   // on its own: a refused claim would roll the account's creation back with it

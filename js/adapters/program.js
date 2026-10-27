@@ -354,11 +354,24 @@ var chain = {
     await this.send([att.ix, ix]); if (this.dry) return;
     const prof = this.profiles[p.address]; if (prof && prof.profile && prof.profile.model) { prof.profile.model.xAccount = { handle: att.handle, verified: !att.typed, typed: att.typed }; supa.call('raise-profile', { address: p.address, profile: prof.profile }).catch(() => {}); }
   },
+  /* pay is what the page shows leaving the wallet, the fee included. The program takes the buy and charges its fee on top
+     (mul_div_ceil), so the buy sent is the largest whose buy + fee fits in pay, read against the raise and the wallet's
+     contribution as the chain has them now: a buy within the page's six-place rounding of the minimum or of the room left
+     is that minimum or that room, and the wallet's maximum is never passed. Only buy + fee is wrapped (QA P0-F25) */
   async contribute(p, pay) {
-    await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), pp = this.pairProgram(p), wt = this.ata(me, pairMint, pp), amount = this.units(p, pay);
-    const ixs = [this.ixAtaIdem(me, wt, me, pairMint, pp)];
-    if (p.q === 'SOL') ixs.push(this.w.SystemProgram.transfer({ fromPubkey: me, toPubkey: wt, lamports: Number(amount.toString()) }), this.ixSync(wt));   // wrap exactly what the buy and its fee need
-    ixs.push(await this.program.methods.contribute(amount).accounts({ raise, contribution: this.pda.contribution(raise, me), wallet: me, pairMint, walletToken: wt, escrow: this.ata(raise, pairMint, pp), tokenProgram: pp, systemProgram: this.pk(PROG.SYSTEM) }).instruction());
+    await this.init(); const me = this.me(), raise = this.raiseKey(p), pairMint = this.pairMint(p), pp = this.pairProgram(p), wt = this.ata(me, pairMint, pp), contribution = this.pda.contribution(raise, me);
+    const [a, c] = await this.viaRpc(() => Promise.all([this.program.account.raise.fetch(raise), this.program.account.contribution.fetchNullable(contribution)]));
+    const big = v => BigInt(v.toString()), B = BigInt(BPS), f = BigInt(a.feeBps), fee = x => (x * f + B - 1n) / B, P = big(this.units(p, pay)), tol = big(this.units(p, 2e-6));
+    const room = big(a.target) - big(a.raised), min = big(a.minBuy), max = big(a.maxBuy), had = c ? big(c.amount) : 0n;
+    if (room <= 0n) throw new Error(`${p.name} has filled. Nothing was sent.`);
+    let buy = P * B / (B + f); while (buy > 0n && buy + fee(buy) > P) buy--;
+    if (min > 0n && buy < min && buy + tol >= min) buy = min;
+    if (buy + tol >= room) buy = room;
+    if (max > 0n && buy > max - had) buy = max - had;
+    if (buy <= 0n) throw new Error(`This wallet has put in the most ${p.name} takes from one wallet.`);
+    const amount = new this.lib.BN(buy.toString()), ixs = [this.ixAtaIdem(me, wt, me, pairMint, pp)];
+    if (p.q === 'SOL') ixs.push(this.w.SystemProgram.transfer({ fromPubkey: me, toPubkey: wt, lamports: Number(buy + fee(buy)) }), this.ixSync(wt));   // wrap exactly what the buy and its fee need
+    ixs.push(await this.program.methods.contribute(amount).accounts({ raise, contribution, wallet: me, pairMint, walletToken: wt, escrow: this.ata(raise, pairMint, pp), tokenProgram: pp, systemProgram: this.pk(PROG.SYSTEM) }).instruction());
     if (p.q === 'SOL') ixs.push(this.ixClose(wt, me, me));   // whatever a trimmed last buy left wrapped comes back as SOL
     await this.send(ixs); this.later(p);
   },
