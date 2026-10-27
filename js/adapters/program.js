@@ -382,6 +382,7 @@ var chain = {
     catch (e) {   // the crank settled the raise between the read and the send, so the bundled settle failed: the claim goes again without it (QA P2-111)
       if (!first.settles || /Cancelled in the wallet/.test(e.message)) throw e;
       const again = await this.refundIxs(p, me, raise, pairMint, pp, wt); if (again.settles) throw e;
+      if (!this.dry && typeof toast === 'function') toast(`${p.name} was settled meanwhile. Approve the refund claim again.`);   // the wallet asks a second time: say why
       await this.send(again.ixs);
     }
     this.later(p);
