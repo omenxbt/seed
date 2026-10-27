@@ -1787,7 +1787,7 @@ function actCell(p) {
   const C = Q(p), pos = state.positions[p.id];
   if (p.status === 'filled') return `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Seeding ${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1}/4</a>`;
   if (p.status === 'live') return `<button class="qb" data-qb="${p.id}">${BOLT}<span class="qb-w">Deposit </span><span><span class="num" data-qbamt>${qbLabel(p)}</span> ${esc(C.sym)}</span></button>`;
-  if (pos && !state.claimed[p.id]) return `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;
+  if (pos && state.wallet && !state.claimed[p.id]) return `<button class="qb hot" data-claim="${p.id}">${p.status === 'seeded' ? 'Claim tokens' : 'Claim refund'}</button>`;   // a claim is the connected wallet's: with none, the demo book offers nothing (QA P2-107)
   if (p.status === 'seeded') return `<a class="qb" href="#/presale/${p.id}" target="_blank" rel="noopener">Trade</a>`;   // a seeded token is bought and sold on its page
   return '';   // the card's status chip already says refunded
 }
@@ -1827,8 +1827,8 @@ function moveOf(p) {
   return { cls: 'quiet', txt: p.status === 'filled' ? 'Seeding' : '', title: '' };
 }
 function trendItem(p, i) {
-  const m = moveOf(p);
-  return `<a class="ts-item ${p.status}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}" aria-label="${esc(p.name)}, trending ${i + 1}"><span class="ts-rank num">${i + 1}</span>${artHTML(p, 'ts-art')}<b>${esc(p.name)}</b><span class="num ts-mc" data-mc>${fmtMcap(mcapUsdOf(p))}</span><span class="num chg ${m.cls}" title="${esc(m.title)}">${m.txt}</span></a>`;
+  const m = moveOf(p), demo = !p.live && typeof chain !== 'undefined' && chain.on();   // a demo raise among live ones says so, as its board row does (QA P1-F28)
+  return `<a class="ts-item ${p.status}" href="#/presale/${p.id}" target="_blank" rel="noopener" data-row="${p.id}" aria-label="${esc(p.name)}${demo ? ', a demo raise' : ''}, trending ${i + 1}"><span class="ts-rank num">${i + 1}</span>${artHTML(p, 'ts-art')}<b>${esc(p.name)}</b>${demo ? '<span class="demo-chip" title="A demo raise: generated data, nothing on chain">Demo</span>' : ''}<span class="num ts-mc" data-mc>${fmtMcap(mcapUsdOf(p))}</span><span class="num chg ${m.cls}" title="${esc(m.title)}">${m.txt}</span></a>`;
 }
 /* a raise as a tile. The Trending row shows the short form with its rank; the feed adds time, backers, links, checks and the button. */
 function tile(p, i, trend, fresh = '') {
