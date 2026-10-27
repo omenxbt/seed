@@ -736,8 +736,12 @@ function afterTab(p, body) {
   }
   body.onclick = async e => {
     const fl = e.target.closest('[data-flag]'), tk = e.target.closest('[data-takeover]'), dm = e.target.closest('[data-dismiss]'); if (!fl && !tk && !dm) return;
-    if (fl) { if (!confirm(`Flag ${p.name} for fraud? Buying stops and the founder wallet is blacklisted, with the X account if one is linked. This is an on-chain instruction from the admin wallet.`)) return; await adminFlag(p, fl.dataset.flag); }
-    else if (tk) { const to = prompt('The wallet that takes over the payout: creator fees and team unlocks go there from now on.', ''); if (!to) return; if (!B58.test(to.trim())) return toast('That is not a Solana address.'); const label = prompt('A name for it, shown on the page (for example "Backer multisig, 3 of 5").', 'Backer multisig') || 'Backers'; await adminTakeover(p, tk.dataset.takeover, to.trim(), label); }
+    if (fl) { if (!(await askSheet({ title: `Flag ${p.name} for fraud?`, body: 'Buying stops and the founder wallet is blacklisted, with the X account if one is linked. This is an on-chain instruction from the admin wallet.', ok: 'Flag for fraud' }))) return; await adminFlag(p, fl.dataset.flag); }
+    else if (tk) {
+      const v = await askSheet({ title: 'Approve a community takeover', body: 'Creator fees and team unlocks go to the new wallet from now on. This is an on-chain instruction from the admin wallet.', ok: 'Approve takeover',
+        fields: [{ label: 'The wallet that takes over the payout', placeholder: 'Solana address' }, { label: 'A name for it, shown on the page', value: 'Backer multisig', placeholder: 'Backer multisig, 3 of 5' }], check: ([to]) => B58.test(to) ? '' : 'That is not a Solana address.' });
+      if (v) await adminTakeover(p, tk.dataset.takeover, v[0], v[1] || 'Backers');
+    }
     else await dismissReport(p, dm.dataset.dismiss);
   };
 }
@@ -808,6 +812,21 @@ function renderDetail(force) {
   bindPage(p); if (kept) kept(box); if (feesOpen) { const d = $('[data-feesdlg]', box); if (d) d.showModal(); } renderTab(p); mountChat(p); drawCharts(p); watchCharts(p); loadAsync(p);
   if (fresh && typeof playEnter === 'function') playEnter();   // the page's cards rise into place and the raise line draws itself
 }
+/* the app's own confirm and prompt: a sheet like the wallet and X sheets, never the browser's dialog (QA P2-105). Resolves to the
+   fields' values (true when there are none) or to null when dismissed; check(values) returns an error that keeps it open */
+function askSheet({ title, body, ok, no = 'Not now', fields = [], check }) {
+  let d = $('#askDlg'); if (!d) { d = document.createElement('dialog'); d.id = 'askDlg'; d.setAttribute('aria-labelledby', 'askH'); d.innerHTML = '<div class="sheet terms-sheet"></div>'; document.body.appendChild(d); }
+  $('.sheet', d).innerHTML = `<div class="sh-head"><span class="nm"><b id="askH">${esc(title)}</b></span><button type="button" class="x" data-askx aria-label="Close">&times;</button></div><p>${esc(body)}</p>
+    <form data-askform novalidate style="display:grid;gap:12px">${fields.map((f, i) => `<div class="f"><label for="ask${i}">${esc(f.label)}</label><div class="inp"><input id="ask${i}" value="${esc(f.value || '')}" placeholder="${esc(f.placeholder || '')}" autocomplete="off" spellcheck="false"></div></div>`).join('')}
+    <div class="err" data-askerr role="alert"></div><div class="row-btns"><button class="btn btn-navy">${esc(ok)}</button><button type="button" class="btn btn-ink" data-askno>${esc(no)}</button></div></form>`;
+  return new Promise(done => {
+    const finish = v => { d.onclose = d.onclick = null; if (d.open) d.close(); done(v); };
+    $('[data-askform]', d).onsubmit = e => { e.preventDefault(); const vals = fields.map((f, i) => $('#ask' + i, d).value.trim()), bad = check && check(vals); if (bad) { $('[data-askerr]', d).textContent = bad; return; } finish(fields.length ? vals : true); };
+    d.onclick = e => { if (e.target === d || e.target.closest('[data-askx],[data-askno]')) finish(null); };
+    d.onclose = () => finish(null);
+    d.showModal(); const first = $('input', d); if (first) first.focus();
+  });
+}
 /* what the backer typed outlives the page being drawn again (the 20 s chain sync, a realtime update, a wallet change): when the
    same panel comes back, an amount they changed comes back with it, and the focus and the caret; a field they left alone takes
    the new opening amount (QA P1-F27). Returns the restore, to run once the new panel is bound */
@@ -876,7 +895,7 @@ function floatChip(p, amt) {
 function bindRail(p) {
   const box = detailBox, dc = $('[data-dclaim]', box); if (dc) dc.onclick = () => claim(p, dc);
   const sh = $('[data-share]', box); if (sh) sh.onclick = async () => { const url = sh.dataset.share, title = `${p.name} ($${p.ticker}) raise on Seed`; if (navigator.share) { try { await navigator.share({ title, url }); return; } catch (e) { if (e && e.name === 'AbortError') return; } } try { await navigator.clipboard.writeText(url); toast('Link copied: ' + url); } catch (e) { toast(url); } };
-  const cb = $('[data-cancel]', box); if (cb) cb.onclick = async () => { if (!confirm(`Cancel the ${p.name} raise? Every backer gets a refund, fee included, and the raise cannot reopen.`)) return; cb.disabled = true; const was = cb.textContent; cb.textContent = 'Confirm in wallet…';
+  const cb = $('[data-cancel]', box); if (cb) cb.onclick = async () => { if (!(await askSheet({ title: `Cancel the ${p.name} raise?`, body: 'Every backer gets a refund, fee included, and the raise cannot reopen.', ok: 'Cancel the raise', no: 'Keep it open' }))) return; cb.disabled = true; const was = cb.textContent; cb.textContent = 'Confirm in wallet…';
     const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('The cancel did not confirm in 90 seconds. Check the wallet and the raise; try again if it is still live.')), 90e3));
     try { await Promise.race([cancelRaise(find(p.id) || p), timeout]); } catch (e) { toast(e.message); } finally { if (cb.isConnected) { cb.disabled = false; cb.textContent = was; } } };
   const lx = $('[data-linkx]', box); if (lx) lx.onclick = async () => {   // the founder links an X account to a raise that is already open
