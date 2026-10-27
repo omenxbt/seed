@@ -12,6 +12,9 @@ _None open. The Trade-on links and the mainnet checklist shipped in Phase 5; the
 - **QA P2-4 (seed-qa):** dust after crank_pool — ~0.5 token left in the pool staging vault and ~0.001 wSOL in the raise's stage after the DAMM deposit rounds. Burn or sweep both in crank_seed (program change; next upgrade).
 - Optional min buy / max per wallet / whitelist in the program (the site's profile carries them; the program does not enforce them yet).
 
+- **QA P2-71, P2-72, P2-73, P2-75, P2-76 (seed-qa, pass #19, 2026-10-17):** QA.md tags them in that pass's notes (launch validation, the rejected-signature path, the founder page's fee total) but never says what is wrong, and no fix names them. Moved here so they are not lost: seed-qa to restate or close them in its next full pass. (P2-74 is above.)
+- QA P2-97 to P2-104 (pass #32): fixed in e5b4152 and 88ebc1a and verified on the live code (2026-10-26); awaiting seed-qa's re-test.
+
 ## Re-enable other pairs
 _SOL only at launch (the owner, 2026-10-26). Not launch blockers; out of seed-qa's scope until pairs come back. The program keeps the allowlist (`set_pair`), so a pair comes back without an upgrade, except USDC (below)._
 - **QA P1-F21 (seed-qa):** swaps on a Token-2022-paired pool fail. The trade panel's TSTx buy on QAT32 simulates to `InstructionError [1, IncorrectProgramId]`: the associated token account is created under Tokenkeg for the Token-2022 pair (QA.md, passes #31 and #32). e5b4152 passed each side's program to the swap; the ATA create still needs the pair's.
