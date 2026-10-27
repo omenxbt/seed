@@ -134,8 +134,16 @@ function feesOf(p) {
 
 /* ---------------------------------------------------------------- raise states */
 const RAISE_STATE = { live: 'Live', filled: 'Filled, seeding', seeded: 'Seeded', refunded: 'Refunded' };
-const refundReason = p => ({ missed: 'missed its target', cancelled: 'was cancelled by the founder', timeout: 'did not seed within three days of filling' })[p.refundReason] || 'did not seed';
-const seedDeadline = p => (p.filledAt || 0) + SEED.seedTimeoutDays * dayOf(p);   // when a filled raise refunds if it has not seeded
+const refundReason = p => ({ missed: 'missed its target', cancelled: 'was cancelled by the founder', timeout: 'stalled in seeding for three days' })[p.refundReason] || 'did not seed';
+/* when a filled raise refunds if seeding stalls: the timeout counts from the last step, the fill and then the mint, as the program
+   counts it (QA P0-F19), so a raise the pool holds only ever seeds (Infinity). A live raise minted before the chain was read waits for
+   that read; a progress time outside [fill, now] is an older layout's leftover, and the fill counts */
+const seedDeadline = p => {
+  if (p.seedStep === 'pooled' || p.seedStep === 'seeded') return Infinity;
+  const f = p.filledAt || 0, pr = p.progressAt;
+  if (p.live && p.seedStep === 'minted' && pr == null) return Infinity;
+  return (pr >= f && pr <= Date.now() ? pr : f) + SEED.seedTimeoutDays * dayOf(p);
+};
 const SEED_STEPS = ['filled', 'minted', 'pooled', 'seeded'];
 /* the pending payout wallet change, if any, and whether it is due */
 const payoutChange = p => p.pendingPayoutWallet ? { to: p.pendingPayoutWallet, at: p.payoutEffectiveAt, due: Date.now() >= p.payoutEffectiveAt } : null;

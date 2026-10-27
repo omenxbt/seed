@@ -21,7 +21,7 @@ const ICONS = {
   github: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5C5.7.5.5 5.7.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.3.8-.6v-2.2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.8.8 1.2 1.9 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A11.5 11.5 0 0 0 23.5 12C23.5 5.7 18.3.5 12 .5z"/></svg>',
   linkedin: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zM9 9h3.8v1.7h.1c.5-1 1.8-2 3.7-2 4 0 4.7 2.6 4.7 6V21h-4v-5.3c0-1.3 0-2.9-1.8-2.9s-2 1.4-2 2.8V21H9z"/></svg>',
   copy: '<svg class="line" viewBox="0 0 16 16" aria-hidden="true"><rect x="5" y="5" width="8.5" height="8.5" rx="2"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/></svg>',
-  out: '<svg class="line" viewBox="0 0 16 16" aria-hidden="true"><path d="M9 3h4v4M13 3L7 9M12 9.5V13H3V4h3.5"/></svg>'
+  out: '<svg class="line" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M9 3h4v4M13 3L7 9M12 9.5V13H3V4h3.5"/></svg>'
 };
 const SOCIALS = [['website', 'Website', 'web'], ['x', 'X', 'x'], ['telegram', 'Telegram', 'telegram'], ['discord', 'Discord', 'discord'], ['github', 'GitHub', 'github']];
 const hostOf = u => { try { return new URL(u).host.replace(/^www\./, '') + new URL(u).pathname.replace(/\/$/, ''); } catch (e) { return u; } };
@@ -94,7 +94,7 @@ function ppStats(p) {
       st('Refunds claimed', `${claimed} <em>/ ${rows.length || p.backers || 0}</em>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Closed', fmtDay(p.resolvedAt || p.endsAt));   // the backers count stands in until the list is read (QA P2-96)
   }
   if (p.status === 'filled') return st('Raised', `${fmtC(p.raised, p.q, true)} <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Backers', p.backers) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) +
-    st('Filled', fmtAgo(Date.now() - p.filledAt)) + st('Seeding', `${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1} <em>/ ${SEED_STEPS.length}</em>`) + st('Refunds if not seeded by', fmtDate(seedDeadline(p)));
+    st('Filled', fmtAgo(Date.now() - p.filledAt)) + st('Seeding', `${SEED_STEPS.indexOf(p.seedStep || 'filled') + 1} <em>/ ${SEED_STEPS.length}</em>`) + (isFinite(seedDeadline(p)) ? st('Refunds if no step by', fmtDate(seedDeadline(p))) : '');
   return st('Raised', `<span data-sraised>${fmtC(p.raised, p.q, true)}</span> <em>/ ${fmtC(p.target, p.q, true)} ${sym}</em>`) + st('Filled', `<span data-spct>${Math.floor(pctOf(p) + 1e-7)}%</span>`) +
     st('Backers', `<span data-sbackers>${p.backers}</span>`) + st('Raise price', `${fmtPrice(priceOf(p))} ${sym}`) + st('Time left', `<span data-stime>${fmtLeft(p.endsAt - Date.now())}</span>`) +
     st('Fee', `1% <em>on top, refunded on a miss</em>`);
@@ -353,7 +353,7 @@ function seedingPanel(p) {
   const i = SEED_STEPS.indexOf(p.seedStep || 'filled'), names = ['Target reached', 'Token minted, authorities revoked', 'Pool opened and locked', 'Seeded'];
   return `<section class="panel rail-card" data-seeding><h3>Seeding $${esc(p.ticker)}</h3>
     <ol class="seed-steps">${SEED_STEPS.map((k, j) => `<li class="${j < i ? 'done' : j === i ? 'now' : ''}"><span class="num">${j + 1}</span>${names[j]}</li>`).join('')}</ol>
-    <p class="rail-meta">Anyone can run the next step. If seeding has not finished by ${fmtDate(seedDeadline(p))}, every backer claims a refund instead.</p>
+    <p class="rail-meta">Anyone can run the next step. ${isFinite(seedDeadline(p)) ? `If no step lands by ${fmtDate(seedDeadline(p))}, every backer claims a refund instead.` : p.seedStep === 'pooled' ? 'The pool holds the raise now, so seeding only finishes from here; there is no refund.' : ''}</p>
     <button class="btn btn-navy btn-block" data-crank>Run the next step</button></section>`;
 }
 /* the deposit field's opening amount: never more than the wallet may still put in, fee included (the limits live on the profile, QA P2-85) */

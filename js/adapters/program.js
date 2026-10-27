@@ -156,7 +156,7 @@ var chain = {
   apply(p, a) {
     const dp = PAIR_DP[p.q], f = v => Number(v.toString()) / 10 ** dp, t = v => Number(v.toString()) * 1000, key = o => o ? Object.keys(o)[0] : null;
     p.target = f(a.target); p.raised = f(a.raised); p.backers = Number(a.backers); p.status = key(a.status); p.seedStep = key(a.seedStep);
-    p.refundReason = key(a.refundReason); p.openedAt = t(a.openedAt); p.endsAt = t(a.endsAt); p.filledAt = Number(a.filledAt) ? t(a.filledAt) : null; p.seededAt = Number(a.seededAt) ? t(a.seededAt) : null;
+    p.refundReason = key(a.refundReason); p.openedAt = t(a.openedAt); p.endsAt = t(a.endsAt); p.filledAt = Number(a.filledAt) ? t(a.filledAt) : null; p.progressAt = Number(a.progressAt || 0) ? t(a.progressAt) : null; p.seededAt = Number(a.seededAt) ? t(a.seededAt) : null;
     p.dayMs = Number(a.timeUnit) * 1000 || D; p.teamBps = a.teamBps; p.feeBps = a.feeBps; p.creatorShareBps = a.creatorShareBps;
     p.teamSchedule = !a.teamBps ? null : a.even ? { cliffDays: a.even.cliffDays, intervalDays: a.even.intervalDays, count: a.even.count } : { tranches: a.schedule.map(x => ({ dayOffset: x.dayOffset, bps: x.bps })) };
     p.payoutWallet = a.payoutWallet.toBase58(); p.pendingPayoutWallet = a.pendingPayout ? a.pendingPayout.toBase58() : null; p.payoutEffectiveAt = a.pendingPayout ? t(a.payoutEffectiveAt) : null;
