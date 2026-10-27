@@ -441,7 +441,22 @@ function tabInfo(p) {
   return tabHead('Info', '', riskChip(s)) +
     `<ul class="risk-list risk-grid" data-risk>${checks.filter(c => !isFact(c)).map(li).join('')}</ul>
     <p class="info-h">The founder's choices</p><ul class="risk-list risk-grid">${checks.filter(isFact).map(li).join('')}</ul>
-    <p class="quiet risk-note">Seed enforces the minimum and the cap, the refunds, the locked pool and the unlock schedule as set in its program, and acts on fraud. Everything else here is for you to weigh.${demo ? ` ${DEMO_PILL} Checks run on demo data where no live account exists.` : ''}</p>` + infoAddresses(p);
+    <p class="quiet risk-note">Seed enforces the opening market cap preset and the buy limits, the refunds, the locked pool and the unlock schedule as set in its program, and acts on fraud. Everything else here is for you to weigh.${demo ? ` ${DEMO_PILL} Checks run on demo data where no live account exists.` : ''}</p>` + infoAddresses(p) + listingKit(p);
+}
+/* the token's DEXScreener profile, as its Enhanced Token Info form asks for it: the icon (1:1), the header (3:1), the description
+   and the links. All of it is fixed when the raise opens, so the kit is ready the moment it seeds; DEXScreener takes it for a
+   mainnet token, and on devnet it is a preview of what will be sent */
+function listingKit(p) {
+  if (p.status !== 'seeded') return '';
+  const pr = profileOf(p), l = pr.links || {}, links = SOCIALS.filter(s => safeUrl(l[s[0]])).map(s => ({ label: s[1], url: safeUrl(l[s[0]]) }));
+  const abs = u => { try { return u ? new URL(u, location.href).href : ''; } catch (e) { return ''; } };
+  const plain = t => String(t || '').replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)').replace(/^#{1,6}\s*/gm, '').replace(/(\*\*|__)(.*?)\1/g, '$2').replace(/(^|\s)[*_]([^*_\n]+)[*_](?=\s|$)/g, '$1$2').replace(/^\s*[-*]\s+/gm, '• ').replace(/\n{3,}/g, '\n\n').trim();   // DEXScreener takes plain text
+  const kit = { chainId: 'solana', tokenAddress: p.mint || '', name: p.name, symbol: p.ticker, icon: abs(pr.art), header: abs(pr.banner), description: plain(pr.description).slice(0, 1000), links };
+  const img = (src, cls, need) => src ? `<img class="lk-img ${cls}" src="${esc(src)}" alt="">` : `<span class="quiet">${need}</span>`;
+  const row = (k, v) => `<div><dt>${k}</dt><dd>${v}</dd></div>`;
+  return `<p class="info-h">DEXScreener profile</p><dl class="kv kv-wide lk">${row('Icon, 1:1', img(pr.art, 'sq', 'No token art: DEXScreener needs a square icon'))}${row('Header, 3:1', img(pr.banner, 'wide', 'No banner: DEXScreener needs a 3:1 header'))}
+      ${row('Description', kit.description ? `${esc(kit.description.slice(0, 180))}${kit.description.length > 180 ? '…' : ''} <span class="quiet num">${kit.description.length} characters</span>` : '<span class="quiet">None written</span>')}${row('Links', links.length ? links.map(x => `<a class="bar-link" href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.label)}</a>`).join(' ') : '<span class="quiet">None listed</span>')}</dl>
+    <div class="lk-acts">${copyBtn(JSON.stringify(kit, null, 2), 'DEXScreener profile', 'Copy as JSON')}<a class="bar-link" href="https://marketplace.dexscreener.com/product/token-info" target="_blank" rel="noopener">DEXScreener's form ${ICONS.out}</a>${SEED.network === 'mainnet' ? '' : '<span class="quiet">Devnet: a preview. DEXScreener lists mainnet tokens.</span>'}</div>`;
 }
 /* the accounts behind a raise that is on chain, each with a copy button and an explorer link */
 function infoAddresses(p) {
