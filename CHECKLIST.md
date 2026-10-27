@@ -15,11 +15,11 @@ with the commit or tx in brackets.
 - [x] Confirm Vercel auto-deploys on push; remove the manual deploy step from LOOP.md [6bbd066; Git builds READY on their own since: dpl_BL4wLbfx, dpl_28P96Uk2, dpl_548M2PLt, dpl_6pwo4xSc]
 - [x] Report what the Oct 26 10:21 AM PT CLI production deploy contained. If anything uncommitted shipped, commit it or redeploy main from git [dpl_PLUmaCPf was a clean export of commit 7e5f845: tracked files only, nothing uncommitted; main has redeployed from Git since]
 - [x] Deployer ≥ 4.6 SOL free on devnet: close leftover buffers, sweep test wallets (keep 0.05 each). If still short → [OWNER] with the exact amount [11.70 SOL, no buffers left; no sweep needed]
-- [ ] Upgrade the devnet program to 85dc510 or later; refresh js/idl and the crank if the IDL changed; one suite run
+- [x] Upgrade the devnet program to 85dc510 or later; refresh js/idl and the crank if the IDL changed; one suite run [upgraded at slot 515474928, tx 4n3PD67PTAntWw1ToLdVeUv5jgmUTVCGXYjqtwePX573ZqxYUTzkmKuPoK2cRz8H7wUaWrCWiK1gvM2JHioq185c; on-chain bytes match the build; IDL unchanged, so js/idl and the crank stand; suite 28/28 on a local validator loaded with that build. A devnet run (13 pass, 12 fail) fails on test-mode timing, a minute-long deadline passing mid-suite, and on the live crank seeding the suite's raises]
 
 ## B. Scope changes
 - [x] SOL only: no pair selector on the launch form (verify on final-model) [03f8677; production serves no selector]
-- [ ] USDC and TSTx paused on chain with set_pair; a raise attempt on either is refused with PairPaused (save the tx)
+- [ ] USDC and TSTx paused on chain with set_pair; a raise attempt on either is refused with PairPaused (save the tx) [TSTx: tx 3iMigYj8EgUg5wNRX2QWg145oUrJEP4PjdGAhB6v1CbgLdY4pH9z1FabGzsVuq8smq2hSAspcj1ozojf4xa6icaJ, a simulated open_raise fails PairPaused 6014. USDC: open_raise accepts it without the allowlist, so no set_pair can make it refuse, and B3 rules out the change → [OWNER] decide, see PROGRESS.md]
 - [x] No program change for USDC; allowlist code stays for later [03f8677: no program change; set_pair and the allowlist intact]
 - [x] MAINNET.md + staging/production init scripts set up SOL only [03f8677: MAINNET.md SOL only, check-deploy.ts fails on an active entry (devnet OK), staging init makes no entry]
 - [x] Docs, FAQ and copy say SOL; no "SOL, USDC or an approved asset" anywhere [this commit: the site's meta description, the brand book, banner 05 and its source; the docs in 03f8677. The program's own BadPair message still names USDC: program text, B3]
@@ -27,11 +27,11 @@ with the commit or tx in brackets.
 - [x] "What backers pay" removed from the launch form; buy panel still shows the 1% fee and fee-included total [03f8677: "Seed fee, 1%, included" on every deposit panel; the amount you deposit is the fee-included total]
 
 ## C. Remaining fixes
-- [ ] Demo raise no longer shows as "Yours" with no wallet connected
-- [ ] Docs no longer say a $100K cap
-- [ ] /r preview links use the request host, not the hard-coded production domain
-- [ ] Raise links work by address
-- [ ] "Refunds claimed 0/0" fixed
+- [x] Demo raise no longer shows as "Yours" with no wallet connected [88ebc1a: board and tiles use isMine(); 0 "Yours" tags with no wallet]
+- [x] Docs no longer say a $100K cap [88ebc1a: no cap wording left; the presets and a daily-volume example are the only $100K figures]
+- [x] /r preview links use the request host, not the hard-coded production domain [e5b4152 siteOf(); production's /r names seed-nu-ten.vercel.app]
+- [x] Raise links work by address [account address since f4f0d65; by mint too, 88ebc1a: /r and the page both resolve QMNt9Fdm… to Upgr]
+- [x] "Refunds claimed 0/0" fixed [f4f0d65 + the 2026-10-22 backfill: Q33A 0 / 1, QALIM 2 / 2 and 1 / 1]
 - [ ] Every other open P2 in QA.md fixed or moved to BACKLOG.md with a reason
 - [ ] Axiom and GMGN trade buttons on every seeded raise page
 - [ ] DexScreener profile data (logo, socials, description) prepared at seed time for mainnet
@@ -43,10 +43,10 @@ with the commit or tx in brackets.
 - [ ] [OWNER] Keep or revert. Keep: merge into final-model, and the QA clean-pass count restarts. Revert: delete the branch.
 
 ## E. QA gate
-- [ ] Tell seed-qa the scope (SOL only; F21/F22 and paused-pair UI out of scope) and start full pass #33 once A and B are live
+- [x] Tell seed-qa the scope (SOL only; F21/F22 and paused-pair UI out of scope) and start full pass #33 once A and B are live [seed-qa (session seed-9b) is running pass #33 since 03f8677; scope and commits sent 2026-10-26 17:08 PT]
 - [ ] Fix every P0/P1 seed-qa reports, push, wait for READY, have seed-qa run a full pass again
 - [ ] Two consecutive clean full passes (zero P0, zero P1) on the final code (merged UI, if kept)
-- [ ] Keep QA wallets ≥ 0.05 SOL from the deployer
+- [x] Keep QA wallets ≥ 0.05 SOL from the deployer [founder 0.335, backer1 0.250, backer2 0.268 at 17:09 PT; topped up from the deployer when one nears 0.05]
 
 ## F. Ready for final testing
 - [ ] Write READY.md:
