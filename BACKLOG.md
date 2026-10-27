@@ -6,13 +6,13 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 _None open. The Trade-on links and the mainnet checklist shipped in Phase 5; the live pick-up check needs a mainnet raise (Needs the owner)._
 
 ## P2
-- **QA P2-74 (seed-qa):** an idle tab rewrites ~750 KB of localStorage on price ticks because the board cache sits inside `seed.v6`. Half done (an unchanged state is not written); the rest is to keep the board cache in its own key and save the book on user actions only.
+- QA P2-74 (seed-qa): fixed; pass #35 re-measured an idle board writing nothing to seed.v6 in 40 s.
 - **QA P2-26 (seed-qa, program change):** snapshot `pool_fee_bps` on the Raise at `open_raise` (as `creator_share_bps` is) so a raise live across a config change seeds at the fee its backers saw. Next program upgrade, with P2-4.
 - **Axiom/GMGN patterns from QA (P2-15..19):** Your position with Bought / Sold / Holding / PnL for traders; editable quick-amount presets saved per wallet; a 5m/1h/6h/24h strip (change, buys/sells, net volume) above the panel; Price/MCap/Liquidity/24h volume in a row by the name and CA; a USD/SOL toggle and 1s/30s intervals.
 - **QA P2-4 (seed-qa):** dust after crank_pool — ~0.5 token left in the pool staging vault and ~0.001 wSOL in the raise's stage after the DAMM deposit rounds. Burn or sweep both in crank_seed (program change; next upgrade).
 - Optional min buy / max per wallet / whitelist in the program (the site's profile carries them; the program does not enforce them yet).
 
-- QA P2-71 to P2-76 (pass #19, 2026-10-17): closed by seed-qa on 2026-10-26: P2-71 and P2-72 (typed targets, the $100k cap) superseded by the presets; P2-73 (a rejected signature on a buy) passes; P2-75 (the founder page) superseded, re-swept clean in #34; P2-76 closed with no record of what it was. P2-74 stays open (above), to be measured in #35.
+- QA P2-71 to P2-76 (pass #19, 2026-10-17): closed by seed-qa on 2026-10-26: P2-71 and P2-72 (typed targets, the $100k cap) superseded by the presets; P2-73 (a rejected signature on a buy) passes; P2-75 (the founder page) superseded, re-swept clean in #34; P2-76 closed with no record of what it was. P2-74 measured fixed in #35.
 - QA P2-97 to P2-104 (pass #32): fixed in e5b4152 and 88ebc1a and verified on the live code (2026-10-26); awaiting seed-qa's re-test.
 
 ## Re-enable other pairs
