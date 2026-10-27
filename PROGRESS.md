@@ -3,7 +3,7 @@
 - **Needs the owner** (in the order to do them):
   1. **USDC on chain (CHECKLIST B2 against B3).** `open_raise` accepts USDC without reading the allowlist, so `set_pair` cannot make the program refuse it; B3 rules out the program change that would. Either accept that USDC stays open on chain while the site offers SOL only (B2 ticks with TSTx alone), or allow the small change (USDC becomes an allowlist entry like any other pair).
   2. **The UI comparison (CHECKLIST D, keep or revert).** The trending bar and no background effects are on the original UI (b8abe02); the rest of `ui-simplify` was not wanted. Say "revert" and the branch is deleted, or "keep" to merge it.
-  3. **seed-qa.** Section E needs the seed-qa session running; it is not among the open sessions.
+  3. **Admin actions for seed-qa (devnet, your Phantom: the Config admin is that wallet, and no other key may sign them).** On the site, connected as the admin, from each raise's Reports: (a) Flag fraud on QA Q34X, raise G1aiNZzasd81rXfNcNTjia1tRFhQYPU422rs26xkQW7B; (b) Approve takeover on QA Pass 34D, raise Eev4YwcBrHH85jXmKps7LHcFSXv3WCqZZzK5GZ2dEzA6, to 6D8kCB4YDGqxpWCjShRVy6g5RoV6id1WerD7SeY8cm1Q; (c) after a builder opens an X-attested test raise (the devnet attestor key is derived from the deployer's), flag that one too. Send the signatures to seed-qa.
   4. **Phantom click-through (F):** launch a Test-preset raise, back it, watch it seed, claim, trade.
   5. **Refund checks (F):** one cancelled raise, one missed deadline.
   6. **Phone check (F).**

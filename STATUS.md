@@ -1,16 +1,19 @@
-# Seed status — 2026-10-26, 17:38 PT
-**Where it stands:** QA gate: pass #33 not clean (F24, F25, F27 since fixed); full pass #34 running on 88ebc1a; 0 of 2 clean passes.
+# Seed status — 2026-10-26, 18:00 PT
+**Where it stands:** QA gate: 0 of 2 clean passes; #34 not clean (P1-F28, fixed in 2bb0188); #35 next, on final-model 7a35f70.
 
 | Section | Done | Total | State |
 |---|---|---|---|
 | A. Housekeeping | 5 | 5 | done |
 | B. Scope changes | 6 | 7 | blocked: B2's USDC half needs the owner |
-| C. Remaining fixes | 8 | 8 | done (C6-C8 on branch checklist-next, merging after pass #34) |
+| C. Remaining fixes | 8 | 8 | done (on final-model 7a35f70) |
 | D. UI simplification | 3 | 4 | waiting on the owner: keep or revert |
-| E. QA gate | 2 | 4 | in progress: pass #33 running |
+| E. QA gate | 2 | 4 | in progress: #35 next on 7a35f70 |
 | F. Final testing | 0 | 9 | not started |
 
-**Done since last update (17:38):**
+**Done since last update (18:00):**
+- C6-C8 and the owner's raise page asks merged into final-model: 7a35f70 (Creator fees in a window from the founder card, no "How it raised" on a seeded raise, the pool figures in the left panel, the Solana mark in the buy fields, the Trending bar rolling without end)
+
+**Done (17:38):**
 - C6 the remaining P2s: P2-97 to P2-104 verified fixed; P2-71, 72, 73, 75, 76 to BACKLOG (QA.md never describes them) [dfcc7f6]
 - C7 Axiom and GMGN buttons on every seeded raise page; disabled with the reason on devnet [658f153]
 - C8 a seeded raise's Info tab carries its DEXScreener profile (icon, header, plain-text description, links), Copy as JSON and the form link [7fd0803]
@@ -39,7 +42,7 @@
 - E4 QA wallets above 0.05 SOL
 - Also, outside the checklist: the one-line Trending bar and no background effects on the original UI [b8abe02]
 
-**In progress:** seed-qa's full pass #34 on 88ebc1a (re-testing P2-97 to P2-104 too); seed-cc fixes what it finds. final-model takes only fixes until #34 ends, so C6-C8 wait on branch checklist-next and merge after. main stays at 0fc8490: main is production and moves only after seed-qa passes the change.
+**In progress:** seed-qa's full pass #35 on 7a35f70 (#34 on 0fc8490 found P1-F28, fixed in 2bb0188, and P2-105 to P2-107). seed-cc fixes what it finds. main stays at 0fc8490 until seed-qa passes the change.
 
 **Blocked:**
 - B2 (USDC refused on chain), since 16:00 PT: `open_raise` takes USDC without the allowlist, and B3 rules out the program change. Waiting on the owner.
@@ -47,12 +50,13 @@
 **Needs the owner:**
 1. USDC (B2 against B3): accept that USDC stays open on chain while the site offers SOL only, or allow the small program change.
 2. ui-simplify (D): "revert" to delete the branch (its two kept pieces are already on the original), or "keep" to merge it.
-3. After the QA gate: the Phantom click-through (launch a Test-preset raise, back it, watch it seed, claim, trade).
-4. Refund checks: one cancelled raise, one missed deadline.
-5. Phone check.
-6. Takeover policy for unvested team tokens: burn or keep.
-7. Staging presets ($150/$300/$450/$600, or $50K in place of $600) and mainnet funding: deployer 5.0, staging backer 0.75, Irys 0.01 SOL.
+3. Admin actions for seed-qa, signed in your Phantom (the Config admin): flag fraud on raise G1aiNZza… (QA Q34X); approve the takeover on Eev4YwcB… (QA Pass 34D) to 6D8kCB4Y…; then flag the X-attested test raise a builder opens. Exact steps in PROGRESS.md.
+4. After the QA gate: the Phantom click-through (launch a Test-preset raise, back it, watch it seed, claim, trade).
+5. Refund checks: one cancelled raise, one missed deadline.
+6. Phone check.
+7. Takeover policy for unvested team tokens: burn or keep.
+8. Staging presets ($150/$300/$450/$600, or $50K in place of $600) and mainnet funding: deployer 5.0, staging backer 0.75, Irys 0.01 SOL.
 
-**QA:** pass #33 (on 03f8677): not clean (P0-F25, P1-F24, P1-F27; fixed in 9969833 and 66ea505). Pass #34 running on 88ebc1a. Consecutive clean: 0. Out of scope: F21, F22, paused-pair UI; USDC accepted on chain is the owner's open call. Open P2s: P2-105 (two browser confirm() dialogs; seed-cc, queued after #34).
+**QA:** #34 on 0fc8490: not clean (P1-F28; P2-105, 106, 107); F25 and F27 verified fixed on chain and in the UI. #35 next on 7a35f70. Consecutive clean: 0. Out of scope: F21, F22, paused-pair UI; USDC accepted on chain is the owner's open call.
 
-**Live:** final-model 0fc8490, main 0fc8490 (production; 88ebc1a's code), https://seed-nu-ten.vercel.app (production builds from main on every push). ui-simplify eee8ff7, preview on Vercel's ui-simplify branch URL (it carries the account slug, so it is not written here). Devnet program 8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn at slot 515474928 (the 85dc510 build). Deployer 10.00 SOL; crank 1.12; QA founder 0.335, backer1 0.250, backer2 0.268.
+**Live:** final-model 7a35f70 (preview), main 0fc8490 (production; 88ebc1a's code), https://seed-nu-ten.vercel.app (production builds from main on every push). ui-simplify eee8ff7, preview on Vercel's ui-simplify branch URL (it carries the account slug, so it is not written here). Devnet program 8Kr2agQDXeQmr1JXZnYQF3G8LgMRVTbcr3C1mVR7eZzn at slot 515474928 (the 85dc510 build). Deployer 10.00 SOL; crank 1.12; QA founder 0.335, backer1 0.250, backer2 0.268.
