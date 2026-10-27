@@ -6,6 +6,10 @@ P0 = broken on devnet or breaks "What Seed is". P1 = a target feature missing. P
 _None open. The Trade-on links and the mainnet checklist shipped in Phase 5; the live pick-up check needs a mainnet raise (Needs the owner)._
 
 ## P2
+- **QA P2-116 to P2-123 (seed-qa, passes #38–#39 on fd7ed1c), fixes held for the owner's call:** P2-116 a stall toasts once per
+  crank step; P2-117 the refund button rounds; P2-120 the raw web3 text on an expired blockhash; P2-122 the creator row shows fees
+  the crank claimed; P2-123 one miss toasts twice (seed-cc, local branch qa-fixes from db4a54c). P2-118 a second takeover's
+  wording; P2-119 a saved demo keeps the old schedules; P2-121 the creator row after a takeover (93a4453 on checklist-next).
 - QA P2-74 (seed-qa): fixed; pass #35 re-measured an idle board writing nothing to seed.v6 in 40 s.
 - **QA P2-26 (seed-qa, program change):** snapshot `pool_fee_bps` on the Raise at `open_raise` (as `creator_share_bps` is) so a raise live across a config change seeds at the fee its backers saw. Next program upgrade, with P2-4.
 - **Axiom/GMGN patterns from QA (P2-15..19):** Your position with Bought / Sold / Holding / PnL for traders; editable quick-amount presets saved per wallet; a 5m/1h/6h/24h strip (change, buys/sells, net volume) above the panel; Price/MCap/Liquidity/24h volume in a row by the name and CA; a USD/SOL toggle and 1s/30s intervals.

@@ -1,3 +1,21 @@
+# Status report (2026-10-27, the owner's four decisions; QA gate #38–#39 on fd7ed1c)
+
+- **Done:** P2-111 to P2-115 landed (7ca3ef2); ui-simplify kept and merged (aa33cd7); burn on takeover in the program and on
+  devnet at slot 515598307 (fd7ed1c), with the IDL, crank, indexer, site wording, docs and MAINNET.md's audit list; USDC stays
+  open on chain (accepted). The gate passed on fd7ed1c: passes #38 and #39 clean, the burn verified on chain in seven cases
+  (READY.md). On devnet the deployer signs the admin instructions as the upgrade authority, so seed-qa's flags and takeovers no
+  longer needed the owner's wallet; Q34X and Q34D's old requests are covered (Q34X flagged; the takeover cases ran on fresh raises).
+- **Needs the owner** (in the order to do them):
+  1. **Phantom click-through on the share link** (READY.md, until 2026-10-28 00:57 PT): launch a Test-preset raise, back it, watch it seed, claim, trade.
+  2. **Refund checks:** one cancelled raise, one missed deadline.
+  3. **Phone check.**
+  4. **The held P2 fixes (P2-116 to P2-123):** seed-cc's db4a54c and the next commits on local branch qa-fixes, and 93a4453 on
+     checklist-next. Land before final testing (two more full passes) or after.
+  5. **Flag and unlocks:** claim_vested has no fraud-flag check, so a flagged raise keeps paying unlocks to the founder, and a
+     takeover after a flag pays the founder what had unlocked. Keep, or burn everything on a flagged raise (a program change).
+  6. **Mainnet funding:** deployer 5.0, staging backer 0.75, Irys 0.01 SOL; the staging presets stay $150/$300/$450/$600.
+  7. **Production:** move main (0fc8490) to the final code after the click-through.
+
 # Status report (2026-10-26, the launch checklist loop; CHECKLIST.md)
 
 - **Needs the owner** (in the order to do them):

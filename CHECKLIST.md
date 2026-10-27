@@ -66,8 +66,8 @@ with the commit or tx in brackets.
 - [x] Merge ui-simplify into final-model, green Buy / red Sell kept [aa33cd7, squashed; the owner's later raise-page asks kept]
 - [x] Burn on takeover: the program change, unit tests, the devnet upgrade and one suite run on devnet; docs, FAQ and the raise page say so; MAINNET.md and the audit list [fd7ed1c; 7 unit tests, 24 on both builds; devnet upgraded at slot 515598307, tx 3yRKSMof…D9t, bytes match; local validator 31/32 (the miss: the stalled-seeding test's 22 s window under machine load); devnet run 19 pass, 2 skipped (admin-only), 11 fail, all the suite raise's one-minute deadline passing during the presets test (DeadlinePassed and what follows), as before the change; on devnet the mid-schedule takeover paid 50M due to the old payout wallet and burned 100M, supply 1B → 900M, tx 2mahKwJP…AWQAK]
 - [x] Refresh js/idl and the crank; push; the Vercel build READY [fd7ed1c: js/idl and crank seed.json from the build; crank v35 and helius-webhook v29 deployed; final-model READY as dpl_3wXC3JzZ]
-- [ ] QA gate on the new final code: the #36–#37 scope plus the new UI and burn on takeover; two consecutive clean full passes
-- [ ] READY.md refreshed (tx links with the burn), a new 23-hour share link, STATUS.md, the "Ready for final testing" notification
+- [x] QA gate on the new final code: the #36–#37 scope plus the new UI and burn on takeover; two consecutive clean full passes [#38 and #39 clean on fd7ed1c, dpl_3wXC3JzZ; burn verified on chain in seven cases; P1-F31 fixed; P2-116 to P2-123 open, fixes held]
+- [x] READY.md refreshed (tx links with the burn), a new 23-hour share link, STATUS.md, the "Ready for final testing" notification [READY.md and STATUS.md in this commit; dpl_3wXC3JzZ share link until 2026-10-28 00:57 PT; notification sent with it]
 - [ ] [OWNER] Move production (main) after the final click-through
 
 ## Status reports
